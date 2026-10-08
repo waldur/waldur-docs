@@ -46,8 +46,10 @@ graph TB
 
 When a Waldur project is provisioned for chat, a `MatrixRoom` row is
 created and a celery task syncs every project member into the room via a
-per-user `MatrixUserProfile`. Outbound events flow Waldur → homeserver
-through the matrix-js-sdk login-token flow. Inbound events arrive over the
+per-user `MatrixUserProfile`. Waldur joins and leaves rooms as the user
+through the appservice, without logging in as them. The chat drawer talks
+to the homeserver directly with a short-lived web session (see
+[Web chat sessions](#web-chat-sessions)). Inbound events arrive over the
 appservice webhook (`PUT /_matrix/app/v1/transactions/{txnId}`), are
 deduplicated by `txn_id`, and dispatched to the bot-command handlers if
 the sender holds an active project role. Project deletion runs the same
@@ -121,7 +123,7 @@ config.MATRIX_ENABLED = True
 config.MATRIX_HOMESERVER_URL = "http://localhost:6167"
 config.MATRIX_HOMESERVER_DOMAIN = "localhost"
 config.MATRIX_USER_REGISTRATION_SECRET = "devregistrationsecret"  # match tuwunel.toml
-config.MATRIX_LOGIN_METHOD = "token"
+config.MATRIX_EXTERNAL_LOGIN_METHOD = "none"  # "password" or "oidc" to allow Element
 config.MATRIX_APPSERVICE_SENDER_LOCALPART = "waldur-bot"
 config.MATRIX_HISTORY_EXPORT_ENABLED = True
 ```
@@ -141,7 +143,7 @@ page load (the `/api/configuration/` response is cached in the SPA bootstrap).
 
 ## Running the Setup wizard
 
-In the homeport, open **Administration → Matrix chat** and click
+In the homeport, open **Administration → Configuration → Matrix chat** and click
 **Setup appservice**. The wizard generates fresh AS/HS tokens, persists
 them via Constance, and returns the registration YAML to copy into the
 homeserver. Re-running Setup rotates both tokens — you will need to update
@@ -228,10 +230,13 @@ Open the **Check connectivity** dialog from the same page:
 
 ![Connectivity diagnostics — all checks green](img/matrix-chat/11-admin-diagnostics.png)
 
-The dialog runs ten live checks against the homeserver and reports the
-result. AS/HS tokens are shown as SHA-256 fingerprints (`sha256:<first-12-hex>`)
-so the diagnostic does not leak token material. When all ten checks are
-green the integration is ready for use.
+The dialog runs live checks against the homeserver and reports the result.
+AS/HS tokens are shown as SHA-256 fingerprints (`sha256:<first-12-hex>`)
+so the diagnostic does not leak token material. The integration is ready for
+use when every check is green, except the LiveKit check, which matters only
+for voice and video calls. The
+[setup guide](../developer-guide/admin-guide/matrix-appservice-setup.md#get-apiadminmatrixdiagnostics)
+lists the checks.
 
 ---
 
@@ -373,7 +378,8 @@ The conditions are:
    at the local `lk-jwt-service`.
 3. The well-known fetch from the browser succeeded. If the homeserver
    is unreachable or the response doesn't include a `livekit` transport,
-   the menu shows only **Mute** and **Open in external Matrix client**.
+   the menu shows only **Mute**, plus **Open in external Matrix client**
+   when `MATRIX_EXTERNAL_LOGIN_METHOD` is `password` or `oidc`.
 
 ![Chat kebab with Start call available](img/matrix-chat/12-chat-kebab-call.png)
 
@@ -443,31 +449,98 @@ a single-line denial, not project data.
 
 ---
 
+## Web chat sessions
+
+With refresh tokens configured on the homeserver (the Helm chart and
+docker-compose do this for Tuwunel), the chat drawer never holds a long-lived
+token. It calls `POST /api/matrix/session/`, which signs the user in through
+the appservice on a new device (`WALDUR_WEB_<id>`) and returns an access token
+and a refresh token. The drawer keeps both in memory and renews the access
+token through Matrix `/refresh`. It asks Waldur for a new session when a
+refresh is rejected or when the homeserver signs its device out, for example
+from Element's session list or because Waldur's limit of web devices was
+reached. Whether the user may still chat is decided there: a deactivated,
+deleted or signed-out user gets no new session and is returned to the login
+page. When chat was switched off, or the new session is signed out again
+within a minute, the drawer shows **Your chat session has ended.**
+
+Waldur is consulted only when the drawer connects, when a refresh is rejected
+and when the device is signed out. Switching chat off or signing out of
+Waldur in another tab therefore does not cut an open drawer: it keeps working
+until it next needs a new session.
+
+The homeserver sets the lifetimes:
+
+| Tuwunel key | Helm value | Default | Meaning |
+| --- | --- | --- | --- |
+| `access_token_ttl` | `matrixChat.homeserver.accessTokenTtl` | `300` | Access token lifetime in seconds |
+| `refresh_token_ttl` | `matrixChat.homeserver.refreshTokenTtl` | `86400` | Idle lifetime of the refresh token in seconds |
+
+docker-compose sets the same values in `config/matrix/tuwunel.toml.template`;
+edit the template to change them. Each refresh moves the idle deadline
+forward, so an open drawer never expires. Logins without a refresh token, such
+as Element with a password, keep non-expiring tokens.
+
+Every session has its own device. Tuwunel keeps one refresh token per
+device, so a device shared by two browser tabs would revoke itself. After
+each new session Waldur signs out the user's web devices not seen for 24
+hours, a window fixed in Waldur, and beyond the 10 most recently seen it
+signs out the rest, except devices seen in the last ten minutes: those belong
+to open tabs.
+
+### External clients
+
+`MATRIX_EXTERNAL_LOGIN_METHOD` decides whether users can also open rooms in
+an external client: `none` (default) hides the option, `password` shows the
+homeserver, the user's Matrix ID and a derived password (it needs
+`MATRIX_USER_REGISTRATION_SECRET`), and `oidc` tells the user to sign in with
+single sign-on configured on the homeserver. Use `oidc` in production: users
+then sign in to their client with the same identity provider as Waldur, and
+there is no Matrix password to leak. `password` is meant for testing and for
+installations without an identity provider. `none` and `oidc` only hide the
+password: password login still works on the homeserver, so switching away from
+`password` does not cut off users who have seen theirs.
+
+---
+
 ## Operational notes
 
 - **Tear-down on logout.** The embedded Matrix client disconnects whenever
-  Waldur loses the authenticated user — re-logins start a fresh client
-  instance, so a shared workstation never leaks one user's session to the
-  next. The same teardown removes the matrix-js-sdk `Sync` listener and any
-  per-call sub-module handlers.
+  Waldur loses the authenticated user and, as a best effort, signs its session
+  device out, which revokes its tokens; otherwise its access token expires
+  within `access_token_ttl` and its refresh token after `refresh_token_ttl` of
+  disuse. Re-logins start a fresh client instance, so a shared
+  workstation never leaks one user's session to the next. The same teardown
+  removes the matrix-js-sdk `Sync` listener and any per-call sub-module
+  handlers.
 - **Webhook rate limit.** The `/_matrix/app/v1/transactions/{txnId}` endpoint
   is rate-limited via the `matrix_webhook` DRF throttle scope (default
   10000/hour). When Matrix is disabled the endpoint returns `200` and
   discards the payload, so the homeserver does not retry.
-- **Per-user credential limit.** `/api/matrix/credentials/` is rate-limited
-  via the `matrix_credentials` scope (default 30/hour per user) and returns
-  `404` when the integration is disabled.
+- **Per-user limits.** `/api/matrix/session/` is rate-limited via the
+  `matrix_session` scope (default 120/hour per user). The drawer calls it on
+  connect, which includes the background connect on every page load for a
+  room member, and when a token refresh is rejected, so each page load counts
+  against the limit. `/api/matrix/credentials/`,
+  which only the external-client dialog calls, uses the `matrix_credentials`
+  scope (default 1000/hour per user). Both return `404` when the integration
+  is disabled.
 - **Cleanup task.** `cleanup_old_appservice_transactions` runs daily at
   03:15 UTC and prunes webhook idempotency rows older than 30 days.
 - **History export.** Disabling a room can optionally export its full
   message history; exports are served through a permission-checked view
   rather than the raw storage URL, so download links honour the same
   room-access policy as the API.
-- **At-rest token storage.** `MatrixUserProfile.access_token` is currently
-  stored in plaintext. The umbrella ticket [WAL-9740](https://opennode.atlassian.net/browse/WAL-9740)
-  introduces field-level encryption for sensitive Constance + model
-  values; the Matrix token will be migrated to the same `EncryptedCharField`
-  once that lands.
+- **No stored Matrix tokens.** Waldur stores no Matrix access token for any
+  user. The drawer's tokens live only in the browser's memory, and registering
+  a user creates no device.
+- **Deactivated and deleted users.** Deactivating or deleting a Waldur user
+  signs out every one of their Matrix devices, Element included, and removes
+  them from their rooms, through background tasks that retry failures, even
+  while chat is switched off. An open drawer loses access within moments.
+  Reactivating the user while chat is on brings them back into the rooms their
+  roles give them. See
+  [Automatic member management](../developer-guide/admin-guide/matrix-appservice-setup.md#automatic-member-management).
 
 ---
 
@@ -475,6 +548,7 @@ a single-line denial, not project data.
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
+| The chat drawer shows **Your chat session has ended.** | Matrix chat was switched off (`MATRIX_ENABLED`) while the drawer was open, or the homeserver signed the drawer's device out again within a minute of reconnecting | Re-enable chat. If sessions keep being signed out, look for what removes `WALDUR_WEB_*` devices on the homeserver. **Reload** in the drawer starts a new session. A deactivated, deleted or signed-out user is returned to the login page instead. A rate-limited connect shows **Too many chat requests. Please try again in …** |
 | `bot_provision_status: "failed: M_UNKNOWN_TOKEN"` after Setup | Homeserver does not yet have the appservice registered with the current AS token | Register the YAML via the admin-room command (see above), then re-run Setup. |
 | Webhook reaches Waldur but returns `400 DisallowedHost` | The hostname the homeserver uses to reach Waldur is not in Django's `ALLOWED_HOSTS` | Add the hostname (e.g. `host.docker.internal`) to `ALLOWED_HOSTS` and restart. |
 | Diagnostics shows `Bot authentication: 403 Forbidden` | AS token mismatch between Waldur and the homeserver | Re-run Setup, then re-register the appservice on the homeserver with the new YAML. |
