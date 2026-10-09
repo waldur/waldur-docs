@@ -19679,11 +19679,13 @@ register Waldur's appservice on the local dev stack:</p>
 curl<span class="w"> </span>-s<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s1">'http://localhost:6167/_matrix/client/v3/register?kind=user'</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"auth":{"type":"m.login.registration_token","token":"devregistrationsecret"},</span>
-<span class="s1">       "username":"admin","password":"admin","device_id":"BOOTSTRAP"}'</span>
-<span class="c1"># → captures access_token + admin's room id from joined_rooms</span>
+<span class="s1">       "username":"matrix-admin","password":"admin","device_id":"BOOTSTRAP"}'</span>
+<span class="c1"># → captures access_token + the admin room id from joined_rooms</span>
 </code></pre></div></td></tr></tbody></table></div>
-<p>The response contains an <code>access_token</code> for <code>@admin:localhost</code>. List the
-admin room (the only joined room):</p>
+<p>The response contains an <code>access_token</code> for <code>@matrix-admin:localhost</code>. Use a
+name no Waldur user maps to: with the default
+<code>MATRIX_USER_ID_FORMAT = username</code>, a Waldur user called <code>admin</code> maps to
+<code>@admin:localhost</code>. List the admin room (the only joined room):</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>curl<span class="w"> </span>-s<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer &lt;ACCESS_TOKEN&gt;"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>http://localhost:6167/_matrix/client/v3/joined_rooms
@@ -19704,20 +19706,29 @@ curl<span class="w"> </span>-s<span class="w"> </span>-X<span class="w"> </span>
 <span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-d<span class="w"> </span><span class="s2">"{\"msgtype\":\"m.text\",\"body\":</span><span class="si">${</span><span class="nv">BODY_JSON</span><span class="si">}</span><span class="s2">}"</span>
 </code></pre></div></td></tr></tbody></table></div>
-<p>Tuwunel's admin user replies <code>Appservice registered with ID: waldur</code>. After
-that, re-running the Waldur Setup wizard succeeds with
-<code>bot_provision_status: "ok"</code>.</p>
+<p>Tuwunel's admin user replies <code>Appservice registered with ID: waldur</code>, and
+creates the bot's account itself. There is nothing more to run: under
+<strong>Administration → Configuration → Matrix chat</strong>, <strong>Diagnostics</strong> should now
+show <strong>Bot authentication (whoami)</strong> passing. Don't run Setup again to
+provision the bot. Setup generates new tokens, and the registration you just
+made would stop working.</p>
 <p>For Synapse, the equivalent is to drop the registration YAML into a path
 listed in <code>app_service_config_files</code> and restart the homeserver. Other
 Conduit-derived homeservers follow the same admin-room workflow as
 Tuwunel.</p>
-<p>If you rotate AS/HS tokens (by re-running the Setup wizard), repeat the
-admin-room command — Tuwunel rejects appservice requests under the old
-tokens once you change them in Waldur.</p>
+<p>If you rotate the AS/HS tokens (by running the Setup wizard again), register
+the new YAML the same way, after removing the old registration with
+<code>!admin appservices unregister waldur</code>: Tuwunel refuses to register an ID that
+is already registered, and rejects appservice requests under the old tokens
+once they change in Waldur. Then restart the bot process (<code>waldur matrix_bot</code>;
+<code>waldur-matrix-bot</code> on Helm and docker-compose), which reads the appservice
+token only when it starts. On a docker-compose deployment, don't rotate with
+Setup at all: <code>waldur-matrix-init</code> writes the deployment's tokens back into
+Waldur on every <code>docker compose up</code>.</p>
 <hr>
 <h2 id="verifying-the-integration">Verifying the integration</h2>
-<p>Open the <strong>Check connectivity</strong> dialog from the same page:</p>
-<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../img/matrix-chat/11-admin-diagnostics.png" data-desc-position="bottom"><img alt="Connectivity diagnostics — all checks green" src="../img/matrix-chat/11-admin-diagnostics.png"></a></p>
+<p>Open <strong>Diagnostics</strong> from the same page:</p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../img/matrix-chat/11-admin-diagnostics.png" data-desc-position="bottom"><img alt="Matrix diagnostics — all checks green" src="../img/matrix-chat/11-admin-diagnostics.png"></a></p>
 <p>The dialog runs live checks against the homeserver and reports the result.
 AS/HS tokens are shown as SHA-256 fingerprints (<code>sha256:&lt;first-12-hex&gt;</code>)
 so the diagnostic does not leak token material. The integration is ready for
@@ -20134,8 +20145,8 @@ password: password login still works on the homeserver, so switching away from
 </tr>
 <tr>
 <td><code>bot_provision_status: "failed: M_UNKNOWN_TOKEN"</code> after Setup</td>
-<td>Homeserver does not yet have the appservice registered with the current AS token</td>
-<td>Register the YAML via the admin-room command (see above), then re-run Setup.</td>
+<td>The homeserver has no registration with the tokens this Setup generated, which is expected on a first Setup</td>
+<td>Register the YAML Setup returned via the admin-room command (see above). Tuwunel then creates the bot itself. Don't run Setup again: it generates new tokens.</td>
 </tr>
 <tr>
 <td>Webhook reaches Waldur but returns <code>400 DisallowedHost</code></td>
@@ -20143,9 +20154,9 @@ password: password login still works on the homeserver, so switching away from
 <td>Add the hostname (e.g. <code>host.docker.internal</code>) to <code>ALLOWED_HOSTS</code> and restart.</td>
 </tr>
 <tr>
-<td>Diagnostics shows <code>Bot authentication: 403 Forbidden</code></td>
-<td>AS token mismatch between Waldur and the homeserver</td>
-<td>Re-run Setup, then re-register the appservice on the homeserver with the new YAML.</td>
+<td>Diagnostics shows <code>Bot authentication: 401 Unauthorized — AS token rejected</code></td>
+<td>The homeserver holds a registration with other tokens than Waldur's, for example after Setup was run again</td>
+<td>Register the tokens Waldur has: <code>waldur generate_appservice_registration --url &lt;URL the homeserver uses to reach Waldur&gt;</code> prints their YAML. Send <code>!admin appservices unregister waldur</code>, then register it and restart the bot process (<code>waldur-matrix-bot</code>), which reads the appservice token only when it starts. On docker-compose, first run <code>docker compose --profile matrix run --rm waldur-matrix-init</code> so Waldur has the deployment's tokens again, and register <code>waldur-registration.yaml</code> from the Matrix secrets volume.</td>
 </tr>
 <tr>
 <td>Voice/video call fails to connect</td>
@@ -20171,11 +20182,6 @@ password: password login still works on the homeserver, so switching away from
 <td>The browser's token request returns <code>404</code></td>
 <td>Matrix chat is switched off (<code>MATRIX_ENABLED</code>), or a reverse proxy does not route <code>/api/matrix/livekit</code> to Waldur</td>
 <td>Enable Matrix chat; route the whole <code>/api/matrix/livekit</code> prefix to the Waldur API.</td>
-</tr>
-<tr>
-<td>Diagnostics reports <code>0 active, 0 total</code> rooms but you created one via API</td>
-<td>Constance cache lag — <code>runserver</code> reads <code>API_CONFIGURATION</code> from its in-process LocMemCache</td>
-<td>Restart the dev backend or call <code>cache.delete('API_CONFIGURATION')</code> from a shell against the same process.</td>
 </tr>
 </tbody>
 </table>
