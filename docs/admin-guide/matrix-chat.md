@@ -69,14 +69,15 @@ You need:
   provision the per-user Matrix accounts that drive the embedded chat).
 - A staff account in Waldur. The Setup wizard, connectivity diagnostics, and
   the **Settings** tab are staff-only.
-- For voice/video calls (optional): a LiveKit SFU and an
-  [`lk-jwt-service`](https://github.com/element-hq/lk-jwt-service) reachable
-  from the browser, advertised by the homeserver via `.well-known/matrix/client`'s
-  `rtc_transports` block (MSC4143).
+- For voice/video calls (optional): a LiveKit SFU reachable from the browser.
+  Waldur itself issues the LiveKit tokens for calls; no separate token service
+  (such as `lk-jwt-service`) is needed. The homeserver advertises Waldur's
+  call token API as its LiveKit focus in `.well-known/matrix/client`'s
+  `rtc_transports` block (MSC4143) — see [Voice and video calls](#voice-and-video-calls).
 
-The bundled `docker/matrix-dev/` stack in the mastermind repo provides all
-three components for local development; for production deployments you supply
-your own.
+The bundled `docker/matrix-dev/` stack in the mastermind repo provides the
+homeserver and the SFU for local development; for production deployments you
+supply your own.
 
 ---
 
@@ -94,21 +95,34 @@ This starts:
 | Service | Port | Notes |
 | --- | --- | --- |
 | `tuwunel` | `6167` | Homeserver, `server_name=localhost` |
-| `livekit` | `7880-7882` | LiveKit SFU for Matrix RTC |
-| `lk-jwt-service` | `8090` | Issues LiveKit JWTs after federated OpenID verification |
-| `federation-tls` | `8448` | Self-signed TLS terminator the JWT service needs |
+| `livekit` | `7880-7882` | LiveKit SFU for Matrix RTC (API key `devkey`, secret `devsecret`) |
+
+There is no token service in the stack: the call tokens come from the Waldur
+API. `tuwunel.toml` advertises
+`http://localhost:10780/api/matrix/livekit` as the LiveKit focus, the
+mastermind dev API on the default port; change it if your API runs elsewhere.
+The `dev_matrix_settings` settings module defaults the LiveKit Constance keys
+to the stack's key, secret and URLs.
 
 Health check:
 
 ```bash
 curl -s -o /dev/null -w "Tuwunel: %{http_code}\n" http://localhost:6167/_matrix/client/versions
 curl -s -o /dev/null -w "LiveKit: %{http_code}\n" http://localhost:7880/
-curl -s -o /dev/null -w "lk-jwt:  %{http_code}\n" http://localhost:8090/healthz
+curl -s http://localhost:6167/.well-known/matrix/client
+curl -s -X POST -H 'Content-Type: application/json' -d '{}' \
+  http://localhost:10780/api/matrix/livekit/get_token
 ```
 
-Each should return `200`. Once Tuwunel is running, Waldur reaches it at
-`http://localhost:6167` and the browser reaches the LiveKit JWT service via
-the Vite dev proxy (`/lk-jwt → http://localhost:8090`).
+Tuwunel and LiveKit should return `200`, and the well-known document should
+list the `livekit` transport with the Waldur URL. Once Matrix chat is enabled
+in Waldur, the token request answers `400` with `M_BAD_JSON` (the empty body
+is refused); a `404` means Matrix chat is switched off. Waldur reaches Tuwunel
+at `http://localhost:6167`.
+
+In homeport, `VITE_LK_JWT_URL` is optional. When set in a dev build, it
+replaces the focus the homeserver advertises, which is useful for pointing the
+browser at a call token API on another port.
 
 ---
 
@@ -126,6 +140,11 @@ config.MATRIX_USER_REGISTRATION_SECRET = "devregistrationsecret"  # match tuwune
 config.MATRIX_EXTERNAL_LOGIN_METHOD = "none"  # "password" or "oidc" to allow Element
 config.MATRIX_APPSERVICE_SENDER_LOCALPART = "waldur-bot"
 config.MATRIX_HISTORY_EXPORT_ENABLED = True
+# Calls (optional): the LiveKit key pair Waldur signs call tokens with
+config.MATRIX_LIVEKIT_KEY = "devkey"
+config.MATRIX_LIVEKIT_SECRET = "devsecret"
+config.MATRIX_LIVEKIT_URL = "http://localhost:7880"  # internal, for room management
+config.MATRIX_LIVEKIT_PUBLIC_URL = "ws://localhost:7880"  # what browsers connect to
 ```
 
 You can do the same in the Django admin (`/admin/constance/config/`) — all
@@ -375,7 +394,7 @@ The conditions are:
 2. The homeserver advertises a `livekit` entry under
    `rtc_transports` in `.well-known/matrix/client` (or the legacy
    `rtc_foci` key). The bundled `tuwunel.toml` ships this entry pointing
-   at the local `lk-jwt-service`.
+   at the Waldur API.
 3. The well-known fetch from the browser succeeded. If the homeserver
    is unreachable or the response doesn't include a `livekit` transport,
    the menu shows only **Mute**, plus **Open in external Matrix client**
@@ -394,8 +413,8 @@ up):
 
 ![Active LiveKit call inside the chat drawer](img/matrix-chat/14-call-active.png)
 
-If the homeserver advertises LiveKit but the SFU or `lk-jwt-service`
-is not reachable, the call view surfaces a single-line **Could not
+If the homeserver advertises LiveKit but the SFU or Waldur's call token
+API is not reachable, the call view surfaces a single-line **Could not
 connect to the call** error with **Reload** and **Close** buttons —
 the call provider never gets stuck on a spinner.
 
@@ -421,12 +440,66 @@ homeport's `NameOverrider` swaps the visible label.
 
 ![Owner side of a two-participant call](img/matrix-chat/21-owner-in-call.png)
 
-> **Dev-stack notes.** The bundled `docker/matrix-dev` stack disables
-> IPv6 in tuwunel's network namespace (`sysctls:
-> net.ipv6.conf.all.disable_ipv6=1`) so `lk-jwt-service`'s federation
-> lookups of `localhost` go to the bundled Caddy TLS proxy at
-> `127.0.0.1:8448` rather than `[::1]:8448`. The Caddyfile binds both
-> IPv4 and IPv6 for the same reason.
+### How call tokens are issued
+
+Waldur serves the call token API that Matrix clients — Waldur's chat drawer
+and Element Call alike — use to join a call. It replaces `lk-jwt-service`, so
+deployments run only the homeserver and the LiveKit SFU next to Waldur.
+
+Point the homeserver's `.well-known/matrix/client` LiveKit focus at it —
+the `livekit` entry under `rtc_transports` (or the legacy `rtc_foci` key):
+
+```json
+{
+  "type": "livekit",
+  "livekit_service_url": "https://<waldur-api-host>/api/matrix/livekit"
+}
+```
+
+Under that base Waldur answers:
+
+| Endpoint | Request | Answer |
+| --- | --- | --- |
+| `POST /api/matrix/livekit/get_token` | `{room_id, slot_id, openid_token, member: {id, claimed_user_id, claimed_device_id}}` | `{url, jwt}` |
+| `POST /api/matrix/livekit/sfu/get` | `{room, openid_token, device_id}`, the older form Element Call falls back to | `{url, jwt}` |
+| `POST /api/matrix/livekit/delegate_delayed_leave` | anything | `404 M_NOT_FOUND`: not supported |
+
+For each token request Waldur:
+
+1. **Verifies the Matrix OpenID token with the homeserver**, through its
+   federation endpoint `/_matrix/federation/v1/openid/userinfo` at
+   `MATRIX_HOMESERVER_URL`, which must therefore be reachable from Waldur
+   there. Users of other homeservers are refused.
+2. **Checks room membership and the device**: the user must be joined to the
+   room at that moment, and the device named in the request must be one of
+   their own. This applies to any room the user has joined, not only Waldur's
+   project rooms. A deactivated Waldur user is refused.
+3. **Rate-limits** per client address (`matrix_livekit_token`, 600/hour by
+   default) and per Matrix user (`matrix_livekit_token_user`, 120/hour). The
+   client address is the last `X-Forwarded-For` entry, the one the proxy in
+   front of Waldur wrote.
+4. **Issues a LiveKit token** for that room's call, valid for 3 minutes;
+   LiveKit renews the token of a connected participant.
+
+Every refusal to join gets the same `403 M_FORBIDDEN` answer, so the response
+does not reveal whether a room exists or who is in it. If `MATRIX_LIVEKIT_KEY`,
+`MATRIX_LIVEKIT_SECRET` or `MATRIX_LIVEKIT_PUBLIC_URL` is unset, or the
+homeserver cannot be reached, the endpoints answer `503`.
+
+Element Call can hand its delayed leave event (MSC4140) over to the token
+service, which then sends the leave once the member drops off the SFU. Waldur
+does not take that over: `delegate_delayed_leave` always answers "not
+supported", so clients keep the delayed leave themselves and restart it while
+they are in the call.
+
+When a user loses access to a Waldur room (role revoked, deactivation, room
+disabled), Waldur also disconnects them from its call.
+
+Any origin may call these paths, without credentials, so Element Web on
+another domain can use them. The packaged Helm chart and Docker Compose stack
+route `/api/matrix/livekit` to Waldur with CORS open to all origins. The
+LiveKit admin API (`/twirp`) is used only by Waldur internally and should not
+be exposed publicly.
 
 ---
 
@@ -552,9 +625,11 @@ password: password login still works on the homeserver, so switching away from
 | `bot_provision_status: "failed: M_UNKNOWN_TOKEN"` after Setup | Homeserver does not yet have the appservice registered with the current AS token | Register the YAML via the admin-room command (see above), then re-run Setup. |
 | Webhook reaches Waldur but returns `400 DisallowedHost` | The hostname the homeserver uses to reach Waldur is not in Django's `ALLOWED_HOSTS` | Add the hostname (e.g. `host.docker.internal`) to `ALLOWED_HOSTS` and restart. |
 | Diagnostics shows `Bot authentication: 403 Forbidden` | AS token mismatch between Waldur and the homeserver | Re-run Setup, then re-register the appservice on the homeserver with the new YAML. |
-| Voice/video call fails to connect | `lk-jwt-service` cannot reach the homeserver's federation endpoint, or the SFU URL is wrong in `.well-known/matrix/client` | Confirm `https://localhost:8448` is reachable from the JWT service container (Caddy provides the TLS termination) and that `rtc_transports[].livekit_service_url` matches what the JWT service serves. |
-| Call shows **Could not connect to the call.** and the browser's token request returns `400 Missing room parameter` | The homeport build posts to lk-jwt's legacy `/sfu/get`, which accepts homeport's request body only up to lk-jwt 0.5.0 | Upgrade homeport to a build that posts to `/get_token`, or keep lk-jwt at 0.5.0 until you can. |
-| The browser's token request to `/get_token` returns `404` | A reverse proxy in front of `lk-jwt-service` forwards only `/sfu` paths | Forward `/get_token` to `lk-jwt-service` as well. Current Waldur Helm charts route both. |
+| Voice/video call fails to connect | The `livekit_service_url` in `.well-known/matrix/client` does not point at Waldur's `/api/matrix/livekit`, or the browser cannot reach it | Set it to `https://<waldur-api-host>/api/matrix/livekit` and check the token request in the browser's network tab. |
+| The browser's token request returns `503` | LiveKit keys or public URL are not set in Waldur, or Waldur cannot reach the homeserver's `/_matrix/federation/v1/openid/userinfo` at `MATRIX_HOMESERVER_URL` | Set `MATRIX_LIVEKIT_KEY`, `MATRIX_LIVEKIT_SECRET` and `MATRIX_LIVEKIT_PUBLIC_URL`; make sure the homeserver's federation endpoints are reachable at `MATRIX_HOMESERVER_URL`. |
+| The browser's token request returns `403 M_FORBIDDEN` | The user is not joined to the room, the device is not theirs, the user belongs to another homeserver, or the Waldur user is deactivated | Join the room first; check the Waldur logs for "Refused a call token". |
+| The browser's token request returns `429` | Rate limit hit. Behind a load balancer that does not pass the client address on, all clients share one per-address bucket | Pass the real client address to the proxy in front of Waldur, or raise `matrix_livekit_token`. |
+| The browser's token request returns `404` | Matrix chat is switched off (`MATRIX_ENABLED`), or a reverse proxy does not route `/api/matrix/livekit` to Waldur | Enable Matrix chat; route the whole `/api/matrix/livekit` prefix to the Waldur API. |
 | Diagnostics reports `0 active, 0 total` rooms but you created one via API | Constance cache lag — `runserver` reads `API_CONFIGURATION` from its in-process LocMemCache | Restart the dev backend or call `cache.delete('API_CONFIGURATION')` from a shell against the same process. |
 
 For an unauthenticated denial reply from the bot, double-check that the
