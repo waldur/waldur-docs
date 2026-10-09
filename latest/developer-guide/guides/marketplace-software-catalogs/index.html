@@ -8422,6 +8422,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#scheduled-cleanup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scheduled Cleanup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#manual-trigger" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19887,6 +19898,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#scheduled-cleanup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scheduled Cleanup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#manual-trigger" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -20492,20 +20514,29 @@
 <ul>
 <li><code>SOFTWARE_CATALOG_UPDATE_EXISTING_PACKAGES</code>: Update existing packages during refresh (default: true)</li>
 <li><code>SOFTWARE_CATALOG_CLEANUP_ENABLED</code>: Enable automatic cleanup of old catalog data (default: false)</li>
-<li><code>SOFTWARE_CATALOG_RETENTION_DAYS</code>: Number of days to retain old catalog versions (default: 90)</li>
+<li><code>SOFTWARE_CATALOG_RETENTION_DAYS</code>: Number of days to retain catalogs that have not been successfully updated (default: 90)</li>
 </ul>
 <h3 id="scheduled-updates">Scheduled Updates</h3>
 <p>The <code>update_software_catalogs</code> task runs daily at 3 AM and:</p>
 <ol>
-<li><strong>Updates only existing catalogs</strong>: The task never creates new catalog records. If no catalog exists in the database for a given name/type, the task skips it with a warning. Create catalogs first via the API, management commands, or the <code>discover</code> endpoint to see what's available.</li>
-<li><strong>Independent Processing</strong>: Each catalog is updated independently - failures don't affect other catalogs</li>
+<li><strong>Updates only existing catalogs</strong>: The task never creates new catalog records. If no catalog exists in the database for a given name/type, the task skips it with a warning. Create catalogs first via the API, management commands, or the <code>discover</code> / <code>import_catalog</code> endpoints.</li>
+<li><strong>Multi-version catalogs</strong>: When several rows share a name/type (EESSI releases such as <code>2023.06</code> / <code>2026.06</code>, or Spack snapshot dates), <strong>each version is refreshed independently</strong>. The version string is never rewritten; import a new upstream version to add another row.</li>
+<li><strong>Independent Processing</strong>: Each catalog source is updated independently - failures don't affect other sources</li>
 <li><strong>Configuration Validation</strong>: Validates settings before attempting updates</li>
 <li><strong>Error Isolation</strong>: Individual catalog failures are logged but don't prevent other updates</li>
 <li><strong>Comprehensive Logging</strong>: Detailed logging for monitoring and troubleshooting</li>
 </ol>
+<p><code>import_catalog</code> creates the upstream-detected version when that exact <code>(name, version, type)</code> is not already stored. Another EESSI/Spack version already in the database does <strong>not</strong> block the import.</p>
 <blockquote>
 <p><strong>Note:</strong> Both <code>SOFTWARE_CATALOG_EESSI_UPDATE_ENABLED</code> and <code>SOFTWARE_CATALOG_SPACK_UPDATE_ENABLED</code> default to <code>false</code>. Enable them explicitly after creating the initial catalog records.</p>
 </blockquote>
+<h3 id="scheduled-cleanup">Scheduled Cleanup</h3>
+<p>The <code>cleanup_old_software_catalogs</code> task runs daily at 4 AM (after updates) when <code>SOFTWARE_CATALOG_CLEANUP_ENABLED</code> is true:</p>
+<ol>
+<li><strong>True duplicates only</strong>: Rows that share the same <code>(name, version, catalog_type)</code> — for example two EESSI <code>2026.06</code> catalogs — are collapsed to the newest row. Offering links are remapped when safe. <strong>Distinct versions are never collapsed</strong> (EESSI <code>2023.06</code> and <code>2026.06</code> both remain).</li>
+<li><strong>Retention</strong>: Catalogs whose <code>last_successful_update</code> is older than <code>SOFTWARE_CATALOG_RETENTION_DAYS</code> are deleted. Keep auto-update enabled (or re-load periodically) for every version you still need on offerings.</li>
+</ol>
+<p>Sites that expose multiple EESSI stacks on one offering should leave cleanup enabled only if those catalogs stay within the retention window via daily updates.</p>
 <h3 id="manual-trigger">Manual Trigger</h3>
 <p>You can manually trigger catalog updates:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>

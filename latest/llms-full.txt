@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-09T02:04:02.307276Z
+Generated: 2026-10-09T19:00:33.321017Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -2031,14 +2031,15 @@ paths:
 | Helm | `matrixChat.homeserver.imageTag` |
 | Docker Compose | `WALDUR_TUWUNEL_IMAGE_TAG` |
 
-Both are `v1.9.0`. Do not set a version we do not ship, and do not let the two
+Both are `v1.9.3`. Do not set a version we do not ship, and do not let the two
 diverge.
 
 ### Upgrading
 
 Tuwunel migrates its embedded database in place on the first boot of a new
-version, before it opens its port, and logs nothing while it runs. Every minor
-release so far has done this, so read the
+version, before it opens its port. From 1.9.1 a long migration logs its phase and
+progress every fifteen seconds; earlier versions log nothing while it runs. Every
+minor release so far has done this, so read the
 [upstream release notes](https://github.com/matrix-construct/tuwunel/releases)
 before moving in either direction.
 
@@ -2054,6 +2055,10 @@ before moving in either direction.
 a migrated database and then silently serves stale data from the old stores. A
 successful downgrade boot means nothing. Roll back by restoring the snapshot,
 never by re-pointing the tag at an older image.
+
+From 1.9.2, rooms are created as room version 12 by default. Existing rooms keep
+their version. In a version 12 room the creator, the Waldur bot, has the highest
+power level by definition and can never be listed in the room's power levels.
 
 `serverName` is immutable: it is baked into every user and room ID. From 1.9.0
 the homeserver stamps it into the database and refuses to boot under another
@@ -5400,15 +5405,15 @@ Matrix component versions live in `.env`. Bump them deliberately:
 
 | Variable | Default | Component |
 |---|---|---|
-| `WALDUR_TUWUNEL_IMAGE_TAG` | `v1.9.0` | Tuwunel homeserver — requires 1.7.0+ for Synapse-compatible `registration_shared_secret`. **Kept in lockstep with the Helm chart's `matrixChat.homeserver.imageTag`** — one supported homeserver version across both packaging paths |
+| `WALDUR_TUWUNEL_IMAGE_TAG` | `v1.9.3` | Tuwunel homeserver — requires 1.7.0+ for Synapse-compatible `registration_shared_secret`. **Kept in lockstep with the Helm chart's `matrixChat.homeserver.imageTag`** — one supported homeserver version across both packaging paths |
 | `WALDUR_LIVEKIT_IMAGE_TAG` | `v1.13.7` | LiveKit SFU |
 | `WALDUR_LK_JWT_IMAGE_TAG` | `0.7.0` | lk-jwt-service, 0.4.0 or newer: homeport requests call tokens from its `/get_token` endpoint. Requires explicit `LIVEKIT_FULL_ACCESS_HOMESERVERS` (auto-set) |
 
 All three publish multi-arch (`linux/amd64` and `linux/arm64`) manifests for the pinned tags. Re-check with `docker buildx imagetools inspect <image>:<tag>` after bumps.
 
 **Back up before bumping Tuwunel.** It migrates its embedded database in place
-on the first boot of a new version, before it listens and without logging
-anything, so read the
+on the first boot of a new version, before it listens (from 1.9.1 it logs its
+progress every fifteen seconds; earlier versions log nothing), so read the
 [upstream release notes](https://github.com/matrix-construct/tuwunel/releases)
 before moving in either direction. A `tuwunel` container that is up but not
 answering `/_matrix/client/versions` is migrating, not hung: do not restart it,
@@ -7167,6 +7172,26 @@ options:
 ## init_service_desk_defaults
 
 Seed the terminal issue statuses, and the default request type used by the built-in service desk. Existing rows are left untouched, so the command is safe to re-run. Request types are seeded only when the active backend is one Waldur owns; a deployment backed by a remote service desk gets its types from there.
+
+## link_matrix_account
+
+Link a Waldur user to a Matrix account that already exists on the homeserver. Provisioning refuses to take over accounts this Waldur did not create; use this once you know the account belongs to the user.
+
+```bash
+
+usage: waldur link_matrix_account [--all] [username] [matrix_user_id]
+
+positional arguments:
+  username        Waldur username
+  matrix_user_id  e.g. @alice:chat.example.org
+
+options:
+  --all           Link every user without a Matrix profile to the existing
+                  account with their generated Matrix ID. Only for a Waldur
+                  database that was restored or reset against a homeserver
+                  whose accounts all belong to this Waldur's users.
+
+```
 
 ## list_missing_resources
 
@@ -11631,7 +11656,7 @@ Shared secret for Matrix user registration.
 
 **Default value:** username
 
-Format for generating Matrix user IDs: username, uuid, or email_local.
+Format for generating Matrix user IDs: username, uuid, or email_local. Applies only to users provisioned afterwards; existing users keep their Matrix ID.
 
 #### MATRIX_EXTERNAL_LOGIN_METHOD
 
@@ -11639,7 +11664,7 @@ Format for generating Matrix user IDs: username, uuid, or email_local.
 
 **Default value:** none
 
-How users sign in to an external Matrix client such as Element: 'none' (Waldur offers no external sign-in), 'password' (a password Waldur derives for each user), or 'oidc' (single sign-on configured on the homeserver). Switching away from 'password' does not revoke passwords already shown or sign out external clients.
+How users sign in to an external Matrix client such as Element: 'none' (Waldur offers no external sign-in), 'password' (for testing and sites without an identity provider: users generate a password in Waldur; needs the Waldur bot to be a homeserver admin), or 'oidc' (single sign-on configured on the homeserver; use this in production). Switching away from 'password' revokes no generated password and signs out no external client; to refuse password logins, set login_with_password = false on the homeserver.
 
 #### MATRIX_LIVEKIT_KEY
 
@@ -18038,7 +18063,7 @@ td:nth-child(4) {
 | `cleanup-orphaned-answers` | `waldur_core.checklist.cleanup_orphaned_answers` | 1 day | Clean up Answer objects that have null completion field.<br><br>This should not happen in normal operation as domain apps are expected<br>to always set the completion field, but this task provides a safety net<br>to clean up any orphaned answers that might exist. |
 | `cleanup-site-agent-logs` | `waldur_mastermind.marketplace_site_agent.cleanup_site_agent_logs` | 15 minutes | Enforce row count limit per agent identity.<br><br>Keeps newest logs, deletes oldest when count exceeds the configured limit.<br>Runs periodically to maintain log volume within limits. |
 | `cleanup-slurm-evaluation-logs` | `waldur_mastermind.policy.cleanup_slurm_evaluation_logs` | Cron: `0 3 * * * (m/h/dM/MY/d)` | Delete SLURM policy evaluation log entries older than the configured retention period. |
-| `cleanup-software-catalogs` | `marketplace.cleanup_old_software_catalogs` | Cron: `0 4 * * * (m/h/dM/MY/d)` | Periodic task to clean up old and duplicate software catalog data.<br><br>This task performs two cleanup operations:<br>1. Removes duplicate catalogs, keeping only the newest one per (name, catalog_type)<br>2. Removes catalogs that haven't been updated within the retention period<br><br>This task respects the SOFTWARE_CATALOG_CLEANUP_ENABLED setting. |
+| `cleanup-software-catalogs` | `marketplace.cleanup_old_software_catalogs` | Cron: `0 4 * * * (m/h/dM/MY/d)` | Periodic task to clean up old and duplicate software catalog data.<br><br>This task performs two cleanup operations:<br>1. Removes true duplicate catalogs — same (name, version, catalog_type) —<br> keeping only the newest row. Different versions of the same catalog<br> (e.g. EESSI 2023.06 and 2026.06) are intentional and are never collapsed.<br>2. Removes catalogs that haven't been updated within the retention period<br><br>This task respects the SOFTWARE_CATALOG_CLEANUP_ENABLED setting. |
 | `cleanup-stale-agent-queues` | `waldur_mastermind.marketplace_site_agent.cleanup_stale_agent_queues` | 1 day | Tear down unified-queue RMQ state for consumers whose owner is inactive.<br><br>Mirrors `waldur_core.logging.delete_stale_event_subscriptions` for the<br>EventConsumer-backed path: when the owner's credential is no longer active<br>(or the user is gone), drop the RMQ queue and user and flip the consumer<br>back to an unregistered state.<br><br>An owner counts as active if they hold a live DRF token OR a live Personal<br>Access Token. The PAT arm is essential: a PAT-backed agent typically<br>has no DRF token at all, so keying off DRF tokens alone would reap every<br>PAT-backed agent on the next run. |
 | `cleanup-stale-token-exchange-codes` | `waldur_core.core.cleanup_stale_token_exchange_codes` | 1 minute | Delete TokenExchangeCode rows that were never redeemed. |
 | `cleanup-system-logs` | `waldur_core.logging.cleanup_system_logs` | 15 minutes | Enforce row count limit per source (across all instances).<br><br>Keeps newest logs, deletes oldest when count exceeds the configured limit.<br>Runs periodically to maintain log volume within limits. |
@@ -63618,19 +63643,31 @@ Configure automated updates through constance settings:
 
 - `SOFTWARE_CATALOG_UPDATE_EXISTING_PACKAGES`: Update existing packages during refresh (default: true)
 - `SOFTWARE_CATALOG_CLEANUP_ENABLED`: Enable automatic cleanup of old catalog data (default: false)
-- `SOFTWARE_CATALOG_RETENTION_DAYS`: Number of days to retain old catalog versions (default: 90)
+- `SOFTWARE_CATALOG_RETENTION_DAYS`: Number of days to retain catalogs that have not been successfully updated (default: 90)
 
 ### Scheduled Updates
 
 The `update_software_catalogs` task runs daily at 3 AM and:
 
-1. **Updates only existing catalogs**: The task never creates new catalog records. If no catalog exists in the database for a given name/type, the task skips it with a warning. Create catalogs first via the API, management commands, or the `discover` endpoint to see what's available.
-2. **Independent Processing**: Each catalog is updated independently - failures don't affect other catalogs
-3. **Configuration Validation**: Validates settings before attempting updates
-4. **Error Isolation**: Individual catalog failures are logged but don't prevent other updates
-5. **Comprehensive Logging**: Detailed logging for monitoring and troubleshooting
+1. **Updates only existing catalogs**: The task never creates new catalog records. If no catalog exists in the database for a given name/type, the task skips it with a warning. Create catalogs first via the API, management commands, or the `discover` / `import_catalog` endpoints.
+2. **Multi-version catalogs**: When several rows share a name/type (EESSI releases such as `2023.06` / `2026.06`, or Spack snapshot dates), **each version is refreshed independently**. The version string is never rewritten; import a new upstream version to add another row.
+3. **Independent Processing**: Each catalog source is updated independently - failures don't affect other sources
+4. **Configuration Validation**: Validates settings before attempting updates
+5. **Error Isolation**: Individual catalog failures are logged but don't prevent other updates
+6. **Comprehensive Logging**: Detailed logging for monitoring and troubleshooting
+
+`import_catalog` creates the upstream-detected version when that exact `(name, version, type)` is not already stored. Another EESSI/Spack version already in the database does **not** block the import.
 
 > **Note:** Both `SOFTWARE_CATALOG_EESSI_UPDATE_ENABLED` and `SOFTWARE_CATALOG_SPACK_UPDATE_ENABLED` default to `false`. Enable them explicitly after creating the initial catalog records.
+
+### Scheduled Cleanup
+
+The `cleanup_old_software_catalogs` task runs daily at 4 AM (after updates) when `SOFTWARE_CATALOG_CLEANUP_ENABLED` is true:
+
+1. **True duplicates only**: Rows that share the same `(name, version, catalog_type)` — for example two EESSI `2026.06` catalogs — are collapsed to the newest row. Offering links are remapped when safe. **Distinct versions are never collapsed** (EESSI `2023.06` and `2026.06` both remain).
+2. **Retention**: Catalogs whose `last_successful_update` is older than `SOFTWARE_CATALOG_RETENTION_DAYS` are deleted. Keep auto-update enabled (or re-load periodically) for every version you still need on offerings.
+
+Sites that expose multiple EESSI stacks on one offering should leave cleanup enabled only if those catalogs stay within the retention window via daily updates.
 
 ### Manual Trigger
 
@@ -68449,6 +68486,11 @@ first paint, so the entry graph is kept deliberately small:
   without a default provider, without the route, or unreachable leaves the
   visitor on the application's own login page. Whether a session exists is
   decided from web storage in the script, since only the browser can see it.
+  The script publishes its decision as `window.waldurBootRedirect`, and
+  `src/index.tsx` does not render while the visitor is being sent away:
+  Firefox cancels the page's in-flight requests when a navigation starts, and
+  an app booting alongside the redirect would see its lazy chunks fail and
+  reload, cancelling the redirect (`src/core/bootGuard.ts`).
 - `yarn build:check` (`scripts/bundle-budget.mjs`, run by the `Check cold-path
   budget` CI job on every MR) fails when the entry script plus its
   `modulepreload`s exceed the gzip budget, or when echarts, matrix-js-sdk,
@@ -76374,11 +76416,7 @@ Run one spec with `yarn playwright test focus-ring --project=visual --workers=1`
      );
      ```
 
-   - `matchMedia`: `react-responsive` captures `window.matchMedia` at module load time. Mock `react-responsive` directly rather than mutating `window.matchMedia`:
-
-     ```typescript
-     vi.mock('react-responsive', () => ({ useMediaQuery: vi.fn() }));
-     ```
+   - `matchMedia` & Virtual Viewport: `waldur-ui`'s `useMediaQuery`, `useBreakpointDown`, and `useBreakpointUp` read `window.matchMedia` dynamically via React 18's `useSyncExternalStore`. In tests (jsdom), `test/setupTests.js` initializes the query-aware virtual viewport controller (`setupVirtualViewport()`), defaulting to 1440px desktop with hover enabled and automatic `afterEach` teardown (`resetViewport()`). In responsive test suites, never stub `matchMedia` blindly with `vi.stubGlobal`; instead call `setViewport('mobile' | 'desktop' | BreakpointKey | px | { hover: false })` from `waldur-ui/testing` (or re-exported from `@/test/harness`).
 
 3. **Headless Browser Animation Polling**: CDP/Playwright tabs in automated modes skip compositing animation frames if backgrounded. `setTimeout` polling of `getAnimations()` may read `currentTime: 0`. Trigger a screenshot capture or force a reflow to guarantee paint completion.
 4. **Tailwind only generates classes it can read literally**: Tailwind v4 scans source files for complete class strings. A class assembled at runtime (`` `[&>svg]:h-[${px}]` ``) is never generated, so it silently does nothing. `BaseButton`'s icons rendered at 16px instead of 20px for exactly this reason. Write the class as a literal and pass the varying part through a CSS custom property (`style={{ '--icon-size': px }}` with `[&>svg]:h-[var(--icon-size)]`), or choose between whole literal classes. Classes inside HTML strings (chart tooltips) are scanned too, provided they are literals — `buttonVariants()` returns literals.
@@ -77935,23 +77973,31 @@ translate('{count} item', '{count} items', { count });
 
 ## 11. Responsive Behavior
 
-### 11.1 Breakpoints
+### 11.1 Breakpoints & Media Query Hooks
+
+Always prefer pure CSS/Tailwind responsive utility classes (`sm:`, `md:`, `lg:`, `max-md:`, etc.) for purely visual layout, hiding/showing elements, and spacing. When React component logic, state, or conditional data fetching must adapt to viewport width, use the typed breakpoint helpers from `waldur-ui`:
 
 ```tsx
-import { GRID_BREAKPOINTS } from '@/core/constants';
+import { useBreakpointDown, useBreakpointUp, useMediaQuery } from 'waldur-ui';
 
-// GRID_BREAKPOINTS = { xs: 0, sm: 576, md: 768, lg: 992, xl: 1200, xxl: 1400 }
+// Strictly below breakpoint (boundary-safe: max-width: bp - 1px)
+const isSm = useBreakpointDown('sm'); // < 576px
+const isMd = useBreakpointDown('md'); // < 768px
+const isMobile = useBreakpointDown('lg'); // < 992px
 
-import { useMediaQuery } from 'react-responsive';
+// At or above breakpoint (min-width: bp)
+const isDesktop = useBreakpointUp('lg'); // >= 992px
+const isWide = useBreakpointUp('xl'); // >= 1200px
 
-const isSm = useMediaQuery({ maxWidth: GRID_BREAKPOINTS.sm });
-const isMd = useMediaQuery({ maxWidth: GRID_BREAKPOINTS.md });
+// Device capabilities
+const cannotHover = useMediaQuery('(hover: none)');
 ```
 
 ### 11.2 Filter Position Adaptation
 
 ```tsx
 // Automatically converts 'menu' to 'sidebar' on small screens
+const isSm = useBreakpointDown('sm');
 const filterPosition =
   isSm && originalPosition === 'menu' ? 'sidebar' : originalPosition;
 ```
@@ -95500,14 +95546,15 @@ You need:
   provision the per-user Matrix accounts that drive the embedded chat).
 - A staff account in Waldur. The Setup wizard, connectivity diagnostics, and
   the **Settings** tab are staff-only.
-- For voice/video calls (optional): a LiveKit SFU and an
-  [`lk-jwt-service`](https://github.com/element-hq/lk-jwt-service) reachable
-  from the browser, advertised by the homeserver via `.well-known/matrix/client`'s
-  `rtc_transports` block (MSC4143).
+- For voice/video calls (optional): a LiveKit SFU reachable from the browser.
+  Waldur itself issues the LiveKit tokens for calls; no separate token service
+  (such as `lk-jwt-service`) is needed. The homeserver advertises Waldur's
+  call token API as its LiveKit focus in `.well-known/matrix/client`'s
+  `rtc_transports` block (MSC4143) — see [Voice and video calls](#voice-and-video-calls).
 
-The bundled `docker/matrix-dev/` stack in the mastermind repo provides all
-three components for local development; for production deployments you supply
-your own.
+The bundled `docker/matrix-dev/` stack in the mastermind repo provides the
+homeserver and the SFU for local development; for production deployments you
+supply your own.
 
 ---
 
@@ -95525,21 +95572,34 @@ This starts:
 | Service | Port | Notes |
 | --- | --- | --- |
 | `tuwunel` | `6167` | Homeserver, `server_name=localhost` |
-| `livekit` | `7880-7882` | LiveKit SFU for Matrix RTC |
-| `lk-jwt-service` | `8090` | Issues LiveKit JWTs after federated OpenID verification |
-| `federation-tls` | `8448` | Self-signed TLS terminator the JWT service needs |
+| `livekit` | `7880-7882` | LiveKit SFU for Matrix RTC (API key `devkey`, secret `devsecret`) |
+
+There is no token service in the stack: the call tokens come from the Waldur
+API. `tuwunel.toml` advertises
+`http://localhost:10780/api/matrix/livekit` as the LiveKit focus, the
+mastermind dev API on the default port; change it if your API runs elsewhere.
+The `dev_matrix_settings` settings module defaults the LiveKit Constance keys
+to the stack's key, secret and URLs.
 
 Health check:
 
 ```bash
 curl -s -o /dev/null -w "Tuwunel: %{http_code}\n" http://localhost:6167/_matrix/client/versions
 curl -s -o /dev/null -w "LiveKit: %{http_code}\n" http://localhost:7880/
-curl -s -o /dev/null -w "lk-jwt:  %{http_code}\n" http://localhost:8090/healthz
+curl -s http://localhost:6167/.well-known/matrix/client
+curl -s -X POST -H 'Content-Type: application/json' -d '{}' \
+  http://localhost:10780/api/matrix/livekit/get_token
 ```
 
-Each should return `200`. Once Tuwunel is running, Waldur reaches it at
-`http://localhost:6167` and the browser reaches the LiveKit JWT service via
-the Vite dev proxy (`/lk-jwt → http://localhost:8090`).
+Tuwunel and LiveKit should return `200`, and the well-known document should
+list the `livekit` transport with the Waldur URL. Once Matrix chat is enabled
+in Waldur, the token request answers `400` with `M_BAD_JSON` (the empty body
+is refused); a `404` means Matrix chat is switched off. Waldur reaches Tuwunel
+at `http://localhost:6167`.
+
+In homeport, `VITE_LK_JWT_URL` is optional. When set in a dev build, it
+replaces the focus the homeserver advertises, which is useful for pointing the
+browser at a call token API on another port.
 
 ---
 
@@ -95557,6 +95617,11 @@ config.MATRIX_USER_REGISTRATION_SECRET = "devregistrationsecret"  # match tuwune
 config.MATRIX_EXTERNAL_LOGIN_METHOD = "none"  # "password" or "oidc" to allow Element
 config.MATRIX_APPSERVICE_SENDER_LOCALPART = "waldur-bot"
 config.MATRIX_HISTORY_EXPORT_ENABLED = True
+# Calls (optional): the LiveKit key pair Waldur signs call tokens with
+config.MATRIX_LIVEKIT_KEY = "devkey"
+config.MATRIX_LIVEKIT_SECRET = "devsecret"
+config.MATRIX_LIVEKIT_URL = "http://localhost:7880"  # internal, for room management
+config.MATRIX_LIVEKIT_PUBLIC_URL = "ws://localhost:7880"  # what browsers connect to
 ```
 
 You can do the same in the Django admin (`/admin/constance/config/`) — all
@@ -95806,7 +95871,7 @@ The conditions are:
 2. The homeserver advertises a `livekit` entry under
    `rtc_transports` in `.well-known/matrix/client` (or the legacy
    `rtc_foci` key). The bundled `tuwunel.toml` ships this entry pointing
-   at the local `lk-jwt-service`.
+   at the Waldur API.
 3. The well-known fetch from the browser succeeded. If the homeserver
    is unreachable or the response doesn't include a `livekit` transport,
    the menu shows only **Mute**, plus **Open in external Matrix client**
@@ -95825,8 +95890,8 @@ up):
 
 [Image: Active LiveKit call inside the chat drawer]
 
-If the homeserver advertises LiveKit but the SFU or `lk-jwt-service`
-is not reachable, the call view surfaces a single-line **Could not
+If the homeserver advertises LiveKit but the SFU or Waldur's call token
+API is not reachable, the call view surfaces a single-line **Could not
 connect to the call** error with **Reload** and **Close** buttons —
 the call provider never gets stuck on a spinner.
 
@@ -95852,12 +95917,66 @@ homeport's `NameOverrider` swaps the visible label.
 
 [Image: Owner side of a two-participant call]
 
-> **Dev-stack notes.** The bundled `docker/matrix-dev` stack disables
-> IPv6 in tuwunel's network namespace (`sysctls:
-> net.ipv6.conf.all.disable_ipv6=1`) so `lk-jwt-service`'s federation
-> lookups of `localhost` go to the bundled Caddy TLS proxy at
-> `127.0.0.1:8448` rather than `[::1]:8448`. The Caddyfile binds both
-> IPv4 and IPv6 for the same reason.
+### How call tokens are issued
+
+Waldur serves the call token API that Matrix clients — Waldur's chat drawer
+and Element Call alike — use to join a call. It replaces `lk-jwt-service`, so
+deployments run only the homeserver and the LiveKit SFU next to Waldur.
+
+Point the homeserver's `.well-known/matrix/client` LiveKit focus at it —
+the `livekit` entry under `rtc_transports` (or the legacy `rtc_foci` key):
+
+```json
+{
+  "type": "livekit",
+  "livekit_service_url": "https://<waldur-api-host>/api/matrix/livekit"
+}
+```
+
+Under that base Waldur answers:
+
+| Endpoint | Request | Answer |
+| --- | --- | --- |
+| `POST /api/matrix/livekit/get_token` | `{room_id, slot_id, openid_token, member: {id, claimed_user_id, claimed_device_id}}` | `{url, jwt}` |
+| `POST /api/matrix/livekit/sfu/get` | `{room, openid_token, device_id}`, the older form Element Call falls back to | `{url, jwt}` |
+| `POST /api/matrix/livekit/delegate_delayed_leave` | anything | `404 M_NOT_FOUND`: not supported |
+
+For each token request Waldur:
+
+1. **Verifies the Matrix OpenID token with the homeserver**, through its
+   federation endpoint `/_matrix/federation/v1/openid/userinfo` at
+   `MATRIX_HOMESERVER_URL`, which must therefore be reachable from Waldur
+   there. Users of other homeservers are refused.
+2. **Checks room membership and the device**: the user must be joined to the
+   room at that moment, and the device named in the request must be one of
+   their own. This applies to any room the user has joined, not only Waldur's
+   project rooms. A deactivated Waldur user is refused.
+3. **Rate-limits** per client address (`matrix_livekit_token`, 600/hour by
+   default) and per Matrix user (`matrix_livekit_token_user`, 120/hour). The
+   client address is the last `X-Forwarded-For` entry, the one the proxy in
+   front of Waldur wrote.
+4. **Issues a LiveKit token** for that room's call, valid for 3 minutes;
+   LiveKit renews the token of a connected participant.
+
+Every refusal to join gets the same `403 M_FORBIDDEN` answer, so the response
+does not reveal whether a room exists or who is in it. If `MATRIX_LIVEKIT_KEY`,
+`MATRIX_LIVEKIT_SECRET` or `MATRIX_LIVEKIT_PUBLIC_URL` is unset, or the
+homeserver cannot be reached, the endpoints answer `503`.
+
+Element Call can hand its delayed leave event (MSC4140) over to the token
+service, which then sends the leave once the member drops off the SFU. Waldur
+does not take that over: `delegate_delayed_leave` always answers "not
+supported", so clients keep the delayed leave themselves and restart it while
+they are in the call.
+
+When a user loses access to a Waldur room (role revoked, deactivation, room
+disabled), Waldur also disconnects them from its call.
+
+Any origin may call these paths, without credentials, so Element Web on
+another domain can use them. The packaged Helm chart and Docker Compose stack
+route `/api/matrix/livekit` to Waldur with CORS open to all origins. The
+LiveKit admin API (`/twirp`) is used only by Waldur internally and should not
+be exposed publicly.
 
 ---
 
@@ -95983,9 +96102,11 @@ password: password login still works on the homeserver, so switching away from
 | `bot_provision_status: "failed: M_UNKNOWN_TOKEN"` after Setup | Homeserver does not yet have the appservice registered with the current AS token | Register the YAML via the admin-room command (see above), then re-run Setup. |
 | Webhook reaches Waldur but returns `400 DisallowedHost` | The hostname the homeserver uses to reach Waldur is not in Django's `ALLOWED_HOSTS` | Add the hostname (e.g. `host.docker.internal`) to `ALLOWED_HOSTS` and restart. |
 | Diagnostics shows `Bot authentication: 403 Forbidden` | AS token mismatch between Waldur and the homeserver | Re-run Setup, then re-register the appservice on the homeserver with the new YAML. |
-| Voice/video call fails to connect | `lk-jwt-service` cannot reach the homeserver's federation endpoint, or the SFU URL is wrong in `.well-known/matrix/client` | Confirm `https://localhost:8448` is reachable from the JWT service container (Caddy provides the TLS termination) and that `rtc_transports[].livekit_service_url` matches what the JWT service serves. |
-| Call shows **Could not connect to the call.** and the browser's token request returns `400 Missing room parameter` | The homeport build posts to lk-jwt's legacy `/sfu/get`, which accepts homeport's request body only up to lk-jwt 0.5.0 | Upgrade homeport to a build that posts to `/get_token`, or keep lk-jwt at 0.5.0 until you can. |
-| The browser's token request to `/get_token` returns `404` | A reverse proxy in front of `lk-jwt-service` forwards only `/sfu` paths | Forward `/get_token` to `lk-jwt-service` as well. Current Waldur Helm charts route both. |
+| Voice/video call fails to connect | The `livekit_service_url` in `.well-known/matrix/client` does not point at Waldur's `/api/matrix/livekit`, or the browser cannot reach it | Set it to `https://<waldur-api-host>/api/matrix/livekit` and check the token request in the browser's network tab. |
+| The browser's token request returns `503` | LiveKit keys or public URL are not set in Waldur, or Waldur cannot reach the homeserver's `/_matrix/federation/v1/openid/userinfo` at `MATRIX_HOMESERVER_URL` | Set `MATRIX_LIVEKIT_KEY`, `MATRIX_LIVEKIT_SECRET` and `MATRIX_LIVEKIT_PUBLIC_URL`; make sure the homeserver's federation endpoints are reachable at `MATRIX_HOMESERVER_URL`. |
+| The browser's token request returns `403 M_FORBIDDEN` | The user is not joined to the room, the device is not theirs, the user belongs to another homeserver, or the Waldur user is deactivated | Join the room first; check the Waldur logs for "Refused a call token". |
+| The browser's token request returns `429` | Rate limit hit. Behind a load balancer that does not pass the client address on, all clients share one per-address bucket | Pass the real client address to the proxy in front of Waldur, or raise `matrix_livekit_token`. |
+| The browser's token request returns `404` | Matrix chat is switched off (`MATRIX_ENABLED`), or a reverse proxy does not route `/api/matrix/livekit` to Waldur | Enable Matrix chat; route the whole `/api/matrix/livekit` prefix to the Waldur API. |
 | Diagnostics reports `0 active, 0 total` rooms but you created one via API | Constance cache lag — `runserver` reads `API_CONFIGURATION` from its in-process LocMemCache | Restart the dev backend or call `cache.delete('API_CONFIGURATION')` from a shell against the same process. |
 
 For an unauthenticated denial reply from the bot, double-check that the
@@ -97550,7 +97671,7 @@ Waldur integrates with the [Matrix](https://matrix.org/) open communication prot
 - **External clients** — optionally, users can sign in to Element or another Matrix client
 - **Room lifecycle** — disable, reactivate, and reprovision rooms
 
-The integration works with any Matrix homeserver that supports the Application Service API (Synapse, Dendrite, Conduit/Tuwunel, etc.).
+Rooms, member sync, bot commands, exports and the chat drawer need a homeserver with the Application Service API, and short-lived drawer sessions also need refresh tokens. Locking the accounts of deactivated and deleted users, generated passwords and the refusal of homeserver-admin accounts also need the Synapse admin API (`/_synapse/admin`), with the bot as a homeserver admin; Synapse and Tuwunel have it. The Helm chart and docker-compose ship Tuwunel.
 
 ## Prerequisites
 
@@ -97650,13 +97771,18 @@ Checks performed (the `checks` array in the response):
 1. Homeserver URL configured (`homeserver_configured`)
 2. Homeserver domain configured (`homeserver_domain_configured`)
 3. Homeserver reachable (`homeserver_reachable`, via `/_matrix/client/versions`; also names the homeserver software and version, from `/_matrix/federation/v1/version` or, with federation off, Tuwunel's `/_tuwunel/server_version`)
-4. AS token configured (`as_token_configured`)
-5. HS token configured (`hs_token_configured`)
-6. Registration secret configured (`registration_secret_configured`)
-7. Bot authentication (`bot_whoami`, via `/account/whoami`; also how many rooms the bot is in)
-8. Appservice can act for users (`appservice_user_namespace`: `/account/whoami` as the staff user's Matrix ID. It fails when the homeserver's appservice registration does not cover users, which breaks chat sessions and room joins; register the appservice again with Waldur's registration. When it fails, it also counts room members recorded as invited, not joined)
-9. Room statistics (`room_stats`: active, creating, errored counts)
-10. User profile statistics (`user_stats`: provisioned count)
+4. Public homeserver URL configured (`public_homeserver_configured`: the URL browsers use, `MATRIX_HOMESERVER_PUBLIC_URL` or else `MATRIX_HOMESERVER_URL`)
+5. Public homeserver reachable (`public_homeserver_reachable`, via `/_matrix/client/versions` from Waldur; only probed when the public URL differs from the internal one)
+6. AS token configured (`as_token_configured`)
+7. HS token configured (`hs_token_configured`)
+8. Registration secret configured (`registration_secret_configured`)
+9. Bot authentication (`bot_whoami`, via `/account/whoami`; also how many rooms the bot is in)
+10. Appservice can act for users (`appservice_user_namespace`: `/account/whoami` as the staff user's Matrix ID. It fails when the homeserver's appservice registration does not cover users, which breaks chat sessions and room joins; register the appservice again with Waldur's registration. When it fails, it also counts room members recorded as invited, not joined)
+11. Chat drawer tokens expire (`web_token_lifetime`: signs the staff user in on a test device and reads the token's lifetime; fails when tokens never expire or live over an hour. Skipped until the staff user has opened the chat once)
+12. Bot is a homeserver admin (`bot_homeserver_admin`; see [Making the bot a homeserver admin](#making-the-bot-a-homeserver-admin))
+13. LiveKit configured (`livekit_configured`: a LiveKit focus in the homeserver's `/.well-known/matrix/client`; only calls need it)
+14. Room statistics (`room_stats`: active, creating, errored counts)
+15. User profile statistics (`user_stats`: provisioned count, plus the active users whose roles put them in an active project room but who have no Matrix profile, named up to ten. Provisioning refused or failed for those; the worker log says why, and [Existing Matrix accounts](#existing-matrix-accounts) says how to link one. Fails while any room member is unlinked)
 
 **Example response (200):**
 
@@ -97678,6 +97804,19 @@ Resets all active rooms to `creating` state and re-queues them for provisioning 
 Do not run it against the homeserver the rooms already live on. Old rooms are not
 deleted, so each one stays behind with its history while Waldur replaces it with
 an empty room.
+
+Users keep their Matrix IDs: each one is provisioned again on the new homeserver
+under the ID their profile already holds. The new homeserver therefore needs the
+same `server_name` as the old one. Under another domain Waldur keeps acting for
+the old IDs, and chat fails for every user. To move, point
+`MATRIX_HOMESERVER_URL` at the new homeserver, register the appservice there,
+make the bot a homeserver admin there (see
+[Existing Matrix accounts](#existing-matrix-accounts)), then reprovision.
+
+Reprovisioning takes over an account the new homeserver already has under a
+user's ID, since the profile says the ID is theirs. With the bot an admin, it
+refuses the homeserver's admins; it cannot tell a self-registered account, so
+keep registration closed on the new homeserver until reprovisioning is done.
 
 **Example response (202):**
 
@@ -97910,7 +98049,7 @@ Lists room members with their user UUID, full name, Matrix user ID, power level,
 When a room is created or a manual sync is triggered:
 
 1. Everyone with an active project role is enumerated, plus everyone whose customer role may create the customer's chat rooms (`MATRIX_ROOM.CREATE`, held by customer owners by default). Other customer roles, such as organization support and reader, are left out
-2. Each user is provisioned on the homeserver if needed (via `MatrixUserProfile`)
+2. Each user is provisioned on the homeserver if needed (via `MatrixUserProfile`). A user whose Matrix ID already belongs to an account Waldur did not create is skipped; see [Existing Matrix accounts](#existing-matrix-accounts)
 3. Display names are set to the user's full name
 4. Users are invited to the room, and the invite is accepted on their behalf
 5. Power levels are set based on roles:
@@ -97926,6 +98065,62 @@ The same rule decides who else sees a room. A user sees a project's room in the 
 
 Joins and leaves act as the user through the appservice token with `?user_id=`. They never log in as the user, so they create no Matrix device or access token.
 
+### Existing Matrix accounts
+
+Waldur only provisions Matrix accounts it creates. The appservice can act as any
+account in its namespace, so taking over an existing one would sign the user in
+as its owner. When a user without a Matrix profile derives an ID that already
+has an account on the homeserver, such as a self-registered account or one made
+by hand, provisioning refuses it: their chat answers "Chat is unavailable right
+now", member sync skips them, and the API or worker log says the ID "already belongs to
+an account this Waldur did not create". Diagnostics lists the room members left
+without a profile in its "User profiles" row.
+
+If the account belongs to the user, link it:
+
+```bash
+waldur link_matrix_account <username> @<localpart>:<homeserver domain>
+```
+
+After a database reset, or a restore of an older dump, against the same
+homeserver, every user provisioned since has an account but no profile. Link
+them in one go:
+
+```bash
+waldur link_matrix_account --all
+```
+
+`--all` links each user without a profile to the existing account with their
+derived ID. It skips users with no account, homeserver admins, IDs another user
+already holds, and IDs that several users without a profile derive, since
+nothing tells whose that account is. It names each skipped user; link the owner
+by hand. Run it only when every such account belongs to this Waldur's users.
+Back up the homeserver together with Waldur's database, so a restore brings
+both back to the same point.
+
+Different users can derive the same ID: under `email_local` (`alice@a.org` and
+`alice@b.org`), and when usernames differ only in case or in characters Matrix
+does not allow, which become `_` (`a@b` and `a_b`). The first one provisioned
+gets the account. The second gets no chat, and the log names the user who holds
+it; linking cannot help, since an ID is linked to one user only. A user deleted
+and recreated under the same username finds their old account, which outlives
+the deletion, and needs `link_matrix_account`. Once the bot is a homeserver
+admin, the deletion has also locked that account and replaced its password, so
+after linking either deactivate and reactivate the user, or unlock the account
+on the homeserver and run a member sync of their rooms (see
+[Automatic member management](#automatic-member-management)).
+
+No Waldur user may hold a homeserver admin's account, since its sessions could
+run admin commands. The homeserver admins are the accounts you administer it
+with, plus the bot once you make it one. Waldur can only tell who they are once
+the bot is a homeserver admin itself: on Tuwunel, send
+`!admin users make-user-admin @waldur-bot:<homeserver domain>` in `#admins`.
+That also makes the appservice token an admin credential. From then on Waldur
+refuses web chat sessions, reprovisioning and links for any user whose account
+is an admin, sets no password on such an account and does not lock it. Until
+then nothing is refused, and `link_matrix_account` warns that it could not
+check.
+
 ### Automatic member management
 
 The integration automatically responds to role changes:
@@ -97937,9 +98132,11 @@ The integration automatically responds to role changes:
 - **Role permissions changed** — when a role gains or loses `MATRIX_ROOM.CREATE`, through the role API or the role files loaded at deployment (`permissions.yaml`, `custom-roles.yaml`, `permissions-override.yaml`), every active room of the projects and organizations where the role has holders is synced three minutes later (see [Member Sync](#member-sync))
 - **Project deleted** — the room is disabled (members kicked, history exported, room archived)
 - **Order state changed** — notifications are posted when orders are approved, completed, rejected, canceled, or errored
-- **User deactivated or deleted** — a background task signs out every Matrix device of the user, Element included, and removes them from all their rooms. An open chat drawer then asks Waldur for a new session, gets none, and the user is returned to the login page. This runs even while chat is switched off (`MATRIX_ENABLED`), because open drawers renew their tokens with the homeserver directly. A user reactivated before the task runs keeps access, and reactivation invites them back to every room a role puts them in. The Matrix account itself stays active, so the user can still sign in to an external client but finds no rooms there; with `oidc`, disable the user at the IdP as well
+- **User deactivated or deleted** — a background task signs out every Matrix device of the user, Element included, removes them from all their rooms, and then locks their Matrix account. A locked account refuses its tokens and every new sign-in, by password or single sign-on, so the user cannot return through an external client while the IdP still accepts them. An open chat drawer then asks Waldur for a new session, gets none, and the user is returned to the login page. This runs even while chat is switched off (`MATRIX_ENABLED`), because open drawers renew their tokens with the homeserver directly. A user reactivated before the task runs keeps access. Reactivation unlocks the account and then invites the user back to every room a role puts them in. A deleted user's account stays locked, and its password is replaced with one nobody knows. Locking needs the bot to be a homeserver admin (see [Making the bot a homeserver admin](#making-the-bot-a-homeserver-admin)). Until it is, the account stays usable: the user can still sign in to an external client but finds no rooms there, and with `oidc` has to be disabled at the IdP as well. Making the bot an admin later does not lock the accounts of users who were deactivated earlier
 
-Kicks that fail are retried for several minutes, and each retry checks again whether the user still has access. A member whose kick never succeeds stays recorded as a member.
+Kicks that fail are retried for several minutes, and each retry checks again whether the user still has access. A member whose kick never succeeds stays recorded as a member. A sign-out that fails is retried the same way while the account could not be locked. Once it is locked, the devices left signed in are refused like any other, but work again if the user is reactivated.
+
+Only a reactivation unlocks an account, and it unlocks it whoever locked it. If its unlock fails for longer than the retries last, or the admin API is not usable then, the account stays locked: the user's chat answers "Your chat account is locked; ask your administrator." until staff deactivates and reactivates the user, or an admin unlocks the account on the homeserver (`PUT /_synapse/admin/v2/users/<Matrix ID>` with `{"locked": false}`) and then runs a member sync of the user's rooms, which only a reactivation starts by itself. A new user who gets the Matrix ID of a deleted one is refused before that, like anyone whose ID has an account Waldur did not create for them (see [Existing Matrix accounts](#existing-matrix-accounts)). Linked deliberately, it is still the deleted user's account, with their direct messages and other rooms, and it stays locked until staff or an admin does one of those two.
 
 ## History Exports
 
@@ -98035,7 +98232,7 @@ Starts a Matrix session for Waldur's chat drawer. Waldur signs the user in throu
 | `403` | The account was deactivated while the session was being started; the new device is signed out again |
 | `404` | Matrix chat is disabled |
 | `429` | The per-user `matrix_session` rate limit (default 120/hour) is exhausted |
-| `503` | The homeserver failed or Matrix is misconfigured; the details are logged, not returned |
+| `503` | "Your chat account is locked; ask your administrator." when the user's Matrix account is locked (see [Automatic member management](#automatic-member-management)), otherwise the homeserver failed or Matrix is misconfigured; the details are logged, not returned |
 
 The drawer keeps both tokens in memory only. It renews the access token through Matrix `/refresh`, and asks Waldur for a new session when a refresh is rejected or when the homeserver signs its device out, for example from Element's session list or through the device cleanup described below. Waldur is therefore consulted when the drawer connects, when a refresh is rejected and when the device is signed out, not while refreshes succeed: switching chat off or signing out of Waldur in another tab does not cut an open drawer, which keeps working until it next needs a new session. Whether the user may still chat is decided then: a deactivated, deleted or signed-out user gets no new session and is returned to the login page. The drawer shows that the chat session has ended when chat was switched off, or when the new session is signed out again within a minute. A rate-limited connect asks the user to try again later.
 
@@ -98049,11 +98246,11 @@ The homeserver sets the lifetimes. The Helm chart and docker-compose configure T
 
 | Method | What the user gets |
 | --- | --- |
-| `none` (default) | Waldur offers no external sign-in: "Open in external Matrix client" and "Connect to Matrix…" are hidden. This hides the password; it does not disable password login on the homeserver |
-| `password` | The room, the homeserver, their Matrix user ID and a password Waldur derives for them. Needs `MATRIX_USER_REGISTRATION_SECRET` |
+| `none` (default) | Waldur offers no external sign-in: "Open in external Matrix client" and "Connect to Matrix…" are hidden. Users cannot generate a password, but this does not disable password login on the homeserver: a password generated earlier keeps working there |
+| `password` | The room, the homeserver, their Matrix user ID and a password they generate in Waldur; see [Generated passwords](#generated-passwords). For testing and sites without an identity provider; needs the bot to be a homeserver admin |
 | `oidc` | The room, the homeserver and an instruction to sign in with single sign-on, which must be configured on the homeserver |
 
-Switching away from `password` does not revoke passwords users have already seen or sign out their external clients; reset those passwords on the homeserver to cut that access.
+Switching away from `password` does not revoke passwords users have already seen or sign out their external clients; to refuse password logins, set `login_with_password = false` on the homeserver.
 
 **GET /api/matrix/credentials/**
 
@@ -98062,10 +98259,36 @@ Returns what the external client dialog shows. If the user has not been provisio
 | Method | Response fields |
 | --- | --- |
 | `none` | `method`, `matrix_user_id`, `homeserver_url` |
-| `password` | `method`, `matrix_user_id`, `homeserver_url`, `password` |
+| `password` | `method`, `matrix_user_id`, `homeserver_url` |
 | `oidc` | `method`, `matrix_user_id`, `homeserver_url` |
 
-The endpoint never returns an access token. Waldur's chat drawer gets its tokens from `POST /api/matrix/session/`. It answers `400` with the reason when Matrix is misconfigured for the chosen method, and `503` when provisioning the user on the homeserver fails; the details are logged, not returned.
+The endpoint never returns a password or an access token. Waldur's chat drawer gets its tokens from `POST /api/matrix/session/`. It answers `400` with the reason when Matrix is misconfigured for the chosen method, and `503` when provisioning the user on the homeserver fails; the details are logged, not returned.
+
+### Generated passwords
+
+Waldur registers every account with a random password that it does not keep, so nobody knows it; Tuwunel treats an account without a password as deactivated and refuses single sign-on into it. In `password` mode a user replaces it with one they can see:
+
+**POST /api/matrix/credentials/password/**
+
+It sets a random password on the user's Matrix account through the homeserver's admin API and returns it with `matrix_user_id` and `homeserver_url`. The password is not stored, so it is shown only in this response (sent with `Cache-Control: no-store`). Generating again replaces it; clients already signed in stay signed in. Each one is recorded in the event log (`matrix_password_generated`), without the password. Deactivating the user locks the account, which refuses the password too; after a reactivation it works again. Deleting the user also replaces the password with a random one and signs out every device through the admin API. A password generated while the account is locked is refused like any other until the account is unlocked.
+
+| Status | When |
+| --- | --- |
+| `200` | Password set |
+| `403` | The user was deactivated meanwhile; the account is locked |
+| `404` | Matrix chat is disabled |
+| `409` | The login method is not `password` |
+| `429` | The per-user `matrix_password` rate limit (default 30/hour) is exhausted |
+| `503` | "Matrix passwords are not available yet; ask your administrator." when the bot is not a homeserver admin, the admin API is not reachable or the account is a homeserver admin's, otherwise "Chat is unavailable right now. Please try again later."; the details are logged |
+
+### Making the bot a homeserver admin
+
+Locking the Matrix account of a deactivated or deleted user, generating passwords, and refusing Waldur users whose Matrix account is a homeserver admin (see [Existing Matrix accounts](#existing-matrix-accounts)) go through the homeserver's admin API (`/_synapse/admin`), which answers only homeserver admins. Every login method needs the first of these. Until the bot is an admin, or while the admin API is not reachable, a deactivated user's account stays unlocked, a deleted user's password is not replaced, generating a password answers `503`, and admin accounts are not refused.
+
+- **Tuwunel:** as an admin, send `!admin users make-user-admin @waldur-bot:<homeserver domain>` in `#admins`.
+- **Synapse:** set the bot's admin flag, for example with `PUT /_synapse/admin/v2/users/@waldur-bot:<homeserver domain>` and `{"admin": true}`, using an admin's access token.
+
+Use your bot's localpart if it is not `waldur-bot`. The appservice token (`MATRIX_APPSERVICE_AS_TOKEN`) already acts as every local user of the homeserver; as an admin's token it carries server-wide powers on top, such as setting any account's password, so protect it accordingly. Waldur calls the admin API at `MATRIX_HOMESERVER_URL`; if a proxy blocks `/_synapse/admin` there, point it at an internal address. The diagnostics check "Bot is a homeserver admin" (`bot_homeserver_admin`) shows whether the bot is an admin.
 
 ## Webhook
 
@@ -98093,7 +98316,7 @@ These Constance settings control the integration:
 | Setting | Default | Description |
 | --- | --- | --- |
 | `MATRIX_ENABLED` | `False` | Enable Matrix chat integration |
-| `MATRIX_HOMESERVER_URL` | `""` | Homeserver URL (e.g., `https://matrix.example.com`) |
+| `MATRIX_HOMESERVER_URL` | `""` | Homeserver URL (e.g., `https://matrix.example.com`) that Waldur calls, including the admin API under `/_synapse/admin` |
 | `MATRIX_HOMESERVER_DOMAIN` | `""` | Homeserver domain for user IDs (e.g., `matrix.example.com`) |
 | `MATRIX_APPSERVICE_AS_TOKEN` | `""` | Token Waldur uses to authenticate with the homeserver |
 | `MATRIX_APPSERVICE_HS_TOKEN` | `""` | Token the homeserver uses to authenticate with Waldur |
@@ -98102,7 +98325,7 @@ These Constance settings control the integration:
 | `MATRIX_EXPORT_MEDIA` | `False` | Download media files during export |
 | `MATRIX_HISTORY_EXPORT_RETENTION_DAYS` | `90` | Days to keep history exports, files included; each room's newest completed export is kept; `0` or less keeps them forever |
 | `MATRIX_USER_REGISTRATION_SECRET` | `""` | Shared secret for registering users on the homeserver |
-| `MATRIX_USER_ID_FORMAT` | `username` | Format for generating Matrix user IDs: `username`, `uuid`, or `email_local` |
+| `MATRIX_USER_ID_FORMAT` | `username` | Format for generating Matrix user IDs: `username`, `uuid`, or `email_local`. Applies only to users provisioned afterwards; existing users keep their Matrix ID. See [Existing Matrix accounts](#existing-matrix-accounts) for IDs two users share |
 | `MATRIX_EXTERNAL_LOGIN_METHOD` | `none` | How users sign in to an external Matrix client: `none`, `password`, or `oidc`. See [External clients](#external-clients) |
 
 ## Feature Flag
@@ -98118,6 +98341,18 @@ The Matrix chat UI is gated on the project feature flag `project.show_matrix_cha
 | `MatrixRoomMember` | Tracks room membership, power levels, and membership state per user. `manually_joined` marks staff and support who joined with the Join action. |
 | `MatrixHistoryExport` | A chat history export with state, message/media counts, and file references. |
 | `MatrixAppserviceTransaction` | Idempotency record for processed webhook transactions. |
+
+## Troubleshooting
+
+The messages below appear in the API and worker logs; the user only sees "Chat is unavailable right now", unless the row says otherwise.
+
+| Log message | Cause | Fix |
+| --- | --- | --- |
+| `<id> already belongs to an account this Waldur did not create` | The user's derived Matrix ID had an account before Waldur provisioned them | If it is theirs, `waldur link_matrix_account <username> <id>`; after a database reset or restore, `waldur link_matrix_account --all`. Otherwise create another account for the user on the homeserver and link that; deactivating the existing account does not free its ID. See [Existing Matrix accounts](#existing-matrix-accounts) |
+| `<id> is already linked to <user>; <username> cannot be linked to it too` | Two users derive the same Matrix ID | The second user gets no chat until what the ID is derived from (username, or email under `email_local`) changes. See [Existing Matrix accounts](#existing-matrix-accounts) |
+| `<user> was linked to <id> meanwhile; try again` | `link_matrix_account` linked the user while their chat was being provisioned | None; the next attempt uses the linked account |
+| `<id> is a homeserver admin; Waldur does not act as it for a user`, or `does not set the password of <id>`; `Not locking <id>, a homeserver admin`; `Matrix password of deleted <id> not replaced and its account not locked: it is a homeserver admin's` | The user's account is a homeserver admin's. They get no chat session, and generating a password answers "Matrix passwords are not available yet; ask your administrator." Deactivating or deleting the user still signs the account's devices out and removes it from the rooms Waldur manages, but does not lock it or replace its password | Remove the admin flag from the account on the homeserver, or keep the user off chat |
+| `The Matrix account of <user> is locked` | A deactivation or deletion locked the account and no reactivation unlocked it: the unlock failed for longer than its retries, or the account is a deleted user's, linked to this one. The user sees "Your chat account is locked; ask your administrator." | Deactivate and reactivate the user, or unlock the account on the homeserver and run a member sync of their rooms. See [Automatic member management](#automatic-member-management) |
 
 ---
 
@@ -103014,6 +103249,7 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
 - marketplace_offering_user_created
 - marketplace_offering_user_deleted
 - marketplace_offering_user_restriction_updated
+- matrix_password_generated
 - passkey_authentication_failed
 - passkey_authentication_succeeded
 - passkey_registered
@@ -103827,10 +104063,12 @@ td:nth-child(4) {
 | `on_order_state_changed` | `Django Signal (post_save)` | `marketplace.Order` | Notify the project's Matrix room when an order is approved, completed, or rejected. |
 | `on_project_created` | `Django Signal (post_save)` | `structure.Project` | Provision a Matrix room for a newly created project, when opted in. |
 | `on_project_pre_delete` | `Django Signal (pre_delete)` | `structure.Project` | When a project is about to be deleted, disable room (kick members, export, archive). |
-| `on_user_deactivated` | `Django Signal (post_save)` | `core.User` | Sign out every Matrix device of a deactivated user and remove them from their rooms. |
+| `on_room_permission_changed` | `Django Signal (post_save)` | `permissions.RolePermission` | Sync the project rooms of a role that gains or loses MATRIX_ROOM.CREATE. |
+| `on_room_permission_changed` | `Django Signal (post_delete)` | `permissions.RolePermission` | Sync the project rooms of a role that gains or loses MATRIX_ROOM.CREATE. |
+| `on_user_deactivated` | `Django Signal (post_save)` | `core.User` | Sign out every Matrix device of a deactivated user, remove them from |
 | `on_user_demoted` | `Django Signal (post_save)` | `core.User` | Take former staff and support out of the rooms they joined with the |
-| `on_user_pre_delete` | `Django Signal (pre_delete)` | `core.User` | End a deleted user's Matrix sessions and room memberships. |
-| `on_user_reactivated` | `Django Signal (post_save)` | `core.User` | Bring a reactivated user back into the rooms deactivation removed them from. |
+| `on_user_pre_delete` | `Django Signal (pre_delete)` | `core.User` | End a deleted user's Matrix sessions and room memberships, replace |
+| `on_user_reactivated` | `Django Signal (post_save)` | `core.User` | Unlock a reactivated user's Matrix account and bring them back into the |
 | `plan_component_has_been_updated` | `Django Signal (post_save)` | `marketplace.PlanComponent` | Log plan component updates. |
 | `plan_has_been_created_or_updated` | `Django Signal (post_save)` | `marketplace.Plan` | Log plan creation, update, and archiving events. |
 | `populate_volume_metadata_on_resource_creation` | `Django Signal (post_save)` | `marketplace.Resource` | No description |
@@ -104055,14 +104293,14 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 753
+Total unique handlers found: 755
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 2 handlers
 - **waldur_core**: 345 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 347 handlers
+- **waldur_mastermind**: 349 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 14 handlers
 - **waldur_openstack_replication**: 1 handlers

@@ -20179,7 +20179,12 @@ first paint, so the entry graph is kept deliberately small:</p>
   and navigates only on the <code>204</code> a probe-aware backend answers, so a backend
   without a default provider, without the route, or unreachable leaves the
   visitor on the application's own login page. Whether a session exists is
-  decided from web storage in the script, since only the browser can see it.</li>
+  decided from web storage in the script, since only the browser can see it.
+  The script publishes its decision as <code>window.waldurBootRedirect</code>, and
+  <code>src/index.tsx</code> does not render while the visitor is being sent away:
+  Firefox cancels the page's in-flight requests when a navigation starts, and
+  an app booting alongside the redirect would see its lazy chunks fail and
+  reload, cancelling the redirect (<code>src/core/bootGuard.ts</code>).</li>
 <li><code>yarn build:check</code> (<code>scripts/bundle-budget.mjs</code>, run by the <code>Check cold-path
   budget</code> CI job on every MR) fails when the entry script plus its
   <code>modulepreload</code>s exceed the gzip budget, or when echarts, matrix-js-sdk,

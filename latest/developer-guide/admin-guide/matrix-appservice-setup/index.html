@@ -11244,6 +11244,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#existing-matrix-accounts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Existing Matrix accounts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#automatic-member-management" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -11362,6 +11373,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="External Clients">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#generated-passwords" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Generated passwords
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#making-the-bot-a-homeserver-admin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Making the bot a homeserver admin
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -11419,6 +11458,17 @@
     <span class="md-ellipsis">
       
         Data Model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
       
     </span>
   </a>
@@ -19590,6 +19640,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#existing-matrix-accounts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Existing Matrix accounts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#automatic-member-management" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19708,6 +19769,34 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="External Clients">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#generated-passwords" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Generated passwords
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#making-the-bot-a-homeserver-admin" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Making the bot a homeserver admin
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -19771,6 +19860,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -19798,7 +19898,7 @@
 <li><strong>External clients</strong> — optionally, users can sign in to Element or another Matrix client</li>
 <li><strong>Room lifecycle</strong> — disable, reactivate, and reprovision rooms</li>
 </ul>
-<p>The integration works with any Matrix homeserver that supports the Application Service API (Synapse, Dendrite, Conduit/Tuwunel, etc.).</p>
+<p>Rooms, member sync, bot commands, exports and the chat drawer need a homeserver with the Application Service API, and short-lived drawer sessions also need refresh tokens. Locking the accounts of deactivated and deleted users, generated passwords and the refusal of homeserver-admin accounts also need the Synapse admin API (<code>/_synapse/admin</code>), with the bot as a homeserver admin; Synapse and Tuwunel have it. The Helm chart and docker-compose ship Tuwunel.</p>
 <h2 id="prerequisites">Prerequisites</h2>
 <ul>
 <li>A running Matrix homeserver with Application Service support</li>
@@ -19926,13 +20026,18 @@
 <li>Homeserver URL configured (<code>homeserver_configured</code>)</li>
 <li>Homeserver domain configured (<code>homeserver_domain_configured</code>)</li>
 <li>Homeserver reachable (<code>homeserver_reachable</code>, via <code>/_matrix/client/versions</code>; also names the homeserver software and version, from <code>/_matrix/federation/v1/version</code> or, with federation off, Tuwunel's <code>/_tuwunel/server_version</code>)</li>
+<li>Public homeserver URL configured (<code>public_homeserver_configured</code>: the URL browsers use, <code>MATRIX_HOMESERVER_PUBLIC_URL</code> or else <code>MATRIX_HOMESERVER_URL</code>)</li>
+<li>Public homeserver reachable (<code>public_homeserver_reachable</code>, via <code>/_matrix/client/versions</code> from Waldur; only probed when the public URL differs from the internal one)</li>
 <li>AS token configured (<code>as_token_configured</code>)</li>
 <li>HS token configured (<code>hs_token_configured</code>)</li>
 <li>Registration secret configured (<code>registration_secret_configured</code>)</li>
 <li>Bot authentication (<code>bot_whoami</code>, via <code>/account/whoami</code>; also how many rooms the bot is in)</li>
 <li>Appservice can act for users (<code>appservice_user_namespace</code>: <code>/account/whoami</code> as the staff user's Matrix ID. It fails when the homeserver's appservice registration does not cover users, which breaks chat sessions and room joins; register the appservice again with Waldur's registration. When it fails, it also counts room members recorded as invited, not joined)</li>
+<li>Chat drawer tokens expire (<code>web_token_lifetime</code>: signs the staff user in on a test device and reads the token's lifetime; fails when tokens never expire or live over an hour. Skipped until the staff user has opened the chat once)</li>
+<li>Bot is a homeserver admin (<code>bot_homeserver_admin</code>; see <a href="#making-the-bot-a-homeserver-admin">Making the bot a homeserver admin</a>)</li>
+<li>LiveKit configured (<code>livekit_configured</code>: a LiveKit focus in the homeserver's <code>/.well-known/matrix/client</code>; only calls need it)</li>
 <li>Room statistics (<code>room_stats</code>: active, creating, errored counts)</li>
-<li>User profile statistics (<code>user_stats</code>: provisioned count)</li>
+<li>User profile statistics (<code>user_stats</code>: provisioned count, plus the active users whose roles put them in an active project room but who have no Matrix profile, named up to ten. Provisioning refused or failed for those; the worker log says why, and <a href="#existing-matrix-accounts">Existing Matrix accounts</a> says how to link one. Fails while any room member is unlinked)</li>
 </ol>
 <p><strong>Example response (200):</strong></p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -19956,6 +20061,17 @@
 <p>Do not run it against the homeserver the rooms already live on. Old rooms are not
 deleted, so each one stays behind with its history while Waldur replaces it with
 an empty room.</p>
+<p>Users keep their Matrix IDs: each one is provisioned again on the new homeserver
+under the ID their profile already holds. The new homeserver therefore needs the
+same <code>server_name</code> as the old one. Under another domain Waldur keeps acting for
+the old IDs, and chat fails for every user. To move, point
+<code>MATRIX_HOMESERVER_URL</code> at the new homeserver, register the appservice there,
+make the bot a homeserver admin there (see
+<a href="#existing-matrix-accounts">Existing Matrix accounts</a>), then reprovision.</p>
+<p>Reprovisioning takes over an account the new homeserver already has under a
+user's ID, since the profile says the ID is theirs. With the bot an admin, it
+refuses the homeserver's admins; it cannot tell a self-registered account, so
+keep registration closed on the new homeserver until reprovisioning is done.</p>
 <p><strong>Example response (202):</strong></p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
@@ -20227,7 +20343,7 @@ either goes: retrying and re-enabling a room are staff's alone.</p>
 <p>When a room is created or a manual sync is triggered:</p>
 <ol>
 <li>Everyone with an active project role is enumerated, plus everyone whose customer role may create the customer's chat rooms (<code>MATRIX_ROOM.CREATE</code>, held by customer owners by default). Other customer roles, such as organization support and reader, are left out</li>
-<li>Each user is provisioned on the homeserver if needed (via <code>MatrixUserProfile</code>)</li>
+<li>Each user is provisioned on the homeserver if needed (via <code>MatrixUserProfile</code>). A user whose Matrix ID already belongs to an account Waldur did not create is skipped; see <a href="#existing-matrix-accounts">Existing Matrix accounts</a></li>
 <li>Display names are set to the user's full name</li>
 <li>Users are invited to the room, and the invite is accepted on their behalf</li>
 <li>Power levels are set based on roles:</li>
@@ -20239,6 +20355,51 @@ either goes: retrying and re-enabling a room are staff's alone.</p>
 <p>Member records are stored in <code>MatrixRoomMember</code> with membership states: <code>invited</code>, <code>joined</code>, <code>left</code>, <code>banned</code>.</p>
 <p>The same rule decides who else sees a room. A user sees a project's room in the room list, and reaches its members, media and history exports or answers to bot commands, only if a role would put them in it in step 1; each action may ask for more on top. Organization support and readers therefore do not see the rooms of the organization's projects. Staff and support users list every room.</p>
 <p>Joins and leaves act as the user through the appservice token with <code>?user_id=</code>. They never log in as the user, so they create no Matrix device or access token.</p>
+<h3 id="existing-matrix-accounts">Existing Matrix accounts</h3>
+<p>Waldur only provisions Matrix accounts it creates. The appservice can act as any
+account in its namespace, so taking over an existing one would sign the user in
+as its owner. When a user without a Matrix profile derives an ID that already
+has an account on the homeserver, such as a self-registered account or one made
+by hand, provisioning refuses it: their chat answers "Chat is unavailable right
+now", member sync skips them, and the API or worker log says the ID "already belongs to
+an account this Waldur did not create". Diagnostics lists the room members left
+without a profile in its "User profiles" row.</p>
+<p>If the account belongs to the user, link it:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>waldur<span class="w"> </span>link_matrix_account<span class="w"> </span>&lt;username&gt;<span class="w"> </span>@&lt;localpart&gt;:&lt;homeserver<span class="w"> </span>domain&gt;
+</code></pre></div></td></tr></tbody></table></div>
+<p>After a database reset, or a restore of an older dump, against the same
+homeserver, every user provisioned since has an account but no profile. Link
+them in one go:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>waldur<span class="w"> </span>link_matrix_account<span class="w"> </span>--all
+</code></pre></div></td></tr></tbody></table></div>
+<p><code>--all</code> links each user without a profile to the existing account with their
+derived ID. It skips users with no account, homeserver admins, IDs another user
+already holds, and IDs that several users without a profile derive, since
+nothing tells whose that account is. It names each skipped user; link the owner
+by hand. Run it only when every such account belongs to this Waldur's users.
+Back up the homeserver together with Waldur's database, so a restore brings
+both back to the same point.</p>
+<p>Different users can derive the same ID: under <code>email_local</code> (<code>alice@a.org</code> and
+<code>alice@b.org</code>), and when usernames differ only in case or in characters Matrix
+does not allow, which become <code>_</code> (<code>a@b</code> and <code>a_b</code>). The first one provisioned
+gets the account. The second gets no chat, and the log names the user who holds
+it; linking cannot help, since an ID is linked to one user only. A user deleted
+and recreated under the same username finds their old account, which outlives
+the deletion, and needs <code>link_matrix_account</code>. Once the bot is a homeserver
+admin, the deletion has also locked that account and replaced its password, so
+after linking either deactivate and reactivate the user, or unlock the account
+on the homeserver and run a member sync of their rooms (see
+<a href="#automatic-member-management">Automatic member management</a>).</p>
+<p>No Waldur user may hold a homeserver admin's account, since its sessions could
+run admin commands. The homeserver admins are the accounts you administer it
+with, plus the bot once you make it one. Waldur can only tell who they are once
+the bot is a homeserver admin itself: on Tuwunel, send
+<code>!admin users make-user-admin @waldur-bot:&lt;homeserver domain&gt;</code> in <code>#admins</code>.
+That also makes the appservice token an admin credential. From then on Waldur
+refuses web chat sessions, reprovisioning and links for any user whose account
+is an admin, sets no password on such an account and does not lock it. Until
+then nothing is refused, and <code>link_matrix_account</code> warns that it could not
+check.</p>
 <h3 id="automatic-member-management">Automatic member management</h3>
 <p>The integration automatically responds to role changes:</p>
 <ul>
@@ -20249,9 +20410,10 @@ either goes: retrying and re-enabling a room are staff's alone.</p>
 <li><strong>Role permissions changed</strong> — when a role gains or loses <code>MATRIX_ROOM.CREATE</code>, through the role API or the role files loaded at deployment (<code>permissions.yaml</code>, <code>custom-roles.yaml</code>, <code>permissions-override.yaml</code>), every active room of the projects and organizations where the role has holders is synced three minutes later (see <a href="#member-sync">Member Sync</a>)</li>
 <li><strong>Project deleted</strong> — the room is disabled (members kicked, history exported, room archived)</li>
 <li><strong>Order state changed</strong> — notifications are posted when orders are approved, completed, rejected, canceled, or errored</li>
-<li><strong>User deactivated or deleted</strong> — a background task signs out every Matrix device of the user, Element included, and removes them from all their rooms. An open chat drawer then asks Waldur for a new session, gets none, and the user is returned to the login page. This runs even while chat is switched off (<code>MATRIX_ENABLED</code>), because open drawers renew their tokens with the homeserver directly. A user reactivated before the task runs keeps access, and reactivation invites them back to every room a role puts them in. The Matrix account itself stays active, so the user can still sign in to an external client but finds no rooms there; with <code>oidc</code>, disable the user at the IdP as well</li>
+<li><strong>User deactivated or deleted</strong> — a background task signs out every Matrix device of the user, Element included, removes them from all their rooms, and then locks their Matrix account. A locked account refuses its tokens and every new sign-in, by password or single sign-on, so the user cannot return through an external client while the IdP still accepts them. An open chat drawer then asks Waldur for a new session, gets none, and the user is returned to the login page. This runs even while chat is switched off (<code>MATRIX_ENABLED</code>), because open drawers renew their tokens with the homeserver directly. A user reactivated before the task runs keeps access. Reactivation unlocks the account and then invites the user back to every room a role puts them in. A deleted user's account stays locked, and its password is replaced with one nobody knows. Locking needs the bot to be a homeserver admin (see <a href="#making-the-bot-a-homeserver-admin">Making the bot a homeserver admin</a>). Until it is, the account stays usable: the user can still sign in to an external client but finds no rooms there, and with <code>oidc</code> has to be disabled at the IdP as well. Making the bot an admin later does not lock the accounts of users who were deactivated earlier</li>
 </ul>
-<p>Kicks that fail are retried for several minutes, and each retry checks again whether the user still has access. A member whose kick never succeeds stays recorded as a member.</p>
+<p>Kicks that fail are retried for several minutes, and each retry checks again whether the user still has access. A member whose kick never succeeds stays recorded as a member. A sign-out that fails is retried the same way while the account could not be locked. Once it is locked, the devices left signed in are refused like any other, but work again if the user is reactivated.</p>
+<p>Only a reactivation unlocks an account, and it unlocks it whoever locked it. If its unlock fails for longer than the retries last, or the admin API is not usable then, the account stays locked: the user's chat answers "Your chat account is locked; ask your administrator." until staff deactivates and reactivates the user, or an admin unlocks the account on the homeserver (<code>PUT /_synapse/admin/v2/users/&lt;Matrix ID&gt;</code> with <code>{"locked": false}</code>) and then runs a member sync of the user's rooms, which only a reactivation starts by itself. A new user who gets the Matrix ID of a deleted one is refused before that, like anyone whose ID has an account Waldur did not create for them (see <a href="#existing-matrix-accounts">Existing Matrix accounts</a>). Linked deliberately, it is still the deleted user's account, with their direct messages and other rooms, and it stays locked until staff or an admin does one of those two.</p>
 <h2 id="history-exports">History Exports</h2>
 <h3 id="export-triggers">Export triggers</h3>
 <table>
@@ -20428,7 +20590,7 @@ staff disable a room with <code>delete_history</code> or delete the room.</p>
 </tr>
 <tr>
 <td><code>503</code></td>
-<td>The homeserver failed or Matrix is misconfigured; the details are logged, not returned</td>
+<td>"Your chat account is locked; ask your administrator." when the user's Matrix account is locked (see <a href="#automatic-member-management">Automatic member management</a>), otherwise the homeserver failed or Matrix is misconfigured; the details are logged, not returned</td>
 </tr>
 </tbody>
 </table>
@@ -20447,11 +20609,11 @@ staff disable a room with <code>delete_history</code> or delete the room.</p>
 <tbody>
 <tr>
 <td><code>none</code> (default)</td>
-<td>Waldur offers no external sign-in: "Open in external Matrix client" and "Connect to Matrix…" are hidden. This hides the password; it does not disable password login on the homeserver</td>
+<td>Waldur offers no external sign-in: "Open in external Matrix client" and "Connect to Matrix…" are hidden. Users cannot generate a password, but this does not disable password login on the homeserver: a password generated earlier keeps working there</td>
 </tr>
 <tr>
 <td><code>password</code></td>
-<td>The room, the homeserver, their Matrix user ID and a password Waldur derives for them. Needs <code>MATRIX_USER_REGISTRATION_SECRET</code></td>
+<td>The room, the homeserver, their Matrix user ID and a password they generate in Waldur; see <a href="#generated-passwords">Generated passwords</a>. For testing and sites without an identity provider; needs the bot to be a homeserver admin</td>
 </tr>
 <tr>
 <td><code>oidc</code></td>
@@ -20459,7 +20621,7 @@ staff disable a room with <code>delete_history</code> or delete the room.</p>
 </tr>
 </tbody>
 </table>
-<p>Switching away from <code>password</code> does not revoke passwords users have already seen or sign out their external clients; reset those passwords on the homeserver to cut that access.</p>
+<p>Switching away from <code>password</code> does not revoke passwords users have already seen or sign out their external clients; to refuse password logins, set <code>login_with_password = false</code> on the homeserver.</p>
 <p><strong>GET /api/matrix/credentials/</strong></p>
 <p>Returns what the external client dialog shows. If the user has not been provisioned on the homeserver yet, provisioning happens on demand.</p>
 <table>
@@ -20476,7 +20638,7 @@ staff disable a room with <code>delete_history</code> or delete the room.</p>
 </tr>
 <tr>
 <td><code>password</code></td>
-<td><code>method</code>, <code>matrix_user_id</code>, <code>homeserver_url</code>, <code>password</code></td>
+<td><code>method</code>, <code>matrix_user_id</code>, <code>homeserver_url</code></td>
 </tr>
 <tr>
 <td><code>oidc</code></td>
@@ -20484,7 +20646,52 @@ staff disable a room with <code>delete_history</code> or delete the room.</p>
 </tr>
 </tbody>
 </table>
-<p>The endpoint never returns an access token. Waldur's chat drawer gets its tokens from <code>POST /api/matrix/session/</code>. It answers <code>400</code> with the reason when Matrix is misconfigured for the chosen method, and <code>503</code> when provisioning the user on the homeserver fails; the details are logged, not returned.</p>
+<p>The endpoint never returns a password or an access token. Waldur's chat drawer gets its tokens from <code>POST /api/matrix/session/</code>. It answers <code>400</code> with the reason when Matrix is misconfigured for the chosen method, and <code>503</code> when provisioning the user on the homeserver fails; the details are logged, not returned.</p>
+<h3 id="generated-passwords">Generated passwords</h3>
+<p>Waldur registers every account with a random password that it does not keep, so nobody knows it; Tuwunel treats an account without a password as deactivated and refuses single sign-on into it. In <code>password</code> mode a user replaces it with one they can see:</p>
+<p><strong>POST /api/matrix/credentials/password/</strong></p>
+<p>It sets a random password on the user's Matrix account through the homeserver's admin API and returns it with <code>matrix_user_id</code> and <code>homeserver_url</code>. The password is not stored, so it is shown only in this response (sent with <code>Cache-Control: no-store</code>). Generating again replaces it; clients already signed in stay signed in. Each one is recorded in the event log (<code>matrix_password_generated</code>), without the password. Deactivating the user locks the account, which refuses the password too; after a reactivation it works again. Deleting the user also replaces the password with a random one and signs out every device through the admin API. A password generated while the account is locked is refused like any other until the account is unlocked.</p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>When</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>200</code></td>
+<td>Password set</td>
+</tr>
+<tr>
+<td><code>403</code></td>
+<td>The user was deactivated meanwhile; the account is locked</td>
+</tr>
+<tr>
+<td><code>404</code></td>
+<td>Matrix chat is disabled</td>
+</tr>
+<tr>
+<td><code>409</code></td>
+<td>The login method is not <code>password</code></td>
+</tr>
+<tr>
+<td><code>429</code></td>
+<td>The per-user <code>matrix_password</code> rate limit (default 30/hour) is exhausted</td>
+</tr>
+<tr>
+<td><code>503</code></td>
+<td>"Matrix passwords are not available yet; ask your administrator." when the bot is not a homeserver admin, the admin API is not reachable or the account is a homeserver admin's, otherwise "Chat is unavailable right now. Please try again later."; the details are logged</td>
+</tr>
+</tbody>
+</table>
+<h3 id="making-the-bot-a-homeserver-admin">Making the bot a homeserver admin</h3>
+<p>Locking the Matrix account of a deactivated or deleted user, generating passwords, and refusing Waldur users whose Matrix account is a homeserver admin (see <a href="#existing-matrix-accounts">Existing Matrix accounts</a>) go through the homeserver's admin API (<code>/_synapse/admin</code>), which answers only homeserver admins. Every login method needs the first of these. Until the bot is an admin, or while the admin API is not reachable, a deactivated user's account stays unlocked, a deleted user's password is not replaced, generating a password answers <code>503</code>, and admin accounts are not refused.</p>
+<ul>
+<li><strong>Tuwunel:</strong> as an admin, send <code>!admin users make-user-admin @waldur-bot:&lt;homeserver domain&gt;</code> in <code>#admins</code>.</li>
+<li><strong>Synapse:</strong> set the bot's admin flag, for example with <code>PUT /_synapse/admin/v2/users/@waldur-bot:&lt;homeserver domain&gt;</code> and <code>{"admin": true}</code>, using an admin's access token.</li>
+</ul>
+<p>Use your bot's localpart if it is not <code>waldur-bot</code>. The appservice token (<code>MATRIX_APPSERVICE_AS_TOKEN</code>) already acts as every local user of the homeserver; as an admin's token it carries server-wide powers on top, such as setting any account's password, so protect it accordingly. Waldur calls the admin API at <code>MATRIX_HOMESERVER_URL</code>; if a proxy blocks <code>/_synapse/admin</code> there, point it at an internal address. The diagnostics check "Bot is a homeserver admin" (<code>bot_homeserver_admin</code>) shows whether the bot is an admin.</p>
 <h2 id="webhook">Webhook</h2>
 <p><strong>PUT /_matrix/app/v1/transactions/{txnId}</strong></p>
 <p>The homeserver sends room events to this endpoint. Authentication is via the <code>hs_token</code> in the <code>Authorization: Bearer</code> header.</p>
@@ -20536,7 +20743,7 @@ staff disable a room with <code>delete_history</code> or delete the room.</p>
 <tr>
 <td><code>MATRIX_HOMESERVER_URL</code></td>
 <td><code>""</code></td>
-<td>Homeserver URL (e.g., <code>https://matrix.example.com</code>)</td>
+<td>Homeserver URL (e.g., <code>https://matrix.example.com</code>) that Waldur calls, including the admin API under <code>/_synapse/admin</code></td>
 </tr>
 <tr>
 <td><code>MATRIX_HOMESERVER_DOMAIN</code></td>
@@ -20581,7 +20788,7 @@ staff disable a room with <code>delete_history</code> or delete the room.</p>
 <tr>
 <td><code>MATRIX_USER_ID_FORMAT</code></td>
 <td><code>username</code></td>
-<td>Format for generating Matrix user IDs: <code>username</code>, <code>uuid</code>, or <code>email_local</code></td>
+<td>Format for generating Matrix user IDs: <code>username</code>, <code>uuid</code>, or <code>email_local</code>. Applies only to users provisioned afterwards; existing users keep their Matrix ID. See <a href="#existing-matrix-accounts">Existing Matrix accounts</a> for IDs two users share</td>
 </tr>
 <tr>
 <td><code>MATRIX_EXTERNAL_LOGIN_METHOD</code></td>
@@ -20620,6 +20827,44 @@ staff disable a room with <code>delete_history</code> or delete the room.</p>
 <tr>
 <td><code>MatrixAppserviceTransaction</code></td>
 <td>Idempotency record for processed webhook transactions.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<p>The messages below appear in the API and worker logs; the user only sees "Chat is unavailable right now", unless the row says otherwise.</p>
+<table>
+<thead>
+<tr>
+<th>Log message</th>
+<th>Cause</th>
+<th>Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&lt;id&gt; already belongs to an account this Waldur did not create</code></td>
+<td>The user's derived Matrix ID had an account before Waldur provisioned them</td>
+<td>If it is theirs, <code>waldur link_matrix_account &lt;username&gt; &lt;id&gt;</code>; after a database reset or restore, <code>waldur link_matrix_account --all</code>. Otherwise create another account for the user on the homeserver and link that; deactivating the existing account does not free its ID. See <a href="#existing-matrix-accounts">Existing Matrix accounts</a></td>
+</tr>
+<tr>
+<td><code>&lt;id&gt; is already linked to &lt;user&gt;; &lt;username&gt; cannot be linked to it too</code></td>
+<td>Two users derive the same Matrix ID</td>
+<td>The second user gets no chat until what the ID is derived from (username, or email under <code>email_local</code>) changes. See <a href="#existing-matrix-accounts">Existing Matrix accounts</a></td>
+</tr>
+<tr>
+<td><code>&lt;user&gt; was linked to &lt;id&gt; meanwhile; try again</code></td>
+<td><code>link_matrix_account</code> linked the user while their chat was being provisioned</td>
+<td>None; the next attempt uses the linked account</td>
+</tr>
+<tr>
+<td><code>&lt;id&gt; is a homeserver admin; Waldur does not act as it for a user</code>, or <code>does not set the password of &lt;id&gt;</code>; <code>Not locking &lt;id&gt;, a homeserver admin</code>; <code>Matrix password of deleted &lt;id&gt; not replaced and its account not locked: it is a homeserver admin's</code></td>
+<td>The user's account is a homeserver admin's. They get no chat session, and generating a password answers "Matrix passwords are not available yet; ask your administrator." Deactivating or deleting the user still signs the account's devices out and removes it from the rooms Waldur manages, but does not lock it or replace its password</td>
+<td>Remove the admin flag from the account on the homeserver, or keep the user off chat</td>
+</tr>
+<tr>
+<td><code>The Matrix account of &lt;user&gt; is locked</code></td>
+<td>A deactivation or deletion locked the account and no reactivation unlocked it: the unlock failed for longer than its retries, or the account is a deleted user's, linked to this one. The user sees "Your chat account is locked; ask your administrator."</td>
+<td>Deactivate and reactivate the user, or unlock the account on the homeserver and run a member sync of their rooms. See <a href="#automatic-member-management">Automatic member management</a></td>
 </tr>
 </tbody>
 </table>

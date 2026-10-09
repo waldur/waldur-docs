@@ -9945,10 +9945,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#111-breakpoints" class="md-nav__link">
+  <a href="#111-breakpoints-media-query-hooks" class="md-nav__link">
     <span class="md-ellipsis">
       
-        11.1 Breakpoints
+        11.1 Breakpoints &amp; Media Query Hooks
       
     </span>
   </a>
@@ -20507,10 +20507,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#111-breakpoints" class="md-nav__link">
+  <a href="#111-breakpoints-media-query-hooks" class="md-nav__link">
     <span class="md-ellipsis">
       
-        11.1 Breakpoints
+        11.1 Breakpoints &amp; Media Query Hooks
       
     </span>
   </a>
@@ -22358,27 +22358,40 @@ check control, a select option). The lint rule
 </code></pre></div></td></tr></tbody></table></div>
 <hr>
 <h2 id="11-responsive-behavior">11. Responsive Behavior</h2>
-<h3 id="111-breakpoints">11.1 Breakpoints</h3>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span>
-<span class="normal">6</span>
-<span class="normal">7</span>
-<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">GRID_BREAKPOINTS</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'@/core/constants'</span><span class="p">;</span>
+<h3 id="111-breakpoints-media-query-hooks">11.1 Breakpoints &amp; Media Query Hooks</h3>
+<p>Always prefer pure CSS/Tailwind responsive utility classes (<code>sm:</code>, <code>md:</code>, <code>lg:</code>, <code>max-md:</code>, etc.) for purely visual layout, hiding/showing elements, and spacing. When React component logic, state, or conditional data fetching must adapt to viewport width, use the typed breakpoint helpers from <code>waldur-ui</code>:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">useBreakpointDown</span><span class="p">,</span><span class="w"> </span><span class="nx">useBreakpointUp</span><span class="p">,</span><span class="w"> </span><span class="nx">useMediaQuery</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'waldur-ui'</span><span class="p">;</span>
 
-<span class="c1">// GRID_BREAKPOINTS = { xs: 0, sm: 576, md: 768, lg: 992, xl: 1200, xxl: 1400 }</span>
+<span class="c1">// Strictly below breakpoint (boundary-safe: max-width: bp - 1px)</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">isSm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useBreakpointDown</span><span class="p">(</span><span class="s1">'sm'</span><span class="p">);</span><span class="w"> </span><span class="c1">// &lt; 576px</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">isMd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useBreakpointDown</span><span class="p">(</span><span class="s1">'md'</span><span class="p">);</span><span class="w"> </span><span class="c1">// &lt; 768px</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">isMobile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useBreakpointDown</span><span class="p">(</span><span class="s1">'lg'</span><span class="p">);</span><span class="w"> </span><span class="c1">// &lt; 992px</span>
 
-<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">useMediaQuery</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'react-responsive'</span><span class="p">;</span>
+<span class="c1">// At or above breakpoint (min-width: bp)</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">isDesktop</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useBreakpointUp</span><span class="p">(</span><span class="s1">'lg'</span><span class="p">);</span><span class="w"> </span><span class="c1">// &gt;= 992px</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">isWide</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useBreakpointUp</span><span class="p">(</span><span class="s1">'xl'</span><span class="p">);</span><span class="w"> </span><span class="c1">// &gt;= 1200px</span>
 
-<span class="kd">const</span><span class="w"> </span><span class="nx">isSm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useMediaQuery</span><span class="p">({</span><span class="w"> </span><span class="nx">maxWidth</span><span class="o">:</span><span class="w"> </span><span class="kt">GRID_BREAKPOINTS.sm</span><span class="w"> </span><span class="p">});</span>
-<span class="kd">const</span><span class="w"> </span><span class="nx">isMd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useMediaQuery</span><span class="p">({</span><span class="w"> </span><span class="nx">maxWidth</span><span class="o">:</span><span class="w"> </span><span class="kt">GRID_BREAKPOINTS.md</span><span class="w"> </span><span class="p">});</span>
+<span class="c1">// Device capabilities</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">cannotHover</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useMediaQuery</span><span class="p">(</span><span class="s1">'(hover: none)'</span><span class="p">);</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h3 id="112-filter-position-adaptation">11.2 Filter Position Adaptation</h3>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
-<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1">// Automatically converts 'menu' to 'sidebar' on small screens</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1">// Automatically converts 'menu' to 'sidebar' on small screens</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">isSm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useBreakpointDown</span><span class="p">(</span><span class="s1">'sm'</span><span class="p">);</span>
 <span class="kd">const</span><span class="w"> </span><span class="nx">filterPosition</span><span class="w"> </span><span class="o">=</span>
 <span class="w">  </span><span class="nx">isSm</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">originalPosition</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">'menu'</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="s1">'sidebar'</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">originalPosition</span><span class="p">;</span>
 </code></pre></div></td></tr></tbody></table></div>
