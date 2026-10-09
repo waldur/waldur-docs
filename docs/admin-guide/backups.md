@@ -44,3 +44,21 @@ zcat waldur-20260819T101500.sql.gz | docker exec -i waldur-db psql -U waldur wal
 ```
 
 We suggest to make sure that backups are running regularly, e.g. using cron.
+
+## Matrix chat
+
+With Matrix chat on, the homeserver is a third component to back up: it keeps
+the chat rooms, their messages and the users' Matrix accounts in its own
+storage, the `tuwunel_data` volume with docker-compose and the
+`data-matrix-homeserver-0` PVC with Helm. Back it up together with Waldur's
+database, so a restore brings both back to the same point, and stop the
+homeserver while you copy it (with Helm, scale the `matrix-homeserver`
+StatefulSet to zero). With docker-compose, also back up the
+`waldur_matrix_secrets` volume, which holds the tokens Waldur and the
+homeserver share.
+
+After restoring an older Waldur dump, or resetting Waldur's database, against
+the same homeserver, the users provisioned since have a Matrix account that
+Waldur no longer knows, and Waldur refuses to take it over: their chat stays
+unavailable. Link them all with `waldur link_matrix_account --all`; see
+[Existing Matrix accounts](../developer-guide/admin-guide/matrix-appservice-setup.md#existing-matrix-accounts).
