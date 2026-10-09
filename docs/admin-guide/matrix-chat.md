@@ -203,12 +203,14 @@ register Waldur's appservice on the local dev stack:
 curl -s -X POST 'http://localhost:6167/_matrix/client/v3/register?kind=user' \
   -H 'Content-Type: application/json' \
   -d '{"auth":{"type":"m.login.registration_token","token":"devregistrationsecret"},
-       "username":"admin","password":"admin","device_id":"BOOTSTRAP"}'
-# → captures access_token + admin's room id from joined_rooms
+       "username":"matrix-admin","password":"admin","device_id":"BOOTSTRAP"}'
+# → captures access_token + the admin room id from joined_rooms
 ```
 
-The response contains an `access_token` for `@admin:localhost`. List the
-admin room (the only joined room):
+The response contains an `access_token` for `@matrix-admin:localhost`. Use a
+name no Waldur user maps to: with the default
+`MATRIX_USER_ID_FORMAT = username`, a Waldur user called `admin` maps to
+`@admin:localhost`. List the admin room (the only joined room):
 
 ```bash
 curl -s -H "Authorization: Bearer <ACCESS_TOKEN>" \
@@ -228,26 +230,35 @@ curl -s -X PUT "http://localhost:6167/_matrix/client/v3/rooms/<ADMIN_ROOM_ID>/se
   -d "{\"msgtype\":\"m.text\",\"body\":${BODY_JSON}}"
 ```
 
-Tuwunel's admin user replies `Appservice registered with ID: waldur`. After
-that, re-running the Waldur Setup wizard succeeds with
-`bot_provision_status: "ok"`.
+Tuwunel's admin user replies `Appservice registered with ID: waldur`, and
+creates the bot's account itself. There is nothing more to run: under
+**Administration → Configuration → Matrix chat**, **Diagnostics** should now
+show **Bot authentication (whoami)** passing. Don't run Setup again to
+provision the bot. Setup generates new tokens, and the registration you just
+made would stop working.
 
 For Synapse, the equivalent is to drop the registration YAML into a path
 listed in `app_service_config_files` and restart the homeserver. Other
 Conduit-derived homeservers follow the same admin-room workflow as
 Tuwunel.
 
-If you rotate AS/HS tokens (by re-running the Setup wizard), repeat the
-admin-room command — Tuwunel rejects appservice requests under the old
-tokens once you change them in Waldur.
+If you rotate the AS/HS tokens (by running the Setup wizard again), register
+the new YAML the same way, after removing the old registration with
+`!admin appservices unregister waldur`: Tuwunel refuses to register an ID that
+is already registered, and rejects appservice requests under the old tokens
+once they change in Waldur. Then restart the bot process (`waldur matrix_bot`;
+`waldur-matrix-bot` on Helm and docker-compose), which reads the appservice
+token only when it starts. On a docker-compose deployment, don't rotate with
+Setup at all: `waldur-matrix-init` writes the deployment's tokens back into
+Waldur on every `docker compose up`.
 
 ---
 
 ## Verifying the integration
 
-Open the **Check connectivity** dialog from the same page:
+Open **Diagnostics** from the same page:
 
-![Connectivity diagnostics — all checks green](img/matrix-chat/11-admin-diagnostics.png)
+![Matrix diagnostics — all checks green](img/matrix-chat/11-admin-diagnostics.png)
 
 The dialog runs live checks against the homeserver and reports the result.
 AS/HS tokens are shown as SHA-256 fingerprints (`sha256:<first-12-hex>`)
@@ -640,15 +651,14 @@ password: password login still works on the homeserver, so switching away from
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
 | The chat drawer shows **Your chat session has ended.** | Matrix chat was switched off (`MATRIX_ENABLED`) while the drawer was open, or the homeserver signed the drawer's device out again within a minute of reconnecting | Re-enable chat. If sessions keep being signed out, look for what removes `WALDUR_WEB_*` devices on the homeserver. **Reload** in the drawer starts a new session. A deactivated, deleted or signed-out user is returned to the login page instead. A rate-limited connect shows **Too many chat requests. Please try again in …** |
-| `bot_provision_status: "failed: M_UNKNOWN_TOKEN"` after Setup | Homeserver does not yet have the appservice registered with the current AS token | Register the YAML via the admin-room command (see above), then re-run Setup. |
+| `bot_provision_status: "failed: M_UNKNOWN_TOKEN"` after Setup | The homeserver has no registration with the tokens this Setup generated, which is expected on a first Setup | Register the YAML Setup returned via the admin-room command (see above). Tuwunel then creates the bot itself. Don't run Setup again: it generates new tokens. |
 | Webhook reaches Waldur but returns `400 DisallowedHost` | The hostname the homeserver uses to reach Waldur is not in Django's `ALLOWED_HOSTS` | Add the hostname (e.g. `host.docker.internal`) to `ALLOWED_HOSTS` and restart. |
-| Diagnostics shows `Bot authentication: 403 Forbidden` | AS token mismatch between Waldur and the homeserver | Re-run Setup, then re-register the appservice on the homeserver with the new YAML. |
+| Diagnostics shows `Bot authentication: 401 Unauthorized — AS token rejected` | The homeserver holds a registration with other tokens than Waldur's, for example after Setup was run again | Register the tokens Waldur has: `waldur generate_appservice_registration --url <URL the homeserver uses to reach Waldur>` prints their YAML. Send `!admin appservices unregister waldur`, then register it and restart the bot process (`waldur-matrix-bot`), which reads the appservice token only when it starts. On docker-compose, first run `docker compose --profile matrix run --rm waldur-matrix-init` so Waldur has the deployment's tokens again, and register `waldur-registration.yaml` from the Matrix secrets volume. |
 | Voice/video call fails to connect | The `livekit_service_url` in `.well-known/matrix/client` does not point at Waldur's `/api/matrix/livekit`, or the browser cannot reach it | Set it to `https://<waldur-api-host>/api/matrix/livekit` and check the token request in the browser's network tab. |
 | The browser's token request returns `503` | LiveKit keys or public URL are not set in Waldur, or Waldur cannot reach the homeserver's `/_matrix/federation/v1/openid/userinfo` at `MATRIX_HOMESERVER_URL` | Set `MATRIX_LIVEKIT_KEY`, `MATRIX_LIVEKIT_SECRET` and `MATRIX_LIVEKIT_PUBLIC_URL`; make sure the homeserver's federation endpoints are reachable at `MATRIX_HOMESERVER_URL`. |
 | The browser's token request returns `403 M_FORBIDDEN` | The user is not joined to the room, the device is not theirs, the user belongs to another homeserver, or the Waldur user is deactivated | Join the room first; check the Waldur logs for "Refused a call token". |
 | The browser's token request returns `429` | Rate limit hit. Behind a load balancer that does not pass the client address on, all clients share one per-address bucket | Pass the real client address to the proxy in front of Waldur, or raise `matrix_livekit_token`. |
 | The browser's token request returns `404` | Matrix chat is switched off (`MATRIX_ENABLED`), or a reverse proxy does not route `/api/matrix/livekit` to Waldur | Enable Matrix chat; route the whole `/api/matrix/livekit` prefix to the Waldur API. |
-| Diagnostics reports `0 active, 0 total` rooms but you created one via API | Constance cache lag — `runserver` reads `API_CONFIGURATION` from its in-process LocMemCache | Restart the dev backend or call `cache.delete('API_CONFIGURATION')` from a shell against the same process. |
 
 For an unauthenticated denial reply from the bot, double-check that the
 Matrix sender ID is mapped to a Waldur user in `MatrixUserProfile` and
