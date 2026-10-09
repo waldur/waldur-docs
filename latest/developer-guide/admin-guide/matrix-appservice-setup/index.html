@@ -11365,6 +11365,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#encryption-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Encryption keys
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Encryption keys">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#locked-identities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Locked identities
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#external-clients" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -11400,6 +11428,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#calls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Calls
+      
+    </span>
+  </a>
   
 </li>
       
@@ -19761,6 +19800,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#encryption-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Encryption keys
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Encryption keys">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#locked-identities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Locked identities
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#external-clients" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19796,6 +19863,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#calls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Calls
+      
+    </span>
+  </a>
   
 </li>
       
@@ -20562,6 +20640,10 @@ staff disable a room with <code>delete_history</code> or delete the room.</p>
 <td><code>expires_in_ms</code></td>
 <td>Lifetime of <code>access_token</code>; <code>null</code> without refresh tokens</td>
 </tr>
+<tr>
+<td><code>recovery_key</code></td>
+<td>The user's encryption recovery key (see <a href="#encryption-keys">Encryption keys</a>); <code>null</code> until encryption is set up. Only ever returned to its owner</td>
+</tr>
 </tbody>
 </table>
 <table>
@@ -20597,6 +20679,81 @@ staff disable a room with <code>delete_history</code> or delete the room.</p>
 <p>The drawer keeps both tokens in memory only. It renews the access token through Matrix <code>/refresh</code>, and asks Waldur for a new session when a refresh is rejected or when the homeserver signs its device out, for example from Element's session list or through the device cleanup described below. Waldur is therefore consulted when the drawer connects, when a refresh is rejected and when the device is signed out, not while refreshes succeed: switching chat off or signing out of Waldur in another tab does not cut an open drawer, which keeps working until it next needs a new session. Whether the user may still chat is decided then: a deactivated, deleted or signed-out user gets no new session and is returned to the login page. The drawer shows that the chat session has ended when chat was switched off, or when the new session is signed out again within a minute. A rate-limited connect asks the user to try again later.</p>
 <p>Every session has its own device. Tuwunel keeps one refresh token per device, so two browser tabs sharing a device would invalidate each other's refresh token. A session starts on every page load for a room member, because the drawer connects in the background for unread counts, so each load is one device and one call against the rate limit. After each new session Waldur signs out the user's web devices not seen for 24 hours, a window fixed in Waldur that matches the default <code>refresh_token_ttl</code>. Beyond the 10 most recently seen devices it signs out the rest, except devices seen in the last ten minutes: those belong to open tabs. It never signs out the session that triggered the cleanup.</p>
 <p>The homeserver sets the lifetimes. The Helm chart and docker-compose configure Tuwunel with <code>access_token_ttl = 300</code> (5 minutes) and <code>refresh_token_ttl = 86400</code> (24 hours, idle); another homeserver needs its own equivalent settings. Logins without a refresh token, such as Element with a password, keep non-expiring tokens and are unaffected.</p>
+<h2 id="encryption-keys">Encryption keys</h2>
+<p>Chat is end-to-end encrypted. Each user's encryption identity (cross-signing keys,
+key backup and the device that receives messages while no drawer is open) is
+unlocked by a <strong>recovery key</strong> that Waldur holds for them: the homeserver only ever
+stores encrypted keys, and the recovery key that unlocks them is held by your
+Waldur deployment. It is stored encrypted under <code>FIELD_ENCRYPTION_KEY</code> (see
+<code>docs/field-encryption.md</code>) and returned only in the user's own web chat session.</p>
+<p>The drawer sets encryption up on a user's first session. Only one browser may do
+so at a time, and Waldur must hold the recovery key before any key is uploaded:</p>
+<p><strong>POST /api/matrix/crypto/lease/</strong> with <code>{"kind": "bootstrap"}</code> grants a lease
+for ten minutes. <strong>POST /api/matrix/crypto/escrow/</strong> with <code>{"lease": ...,
+"recovery_key": ...}</code> stores the key, from the lease holder only; the lease is
+kept while the drawer uploads the keys that go with it. <strong>POST
+/api/matrix/crypto/lease/release/</strong> with <code>{"lease": ...}</code> ends it when the setup
+is done or has failed.</p>
+<p>These endpoints, and the recovery key in the session response, accept only the
+ways the web UI authenticates: the user's Waldur API token or a session.
+Personal access tokens, OIDC access tokens and staff impersonating a user are
+refused (<code>403</code>) and get no key. The user's API token itself is not limited to
+the web UI (it can be copied into scripts), so treat it as giving access to the
+user's chat encryption too. Escrowing a key and starting a reset are recorded in
+the user's event log.</p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>When</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>200</code> / <code>204</code></td>
+<td>Lease granted / key stored</td>
+</tr>
+<tr>
+<td><code>400</code></td>
+<td>The recovery key is not a valid Matrix recovery key</td>
+</tr>
+<tr>
+<td><code>409</code></td>
+<td><code>state</code> says why: <code>set_up</code> (already done), <code>locked</code> (the homeserver has an identity Waldur holds no key for), <code>in_progress</code> (another window holds the lease; see <code>Retry-After</code>), <code>no_lease</code> (the lease expired or another window took over), <code>not_locked</code> (a reset was asked for but isn't needed)</td>
+</tr>
+<tr>
+<td><code>429</code></td>
+<td>The per-user <code>matrix_crypto</code> rate limit (default 30/hour) is exhausted</td>
+</tr>
+<tr>
+<td><code>503</code></td>
+<td>The homeserver could not be asked, or the bot is not a homeserver admin</td>
+</tr>
+</tbody>
+</table>
+<h3 id="locked-identities">Locked identities</h3>
+<p>Tuwunel accepts a user's first cross-signing keys without a password but refuses
+to replace them unless the user answers a password prompt, which Waldur's users
+can't. An identity is <strong>locked</strong> when the homeserver has cross-signing keys for
+the user and the key Waldur holds is missing or no longer opens their secret
+storage. That happens when:</p>
+<ul>
+<li>the Waldur database is restored to a point before the user's first setup while
+  the homeserver keeps newer data, or Waldur's profiles are relinked with
+  <code>link_matrix_account</code>;</li>
+<li><code>FIELD_ENCRYPTION_KEY</code> is lost, or <code>SECRET_KEY</code> is rotated while it is unset;</li>
+<li>the user set encryption up in another client with a key Waldur never saw.</li>
+</ul>
+<p>A lease with <code>{"kind": "reset"}</code> recovers it. Waldur checks that the identity is
+really locked, sets a temporary Matrix password through the admin API (the bot
+must be a homeserver admin), and returns it once so the drawer can answer the
+password prompt. The password is replaced with a discarded random one as soon as
+the new recovery key is escrowed, or when the lease runs out, and a sweep every
+ten minutes replaces any left behind. A reset replaces
+the user's identity and deletes their old key backups, and in password mode it
+also replaces any Matrix password the user generated for an external client.</p>
+<p>Back up the homeserver and the Waldur database <strong>together</strong>, and keep
+<code>FIELD_ENCRYPTION_KEY</code> safe: without it, no escrowed recovery key can be read.</p>
 <h2 id="external-clients">External Clients</h2>
 <p><code>MATRIX_EXTERNAL_LOGIN_METHOD</code> decides whether users can open their rooms in Element or another Matrix client:</p>
 <table>
@@ -20692,6 +20849,35 @@ staff disable a room with <code>delete_history</code> or delete the room.</p>
 <li><strong>Synapse:</strong> set the bot's admin flag, for example with <code>PUT /_synapse/admin/v2/users/@waldur-bot:&lt;homeserver domain&gt;</code> and <code>{"admin": true}</code>, using an admin's access token.</li>
 </ul>
 <p>Use your bot's localpart if it is not <code>waldur-bot</code>. The appservice token (<code>MATRIX_APPSERVICE_AS_TOKEN</code>) already acts as every local user of the homeserver; as an admin's token it carries server-wide powers on top, such as setting any account's password, so protect it accordingly. Waldur calls the admin API at <code>MATRIX_HOMESERVER_URL</code>; if a proxy blocks <code>/_synapse/admin</code> there, point it at an internal address. The diagnostics check "Bot is a homeserver admin" (<code>bot_homeserver_admin</code>) shows whether the bot is an admin.</p>
+<h2 id="calls">Calls</h2>
+<p>Calls run on LiveKit. Waldur issues the LiveKit tokens that Matrix clients (Waldur's chat drawer and Element Call) need to join a call, in place of lk-jwt-service. Point the homeserver's <code>.well-known/matrix/client</code> LiveKit focus at it: <code>livekit_service_url</code> is <code>https://&lt;waldur-api&gt;/api/matrix/livekit</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Request</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POST /api/matrix/livekit/get_token</code></td>
+<td><code>{room_id, slot_id, openid_token, member: {id, claimed_user_id, claimed_device_id}}</code></td>
+</tr>
+<tr>
+<td><code>POST /api/matrix/livekit/sfu/get</code></td>
+<td><code>{room, openid_token, device_id}</code> (the older form; Element Call falls back to it)</td>
+</tr>
+</tbody>
+</table>
+<p>Both answer <code>{url, jwt}</code>. The Matrix OpenID token authenticates the caller, verified at the homeserver (<code>/_matrix/federation/v1/openid/userinfo</code> at <code>MATRIX_HOMESERVER_URL</code>, so its federation endpoints must be reachable there). Any origin may call these two paths, without credentials.</p>
+<ul>
+<li><strong>Who gets a token:</strong> a user of this homeserver who is joined to the room at that moment, for one of their own devices. For a room Waldur manages, the room must also be active and the user a Waldur user who still has access to it (a role that puts them in the room, or staff who joined it), so a user whose role was revoked gets no token even before they are removed from the room on the homeserver. Rooms Waldur does not manage, such as direct messages and rooms created in Element, have no Waldur roles: there membership on the homeserver alone decides. Users of other homeservers are refused.</li>
+<li><strong>What it allows:</strong> joining that room's call, for 3 minutes; LiveKit renews the token of a connected participant.</li>
+<li><strong>Removal:</strong> when a user loses access to a Waldur room (role revoked, staff leave, deactivation, deletion, room disabled), Waldur also disconnects them from its call. A removed user can reconnect until the token LiveKit last gave them expires, up to about 10 minutes. Leaving or being removed from a room Waldur does not manage disconnects no one; the user cannot get a new token for it.</li>
+<li><strong>Client address:</strong> the per-address limit keys on the last <code>X-Forwarded-For</code> entry, the address the proxy in front of Waldur saw (a port, as Azure Application Gateway adds, is dropped). Behind a further load balancer or CDN that does not pass the real client address on (real-IP or PROXY protocol), every client appears as that balancer and all share one bucket: calls then fail with <code>429</code> under load rather than going unlimited.</li>
+<li><strong>OpenID tokens:</strong> any Matrix OpenID token of a user lets its holder get call tokens for the rooms that user has joined, as with lk-jwt-service. A widget or integration the user hands an OpenID token to can therefore join their calls while the OpenID token is valid.</li>
+<li><strong>Limits:</strong> <code>matrix_livekit_token</code> per client address (default 600/hour) and <code>matrix_livekit_token_user</code> per Matrix user (default 120/hour); <code>MATRIX_LIVEKIT_KEY</code>, <code>MATRIX_LIVEKIT_SECRET</code> and <code>MATRIX_LIVEKIT_PUBLIC_URL</code> (the signalling URL browsers connect to) must be set, or the endpoints answer <code>503</code>.</li>
+</ul>
 <h2 id="webhook">Webhook</h2>
 <p><strong>PUT /_matrix/app/v1/transactions/{txnId}</strong></p>
 <p>The homeserver sends room events to this endpoint. Authentication is via the <code>hs_token</code> in the <code>Authorization: Bearer</code> header.</p>

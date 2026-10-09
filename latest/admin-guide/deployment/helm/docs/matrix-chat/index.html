@@ -2505,6 +2505,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-matrix-bot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Matrix bot
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#calls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Calls
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Calls">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#upgrading-from-lk-jwt-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrading from lk-jwt-service
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#required-runtime-steps-not-automated-by-the-chart" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19166,6 +19205,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-matrix-bot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Matrix bot
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#calls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Calls
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Calls">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#upgrading-from-lk-jwt-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrading from lk-jwt-service
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#required-runtime-steps-not-automated-by-the-chart" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19247,8 +19325,10 @@
                   
 
 <h1 id="matrix-chat-homeserver-livekit-calls">Matrix chat (homeserver + LiveKit calls)</h1>
-<p>The chart can deploy the Matrix chat infrastructure: a Tuwunel homeserver, a
-LiveKit media SFU, and lk-jwt-service (required for voice/video calls).</p>
+<p>The chart can deploy the Matrix chat infrastructure: a Tuwunel homeserver and
+a LiveKit media SFU for voice and video calls. Waldur's API issues the LiveKit
+call tokens itself, and only to joined members of the room (see
+<a href="#calls">Calls</a>).</p>
 <h2 id="enabling">Enabling</h2>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
@@ -19265,32 +19345,32 @@ LiveKit media SFU, and lk-jwt-service (required for voice/video calls).</p>
 <span class="normal">13</span>
 <span class="normal">14</span>
 <span class="normal">15</span>
-<span class="normal">16</span>
-<span class="normal">17</span>
-<span class="normal">18</span>
-<span class="normal">19</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">matrixChat</span><span class="p">:</span>
+<span class="normal">16</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">matrixChat</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <span class="w">  </span><span class="nt">networkPolicy</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">   </span><span class="c1"># ships the livekit/lk-jwt/homeserver NetworkPolicies; independent of the chart-wide networkPolicy.enabled</span>
+<span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">   </span><span class="c1"># ships the livekit/homeserver NetworkPolicies; independent of the chart-wide networkPolicy.enabled</span>
 <span class="w">  </span><span class="nt">homeserver</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <span class="w">    </span><span class="nt">serverName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">matrix.example.org</span><span class="w">   </span><span class="c1"># immutable; baked into every user/room ID</span>
 <span class="w">    </span><span class="nt">registrationToken</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;secret&gt;</span><span class="w">      </span><span class="c1"># MUST equal the backend MATRIX_USER_REGISTRATION_SECRET</span>
-<span class="w">    </span><span class="nt">livekitServiceUrl</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://matrix.example.org</span><span class="w">   </span><span class="c1"># public lk-jwt base, advertised to clients</span>
 <span class="w">  </span><span class="nt">livekit</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<span class="w">    </span><span class="nt">publicUrl</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">wss://matrix.example.org</span>
+<span class="w">    </span><span class="nt">publicUrl</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">wss://matrix.example.org</span><span class="w">   </span><span class="c1"># calls are offered only when this is set</span>
 <span class="w">    </span><span class="nt">keys</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">apiKey</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;key&gt;</span>
 <span class="w">      </span><span class="nt">apiSecret</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;secret&gt;</span>
 <span class="w">    </span><span class="nt">rtc</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">nodeIp</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;livekit-rtc LoadBalancer external IP&gt;</span><span class="w">   </span><span class="c1"># else calls connect with no media</span>
-<span class="w">  </span><span class="nt">lkJwt</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 </code></pre></div></td></tr></tbody></table></div>
 <p>Both secret groups (<code>livekit.keys</code> — <code>apiKey</code> + <code>apiSecret</code> — and
 <code>homeserver.registrationToken</code>) support <code>existingSecret</code> for external secret
 managers.</p>
+<p>Calls need encrypted transports. With <code>livekit.publicUrl</code> set, the chart
+refuses to render unless <code>publicUrl</code> is a <code>wss://</code> URL and <code>apiScheme</code> is
+<code>https</code>: clients send their Matrix OpenID token to Waldur's call token API and
+their LiveKit token on the signalling websocket, and both are bearer
+credentials. On a local or kind cluster without TLS, set
+<code>matrixChat.livekit.allowInsecureTransport: true</code> to allow <code>ws://</code> and <code>http</code>.</p>
 <h2 id="image-pinning">Image pinning</h2>
 <p>Images are pinned to specific versions by default — never <code>latest</code>:</p>
 <ul>
@@ -19302,8 +19382,6 @@ managers.</p>
   own key, <strong>not</strong> <code>global.imageRegistry</code>, so pointing <code>global</code> at a private
   mirror doesn't rewrite LiveKit to a registry that has no such image. Override
   <code>livekit.imageRegistry</code> if you mirror it.</li>
-<li><strong>lk-jwt</strong> — <code>ghcr.io/element-hq/lk-jwt-service</code>, pinned by tag; <code>lkJwt.imageDigest</code>
-  available and takes precedence over the tag.</li>
 </ul>
 <h2 id="supported-homeserver-version">Supported homeserver version</h2>
 <p>Waldur bundles the homeserver, so its version is ours to support, not yours to
@@ -19409,6 +19487,91 @@ other session.</p>
 get non-expiring tokens and are unaffected.</p>
 <p>Tuwunel reads its configuration only at startup, so restart it after changing
 either value: <code>kubectl rollout restart statefulset/matrix-homeserver</code>.</p>
+<h2 id="the-matrix-bot">The Matrix bot</h2>
+<p><code>matrixChat.bot</code> deploys mastermind's <code>matrix_bot</code> command, Waldur's member of
+every Waldur room. It runs on a Matrix device of its own and holds that
+device's keys, so it is the only process that can post into an encrypted room
+or read the commands sent to it there. While it runs, every message Waldur
+sends as the bot (role, order and staff notices, command replies) goes through
+it. Without it, Waldur posts directly, which works only in rooms that are not
+encrypted.</p>
+<ul>
+<li><strong>Exactly one replica.</strong> The bot holds a lease in Waldur's database, and a
+  second one refuses to start while the first holds it, so the Deployment uses
+  the <code>Recreate</code> strategy: the old pod releases the lease before the new one
+  starts.</li>
+<li><strong>No volume.</strong> Its keys live in Waldur's database, in a <code>matrix_bot</code>
+  schema, pickled under a key stored encrypted with <code>FIELD_ENCRYPTION_KEY</code>.
+  Database backups carry them, and losing that key makes the store unreadable:
+  the bot then refuses to start rather than reset its identity.</li>
+<li>It needs the appservice registered (step 2 below) and reaches the homeserver
+  at <code>MATRIX_HOMESERVER_URL</code>, like the API.</li>
+<li><strong>Restoring a database elsewhere</strong> (a staging copy of production, say) copies
+  the bot's identity with it. Disable <code>matrixChat.bot</code> there, or drop the copy's
+  <code>matrix_bot</code> schema and <code>matrix_chat_matrixbotidentity</code> rows, before the bot
+  starts: otherwise a second bot runs as the same device, can read the
+  original's rooms, and corrupts both bots' sessions.</li>
+</ul>
+<h2 id="calls">Calls</h2>
+<p>Matrix clients find calls in the homeserver's <code>.well-known/matrix/client</code>. With
+<code>livekit.publicUrl</code> set, the chart advertises one RTC focus there
+(<code>org.matrix.msc4143.rtc_foci</code>):</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"livekit"</span><span class="p">,</span><span class="w"> </span><span class="nt">"livekit_service_url"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://&lt;apiHostname&gt;/api/matrix/livekit"</span><span class="p">}</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Element (Web, Desktop and mobile, through Element Call) and Waldur's chat
+drawer both read it and ask Waldur's API for a LiveKit token:
+<code>POST /api/matrix/livekit/get_token</code>, or the legacy <code>/api/matrix/livekit/sfu/get</code>
+that Element Call falls back to. Waldur verifies the caller's Matrix OpenID
+token with the homeserver, checks that the caller is joined to the room now and
+that the device is theirs, and answers with the LiveKit URL and a token for
+that room only. Anyone else gets <code>403</code>.</p>
+<p>The chart wires what this needs:</p>
+<ul>
+<li><strong>Settings.</strong> The init-whitelabeling job seeds <code>MATRIX_LIVEKIT_PUBLIC_URL</code>
+  (<code>livekit.publicUrl</code>), <code>MATRIX_LIVEKIT_URL</code> (the bundled LiveKit's in-cluster
+  Service, or an external LiveKit's public URL as <code>https://</code>), and
+  <code>MATRIX_LIVEKIT_KEY</code> / <code>MATRIX_LIVEKIT_SECRET</code> from the LiveKit Secret. They
+  are overwritten on every <code>helm upgrade</code>, like the other seeded settings; a
+  <code>waldur.settingsOverrides</code> entry for either URL takes precedence. The
+  bundled LiveKit's room API (<code>/twirp</code>) is not routed through the ingress, so
+  keep <code>MATRIX_LIVEKIT_URL</code> on the in-cluster Service; only the signalling
+  websocket (<code>/rtc</code>) is public. With
+  <code>waldur.initdbEnabled: false</code> nothing is seeded: set them under
+  Administration -&gt; Settings instead.</li>
+<li><strong>Cross-origin access.</strong> Element calls the API from another origin. Waldur
+  answers these two paths with <code>Access-Control-Allow-Origin: *</code> and no
+  credentials. ingress-nginx's <code>enable-cors</code> on the API ingress would replace
+  that with the caller's origin plus credentials, so on nginx the chart routes
+  <code>/api/matrix/livekit</code> through a separate <code>api-matrix-livekit-ingress</code> without
+  it. Traefik's API middleware already answers with <code>*</code>.</li>
+<li><strong>Homeserver access.</strong> Waldur checks OpenID tokens at
+  <code>/_matrix/federation/v1/openid/userinfo</code> on <code>MATRIX_HOMESERVER_URL</code>, the
+  in-cluster client port. Tuwunel serves that endpoint with federation off too,
+  so calls do not depend on <code>homeserver.allowFederation</code>, public DNS or
+  hairpin routing to <code>serverName</code>.</li>
+</ul>
+<p>A call that shows <strong>Could not connect to the call.</strong> usually fails at the
+token request; check it in the browser's network tab. <code>403</code> means Waldur
+refused the caller (not joined to the room, or an unknown device). <code>503</code> means
+Waldur could not reach the homeserver or LiveKit, or the LiveKit settings above
+are missing.</p>
+<h3 id="upgrading-from-lk-jwt-service">Upgrading from lk-jwt-service</h3>
+<p>Earlier charts deployed <code>lk-jwt-service</code> to issue call tokens. Waldur issues
+them now, and the service is removed:</p>
+<ol>
+<li>Delete <code>matrixChat.lkJwt</code> and <code>matrixChat.homeserver.livekitServiceUrl</code> from
+   your values. The chart ignores both; the RTC focus now always points at
+   Waldur's API.</li>
+<li>Upgrade the chart together with a Waldur image that serves
+   <code>/api/matrix/livekit</code> (delete the init-whitelabeling job first, as usual).
+   <code>helm upgrade</code> removes the lk-jwt-service Deployment, Service,
+   NetworkPolicy and its <code>/get_token</code> and <code>/sfu</code> routes.</li>
+<li>Restart the homeserver so it reads the new <code>.well-known</code>:
+   <code>kubectl rollout restart statefulset/matrix-homeserver</code>.</li>
+<li>Calls already running keep their LiveKit connection. Clients pick up the new
+   focus the next time they read <code>.well-known</code>; reloading Element or the
+   Waldur page is enough.</li>
+</ol>
 <h2 id="required-runtime-steps-not-automated-by-the-chart">Required runtime steps (not automated by the chart)</h2>
 <ol>
 <li><strong>Backend token match.</strong> <code>homeserver.registrationToken</code> must equal the
@@ -19421,22 +19584,12 @@ either value: <code>kubectl rollout restart statefulset/matrix-homeserver</code>
    for the procedure. Re-running Setup rotates the tokens — re-register if you do.</li>
 <li><strong>LoadBalancer IP.</strong> After the <code>livekit-rtc</code> Service gets its external IP, set
    <code>livekit.rtc.nodeIp</code> to it so LiveKit advertises a reachable ICE candidate.</li>
-<li><strong>lk-jwt → homeserver reachability.</strong> lk-jwt-service verifies each caller's
-   Matrix OpenID token over federation against <code>https://&lt;serverName&gt;</code>, which
-   resolves to the <em>public</em> ingress address. The cluster must therefore be able
-   to resolve <strong>and reach</strong> <code>serverName</code> from inside a pod — i.e. either the
-   external LoadBalancer supports hairpin (in-cluster traffic to its own public
-   IP loops back through the ingress) or split-horizon DNS points <code>serverName</code> at
-   the ingress internally. If neither holds, chat works but <strong>calls fail</strong> at the
-   token-exchange step. (<code>lkJwt.insecureSkipVerifyTls</code> only relaxes the cert
-   check — it does not fix reachability.)</li>
+<li><strong>Homeserver URL.</strong> <code>MATRIX_HOMESERVER_URL</code> is where Waldur calls the
+   homeserver, for chat and to verify call tokens. Prefer the in-cluster
+   address (e.g. <code>http://matrix-homeserver.&lt;namespace&gt;.svc:6167</code>); the public
+   <code>https://&lt;serverName&gt;</code> works only if pods can reach the ingress's public
+   address.</li>
 </ol>
-<p>A call that shows <strong>Could not connect to the call.</strong> usually fails at this
-   token request; check it in the browser's network tab. <code>404</code> on
-   <code>https://&lt;serverName&gt;/get_token</code> means a chart without the <code>/get_token</code>
-   route. <code>400 Missing room parameter</code> on <code>/sfu/get</code> means a homeport image
-   that still posts to the legacy endpoint, running against lk-jwt 0.6.0 or
-   newer. Upgrade the chart and the homeport image together.</p>
 <h2 id="open-registration-guard">Open-registration guard</h2>
 <p>If <code>homeserver.allowRegistration</code> is <code>true</code> but no <code>registrationToken</code> (or
 <code>registrationTokenExistingSecret</code>) is set, the chart <strong>refuses to render</strong> — this
@@ -19447,7 +19600,7 @@ into an obvious config error:</p>
 <ul>
 <li><code>livekit.enabled</code> with <strong>no credentials</strong> (neither <code>livekit.keys.apiKey</code> +
   <code>apiSecret</code> nor <code>livekit.keys.existingSecret.name</code>) — otherwise livekit-server
-  starts with no signing key and lk-jwt references a Secret that doesn't exist.</li>
+  starts with no signing key and Waldur cannot sign call tokens.</li>
 <li><code>livekit.keys.apiSecret</code> shorter than <strong>32 characters</strong> — livekit-server only
   warns and starts anyway, shipping a weak signing key.</li>
 <li><code>livekit.turn.enabled</code> with <strong>no <code>turn.domain</code></strong> or <strong>no <code>turn.tls.existingSecret</code></strong>
@@ -19502,27 +19655,30 @@ exposed — relayed media always rides TLS.</p>
   <code>https://&lt;serverName&gt;</code> (chat media/images). Without this the browser would block
   the chat client and calls. No action needed — it follows <code>homeserver.serverName</code>
   and is a no-op when matrix is disabled.</li>
+<li><strong>WebAssembly in the homeport CSP.</strong> <code>script-src</code> always includes
+  <code>'wasm-unsafe-eval'</code>. Chat is end-to-end encrypted, and the browser runs the
+  encryption as WebAssembly, which it refuses to compile without this source. It
+  allows compiling WebAssembly only, not <code>eval()</code> of JavaScript. Without it the
+  chat drawer reports that encryption is unavailable in this browser.</li>
 <li><strong>NetworkPolicies.</strong> When <code>matrixChat.networkPolicy.enabled</code> is <code>true</code>, the chart
   adds a policy per pod. This gate is independent of the chart-wide
   <code>networkPolicy.enabled</code> (which only covers the homeport/mastermind-api
   policies) — set it to ship the matrix/livekit policies without opting the
   rest of the stack into NetworkPolicy. The livekit policy accepts media from
-  <strong>anywhere</strong> (external WebRTC). The homeserver and lk-jwt policies accept
-  HTTP from <strong>anywhere</strong> on their service port too, because browser requests
-  reach them through the ingress controller, which runs in its own namespace.
-  Egress is left open on all three —
-  federation, OpenID verification, and <code>/twirp</code> room creation all need
-  outbound reach to <code>serverName</code>.</li>
+  <strong>anywhere</strong> (external WebRTC). The homeserver policy accepts HTTP from
+  <strong>anywhere</strong> on its service port too, because browser requests reach it
+  through the ingress controller, which runs in its own namespace. Egress is
+  left open on both, for federation.</li>
 </ul>
 <h2 id="using-an-external-livekit">Using an external LiveKit</h2>
 <p>You can run the Matrix calling stack against an <strong>operator-managed LiveKit SFU</strong>
 instead of the bundled <code>livekit-server</code> — the same bring-your-own-backend pattern
-the chart offers for PostgreSQL. Tuwunel and lk-jwt-service stay bundled, because
-lk-jwt is tied to <em>this</em> homeserver's federation identity; only the SFU is external.</p>
-<p>Why it works: the browser reaches LiveKit client-side via the URL lk-jwt returns
-(<code>livekit.publicUrl</code>), and lk-jwt signs call tokens with an API key/secret it shares
-with the LiveKit server. Point both at your external instance and the bundled SFU
-is never needed. Mastermind never talks to LiveKit, so there is no backend change.</p>
+the chart offers for PostgreSQL. Tuwunel stays bundled; only the SFU is external.</p>
+<p>Why it works: the browser reaches LiveKit client-side via the URL Waldur returns
+with each call token (<code>livekit.publicUrl</code>), and Waldur signs those tokens with an
+API key/secret it shares with the LiveKit server. Waldur also calls the external
+LiveKit's room API at the same address over <code>https://</code>. Point both at your
+external instance and the bundled SFU is never needed.</p>
 <p>Configuration:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
@@ -19536,10 +19692,7 @@ is never needed. Mastermind never talks to LiveKit, so there is no backend chang
 <span class="normal">10</span>
 <span class="normal">11</span>
 <span class="normal">12</span>
-<span class="normal">13</span>
-<span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">matrixChat</span><span class="p">:</span>
+<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">matrixChat</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <span class="w">  </span><span class="nt">livekit</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w">                              </span><span class="c1"># don't deploy the bundled SFU</span>
@@ -19549,21 +19702,18 @@ is never needed. Mastermind never talks to LiveKit, so there is no backend chang
 <span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">operator-livekit-creds</span><span class="w">            </span><span class="c1"># REQUIRED for external LiveKit</span>
 <span class="w">        </span><span class="nt">apiKeyKey</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">LIVEKIT_API_KEY</span>
 <span class="w">        </span><span class="nt">apiSecretKey</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">LIVEKIT_API_SECRET</span>
-<span class="w">  </span><span class="nt">lkJwt</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">                               </span><span class="c1"># keep the token broker</span>
 <span class="w">  </span><span class="nt">homeserver</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">                               </span><span class="c1"># Tuwunel stays bundled</span>
 <span class="w">    </span><span class="nt">serverName</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">matrix.example.org</span>
-<span class="w">    </span><span class="nt">livekitServiceUrl</span><span class="p">:</span><span class="w"> </span><span class="s">"https://matrix.example.org"</span>
 </code></pre></div></td></tr></tbody></table></div>
 <p>The <code>existingSecret</code> must hold the <strong>same</strong> API key and secret configured on your
 external LiveKit, under the keys named above. If you omit <code>existingSecret.name</code>
 while <code>livekit.enabled=false</code>, the chart refuses to render — the bundled
-<code>livekit-secret</code> only exists when the bundled server is deployed, so lk-jwt would
-otherwise reference a non-existent Secret and crashloop.</p>
+<code>livekit-secret</code> only exists when the bundled server is deployed, so Waldur
+would have no key to sign call tokens with.</p>
 <p>With <code>livekit.enabled=false</code> the chart drops the in-cluster LiveKit Service, its
-<code>config.yaml</code>, network policy, RTC LoadBalancer, and the <code>/rtc</code> + <code>/twirp</code> ingress
-routes. The browser connects straight to <code>publicUrl</code>, so reachability, TLS, and the
+<code>config.yaml</code>, network policy, RTC LoadBalancer, and the <code>/rtc</code> ingress
+route. The browser connects straight to <code>publicUrl</code>, so reachability, TLS, and the
 media plane are the external operator's responsibility.</p>
 
 
