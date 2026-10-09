@@ -614,7 +614,25 @@ password: password login still works on the homeserver, so switching away from
   Reactivating the user while chat is on brings them back into the rooms their
   roles give them. See
   [Automatic member management](../developer-guide/admin-guide/matrix-appservice-setup.md#automatic-member-management).
-
+- **Keep user registration closed.** Waldur creates each user's Matrix
+  account the first time that user needs chat. It claims only the bot's
+  username exclusively on the homeserver, so anyone the homeserver lets
+  register can take a username Waldur will later want, such as a Waldur
+  user's Matrix ID. Waldur does not adopt an account it did not create: chat
+  provisioning for that user fails with an error naming the `waldur
+  link_matrix_account` command. Before running that command, or its `--all`
+  form, make sure the account really belongs to the user. Linking someone
+  else's account gives them the user's project rooms, messages and calls.
+  The packaged deployments keep registration behind a token that only Waldur
+  and the operator hold: the Helm chart refuses to render
+  `allowRegistration: true` without one, and Docker Compose generates a random
+  one and keeps `WALDUR_MATRIX_OPEN_REGISTRATION` false. Do not turn on open
+  registration on a homeserver that Waldur uses, and treat the token
+  (`MATRIX_USER_REGISTRATION_SECRET`) like a password: Docker Compose also uses
+  it as the homeserver's registration shared secret, which can create admin
+  accounts. If it may have leaked, replace it on the homeserver and in Waldur
+  (with Docker Compose this regenerates the appservice tokens too, so register
+  the appservice again), and review the accounts registered since.
 ---
 
 ## Troubleshooting
