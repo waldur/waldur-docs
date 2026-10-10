@@ -23,6 +23,7 @@ for deployment-specific documentation.
 
 ## Practical guides for the end users
 
+* [Chat encryption](end-users/chat-encryption.md)
 * [How you reach services](end-users/service-access-modes.md)
 * [Interface overview](end-users/interface.md)
 
