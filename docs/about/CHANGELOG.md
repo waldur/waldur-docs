@@ -1,5 +1,53 @@
 # Changelog
 
+## 8.1.3-rc.24 - 2026-10-10
+
+### Highlights
+
+This release makes Matrix team chat secure and ready to deploy. Chat messages, attachments and call media are now end-to-end encrypted. Users can sign in from external Matrix clients with single sign-on, and Helm and Docker Compose can set up chat automatically at deploy time. Organization owners get new reporting views, organization readers get wider read access, and many screens are easier to use with a keyboard or screen reader.
+
+### What's New
+
+- **End-to-end encrypted team chat**: the chat drawer sets up end-to-end encryption, and new rooms are created encrypted. Waldur keeps each user's recovery key in escrow so their encrypted history stays recoverable. Attachments are encrypted before upload, and call audio and video are encrypted end to end.
+- **Message editing, deleting and replying** in team chat.
+- **Calls through Waldur**: Waldur now issues call tokens itself, replacing the separate lk-jwt-service. A token is issued only while the user still has access to the room. Calls started in the drawer join the same call as Element Call. Call names are easier to read, and users are told when a microphone or camera fails or cannot be switched.
+- **Single sign-on for Matrix clients**: Matrix IDs now match identity provider claims. Users generate a Matrix password on request in the external-client dialog instead of getting one derived for them. Waldur refuses to take over Matrix accounts it did not create, and SSO cannot sign in to the bot or admin accounts.
+- **Encrypted Matrix bot**: a new bot service joins every room as an encrypted member and posts Waldur's messages. Its encryption keys are stored in PostgreSQL. It waits for database migrations and its settings before starting, and restarts when its settings change. Helm and Docker Compose can deploy it.
+- **Automatic Matrix setup**: new `init_matrix_settings` and `register_matrix_appservice` commands set up Matrix settings from environment variables and register the appservice on Tuwunel. Helm and Docker Compose use them to set up chat at deploy time, and redeploying rotates the tokens. The admin UI shows when the deployment manages these tokens.
+- **Reporting views for organization owners**, scoped to their own organizations.
+- **Optional Matrix chat monitoring in Helm**: Prometheus alert rules and a ServiceMonitor for the metrics exporter, both off by default.
+
+### Improvements
+
+- Secret Constance settings are now encrypted at rest. `reencrypt_fields` finds the columns to re-encrypt from their field type.
+- The Matrix diagnostics page reports failed exports and appservice errors, and support users can read it. The "connectivity check" was renamed to "Diagnostics". The admin guide has a new production checklist.
+- Project chat rooms are not federated with other servers. Bot messages show names as plain text. Customer rooms check owner roles, and project rooms follow changes to the room-creation setting.
+- Organization readers can now read users, projects, resources, orders and invitations.
+- The provider `list_users` endpoint returns the user attributes that each offering exposes.
+- Software catalogs can import several versions at once and refresh from Spack. Catalogue link and partition lookups are limited to the offering, and an offering cannot be linked twice to the same catalogue.
+- Accessibility: the invite role and project pickers, icon tooltips, the row menu's "Show all" item, quota bars, the footer health button and the sidebar logo now work with a keyboard and screen readers. Admin dashboard text has better contrast, and table header and copy controls are 24×24 px. Checkboxes, radio buttons and switches now use the shared UI library.
+- The resource page refreshes after a usage report is submitted. The usage form shows the selected component in the visible tab row, and out-of-range component amounts show their error under the input.
+- Metric change badges say what they compare against. The user details tables have a single frame.
+- Hardening for Docker Compose and Helm: the homeserver no longer makes its first user an admin, and its admin API is not served publicly. LiveKit's admin API is no longer routed publicly, and default LiveKit credentials are refused. The homeport CSP allows WebAssembly for chat encryption. Matrix media cannot be framed. Tuwunel is upgraded to v1.9.3.
+
+### Bug Fixes
+
+- Fixed software catalog cleanup deleting different EESSI versions of the same software.
+- Fixed how decrypted messages are shown in the Matrix chat drawer.
+- Fixed the locked software catalog label in the edit dialog.
+- Unmanaged OpenStack network owners now fall back to the tenant offering's provider.
+- The app no longer starts loading while it is redirecting to the default identity provider.
+- Celery worker health probes in Helm now close their AMQP connection.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [38 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.3-rc.23...8.1.3-rc.24) - Matrix encryption, bot, call token API, SSO and automatic setup; Constance secrets encrypted at rest; software catalog and permission improvements
+- **Waldur Homeport**: [45 commits](https://github.com/waldur/waldur-homeport/compare/8.1.3-rc.23...8.1.3-rc.24) - Encrypted chat and calls, message editing, deleting and replying, reporting views for organization owners, accessibility fixes
+- **Waldur Helm**: [8 commits](https://github.com/waldur/waldur-helm/compare/8.1.3-rc.23...8.1.3-rc.24) - Matrix setup at deploy time, Matrix bot, SSO, call tokens from Waldur, optional monitoring, Celery probe fix
+- **Waldur Docker Compose**: [76 commits](https://github.com/waldur/waldur-docker-compose/compare/8.1.3-rc.23...8.1.3-rc.24) - Automatic Matrix appservice registration and token rotation, SSO settings, Matrix bot service, hardening and updated Matrix guide
+
+---
+
 ## 8.1.3-rc.23 - 2026-10-07
 
 ### Highlights
