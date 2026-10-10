@@ -1584,6 +1584,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#packaged-deployments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Packaged deployments
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#prerequisites" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19255,6 +19266,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#packaged-deployments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Packaged deployments
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#prerequisites" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19534,8 +19556,9 @@ Conversations are rendered in the homeport drawer next to the Waldur UI, so
 team members do not need a separate Matrix client.</p>
 <p>Rooms and the chat drawer need a homeserver that supports the Application
 Service API, and short-lived web sessions need it to issue refresh tokens.
-Locking the accounts of deactivated users, password mode for external
-clients and refusing homeserver-admin accounts also use the Synapse admin API,
+Locking the Matrix account of a deactivated user, resetting a user's chat
+encryption from the drawer, password mode for external clients and refusing
+homeserver-admin accounts also use the Synapse admin API,
 with Waldur's bot as a homeserver admin (see
 <a href="../../developer-guide/admin-guide/matrix-appservice-setup/#making-the-bot-a-homeserver-admin">Making the bot a homeserver admin</a>);
 on a homeserver without that API they do not work. The examples in this guide
@@ -19549,7 +19572,8 @@ bundled <code>docker/matrix-dev/docker-compose.yml</code> brings up.</p>
         PROFILE[MatrixUserProfile]
         TASKS[Celery tasks]
         WEBHOOK[Appservice webhook]
-        BOT[Bot commands]
+        OUTBOX[Outbox]
+        BOT[matrix_bot process]
         EXPORT[History export]
     end
 
@@ -19562,9 +19586,11 @@ bundled <code>docker/matrix-dev/docker-compose.yml</code> brings up.</p>
     ROOM --&gt;|sync_project_members| TASKS
     TASKS --&gt;|ensure user| PROFILE
     PROFILE --&gt;|invite + join| ROOMHS
-    HS --&gt;|PUT events| WEBHOOK
-    WEBHOOK --&gt;|dispatch| BOT
-    BOT --&gt;|reply via bot user| ROOMHS
+    HS --&gt;|PUT transactions, acknowledged| WEBHOOK
+    TASKS --&gt;|messages to post| OUTBOX
+    OUTBOX --&gt; BOT
+    ROOMHS --&gt;|sync, decrypt commands| BOT
+    BOT --&gt;|encrypted replies and notices| ROOMHS
     PROJ --&gt;|pre_delete| ROOM
     ROOM --&gt;|disable + archive| EXPORT
     ROOM -.-&gt;|room_id| ROOMHS</code></pre>
@@ -19573,12 +19599,62 @@ created and a celery task syncs every project member into the room via a
 per-user <code>MatrixUserProfile</code>. Waldur joins and leaves rooms as the user
 through the appservice, without logging in as them. The chat drawer talks
 to the homeserver directly with a short-lived web session (see
-<a href="#web-chat-sessions">Web chat sessions</a>). Inbound events arrive over the
-appservice webhook (<code>PUT /_matrix/app/v1/transactions/{txnId}</code>), are
-deduplicated by <code>txn_id</code>, and dispatched to the bot-command handlers if
-the sender holds an active project role. Project deletion runs the same
-disable path that the staff "Disable room" action uses, optionally
-exporting history before the room is archived.</p>
+<a href="#web-chat-sessions">Web chat sessions</a>).</p>
+<p>Rooms are end-to-end encrypted, so commands and everything Waldur posts go
+through a long-running bot process, <code>waldur matrix_bot</code>: the Helm Deployment
+<code>waldur-matrix-bot</code>, or the <code>waldur-matrix-bot</code> service in docker-compose's
+<code>matrix</code> profile. It syncs the rooms as Waldur's bot user, decrypts the
+commands, answers them if the sender holds an active project role, and posts
+the messages Waldur queues in its outbox, encrypted for the room. Run exactly
+one: the bot holds a lease in Waldur's database, and a second process refuses
+to start while the first holds it. Without a running bot, commands go
+unanswered and Waldur's notices stay in the outbox. The appservice webhook
+(<code>PUT /_matrix/app/v1/transactions/{txnId}</code>) only records and acknowledges the
+homeserver's transactions; it no longer handles commands. Project deletion
+runs the same disable path that the staff "Disable room" action uses,
+optionally exporting history before the room is archived.</p>
+<hr>
+<h2 id="packaged-deployments">Packaged deployments</h2>
+<p>The <a href="../deployment/helm/docs/matrix-chat/">Helm chart</a> ("Zero-touch setup")
+and <a href="../deployment/docker-compose/matrix-chat-add-on/">docker-compose</a>
+("Appservice registration") bundle a Tuwunel homeserver and set Matrix chat up
+themselves:</p>
+<ul>
+<li>They supply the appservice tokens, the registration token and a bootstrap
+  password. docker-compose generates them into its secrets volume; Helm
+  generates them into a Secret unless <code>setup.existingSecret</code> names your own.
+  On every deploy they seed Waldur's Matrix settings from them with
+  <code>waldur init_matrix_settings</code> (see "Seeding from the environment" in the
+  <a href="../../developer-guide/admin-guide/matrix-appservice-setup/">setup guide</a>).</li>
+<li>By default they register the appservice on every deploy with
+  <code>waldur register_matrix_appservice</code>, which creates a bootstrap admin,
+  <code>@waldur-bootstrap</code>, through the homeserver's shared-secret registration API
+  and makes the bot a homeserver admin (see "Registering on Tuwunel from the
+  command line" in the
+  <a href="../../developer-guide/admin-guide/matrix-appservice-setup/">setup guide</a>).</li>
+<li>The Setup wizard is hidden and its API answers <code>409</code>. The settings the
+  deployment seeds (the homeserver URLs and domain, the appservice tokens, the
+  bot localpart and the registration secret, and with SSO or calls also the
+  login methods and the LiveKit settings) are read-only in the <strong>Settings</strong>
+  tab, which names them, because the next deploy would write the deployment's
+  values back. That is a lock in the UI only: Waldur's API
+  refuses Setup but not a change to a seeded setting, so change those in the
+  deployment instead.</li>
+<li>Tokens are rotated in the Secret or the secrets volume, followed by a
+  deploy, which replaces the registration on the homeserver. Then restart the
+  bot process (<code>waldur-matrix-bot</code>), which reads the appservice token only when
+  it starts. Each guide has the steps under "Rotating the tokens" (Helm) and
+  "Token rotation" (docker-compose).</li>
+<li>Helm turns on the <code>project.show_matrix_chat</code> feature flag; on
+  docker-compose,
+  <a href="../deployment/docker-compose/matrix-chat-add-on/#enabling-the-homeport-ui">turn it on</a>
+  yourself.</li>
+<li>Helm refuses to run Matrix chat without its bundled homeserver.</li>
+</ul>
+<p>On a packaged deployment, skip the sections from
+<a href="#configuring-waldur">Configuring Waldur</a> to
+<a href="#registering-the-appservice-on-the-homeserver">Registering the appservice on the homeserver</a>:
+they are for the <code>docker/matrix-dev</code> stack and homeservers you run yourself.</p>
 <hr>
 <h2 id="prerequisites">Prerequisites</h2>
 <p>You need:</p>
@@ -19597,8 +19673,8 @@ exporting history before the room is archived.</p>
   <code>rtc_transports</code> block (MSC4143) — see <a href="#voice-and-video-calls">Voice and video calls</a>.</li>
 </ul>
 <p>The bundled <code>docker/matrix-dev/</code> stack in the mastermind repo provides the
-homeserver and the SFU for local development; for production deployments you
-supply your own.</p>
+homeserver and the SFU for local development. The Helm chart and
+docker-compose bring their own (see <a href="#packaged-deployments">Packaged deployments</a>).</p>
 <hr>
 <h2 id="bringing-up-a-local-matrix-stack">Bringing up a local Matrix stack</h2>
 <p>From <code>waldur-mastermind</code>:</p>
@@ -19684,8 +19760,9 @@ Django shell:</p>
 <span class="n">config</span><span class="o">.</span><span class="n">MATRIX_LIVEKIT_PUBLIC_URL</span> <span class="o">=</span> <span class="s2">"ws://localhost:7880"</span>  <span class="c1"># what browsers connect to</span>
 </code></pre></div></td></tr></tbody></table></div>
 <p>You can do the same in the Django admin (<code>/admin/constance/config/</code>) — all
-of these values are also editable through the <strong>Matrix chat → Settings</strong> tab
-in the homeport once the Setup wizard has run at least once.</p>
+of these values are also editable in the <strong>Settings</strong> tab under
+<strong>Administration → Configuration → Matrix chat</strong>. On a packaged deployment
+the values the deployment seeds are read-only there.</p>
 <p>To make the per-project Communication tab visible in homeport, enable the
 <code>project.show_matrix_chat</code> feature flag. The backend continues to gate
 access on <code>MATRIX_ENABLED</code> regardless — the feature flag only toggles the UI.</p>
@@ -19722,9 +19799,24 @@ want the in-cluster service DNS.</p>
 <hr>
 <h2 id="registering-the-appservice-on-the-homeserver">Registering the appservice on the homeserver</h2>
 <p>Tuwunel and other Conduit-family homeservers register appservices via an
-admin-room command rather than a config file. The first user registered on
-a fresh Tuwunel instance is automatically invited to the admin room. To
-register Waldur's appservice on the local dev stack:</p>
+admin-room command rather than a config file. On Tuwunel, one command does it
+once Setup has generated the tokens:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nv">MATRIX_BOOTSTRAP_PASSWORD</span><span class="o">=</span>&lt;a<span class="w"> </span>password<span class="w"> </span>you<span class="w"> </span>keep&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>waldur<span class="w"> </span>register_matrix_appservice<span class="w"> </span>--url<span class="w"> </span>http://host.docker.internal:10780
+</code></pre></div></td></tr></tbody></table></div>
+<p>It creates a bootstrap admin, <code>@waldur-bootstrap</code>, through the homeserver's
+shared-secret registration API, which needs the homeserver's
+<code>registration_shared_secret</code> to equal <code>MATRIX_USER_REGISTRATION_SECRET</code> (on
+the dev stack both are <code>devregistrationsecret</code>). It then sends the
+registration to the admin room, makes the bot a homeserver admin and checks
+the result. Run it again with the same password after rotating the tokens.
+"Registering on Tuwunel from the command line" in the
+<a href="../../developer-guide/admin-guide/matrix-appservice-setup/">setup guide</a> has
+the details.</p>
+<p>To do the same by hand: the first user registered on a fresh Tuwunel
+instance is automatically invited to the admin room. To register Waldur's
+appservice on the local dev stack:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
@@ -19777,9 +19869,9 @@ the new YAML the same way, after removing the old registration with
 is already registered, and rejects appservice requests under the old tokens
 once they change in Waldur. Then restart the bot process (<code>waldur matrix_bot</code>;
 <code>waldur-matrix-bot</code> on Helm and docker-compose), which reads the appservice
-token only when it starts. On a docker-compose deployment, don't rotate with
-Setup at all: <code>waldur-matrix-init</code> writes the deployment's tokens back into
-Waldur on every <code>docker compose up</code>.</p>
+token only when it starts. On Helm and docker-compose, Setup is refused while
+the deployment manages the tokens; rotate them as
+<a href="#packaged-deployments">Packaged deployments</a> describes.</p>
 <hr>
 <h2 id="verifying-the-integration">Verifying the integration</h2>
 <p>Open <strong>Diagnostics</strong> from the same page:</p>
@@ -19788,7 +19880,12 @@ Waldur on every <code>docker compose up</code>.</p>
 AS/HS tokens are shown as SHA-256 fingerprints (<code>sha256:&lt;first-12-hex&gt;</code>)
 so the diagnostic does not leak token material. The integration is ready for
 use when every check is green, except the LiveKit check, which matters only
-for voice and video calls. The
+for voice and video calls. Every check talks from Waldur to the homeserver
+except <strong>Homeserver can reach Waldur (ping)</strong>, which has the homeserver call
+Waldur back with the HS token: it fails on a wrong HS token, or on a Waldur
+URL in the registration that the homeserver cannot reach. Bot commands do not
+depend on it, as the bot reads them from its own sync; if commands go
+unanswered, check that the bot process is running and look at its log. The
 <a href="../../developer-guide/admin-guide/matrix-appservice-setup/#get-apiadminmatrixdiagnostics">setup guide</a>
 lists the checks.</p>
 <hr>
@@ -19861,6 +19958,11 @@ through the same i18n pipeline as the rest of homeport, so the chat
 inherits the active language.</p>
 <p>Messages are sent over the homeserver via matrix-js-sdk; the embedded
 client is started inside the homeport tab and tears down on Waldur logout.</p>
+<p>Rooms are end-to-end encrypted from creation, and the bot turns encryption on
+in rooms created before that. The drawer decrypts in the browser with a
+WebAssembly module, so homeport's Content-Security-Policy must allow
+<code>'wasm-unsafe-eval'</code> in <code>script-src</code>. The Helm chart and docker-compose
+already do; add it if you serve homeport behind your own proxy.</p>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../img/matrix-chat/06-message-sent.png" data-desc-position="bottom"><img alt="Sent message in the drawer" src="../img/matrix-chat/06-message-sent.png"></a></p>
 <hr>
 <h2 id="multiple-users-in-the-same-room">Multiple users in the same room</h2>
@@ -20133,10 +20235,14 @@ that is shown once; generating again replaces it on the homeserver (see
 Waldur sets the password through the homeserver's admin API, so the bot must
 be a homeserver admin; until it is, generating fails. On Tuwunel, send
 <code>!admin users make-user-admin @&lt;bot localpart&gt;:&lt;homeserver domain&gt;</code> in the
-admin room, then check that <strong>Bot is a homeserver admin</strong> passes in
-<strong>Diagnostics</strong>. The other modes need it too, to lock the accounts of
-deactivated users, and it lets Waldur refuse to give a user a homeserver
-admin's account, but it makes the appservice token an admin credential.
+admin room. <code>waldur register_matrix_appservice</code> does this itself, so on Helm
+and docker-compose, which run it on every deploy, the bot is an admin already.
+Then check that <strong>Bot is a homeserver admin</strong> passes in <strong>Diagnostics</strong>. Make
+the bot an admin in the other modes too: without it, Waldur cannot lock the
+Matrix account of a deactivated user, and a user whose recovery key is lost
+cannot reset their chat encryption from the drawer. It also lets Waldur refuse
+to give a user a homeserver admin's account. The cost is that the appservice
+token becomes an admin credential.
 <a href="../../developer-guide/admin-guide/matrix-appservice-setup/#making-the-bot-a-homeserver-admin">Making the bot a homeserver admin</a>
 covers the trade-off and Synapse.</p>
 <p><code>none</code> and <code>oidc</code> only hide the option: password login still works on the
@@ -20146,8 +20252,26 @@ homeserver with <code>login_with_password = false</code>
 (Helm <code>matrixChat.homeserver.loginWithPassword: false</code>, docker-compose
 <code>WALDUR_MATRIX_LOGIN_WITH_PASSWORD=false</code>). Clients already signed in stay
 signed in until their sessions are signed out. Waldur's chat drawer signs in
-through the appservice and is unaffected, but an admin created with a password
-can then no longer sign in to a client either.</p>
+through the appservice, but its encryption reset answers interactive auth with
+a temporary password and has not been tested with password login off (see the
+warning under
+<a href="#single-sign-on-for-external-clients">Single sign-on for external clients</a>).
+An admin created with a password can then no longer sign in to a client
+either.</p>
+<p>That includes the bootstrap admin that registers the appservice. A first
+install and routine deploys still work, but changing the registration then
+needs a homeserver admin's access token: <code>admin_token</code> in the Helm Secret,
+on standard input to a one-off register container on docker-compose
+(<code>docker compose --profile matrix run --rm --no-deps -T waldur-matrix-register
+/etc/waldur/matrix/register-matrix.sh --admin-token-stdin</code>), or
+<code>MATRIX_ADMIN_TOKEN</code> for <code>register_matrix_appservice</code>. Without one, a token
+rotation fails after the new tokens are seeded, with "Password login is disabled on the homeserver
+(login_with_password = false), so the command cannot sign in as
+@waldur-bootstrap", and any other change to the registration, such as
+Waldur's URL, is only warned about and not made. The "Rotating with password
+login off" sections of the <a href="../deployment/helm/docs/matrix-chat/">Helm</a> and
+<a href="../deployment/docker-compose/matrix-chat-add-on/">docker-compose</a> guides say
+how to get a token.</p>
 <p>The homeserver reads its configuration only at startup. With Helm, a
 <code>helm upgrade</code> that changes a non-secret <code>matrixChat.homeserver</code> value restarts
 it. The checksum that does this leaves out the secrets (<code>registrationToken</code>,
@@ -20198,7 +20322,18 @@ their values and what they check.</p>
    and docker-compose takes plain localparts separated by commas, such as
    <code>matrix-admin</code>. A bot localpart changed in Waldur's settings rather than in
    the packaging has to be listed too.</li>
-<li>Turn off password login and restart the homeserver, as above.</li>
+<li>
+<p>Turn off password login and restart the homeserver, as above.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Turning password login off has not been tested together with the
+drawer's encryption reset. A user whose recovery key is lost resets
+their chat encryption from the drawer, which answers the homeserver's
+interactive auth with a temporary password that Waldur sets through
+the admin API. Check that a reset still works on your homeserver
+before you turn password login off in production.</p>
+</div>
+</li>
 </ol>
 <p>To check it, sign in to Element with the homeserver URL and the SSO button
 after the user has opened Waldur's chat once: Element shows the user's Waldur
@@ -20239,30 +20374,35 @@ Matrix ID and project rooms, and no second account exists for them.</p>
   the temporary passwords of encryption resets whose lease ran out. The
   <a href="../mastermind-configuration/scheduled/">scheduled jobs reference</a> lists every
   task Waldur schedules.</li>
-<li><strong>History export.</strong> Disabling a room can optionally export its full
-  message history. Exports go only to those holding <code>MATRIX_ROOM.CREATE</code> on
-  the project or its organization (organization owners by default) and to
-  staff and support; everyone else gets <code>404</code>, room members included. Files
+<li><strong>History export.</strong> Disabling a room can optionally export its history.
+  The export reads the room without the bot's keys, so for an encrypted room
+  it gets only ciphertext: message bodies of encrypted rooms are not included
+  until the export goes through the bot, which is planned. Exports go only to
+  those holding <code>MATRIX_ROOM.CREATE</code> on the project or its organization
+  (organization owners by default) and to staff and support; everyone else gets <code>404</code>, room members included. Files
   are served through a permission-checked view rather than the raw storage
   URL. Exports older than <code>MATRIX_HISTORY_EXPORT_RETENTION_DAYS</code> (default 90)
   are deleted daily, except each room's newest completed export; <code>0</code> or less
   keeps them all. See
   <a href="../../developer-guide/admin-guide/matrix-appservice-setup/#who-can-download-exports">Who can download exports</a>
   and <a href="../../developer-guide/admin-guide/matrix-appservice-setup/#retention">Retention</a>.</li>
-<li><strong>No stored Matrix tokens.</strong> Waldur stores no Matrix access token for any
-  user. The drawer's tokens live only in the browser's memory, and registering
-  a user creates no device.</li>
+<li><strong>Stored secrets.</strong> Waldur stores no Matrix access token for any user. The
+  drawer's tokens live only in the browser's memory, and registering a user
+  creates no device. Waldur does store the bot's encryption keys and access
+  token, users' recovery keys and the secret Matrix settings in Constance; all
+  of them are encrypted at rest with <code>FIELD_ENCRYPTION_KEY</code>. Back that key up
+  separately from the database dumps: without it they cannot be decrypted.</li>
 <li><strong>Deactivated and deleted users.</strong> Deactivating or deleting a Waldur user
   signs out every one of their Matrix devices, Element included, and removes
   them from their rooms, through background tasks that retry failures, even
   while chat is switched off. An open drawer loses access within moments.
   Reactivating the user while chat is on brings them back into the rooms their
   roles give them. If the bot is a homeserver admin, Waldur also locks the
-  account, so no client can sign in to it again, and reactivation unlocks it;
-  deleting a user also replaces their Matrix password. Without that, the
-  account stays unlocked: deactivate it on the homeserver, and with single
-  sign-on also disable the user at the IdP, which the homeserver otherwise
-  keeps trusting. See
+  account, so no client can sign in to it again and a generated password stops
+  working, and reactivation unlocks it; deleting a user also replaces their
+  Matrix password. Without that, the account stays unlocked: deactivate it on
+  the homeserver, and with single sign-on also disable the user at the IdP,
+  which the homeserver otherwise keeps trusting. See
   <a href="../../developer-guide/admin-guide/matrix-appservice-setup/#automatic-member-management">Automatic member management</a>.</li>
 <li><strong>Keep user registration closed.</strong> Waldur creates each user's Matrix
   account the first time that user needs chat. It claims only the bot's
@@ -20278,10 +20418,10 @@ Matrix ID and project rooms, and no second account exists for them.</p>
   <code>allowRegistration: true</code> without one, and Docker Compose generates a random
   one and keeps <code>WALDUR_MATRIX_OPEN_REGISTRATION</code> false. Do not turn on open
   registration on a homeserver that Waldur uses, and treat the token
-  (<code>MATRIX_USER_REGISTRATION_SECRET</code>) like a password: Docker Compose also uses
-  it as the homeserver's registration shared secret, which can create admin
-  accounts. If it may have leaked, replace it on the homeserver and in Waldur
-  (with Docker Compose this regenerates the appservice tokens too, so register
+  (<code>MATRIX_USER_REGISTRATION_SECRET</code>) like a password: Helm and Docker Compose
+  also use it as the homeserver's registration shared secret, which can create
+  admin accounts. If it may have leaked, replace it on the homeserver and in
+  Waldur (with Docker Compose this regenerates the appservice tokens too, so register
   the appservice again), and review the accounts registered since.</li>
 </ul>
 <hr>
@@ -20306,6 +20446,11 @@ Matrix ID and project rooms, and no second account exists for them.</p>
 <td>If the account is the user's, link it with <code>waldur link_matrix_account &lt;username&gt; @&lt;localpart&gt;:&lt;homeserver domain&gt;</code>. After restoring or resetting Waldur's database against the same homeserver, run <code>waldur link_matrix_account --all</code>. If it is not theirs, the user gets no chat under that ID: deactivating the other account does not free the ID. See <a href="../../developer-guide/admin-guide/matrix-appservice-setup/#existing-matrix-accounts">Existing Matrix accounts</a>.</td>
 </tr>
 <tr>
+<td>Bot commands go unanswered and Waldur's notices do not appear in rooms</td>
+<td>The <code>matrix_bot</code> process is not running, failed to start, or still uses an appservice token rotated since it started</td>
+<td>Check that <code>waldur-matrix-bot</code> runs and read its log. Restart it after a token rotation. A second process exits with "Another Matrix bot process holds the lease" while the first runs; run exactly one.</td>
+</tr>
+<tr>
 <td><code>bot_provision_status: "failed: M_UNKNOWN_TOKEN"</code> after Setup</td>
 <td>The homeserver has no registration with the tokens this Setup generated, which is expected on a first Setup</td>
 <td>Register the YAML Setup returned via the admin-room command (see above). Tuwunel then creates the bot itself. Don't run Setup again: it generates new tokens.</td>
@@ -20318,7 +20463,7 @@ Matrix ID and project rooms, and no second account exists for them.</p>
 <tr>
 <td>Diagnostics shows <code>Bot authentication: 401 Unauthorized — AS token rejected</code> or <code>403 Forbidden — AS token not recognized by homeserver</code></td>
 <td>The homeserver holds a registration with other tokens than Waldur's, for example after Setup was run again</td>
-<td>Register the tokens Waldur has: <code>waldur generate_appservice_registration --url &lt;URL the homeserver uses to reach Waldur&gt;</code> prints their YAML. Send <code>!admin appservices unregister waldur</code>, then register it and restart the bot process (<code>waldur-matrix-bot</code>), which reads the appservice token only when it starts. On docker-compose, first run <code>docker compose --profile matrix run --rm waldur-matrix-init</code> so Waldur has the deployment's tokens again, and register <code>waldur-registration.yaml</code> from the Matrix secrets volume.</td>
+<td>On Helm or docker-compose, deploy again: the register step replaces a registration that differs from Waldur's. With password login off, pass an admin token (see <a href="#external-clients">External clients</a>). On a homeserver you run yourself, register the tokens Waldur has: <code>waldur generate_appservice_registration --url &lt;URL the homeserver uses to reach Waldur&gt;</code> prints their YAML. Send <code>!admin appservices unregister waldur</code>, then register it. Either way, restart the bot process (<code>waldur-matrix-bot</code>) afterwards, which reads the appservice token only when it starts.</td>
 </tr>
 <tr>
 <td>Voice/video call fails to connect</td>

@@ -19120,9 +19120,10 @@ storage, the <code>tuwunel_data</code> volume with docker-compose and the
 <code>data-matrix-homeserver-0</code> PVC with Helm. Back it up together with Waldur's
 database, so a restore brings both back to the same point, and stop the
 homeserver while you copy it (with Helm, scale the <code>matrix-homeserver</code>
-StatefulSet to zero). With docker-compose, also back up the
-<code>waldur_matrix_secrets</code> volume, which holds the tokens Waldur and the
-homeserver share.</p>
+StatefulSet to zero). Also back up the tokens Waldur and the homeserver
+share: with docker-compose, the <code>waldur_matrix_secrets</code> volume; with Helm, the
+<code>matrix-appservice-secret</code> Secret, unless <code>setup.existingSecret</code> keeps it in
+your secret manager. Both also hold the bootstrap password.</p>
 <p>After restoring an older Waldur dump, or resetting Waldur's database, against
 the same homeserver, the users provisioned since have a Matrix account that
 Waldur no longer knows, and Waldur refuses to take it over: their chat stays
