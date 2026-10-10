@@ -11238,6 +11238,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#before-enabling-in-production" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Before enabling in production
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#appservice-setup" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19734,6 +19745,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#before-enabling-in-production" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Before enabling in production
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#appservice-setup" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -20278,6 +20300,30 @@
 <li>A staff account in Waldur — the Setup appservice wizard, Diagnostics, and the <strong>Settings</strong> tab are staff-only</li>
 </ul>
 <p>The Setup appservice wizard collects everything else it needs. If the homeserver URL, homeserver domain, or user registration secret (<code>MATRIX_HOMESERVER_URL</code>, <code>MATRIX_HOMESERVER_DOMAIN</code>, <code>MATRIX_USER_REGISTRATION_SECRET</code>) are still empty in Constance, the wizard shows a prerequisites step that prompts for them and persists them. You can also set them in Constance beforehand to skip that step.</p>
+<h2 id="before-enabling-in-production">Before enabling in production</h2>
+<ul>
+<li><strong>The homeserver domain is permanent.</strong> The homeserver's <code>server_name</code>
+  (<code>MATRIX_HOMESERVER_DOMAIN</code>; <code>matrixChat.homeserver.serverName</code> in
+  waldur-helm, <code>WALDUR_DOMAIN</code> in waldur-docker-compose) is part of every
+  Matrix user and room ID. Tuwunel 1.9 stamps it into its database on the first
+  start and refuses to start under another name:</li>
+</ul>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>Critical error starting server: Database belongs to old.example; configured server name is new.example. Cannot reuse.
+</code></pre></div></td></tr></tbody></table></div>
+<p>Changing it means a new, empty homeserver. Wiping the old one's data to get
+  past the error discards every room and message.
+- <strong>Choose a supported login method.</strong> <code>MATRIX_EXTERNAL_LOGIN_METHOD</code> decides
+  how users reach their rooms from Element or another Matrix client. <code>none</code>
+  and <code>oidc</code> are supported. <code>password</code> is for testing and for sites without an
+  identity provider. See <a href="#external-clients">External Clients</a> and
+  <a href="../matrix-sso/">Single sign-on for Matrix clients</a>.
+- <strong>Backup, monitoring and capacity.</strong> waldur-helm's <code>docs/matrix-chat.md</code> and
+  the waldur-docker-compose Matrix add-on guide (<code>docs/matrix-chat-add-on.md</code>)
+  cover them in their "Backup and restore", "Monitoring" and "Capacity"
+  sections. Back up the homeserver and Waldur's database together, and keep
+  <code>FIELD_ENCRYPTION_KEY</code> safe: without it no escrowed recovery key can be read
+  (see <a href="#locked-identities">Locked identities</a>). A history export is not a
+  backup.</p>
 <h2 id="appservice-setup">Appservice Setup</h2>
 <h3 id="via-the-ui">Via the UI</h3>
 <p>The page lives at <strong>Administration → Configuration → Matrix chat</strong> and is split into a <strong>Rooms</strong> tab and a staff-only <strong>Settings</strong> tab. Support users see only the Rooms tab; the Setup appservice and Diagnostics actions are staff-only.</p>
@@ -21454,7 +21500,12 @@ affected.</p>
 </tbody>
 </table>
 <h2 id="configuration-reference">Configuration Reference</h2>
-<p>These Constance settings control the integration:</p>
+<p>These Constance settings control the integration. Those marked <strong>Wiring</strong> connect
+Waldur to its homeserver and LiveKit. They are not choices: waldur-helm and
+waldur-docker-compose set them on every deploy with <code>init_matrix_settings</code> (see
+<a href="#seeding-from-the-environment">Seeding from the environment</a>), which also sets
+<code>MATRIX_TOKENS_MANAGED_BY</code>. Change them in the deployment, not here. Without a
+packaged deployment, the Setup wizard sets most of them.</p>
 <table>
 <thead>
 <tr>
@@ -21472,27 +21523,32 @@ affected.</p>
 <tr>
 <td><code>MATRIX_HOMESERVER_URL</code></td>
 <td><code>""</code></td>
-<td>Homeserver URL (e.g., <code>https://matrix.example.com</code>) that Waldur calls, including the admin API under <code>/_synapse/admin</code></td>
+<td><strong>Wiring.</strong> Homeserver URL (e.g., <code>https://matrix.example.com</code>) that Waldur calls, including the admin API under <code>/_synapse/admin</code></td>
+</tr>
+<tr>
+<td><code>MATRIX_HOMESERVER_PUBLIC_URL</code></td>
+<td><code>""</code></td>
+<td><strong>Wiring.</strong> Homeserver URL browsers use, when it differs from <code>MATRIX_HOMESERVER_URL</code>; blank falls back to it</td>
 </tr>
 <tr>
 <td><code>MATRIX_HOMESERVER_DOMAIN</code></td>
 <td><code>""</code></td>
-<td>Homeserver domain for user IDs (e.g., <code>matrix.example.com</code>)</td>
+<td><strong>Wiring.</strong> Homeserver domain for user IDs (e.g., <code>matrix.example.com</code>). Cannot change once the homeserver has started; see <a href="#before-enabling-in-production">Before enabling in production</a></td>
 </tr>
 <tr>
 <td><code>MATRIX_APPSERVICE_AS_TOKEN</code></td>
 <td><code>""</code></td>
-<td>Token Waldur uses to authenticate with the homeserver</td>
+<td><strong>Wiring.</strong> Token Waldur uses to authenticate with the homeserver</td>
 </tr>
 <tr>
 <td><code>MATRIX_APPSERVICE_HS_TOKEN</code></td>
 <td><code>""</code></td>
-<td>Token the homeserver uses to authenticate with Waldur</td>
+<td><strong>Wiring.</strong> Token the homeserver uses to authenticate with Waldur</td>
 </tr>
 <tr>
 <td><code>MATRIX_APPSERVICE_SENDER_LOCALPART</code></td>
 <td><code>waldur-bot</code></td>
-<td>Bot user localpart</td>
+<td><strong>Wiring.</strong> Bot user localpart</td>
 </tr>
 <tr>
 <td><code>MATRIX_TOKENS_MANAGED_BY</code></td>
@@ -21517,7 +21573,22 @@ affected.</p>
 <tr>
 <td><code>MATRIX_USER_REGISTRATION_SECRET</code></td>
 <td><code>""</code></td>
-<td>The homeserver's registration token, and with zero-touch setup also its <code>registration_shared_secret</code>. See <a href="#registration-secret">Registration secret</a></td>
+<td><strong>Wiring.</strong> The homeserver's registration token, and with zero-touch setup also its <code>registration_shared_secret</code>. See <a href="#registration-secret">Registration secret</a></td>
+</tr>
+<tr>
+<td><code>MATRIX_LIVEKIT_KEY</code>, <code>MATRIX_LIVEKIT_SECRET</code></td>
+<td><code>""</code></td>
+<td><strong>Wiring.</strong> LiveKit API key and secret; see <a href="#calls">Calls</a></td>
+</tr>
+<tr>
+<td><code>MATRIX_LIVEKIT_URL</code></td>
+<td><code>""</code></td>
+<td><strong>Wiring.</strong> Internal LiveKit URL; blank falls back to <code>http://livekit:7880</code></td>
+</tr>
+<tr>
+<td><code>MATRIX_LIVEKIT_PUBLIC_URL</code></td>
+<td><code>""</code></td>
+<td><strong>Wiring.</strong> LiveKit signalling URL browsers connect to for calls</td>
 </tr>
 <tr>
 <td><code>MATRIX_USER_ID_FORMAT</code></td>

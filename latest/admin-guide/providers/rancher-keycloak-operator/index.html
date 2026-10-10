@@ -19619,7 +19619,7 @@
 <li>Syncs user membership in all Keycloak groups (project + cluster scope)</li>
 </ol>
 <p>The operator does NOT create or own namespaces — namespace lifecycle (and per-namespace ResourceQuotas under the project cap) is left to users via Rancher.</p>
-<p>When you update the CR (add/remove users, change quotas), the operator reconciles the diff. When you delete the CR, the operator cleans up all created resources.</p>
+<p>When you update the CR (add/remove users, change quotas), the operator reconciles the diff. When you delete the CR, the operator removes its Rancher project, project bindings and project groups. Cluster-scope bindings and groups, and the per-cluster parent group, are shared by every CR on the cluster, so they are removed only with the last one.</p>
 <h2 id="multi-cluster-architecture">Multi-cluster architecture</h2>
 <p>One operator instance connects to a <strong>Rancher management server</strong> and can manage projects across <strong>multiple downstream clusters</strong>. Each CR specifies its target cluster via <code>spec.clusterId</code>.</p>
 <pre class="mermaid"><code>graph LR
@@ -20035,16 +20035,20 @@ uv<span class="w"> </span>run<span class="w"> </span>pytest<span class="w"> </sp
     J --&gt;|Yes| K[Phase: Ready]
     J --&gt;|No| L[Phase: Updating]
 
-    M[CR Deleted] --&gt; N[Remove PRTBs + CRTBs]
-    N --&gt; O[Remove Users from Project Groups]
-    O --&gt; P[Delete Project Keycloak Groups]
-    P --&gt; Q[Delete Rancher Project]
+    M[CR Deleted] --&gt; N[Remove PRTBs]
+    N --&gt; O[Empty + Delete Project Keycloak Groups]
+    O --&gt; S{Other CRs on\nthe cluster?}
+    S --&gt;|No| T[Remove CRTBs,\nEmpty + Delete Cluster Groups]
+    S --&gt;|Yes| U[Keep shared cluster\nCRTBs + groups]
+    T --&gt; V[Delete Parent Group\nif no child groups]
+    U --&gt; V
+    V --&gt; Q[Delete Rancher Project]
 
     style K fill:#198754,color:#fff
     style L fill:#ffc107,color:#000
     style M fill:#dc3545,color:#fff</code></pre>
 <p>A <strong>periodic resync</strong> (every 5 minutes) re-runs the reconciliation for drift detection. Concurrent reconciles for the same CR (create + timer + retries) are serialised through a per-CR <code>asyncio.Lock</code> so they can't race each other into duplicate Rancher projects.</p>
-<p><strong>Cluster-scope orphan-GC</strong>: when a cluster <code>roleBinding</code> disappears from spec (e.g. the last user of a cluster role is revoked in Waldur), the operator deletes the previously-tracked CRTB so cluster access is actually withdrawn. The shared cluster Keycloak group is left in place — multiple CRs (one per Resource × ResourceProject) typically share it, so a per-CR delete must not yank the rug out from siblings. Tolerable cost: small leak of empty groups, cleaned at the parent group level when the last CR for that cluster is deleted.</p>
+<p><strong>Cluster-scope orphan-GC</strong>: when a cluster <code>roleBinding</code> disappears from spec (e.g. the last user of a cluster role is revoked in Waldur), the operator deletes the previously-tracked CRTB so cluster access is actually withdrawn. The shared cluster Keycloak group is left in place — multiple CRs (one per Resource × ResourceProject) typically share it, so a per-CR delete must not yank the rug out from siblings. Tolerable cost: an empty group can linger until the last CR for that cluster is deleted, which removes the cluster CRTBs and groups. Whether other CRs remain is checked at deletion time; CRs that are themselves being deleted don't count, and if the CRs can't be listed the cluster is treated as shared.</p>
 <h2 id="environment-variables">Environment variables</h2>
 <table>
 <thead>
