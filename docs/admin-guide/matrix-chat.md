@@ -609,7 +609,72 @@ covers the trade-off and Synapse.
 
 `none` and `oidc` only hide the option: password login still works on the
 homeserver, so switching away from `password` does not cut off users who
-have generated a password.
+have generated a password. To stop new password logins, turn them off on the
+homeserver with `login_with_password = false`
+(Helm `matrixChat.homeserver.loginWithPassword: false`, docker-compose
+`WALDUR_MATRIX_LOGIN_WITH_PASSWORD=false`). Clients already signed in stay
+signed in until their sessions are signed out. Waldur's chat drawer signs in
+through the appservice and is unaffected, but an admin created with a password
+can then no longer sign in to a client either.
+
+The homeserver reads its configuration only at startup. With Helm, a
+`helm upgrade` that changes a non-secret `matrixChat.homeserver` value restarts
+it. The checksum that does this leaves out the secrets (`registrationToken`,
+`sso.clientSecret`) and any Secret you manage yourself, so after changing one
+run `kubectl rollout restart statefulset/matrix-homeserver`.
+(`sso.waldurRegistrationMethod` is left out too, but it is Waldur's setting,
+not the homeserver's, and needs no restart.) With docker-compose,
+re-render the configuration and restart Tuwunel, which an `up` leaves running
+with the old values:
+
+```bash
+docker compose --profile matrix up -d
+docker compose restart tuwunel
+```
+
+### Single sign-on for external clients
+
+In `oidc` mode, users sign in to Element through the same identity provider
+(IdP) as Waldur and land in the Matrix account Waldur provisioned, with their
+project rooms. Waldur hands out no password.
+[Single sign-on for Matrix clients](../developer-guide/admin-guide/matrix-sso.md)
+explains how the accounts line up, what each setting does and the limits. The
+"Single sign-on for Matrix clients" sections of the
+[Helm](deployment/helm/docs/matrix-chat.md) and
+[docker-compose](deployment/docker-compose/matrix-chat-add-on.md) guides list
+their values and what they check.
+
+1. Point Waldur's identity provider at the IdP with `user_field` set to
+   `username`, and set `MATRIX_USER_ID_FORMAT = username`,
+   `MATRIX_EXTERNAL_LOGIN_METHOD = oidc` and `MATRIX_SSO_REGISTRATION_METHOD`
+   to that identity provider's name in Waldur, such as `keycloak`. Waldur gives
+   a Matrix account only to users who registered through it; while the setting
+   is blank, no user gets one. The packagings seed it from Helm
+   `matrixChat.homeserver.sso.waldurRegistrationMethod` and docker-compose
+   `WALDUR_MATRIX_SSO_REGISTRATION_METHOD`.
+2. Register a client for the homeserver at the IdP with the redirect URI
+   `https://<homeserver>/_matrix/client/unstable/login/sso/callback/<client id>`.
+3. Turn on SSO on the homeserver (Helm `matrixChat.homeserver.sso`,
+   docker-compose `WALDUR_MATRIX_SSO_*`). Its claim must be the one Waldur's
+   identity provider uses as `user_claim`; keep the default `sub` unless the
+   IdP controls usernames.
+4. List every other homeserver admin in the forbidden usernames (Helm
+   `sso.forbiddenUsernames`, docker-compose
+   `WALDUR_MATRIX_SSO_FORBIDDEN_USERNAMES`). Both packagings trust the IdP,
+   which signs a user in to any existing account whose name matches their
+   claim, not only the ones Waldur provisioned. Both always reserve Waldur's
+   bot and `waldur-bootstrap`, the bootstrap admin that automatic registration
+   creates, ahead of the list, but nothing else, so without this step an IdP
+   user named like an admin gets the admin's account. The two take different
+   formats: Helm takes anchored patterns, such as `^admin$` (default `[]`),
+   and docker-compose takes plain localparts separated by commas, such as
+   `matrix-admin`. A bot localpart changed in Waldur's settings rather than in
+   the packaging has to be listed too.
+5. Turn off password login and restart the homeserver, as above.
+
+To check it, sign in to Element with the homeserver URL and the SSO button
+after the user has opened Waldur's chat once: Element shows the user's Waldur
+Matrix ID and project rooms, and no second account exists for them.
 
 ---
 
