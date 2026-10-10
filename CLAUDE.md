@@ -67,11 +67,12 @@ Use `/skill-name` for detailed workflows:
 
 ## External Documentation
 
-8 repositories sync to this docs site via `external-sources.yml`. Key mappings:
+9 repositories sync to this docs site via `external-sources.yml`. Key mappings:
 
 - `waldur-helm` → `docs/admin-guide/deployment/helm/`
 - `waldur-docker-compose` → `docs/admin-guide/deployment/docker-compose/`
 - `waldur-site-agent` → `docs/admin-guide/providers/site-agent/`
+- `rancher-keycloak-operator` → `docs/admin-guide/providers/rancher-keycloak-operator/` (README and Keycloak setup only)
 
 Run `python scripts/sync-external-docs.py` to pull updates.
 
