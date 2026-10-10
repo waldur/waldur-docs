@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-10T10:10:19.907771Z
+Generated: 2026-10-10T14:11:26.142771Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -28290,6 +28290,314 @@ removed as well. Only Waldur's records are removed — the network stays in the 
 
 ---
 
+### Rancher access matched by civil code
+<!-- Source: docs/admin-guide/providers/rancher-civil-code.md -->
+
+# Rancher access matched by civil code
+
+This guide connects a Rancher installation to Waldur so that people who get a role on a Waldur resource
+get the matching project or cluster role in Rancher. It covers the case where **Waldur and Rancher log
+users in through different Keycloaks**. Waldur usernames and user IDs then mean nothing on the Rancher
+side, so users are matched by the one identifier both sides share: the person's civil code (personal
+identification code), which Waldur stores as `civil_number`.
+
+The guide has two halves: what the **Kubernetes operator** of the Rancher installation sets up, and what
+the **Waldur service provider** configures.
+
+## How it fits together
+
+```mermaid
+flowchart LR
+    subgraph Waldur
+        R[Resource = one Rancher cluster] --> RP[Resource projects]
+        U[Users with roles on the resource<br/>or a resource project]
+    end
+    A[Site agent<br/>rancher-kc-crd plugin]
+    subgraph K8s[Kubernetes cluster]
+        CR[ManagedRancherProject CRs]
+        O[rancher-keycloak-operator]
+    end
+    KC[Rancher's Keycloak]
+    RA[Rancher]
+
+    U -- "list_users incl. civil code" --> A
+    A -- "one CR per resource project,<br/>members = civil codes" --> CR
+    CR --> O
+    O -- "groups + members<br/>(found by civil code)" --> KC
+    O -- "projects + role bindings<br/>for those groups" --> RA
+    KC -. "login: groups claim" .-> RA
+```
+
+- A Waldur **resource** is one Rancher downstream cluster; its `backend_id` is the Rancher cluster ID.
+- Each **resource project** becomes one Rancher project, described by one `ManagedRancherProject` custom
+  resource (CR).
+- **Roles on a resource project** become Rancher project roles. **Roles on the resource itself** become
+  cluster roles.
+- The **site agent** reads the role grants from Waldur, including each user's civil code, and writes the
+  CRs. It never talks to Rancher or Keycloak.
+- The **operator** turns each CR into a Rancher project, Keycloak groups, Rancher role bindings for those
+  groups, and group memberships. It finds each user in Rancher's Keycloak by civil code.
+- When a user logs in to Rancher, Keycloak's `groups` claim carries those groups, and Rancher's bindings
+  grant the roles.
+
+The operator never creates Keycloak users. A user who has not logged in to Rancher's Keycloak yet is
+reported back to Waldur as "missing in identity provider" and gets access on the next sync after their
+first login.
+
+## Versions
+
+| Component | Needed |
+|---|---|
+| rancher-keycloak-operator | `0.5.0` or later (attribute lookup, safe cleanup of shared cluster resources) |
+| Waldur (Mastermind) | a release newer than `8.1.3-rc.23`, which returns exposed user attributes from provider `list_users` |
+| waldur-site-agent + `waldur-site-agent-rancher-kc-crd` | a release newer than `1.0.8-rc.8` (civil-code identity settings) |
+| Keycloak (Rancher side) | tested with 26; attribute lookup needs the declarative user profile (24+) |
+| Rancher | tested with v2.9.3 and v2.15.2 |
+
+## Part 1: Kubernetes operator
+
+### 1. Decide how Rancher's Keycloak holds the civil code
+
+Pick one. The choice decides two settings in the site agent configuration later.
+
+| Layout | When | Agent settings |
+|---|---|---|
+| **A. Username is the civil code** | Keycloak brokers TARA or another eID provider and maps its subject (e.g. `EE38001010000`) to the username | `keycloak_user_lookup: username` |
+| **B. Civil code is a user attribute** | Usernames are something else; the code sits in an attribute such as `personalCode` | `keycloak_user_lookup: attribute`, `keycloak_lookup_attribute: personalCode` |
+
+The value must match what Waldur stores, apart from a fixed prefix the agent can add
+(`keycloak_user_identity_template: "EE${value}"`). In layout A the agent lowercases the value, because
+Keycloak stores usernames in lowercase.
+
+!!! danger "Layout B: only administrators may write the attribute"
+    Attribute lookup gives the Rancher roles to whoever holds the value. If users can edit the attribute
+    themselves (Account Console, registration form, first-login profile review), anyone with an account
+    in this Keycloak could copy someone else's civil code into their profile and receive that person's
+    access.
+
+    Declare the attribute under **Realm settings → User profile** with edit permission **admin only**
+    (view: admin), or fill it from an identity-provider or LDAP mapper. Do not set *Unmanaged
+    attributes* to *Enabled*. The operator checks the realm's user profile and refuses to match by an
+    attribute that users can edit, logging `Keycloak users can edit their own attribute …`.
+
+### 2. Prepare Keycloak and Rancher
+
+Follow the operator's [Keycloak setup guide](rancher-keycloak-operator/docs/keycloak-setup.md). In short:
+
+- An **operator user** in Keycloak with `manage-users` and `view-users` on `realm-management` of the
+  realm Rancher logs in with.
+- Rancher's auth provider must be **Keycloak (OIDC)**. The generic OIDC provider produces a different
+  group principal, and the bindings would never match.
+- The Rancher client in Keycloak must emit a **`groups` claim with the bare group name** (*Full group
+  path* off).
+- A Rancher **API token** with admin rights, or cluster-owner on every cluster this operator manages.
+
+### 3. Install the operator
+
+```bash
+helm repo add rancher-keycloak-operator https://waldur.github.io/rancher-keycloak-operator/
+helm repo update
+
+kubectl create namespace waldur-system
+
+helm upgrade --install rko rancher-keycloak-operator/rancher-keycloak-operator \
+  --namespace waldur-system \
+  --version 0.5.0 \
+  --set config.rancher.url=https://rancher.example.com \
+  --set config.rancher.bearerToken=<rancher-api-token> \
+  --set config.rancher.verifySsl=true \
+  --set config.keycloak.url=https://keycloak.example.com \
+  --set config.keycloak.realm=<rancher-realm> \
+  --set config.keycloak.userRealm=<realm-of-the-operator-user> \
+  --set config.keycloak.username=<operator-user> \
+  --set config.keycloak.password=<operator-password> \
+  --set config.keycloak.verifySsl=true
+
+kubectl rollout status deploy/rko-rancher-keycloak-operator -n waldur-system
+kubectl get crd managedrancherprojects.waldur.io
+```
+
+The CRDs ship in the chart's templates, so `helm upgrade` also updates them. One operator serves every
+downstream cluster of the Rancher server; each CR names its cluster.
+
+### 4. Give the site agent access to the CRs
+
+The site agent needs a kubeconfig, or an in-cluster service account, that may
+`get`, `list`, `watch`, `create`, `update`, `patch` and `delete` `managedrancherprojects.waldur.io` in
+`waldur-system`.
+
+!!! warning "Civil codes are stored in the CRs"
+    Each CR holds the civil codes of its members in plain text (`spec…members[].userIdentifier` and
+    `status…syncedMembers`). Restrict read access to `managedrancherprojects` in `waldur-system` to the
+    site agent, the operator and cluster administrators.
+
+### 5. Install and configure the site agent
+
+Install `waldur-site-agent` together with the `waldur-site-agent-rancher-kc-crd` plugin, in a version from
+the table above. See the [site agent documentation](site-agent/index.md) and the
+[plugin reference](site-agent/plugins/rancher-kc-crd/README.md) for installation options.
+
+Add the offering to `waldur-site-agent-config.yaml`; the Waldur service provider supplies the URL, token
+and offering UUID (Part 2):
+
+```yaml
+offerings:
+  - name: "Rancher"
+    waldur_api_url: "https://waldur.example.com/api/"
+    waldur_api_token: "${WALDUR_API_TOKEN}"
+    waldur_offering_uuid: "<offering-uuid>"
+    backend_type: "rancher-kc-crd"
+    membership_sync_backend: "rancher-kc-crd"
+
+    backend_settings:
+      # The plugin reads resource projects and role grants itself, so it
+      # needs the Waldur API too.
+      waldur_api_url: "https://waldur.example.com/api/"
+      waldur_api_token: "${WALDUR_API_TOKEN}"
+      waldur_verify_ssl: true
+
+      kubeconfig_path: "/etc/waldur/rancher-kubeconfig"   # omit when running in-cluster
+      namespace: "waldur-system"
+
+      # Waldur role name -> Rancher role template ID
+      role_map:                       # roles on resource projects -> project roles
+        "Project member": "project-member"
+        "Project owner": "project-owner"
+      cluster_role_map:               # roles on the resource -> cluster roles
+        "Cluster member": "cluster-member"
+
+      # Match users by civil code
+      keycloak_user_identity_source: civil_number
+      # Layout A (username is the civil code):
+      keycloak_user_lookup: username
+      keycloak_user_identity_template: "EE${value}"   # only if Keycloak's value has a prefix Waldur's lacks
+      # Layout B (attribute) instead:
+      # keycloak_user_lookup: attribute
+      # keycloak_lookup_attribute: personalCode
+```
+
+The keys of `role_map` and `cluster_role_map` are the role names the service provider creates in Waldur
+(Part 2, step 3); the values are Rancher role template IDs. Roles missing from the maps are skipped, and
+the agent logs a warning naming them.
+
+Run the agent in membership-sync mode:
+
+```bash
+waldur_site_agent --mode membership_sync --config-file waldur-site-agent-config.yaml
+```
+
+## Part 2: Waldur service provider
+
+### 1. Create the offering
+
+Create an offering of the **site agent** type (`Marketplace.Slurm` in the API). In its integration
+settings, turn on **Enable resource projects** (`plugin_options.enable_resource_projects: true`).
+
+**Offering users do not need to be enabled.** The agent takes members from the role grants on resources
+and resource projects, and the civil code comes with them. It ignores offering users for this backend, so
+`service_provider_can_create_offering_user` can stay off.
+
+### 2. Expose the civil code to the offering
+
+Waldur returns a user's civil code to a service provider only if the offering's user attribute exposure
+allows it. Without it, no member can be matched: every grant is reported as "Civil code not available for
+this user", and the agent logs a warning each cycle.
+
+!!! note
+    The **User attribute exposure** tab in the offering's integration settings is only shown when
+    offering users are enabled. If they are not, set it through the API, as an owner of the
+    service-provider organization:
+
+```bash
+curl -X PATCH -H "Authorization: Token <owner-token>" -H "Content-Type: application/json" \
+  https://waldur.example.com/api/marketplace-provider-offerings/<offering-uuid>/update-user-attribute-config/ \
+  -d '{"expose_civil_number": true}'
+```
+
+If the offering has no attribute configuration yet, this creates one; username, full name and email stay
+exposed by default.
+
+Users only have a civil code in Waldur if they logged in through an identity provider that supplies it
+(for example TARA, or a Keycloak whose `schacPersonalUniqueID` claim is mapped to `civil_number`), or if
+staff entered it. Users cannot set it themselves.
+
+### 3. Define the roles
+
+Create the roles customers can grant, with the exact names used in the agent's `role_map` and
+`cluster_role_map`:
+
+```bash
+# Resource-project role -> Rancher project role
+curl -X POST -H "Authorization: Token <owner-token>" -H "Content-Type: application/json" \
+  https://waldur.example.com/api/marketplace-offering-roles/ \
+  -d '{"name": "Project member", "content_type_input": "resource_project", "offering": "<offering-uuid>"}'
+
+# Resource role -> Rancher cluster role
+curl -X POST -H "Authorization: Token <owner-token>" -H "Content-Type: application/json" \
+  https://waldur.example.com/api/marketplace-offering-roles/ \
+  -d '{"name": "Cluster member", "content_type_input": "resource", "offering": "<offering-uuid>"}'
+```
+
+### 4. Create the agent's API token
+
+Create a user for the agent, make it an **offering manager** of this offering (or a manager of the
+service provider), and give its API token to the Kubernetes operator. The agent uses it to read resources,
+resource projects and role grants, and to set each resource project's state from its CR (OK or erred).
+
+### 5. Link each resource to its Rancher cluster
+
+Each resource stands for one Rancher downstream cluster. Set its `backend_id` to the Rancher cluster ID
+(for example `c-m-abc12345`); the agent refuses to build CRs for a resource without one:
+
+```bash
+curl -X POST -H "Authorization: Token <provider-token>" -H "Content-Type: application/json" \
+  https://waldur.example.com/api/marketplace-provider-resources/<resource-uuid>/set_backend_id/ \
+  -d '{"backend_id": "c-m-abc12345"}'
+```
+
+### 6. Grant access
+
+Customers create resource projects under the resource and give users roles on them, or on the resource
+itself for cluster-wide roles. They can do this directly or by invitation; through the API it is
+`/api/marketplace-resource-projects/<uuid>/add_user/` or `/api/user-invitations/`. If the offering has terms of service
+and consent is enforced, users appear only after accepting them.
+
+## Verify
+
+```bash
+# CRs written by the agent, one per resource project
+kubectl get mrp -n waldur-system -L waldur.io/resource-uuid
+
+# Members and their sync state
+kubectl get mrp <name> -n waldur-system -o jsonpath='{.status.keycloakRoleBindings[*].syncedMembers}'
+
+# Operator log: lookups, refusals, group changes
+kubectl logs deploy/rko-rancher-keycloak-operator -n waldur-system --tail=100
+```
+
+In Waldur, the resource's user list shows an icon on each grant, as the agent reports it:
+
+| State | Shown as | Meaning |
+|---|---|---|
+| synced | "Access is active on the provider side." | The user is a member of the Keycloak group |
+| pending | "Waiting for the provider backend to apply this role." | The operator has not finished reconciling the CR |
+| missing in identity provider | "User is not known to the identity provider yet; access activates after their first login." | No Keycloak user has this civil code yet, the stored value differs, or the user has no civil code in Waldur |
+| error | "Provider-side synchronization failed." | The CR is in phase `Error`; see the operator log |
+
+## Troubleshooting
+
+| Symptom | Cause |
+|---|---|
+| Every grant says "Civil code not available for this user" | `expose_civil_number` is off for the offering (Part 2, step 2) |
+| One user says "Civil code not available" | That user has no civil code in Waldur |
+| Grants stay "missing in identity provider" | The user has not logged in to Rancher's Keycloak yet, or the stored value differs (prefix, case, attribute name) |
+| Operator logs `Keycloak users can edit their own attribute …` | Layout B attribute is user-editable; restrict its edit permission to admin |
+| Operator logs `matches 2 users; refusing to pick one` | Two Keycloak users hold the same civil code; resolve it in Keycloak |
+| Users are group members but have no Rancher access | Rancher uses the generic OIDC provider, or the `groups` claim carries full group paths |
+| Agent log warns that roles are not in `role_map` | A Waldur role name is missing from `role_map` / `cluster_role_map` |
+
+---
+
 ### Keycloak setup for the operator
 <!-- Source: docs/admin-guide/providers/rancher-keycloak-operator/docs/keycloak-setup.md -->
 
@@ -28348,7 +28656,8 @@ target realm:
 | `view-users` | read users, groups and group members (composite: includes `query-users`, `query-groups`) |
 
 That is the minimal set for every call the operator makes:
-`GET /users/{id}`, `GET /users?username=&exact=true`, `GET|POST /groups`,
+`GET /users/{id}`, `GET /users?username=&exact=true`,
+`GET /users?q=<attr>:<value>&exact=true` (attribute-mode members, see §4), `GET|POST /groups`,
 `POST /groups/{id}/children`, `DELETE /groups/{id}`,
 `GET /groups/{id}/members`, `PUT|DELETE /users/{id}/groups/{gid}`.
 No `manage-realm`, no `admin` role.
@@ -28487,9 +28796,74 @@ Expect bare names — `["p-abc-admin"]`, **not** `["/parent/p-abc-admin"]`.
   `managed_by=rancher-keycloak-operator`. Handy for auditing; it is not
   used for filtering.
 
-## 4. Cleanup semantics to be aware of
+## 4. Looking members up by a user attribute
 
-On CR deletion the operator removes members, deletes the child groups,
+Each CR member names a Keycloak user in one of three ways:
+
+| Member fields | `userIdentifier` is |
+|---|---|
+| `lookupByID: true` (default) | the Keycloak user UUID |
+| `lookupByID: false` | the Keycloak username |
+| `lookupAttribute: <name>` | the value of user attribute `<name>`; `lookupByID` is ignored |
+
+The attribute form exists for deployments where Waldur and Rancher
+authenticate against **different** Keycloaks, so neither the UUID nor
+necessarily the username is shared. The identifier both sides do share
+(typically a national civil code) is then sent by the site agent, and
+the Rancher-side Keycloak may hold it as a user attribute instead of
+the username:
+
+```yaml
+members:
+  - userIdentifier: "38001010001"
+    lookupAttribute: civil_code
+```
+
+If the Rancher Keycloak stores the civil code *as the username*, use
+`lookupByID: false` instead — no attribute setup is needed.
+
+What has to hold for attribute lookup to work:
+
+- **Only administrators may write the attribute.** Attribute lookup
+  gives the grant to whoever holds the value, so a user who could edit
+  the attribute in the Account Console, at registration or on the
+  first-broker-login profile review could copy someone else's civil
+  code into their own profile and receive that person's access. On
+  Keycloak 24+ (declarative user profile always on), declare the
+  attribute in *Realm settings → User profile* with **edit permission
+  `admin` only** (view `admin`), or fill it from an identity-provider
+  or LDAP mapper. Leaving it undeclared works only with
+  *Unmanaged attributes* set to *Only administrators can write*
+  (`ADMIN_EDIT`). Never use *Enabled*, which lets users edit it.
+  The operator enforces this: before matching by an attribute it reads
+  `GET /users/profile`. If users can edit the attribute, or the profile
+  can't be read, it logs an error, adds nobody by that attribute, and
+  stops keeping current members on the strength of it. The check is
+  cached for five minutes, so fixing the realm needs no restart.
+- **The attribute must be visible to the admin API.** An attribute that
+  is neither declared nor allowed as unmanaged is neither searchable
+  with `q=` nor returned in group member listings, so every lookup
+  silently finds nobody and the user is never added.
+- **The operator credential needs `view-users`** (already part of the
+  minimal role set in §1); the search is `GET /users?q=<name>:<value>`.
+- **Values must match exactly** what the site agent sends: same
+  attribute name, same value, no extra whitespace or prefix such as a
+  country code. The operator re-checks every search hit against the
+  returned attributes and keeps only exact matches, so a substring
+  match in Keycloak's search can never resolve to the wrong user.
+- **Values must be unique.** Keycloak does not enforce uniqueness of
+  attributes. If a value matches more than one user, the operator adds
+  nobody and logs an error with the attribute name and match count
+  (values are masked in logs, e.g. `3800…01`).
+
+Status `syncedMembers` echoes the attribute value for members matched
+by attribute (as it echoes the username for username-mode members), so
+the site agent can confirm each grant against what it submitted.
+
+## 5. Cleanup semantics to be aware of
+
+On CR deletion the operator removes members (by the UUIDs Keycloak
+lists for each group, whatever form the spec used), deletes the child groups,
 and deletes the parent group **only if it has no remaining subgroups**.
 Pre-existing groups adopted by name are deleted the same way as ones it
 created — don't point a CR at a group you also use for something else.
@@ -28572,7 +28946,11 @@ spec:
         rancherRole: "workloads-manage"
         members:
           - userIdentifier: "keycloak-user-uuid"
-            lookupByID: true
+            lookupByID: true             # Keycloak UUID (default)
+          - userIdentifier: "jdoe"
+            lookupByID: false            # Keycloak username
+          - userIdentifier: "38001010001"
+            lookupAttribute: civil_code  # 0.5.0+: value of a user attribute; lookupByID ignored
 
   cluster:                       # OPTIONAL (0.4.0+): cluster-scope CRTB on spec.clusterId
     keycloak:
@@ -28821,9 +29199,12 @@ A **periodic resync** (every 5 minutes) re-runs the reconciliation for drift det
 
 **Keycloak prerequisites:** the operator needs a dedicated admin user (`manage-users` + `view-users` on `realm-management`) and — so the groups it creates actually grant Rancher access — a Rancher OIDC client emitting a `groups` claim with *full group path* off. See [docs/keycloak-setup.md](docs/keycloak-setup.md); `scripts/keycloak-bootstrap.sh` creates both idempotently.
 
+**Attribute-mode members** (`lookupAttribute`, 0.5.0+) need the attribute declared in the realm's user profile (Keycloak 24+) with edit permission `admin` only. The operator refuses attribute lookups that users could satisfy by editing their own profile. An undeclared attribute is never found, and a value matching more than one user adds nobody. See [docs/keycloak-setup.md §4](docs/keycloak-setup.md#4-looking-members-up-by-a-user-attribute).
+
 ## Duplicate handling
 
 - **Same user twice in one roleBinding**: automatically deduplicated (set-based)
+- **Member identity** is `(lookupAttribute, userIdentifier)`: a username and an attribute value that happen to be the same string are kept as two members
 - **Same groupName across roleBindings**: member lists are merged into a union before syncing, so no roleBinding accidentally removes another's members. A warning is logged.
 
 ---
@@ -44301,6 +44682,12 @@ Rancher after the initial create. The plugin no longer emits
 creation; earlier versions also miss audit fields and the
 stale-project-ID cleanup fallback that the plugin assumes.
 
+Attribute lookup (`keycloak_user_lookup: attribute`, see
+[Matching users across Keycloaks by civil code](#matching-users-across-keycloaks-by-civil-code))
+needs operator **`0.5.0`+**: older CRDs reject the `lookupAttribute`
+member field, so the plugin emits it only when attribute lookup is
+configured.
+
 The operator's helm chart lives in its own repo under
 `helm/rancher-keycloak-operator/`; install instructions are in the
 [Setup](#setup) section below.
@@ -44668,7 +45055,8 @@ offerings:
         create_ns: "create-ns"
 
       # User-identity link to Keycloak. See "User identity matching" below.
-      keycloak_use_user_id: false
+      keycloak_user_identity_source: username  # default
+      keycloak_user_lookup: username           # default
 ```
 
 #### 2c. Run
@@ -44698,10 +45086,21 @@ kubectl logs deploy/rko-rancher-keycloak-operator -n waldur-system --tail=100 -f
 
 ## User identity matching
 
-The plugin can match Waldur users to Keycloak users either by username
-(default) or by UUID. Choose with `backend_settings.keycloak_use_user_id`:
+Each CR member is `{userIdentifier, lookupByID[, lookupAttribute]}`.
+Two settings decide what goes in it:
 
-**`false` (default) — match by username**
+- `keycloak_user_identity_source` — the Waldur field that supplies
+  `userIdentifier`: `username` (default), `uuid`, or `civil_number`.
+- `keycloak_user_lookup` — how the operator finds that value in the
+  Rancher Keycloak: `username` (default), `id` (Keycloak user ID), or
+  `attribute` (a user attribute named by `keycloak_lookup_attribute`).
+
+`keycloak_use_user_id: true` is the deprecated spelling of
+`source: uuid` + `lookup: id`; it still works (with a warning in the
+agent log) and produces the same CRs as before. Combining it with
+conflicting new settings is rejected.
+
+**Username (default) — `source: username`, `lookup: username`**
 : Plugin sends `UserRole.user_username`. Operator does
   `GET /admin/realms/<realm>/users?username=X&exact=true` and uses
   the resulting `user.id` for group membership operations. Works in
@@ -44709,7 +45108,7 @@ The plugin can match Waldur users to Keycloak users either by username
   align with Keycloak usernames — the typical OIDC mapping does this
   via the `preferred_username` claim.
 
-**`true` — match by UUID**
+**UUID — `source: uuid`, `lookup: id`**
 : Plugin sends `UserRole.user_uuid`. Operator does
   `GET /admin/realms/<realm>/users/{uuid}` (matches the Keycloak
   internal `user.id`). Use this only when Waldur was OIDC-provisioned
@@ -44738,6 +45137,85 @@ PRTB and the group are still created and bound, the user just isn't
 a member yet. They become a member on the next reconcile after the
 user appears in Keycloak (e.g. their first OIDC login).
 
+**Civil code — `source: civil_number`**
+: For a Rancher Keycloak that is not the one Waldur logs in with; see
+  the next section.
+
+The CR identifier and the identity reported back to Waldur are kept
+apart: the membership sync report is keyed by `username` in username
+mode and by `user_uuid` in the uuid and civil-number modes.
+
+---
+
+## Matching users across Keycloaks by civil code
+
+When Waldur and Rancher authenticate against **different** Keycloaks,
+Waldur usernames and UUIDs mean nothing on the Rancher side. What both
+sides share is the person's civil code (personal identification code),
+which Waldur stores as `civil_number`. Set
+`keycloak_user_identity_source: civil_number` and pick the lookup that
+matches how the Rancher Keycloak stores the code.
+
+| Key | Values (default first) | Meaning |
+|---|---|---|
+| `keycloak_user_identity_source` | `username`, `uuid`, `civil_number` | Waldur field that becomes `userIdentifier` |
+| `keycloak_user_lookup` | `username`, `id`, `attribute` | How the operator looks it up; `id` needs source `uuid` |
+| `keycloak_lookup_attribute` | string | Attribute to match; required with (only with) lookup `attribute` |
+| `keycloak_user_identity_template` | `${value}`, e.g. `EE${value}` | Rendered around the source value |
+| `keycloak_user_identity_lowercase` | `true` for lookup `username`, else `false` | Lowercase the result |
+
+**Layout 1 — the username is the civil code.** E.g. a Keycloak brokering
+TARA with the `sub` claim (`EE38001010000`) mapped to the username.
+Use `keycloak_user_lookup: username` (the default) and a template for
+any country prefix:
+
+```yaml
+keycloak_user_identity_source: civil_number
+keycloak_user_identity_template: "EE${value}"
+# keycloak_user_lookup: username   (default)
+```
+
+Keycloak stores usernames lowercased and the operator compares the spec
+string with the stored username, so the identifier is lowercased by
+default (`ee38001010000`). A mixed-case value would be added and
+removed again on every reconcile.
+
+**Layout 2 — the civil code is a user attribute.** Use attribute lookup
+and name the attribute. Requires operator **`0.5.0`+**. The attribute
+must be declared in the realm's user profile with **edit permission
+`admin` only**, or filled by an identity-provider or LDAP mapper.
+Attribute lookup gives the grant to whoever holds the value, so a
+user-editable attribute would let anyone copy someone else's civil code
+into their own profile. The operator refuses attribute lookups in that
+case and logs an error:
+
+```yaml
+keycloak_user_identity_source: civil_number
+keycloak_user_lookup: attribute
+keycloak_lookup_attribute: personalCode
+# keycloak_user_identity_template: "EE${value}"   if the stored value is prefixed
+```
+
+The value is matched verbatim (no lowercasing unless
+`keycloak_user_identity_lowercase: true`), and `syncedMembers` in the CR
+status echoes it.
+
+**The offering must expose the civil code.** Waldur includes
+`user_civil_number` in the `list_users` responses the plugin reads only
+when the offering's user attribute config has `expose_civil_number`
+enabled. Without it no member can be matched: the plugin logs a warning
+each cycle naming the setting, and every grant is reported as
+`missing_in_idp` with "Civil code not available for this user". A user
+whose civil code is empty is skipped the same way, individually.
+
+**Privacy.** Civil codes never leave the agent towards Waldur — sync
+reports are keyed by `user_uuid` and the plugin maps confirmed members
+back to UUIDs — and agent logs show them masked (`3800…00`). They are,
+however, stored **in plaintext** in each CR's `spec` and `status`
+(`userIdentifier`, `syncedMembers`). Keep `get`/`list`/`watch` on
+`managedrancherprojects` in the CR namespace restricted to the agent,
+the operator and cluster administrators.
+
 ---
 
 ## Configuration reference
@@ -44759,7 +45237,12 @@ above for why.
 | `role_map` | dict | no (default `{}`) | Waldur role → Rancher project role template ID; see **note C**. |
 | `cluster_role_map` | dict | no | Resource-level role → Rancher cluster role template ID; see **note C**. |
 | `cluster_group_name_template` | string | no | KC group per cluster role. |
-| `keycloak_use_user_id` | bool | no | `false` (default) → match by username. `true` → match by UUID. See above. |
+| `keycloak_user_identity_source` | string | no (default `username`) | `username`, `uuid` or `civil_number`. |
+| `keycloak_user_lookup` | string | no (default `username`) | `username`, `id` or `attribute`. |
+| `keycloak_lookup_attribute` | string | with lookup `attribute` | User attribute to match (operator `0.5.0`+). |
+| `keycloak_user_identity_template` | string | no (default `${value}`) | E.g. `EE${value}`. |
+| `keycloak_user_identity_lowercase` | bool | no | Default `true` for lookup `username`, `false` otherwise. |
+| `keycloak_use_user_id` | bool | no | **Deprecated**: `true` = source `uuid` + lookup `id`. |
 
 Defaults: `group_name_template` is `c_${cluster_id}_${rp_uuid}_${role_name}`,
 `cluster_group_name_template` is `c_${cluster_id}_cluster_${role_name}`.
@@ -44774,7 +45257,9 @@ When `cluster_role_map` is set, the Resource-level user roles are written to eve
 
 The settings are validated by
 `waldur_site_agent_rancher_kc_crd.schemas.RancherKcCrdBackendSettingsSchema`; a misspelt
-key is logged as a warning when the agent loads its configuration.
+key is logged as a warning when the agent loads its configuration. An invalid member-identity
+combination (e.g. source `civil_number` with lookup `id`) is logged the same way and also stops
+the backend from starting, since it would grant access to nobody or to the wrong users.
 
 `spec.clusterId` is resolved from each Resource's `backend_id` (1:1
 with a Rancher cluster) — there is no offering-level `cluster_id`
@@ -44855,9 +45340,12 @@ group name self-explaining in the Keycloak admin UI.
   or as a workaround drop the trailing `/api/` from `waldur_api_url`.
 
 **Operator logs `WARNING User X not found in Keycloak` for every user**
-: Identity mismatch — the chosen identifier (username by default, UUID with `keycloak_use_user_id: true`)
-  isn't resolvable in Keycloak. With the default username path: ensure Waldur usernames map to existing
-  Keycloak usernames. With the UUID path: align Waldur user UUIDs with the Keycloak OIDC `sub`.
+: Identity mismatch — the chosen identifier (username by default; UUID or civil code per
+  `keycloak_user_identity_source`) isn't resolvable in Keycloak. With the default username path: ensure Waldur
+  usernames map to existing Keycloak usernames. With the UUID path: align Waldur user UUIDs with the Keycloak
+  OIDC `sub`. With civil codes: check the template (country prefix) and, for attribute lookup, that the
+  attribute is declared in the realm user profile with edit permission `admin` only (the operator
+  logs `users can edit their own attribute` and refuses lookups otherwise).
 
 **`kubectl delete mrp` succeeds in 0s but the Rancher project remains**
 : `status.rancherProjectId` is stale; operator versions before `0.2.2` treated 404 on delete as success.
@@ -55329,6 +55817,45 @@ Content-Type: application/json
 {
   "DEFAULT_OFFERING_USER_ATTRIBUTES": ["username", "full_name", "email", "organization"]
 }
+```
+
+### Where Exposed Attributes Are Returned
+
+The same configuration governs every provider-facing view of a user:
+
+| Endpoint | What it returns |
+|----------|-----------------|
+| `GET /api/marketplace-offering-users/` | Offering users of the offering, with the exposed `user_<attr>` fields |
+| `GET /api/marketplace-provider-resources/{uuid}/list_users/` | Role grants on the resource itself, with the exposed `user_<attr>` fields |
+| `GET /api/marketplace-provider-resource-projects/{uuid}/list_users/` | Role grants on the resource project, with the exposed `user_<attr>` fields |
+
+The two `list_users` endpoints cover users who hold a role on a resource or one of its resource projects
+without being on the parent project's team, so they may have no offering user at all. A site agent that
+grants access per resource project reads its members there.
+
+On the `list_users` endpoints, `user_username`, `user_full_name` and `user_email` are part of the role
+details and are always returned. Every other `user_<attr>` field (for example `user_civil_number`) is
+present only when the offering exposes that attribute. Consumer-side `list_users` endpoints return no
+profile attributes.
+
+For example, the site agent's `rancher-kc-crd` plugin can match users by civil code in a Rancher Keycloak
+that Waldur does not share. That needs `expose_civil_number: true` on the offering:
+
+```http
+GET /api/marketplace-provider-resource-projects/{uuid}/list_users/
+```
+
+```json
+[
+  {
+    "role_name": "project_member",
+    "user_uuid": "3a57ca3e2bf94fbd8767f6f0a52ea03e",
+    "user_username": "alice",
+    "user_full_name": "Alice Smith",
+    "user_email": "alice@example.com",
+    "user_civil_number": "EE38001010001"
+  }
+]
 ```
 
 ### Permissions
