@@ -13,7 +13,7 @@
         <link rel="prev" href="../../waldur-ci-cd/">
       
       
-        <link rel="next" href="../../design/changelog-offline-support/">
+        <link rel="next" href="../matrix-sso/">
       
       
         
@@ -11061,6 +11061,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#registering-on-tuwunel-from-the-command-line" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Registering on Tuwunel from the command line
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#via-the-api" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -11159,6 +11170,17 @@
     <span class="md-ellipsis">
       
         Token rotation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seeding-from-the-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Seeding from the environment
       
     </span>
   </a>
@@ -11426,6 +11448,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#registration-secret" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Registration secret
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -11518,6 +11551,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../matrix-sso/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Matrix sso
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -19496,6 +19557,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#registering-on-tuwunel-from-the-command-line" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Registering on Tuwunel from the command line
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#via-the-api" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19594,6 +19666,17 @@
     <span class="md-ellipsis">
       
         Token rotation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seeding-from-the-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Seeding from the environment
       
     </span>
   </a>
@@ -19861,6 +19944,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#registration-secret" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Registration secret
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -19981,12 +20075,12 @@
 <ul>
 <li>A running Matrix homeserver with Application Service support</li>
 <li>Waldur reachable from the homeserver over HTTP/HTTPS</li>
-<li>A staff account in Waldur — the Setup appservice wizard, connectivity diagnostics, and the <strong>Settings</strong> tab are staff-only</li>
+<li>A staff account in Waldur — the Setup appservice wizard, Diagnostics, and the <strong>Settings</strong> tab are staff-only</li>
 </ul>
 <p>The Setup appservice wizard collects everything else it needs. If the homeserver URL, homeserver domain, or user registration secret (<code>MATRIX_HOMESERVER_URL</code>, <code>MATRIX_HOMESERVER_DOMAIN</code>, <code>MATRIX_USER_REGISTRATION_SECRET</code>) are still empty in Constance, the wizard shows a prerequisites step that prompts for them and persists them. You can also set them in Constance beforehand to skip that step.</p>
 <h2 id="appservice-setup">Appservice Setup</h2>
 <h3 id="via-the-ui">Via the UI</h3>
-<p>The page lives at <strong>Administration → Configuration → Matrix chat</strong> and is split into a <strong>Rooms</strong> tab and a staff-only <strong>Settings</strong> tab. Support users see only the Rooms tab; the Setup appservice and Check connectivity actions are staff-only.</p>
+<p>The page lives at <strong>Administration → Configuration → Matrix chat</strong> and is split into a <strong>Rooms</strong> tab and a staff-only <strong>Settings</strong> tab. Support users see only the Rooms tab; the Setup appservice and Diagnostics actions are staff-only.</p>
 <ol>
 <li>Navigate to <strong>Administration → Configuration → Matrix chat</strong></li>
 <li>Click <strong>Setup appservice</strong> to open the wizard</li>
@@ -20000,10 +20094,36 @@
 <blockquote>
 <p><strong>Warning:</strong> If AS and HS tokens are already configured, the wizard warns that running setup again will generate new tokens and overwrite the existing ones. You will need to update your homeserver configuration with the new registration YAML.</p>
 </blockquote>
+<h3 id="registering-on-tuwunel-from-the-command-line">Registering on Tuwunel from the command line</h3>
+<p>Tuwunel takes appservice registrations through its admin room instead of a config file. <code>waldur register_matrix_appservice</code> does steps 5–8 for you: it builds the registration from Constance, sends <code>!admin appservices register</code> to the admin room, and reads the admin bot's reply.</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>waldur<span class="w"> </span>register_matrix_appservice<span class="w"> </span>--url<span class="w"> </span>https://waldur.example.com
+</code></pre></div></td></tr></tbody></table></div>
+<ul>
+<li>It acts as a bootstrap admin, <code>@waldur-bootstrap</code>, with <code>MATRIX_BOOTSTRAP_PASSWORD</code> as its password. The first run creates it through the homeserver's shared-secret registration API, <code>/_synapse/admin/v1/register</code>, which Tuwunel serves too. That makes it an admin however many users the homeserver already has. The API is keyed with <code>MATRIX_USER_REGISTRATION_SECRET</code>, so the homeserver's <code>registration_shared_secret</code> must have the same value; waldur-helm and waldur-docker-compose set both. The call goes to <code>MATRIX_HOMESERVER_URL</code>, which therefore has to reach the homeserver's admin API, not only its client API. When <code>@waldur-bootstrap</code> already exists, the command signs in as it.</li>
+<li>To act as another admin, set <code>MATRIX_ADMIN_TOKEN</code> in the command's environment to that admin's access token. It takes precedence, and nobody is created. <code>--admin-token</code> still works, but an argument shows up in process listings.</li>
+<li>It signs the bootstrap admin out when it finishes, whether it succeeded or not, so no admin session outlives the run. A token from <code>MATRIX_ADMIN_TOKEN</code> is left signed in.</li>
+<li>It finds the admin room through its <code>#admins</code> alias. Pass <code>--admin-room</code> only when the alias does not resolve and the admin is in more than one room.</li>
+<li>Set <code>MATRIX_BOOTSTRAP_PASSWORD</code> in the command's environment and keep it. Later runs sign in with it. Without it no bootstrap admin is created, because nobody could sign in as it again, so registering needs <code>MATRIX_ADMIN_TOKEN</code>. An empty value counts as unset. With password login off on the homeserver, later runs need <code>MATRIX_ADMIN_TOKEN</code> too; see <a href="#token-rotation">Token rotation</a>.</li>
+<li><code>MATRIX_BOOTSTRAP_PASSWORD</code> is a homeserver admin's permanent password. While password login is on, anyone who holds it can sign in as <code>@waldur-bootstrap</code> through the homeserver's public <code>/login</code> and administer the whole homeserver. Treat it like the <code>as_token</code> and the registration secret (see <a href="#registration-secret">Registration secret</a>). Keep it only in the deployment's Secret or <code>secrets.env</code>, and out of command lines, shell history and logs. The command reads it from the environment only, and never stores it in Constance. Changing it in the deployment alone breaks later runs, because the homeserver still holds the old one: reset the bootstrap admin's password on the homeserver first.</li>
+<li>Turning password login off (<code>login_with_password = false</code> in <code>tuwunel.toml</code>) closes that door. It suits a homeserver where users sign in to Element with single sign-on (<code>MATRIX_EXTERNAL_LOGIN_METHOD = oidc</code>) or not at all (<code>none</code>). It does not suit <code>password</code>, where users sign in to Element with passwords Waldur generates for them. A first install works either way, because creating the bootstrap admin returns a session. Once it is off, a rotation, or a ping Waldur turns away, needs <code>MATRIX_ADMIN_TOKEN</code>, and so does anything an admin has to do in a client.</li>
+<li>If <code>@waldur-bootstrap</code> exists but is not a homeserver admin, for example because it was created some other way, the command fails with "is not in the admin room". Make it an admin from <code>#admins</code> with <code>!admin users make-user-admin @waldur-bootstrap:&lt;your domain&gt;</code>, or set <code>MATRIX_ADMIN_TOKEN</code>.</li>
+<li>It is safe to re-run. When the homeserver already accepts the appservice token, the command signs in without creating anyone, with <code>MATRIX_ADMIN_TOKEN</code> or as the bootstrap admin with <code>MATRIX_BOOTSTRAP_PASSWORD</code>. It reads the homeserver's copy of the registration with <code>!admin appservices show-config waldur</code> and replaces it when the URL, a token or a namespace differs. This is how a stack registered by hand before the room-alias namespace existed gets that namespace. When it cannot sign in or read the copy, it leaves the registration alone, prints a warning and succeeds.</li>
+<li>When <code>waldur</code> is registered with other tokens, another URL or other namespaces, it unregisters that registration and registers Waldur's. Registering the same id again is not enough, because Tuwunel answers <code>Duplicate id</code> and keeps the old registration.</li>
+<li>When the homeserver accepts the <code>as_token</code> but Waldur turns away its ping with a 4xx, and the homeserver's copy already matches, registering it again cannot help. The command fails without changing anything: the URL does not lead to this Waldur, or Waldur checks another <code>hs_token</code>. When it cannot read the copy, it replaces the registration on the strength of the ping. A 5xx is Waldur or its ingress being down, which a new registration cannot fix, so that is only a warning.</li>
+<li>It unregisters only when the homeserver definitely rejects the token. When it gets no clear answer, such as a timeout or a 5xx from a proxy, it stops without changing anything.</li>
+<li>It succeeds only when the homeserver accepts Waldur's <code>as_token</code> afterwards, and after replacing a live registration, only when Waldur does not turn the next ping away. A failure after the old registration was removed says so: the homeserver delivers no events until a re-run registers the appservice again.</li>
+<li>It makes the bot a homeserver admin through the admin API (<code>PUT /_synapse/admin/v2/users/@waldur-bot:&lt;your domain&gt;</code> with <code>"admin": true</code>, sent with this run's admin token), unless that API already answers the bot. Waldur calls that API as its bot, and this command is the one place that holds an admin session. Re-runs check it too, so a stack registered before the command did this gets it on the next run. When it cannot sign in, or the grant fails, it prints a warning with the command to run by hand and succeeds. The bot then sits in the admin room, so its <code>as_token</code> is as powerful as an admin's access token: keep it as secret as <code>MATRIX_ADMIN_TOKEN</code>.</li>
+<li>It ends with a ping. A failed ping is a warning, because on a fresh install the API may still be starting.</li>
+</ul>
+<p>Synapse loads appservices from its config file only, so use the YAML from the wizard there.</p>
 <h3 id="via-the-api">Via the API</h3>
 <h4 id="post-apiadminmatrix-appservicesetup">POST /api/admin/matrix-appservice/setup/</h4>
 <p>Generates fresh appservice tokens (rotating any existing ones), enables the appservice, and returns registration YAML.</p>
 <p><strong>Authentication:</strong> Staff only (<code>is_staff = True</code>). Non-staff users receive <code>403 Forbidden</code>.</p>
+<p><strong>Conflict:</strong> Returns <code>409 Conflict</code> while <code>MATRIX_TOKENS_MANAGED_BY</code> is set. The
+deployment writes its own tokens back on every deploy, so a rotation made here
+would be reverted while the homeserver kept the old registration. See
+<a href="#token-rotation">Token rotation</a>.</p>
 <p><strong>Request body (all fields optional):</strong></p>
 <table>
 <thead>
@@ -20037,11 +20157,16 @@
 <tr>
 <td><code>user_registration_secret</code></td>
 <td>string</td>
-<td>Shared registration secret (write-only). Persisted only when <code>MATRIX_USER_REGISTRATION_SECRET</code> is still empty</td>
+<td>The homeserver's registration token (write-only). Persisted only when <code>MATRIX_USER_REGISTRATION_SECRET</code> is still empty</td>
+</tr>
+<tr>
+<td><code>homeserver_public_url</code></td>
+<td>string</td>
+<td>Homeserver URL browsers use, when it differs from <code>homeserver_url</code>. Persisted only when <code>MATRIX_HOMESERVER_PUBLIC_URL</code> is still empty</td>
 </tr>
 </tbody>
 </table>
-<p>The last three fields back the wizard's prerequisites step — they are only written when the corresponding Constance value is empty, so an existing configuration is never overwritten by them.</p>
+<p>The last four fields back the wizard's prerequisites step. Each is written only while its Constance value is empty, so an existing configuration is never overwritten by them. A value that differs from a stored one (a trailing slash aside) is refused with <code>400</code> and <code>Already configured with a different value: &lt;KEY&gt;. Change it in the Settings tab first, then run Setup again.</code>, and no tokens are rotated.</p>
 <p><strong>Example request:</strong></p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
@@ -20085,11 +20210,13 @@
 <span class="normal"> 8</span>
 <span class="normal"> 9</span>
 <span class="normal">10</span>
-<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="normal">11</span>
+<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
 <span class="w">  </span><span class="nt">"enabled"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"as_token_configured"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"hs_token_configured"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"sender_localpart"</span><span class="p">:</span><span class="w"> </span><span class="s2">"waldur-bot"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"tokens_managed_by"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"bot_user_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"@waldur-bot:matrix.example.com"</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"webhook_path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/_matrix/app/v1/transactions/{txnId}"</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"homeserver_url"</span><span class="p">:</span><span class="w"> </span><span class="s2">"https://matrix.example.com"</span><span class="p">,</span>
@@ -20113,9 +20240,16 @@
 <li>Appservice can act for users (<code>appservice_user_namespace</code>: <code>/account/whoami</code> as the staff user's Matrix ID. It fails when the homeserver's appservice registration does not cover users, which breaks chat sessions and room joins; register the appservice again with Waldur's registration. When it fails, it also counts room members recorded as invited, not joined)</li>
 <li>Chat drawer tokens expire (<code>web_token_lifetime</code>: signs the staff user in on a test device and reads the token's lifetime; fails when tokens never expire or live over an hour. Skipped until the staff user has opened the chat once)</li>
 <li>Bot is a homeserver admin (<code>bot_homeserver_admin</code>; see <a href="#making-the-bot-a-homeserver-admin">Making the bot a homeserver admin</a>)</li>
+<li>Homeserver can reach Waldur (<code>appservice_ping</code>): Waldur asks the homeserver to ping
+    the appservice (MSC2659), and the homeserver calls <code>POST /_matrix/app/v1/ping</code> with
+    the <code>hs_token</code>. The only check in this direction, so it is the one that fails for a
+    wrong <code>hs_token</code> or an appservice URL the homeserver cannot reach. A timeout here
+    usually means the homeserver is still trying to reach Waldur, so check that the
+    appservice URL is reachable from the homeserver.</li>
 <li>LiveKit configured (<code>livekit_configured</code>: a LiveKit focus in the homeserver's <code>/.well-known/matrix/client</code>; only calls need it)</li>
 <li>Room statistics (<code>room_stats</code>: active, creating, errored counts)</li>
 <li>User profile statistics (<code>user_stats</code>: provisioned count, plus the active users whose roles put them in an active project room but who have no Matrix profile, named up to ten. Provisioning refused or failed for those; the worker log says why, and <a href="#existing-matrix-accounts">Existing Matrix accounts</a> says how to link one. Fails while any room member is unlinked)</li>
+<li>Single sign-on reaches only its own accounts (<code>sso_id_collisions</code>: with <code>MATRIX_EXTERNAL_LOGIN_METHOD = oidc</code>, the provisioned Matrix IDs another identity provider subject could sign in to, counted and named up to ten: those whose localpart is not the user's lowercased ASCII username, whose user does not sign in to Waldur through <code>MATRIX_SSO_REGISTRATION_METHOD</code>, or whose user's username another user's differs from only in case. Fails while <code>MATRIX_SSO_REGISTRATION_METHOD</code> is blank. Passes with "Not using single sign-on" otherwise; see <a href="../matrix-sso/">Single sign-on for Matrix clients</a>)</li>
 </ol>
 <p><strong>Example response (200):</strong></p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -20235,21 +20369,207 @@ which is what the appservice needs in order to give each project room a readable
 address. Without it the homeserver refuses every alias request with <code>M_EXCLUSIVE</code>,
 room creation falls back to an alias-less room, and the "Open in Matrix client"
 link never appears because it is only rendered when an alias exists.</p>
-<p>If you registered the appservice before this namespace existed, re-run setup and
-register the new YAML on your homeserver. Only rooms created after that get an
-alias, since it is requested at creation time.</p>
-<p>To give existing rooms an alias, run <code>waldur reprovision_matrix_rooms</code>. This is
-the exception to the warning above, and it is destructive: every active project
-room is replaced by an empty one, and the old room stays behind with its
-history. Check the counts with <code>--dry-run</code> first.</p>
+<p>If the appservice was registered before this namespace existed, register it
+again with the namespace. On Tuwunel, run <code>waldur register_matrix_appservice</code>;
+packaged deployments run it on every deploy. It adds the namespace without
+rotating any token. It needs the bootstrap admin or <code>MATRIX_ADMIN_TOKEN</code>, and
+<code>MATRIX_ADMIN_TOKEN</code> when password login is off (see
+<a href="#token-rotation">Token rotation</a>). Without either it only warns. On Synapse, run
+<code>waldur generate_appservice_registration --url &lt;Waldur URL&gt;</code>, replace the
+registration file and restart the homeserver. Do not run the Setup wizard again
+for this: it rotates both tokens.</p>
+<p>Only rooms created after that get an alias, since it is requested at creation
+time. Older rooms keep working without one, so they show no "Open in Matrix
+client" link. Reprovisioning does not add aliases: it is only for moving to a new
+homeserver.</p>
 <h3 id="token-rotation">Token rotation</h3>
+<p>When the deployment seeds the tokens with <code>waldur init_matrix_settings</code>, the setup
+endpoint answers <code>409</code> and the status endpoint reports
+<code>"tokens_managed_by": "deployment"</code>. The deployment writes the tokens back on every
+sync, so a rotation made here would be reverted at the next deploy. Rotate the
+deployment's Matrix secret and redeploy instead. If the deployment no longer
+manages Matrix, clear <code>MATRIX_TOKENS_MANAGED_BY</code> under
+<strong>Administration → Configuration → Matrix chat → Settings</strong>.</p>
 <p>Every call to the setup endpoint generates new AS and HS tokens, overwriting any
 existing ones. Re-running setup therefore invalidates the previous registration
 YAML: after each call you must update your homeserver configuration with the new
 YAML and restart the homeserver.</p>
+<p>Prerequisite fields are never overwritten, and a request that conflicts with a
+stored one is refused; see <a href="#via-the-api">Via the API</a>.</p>
+<p>On Tuwunel, run <code>waldur register_matrix_appservice</code> after changing the tokens instead.
+It replaces the old registration, as described above, whether the <code>as_token</code>, the
+<code>hs_token</code> or both changed. Transactions the homeserver sends during the few seconds
+the registration is being replaced are not delivered to Waldur, which loses nothing:
+the transaction endpoint only acknowledges them, and the bot reads its rooms,
+commands included, through its own sync.</p>
+<p>Keep <code>MATRIX_BOOTSTRAP_PASSWORD</code> when you rotate the tokens, and do not regenerate it
+along with them. Replacing the registration needs a homeserver admin, and the
+command signs in as the bootstrap admin with that password. With a new password it
+cannot sign in, and it cannot create the admin again, so the rotation would need
+<code>MATRIX_ADMIN_TOKEN</code> instead. For a packaged deployment this means keeping the Secret
+or <code>secrets.env</code> entry that holds the password, and the homeserver's data volume
+that holds the admin.</p>
+<p>With password login off on the homeserver (<code>login_with_password = false</code>, the
+setting recommended with single sign-on), the bootstrap admin cannot sign in at
+all. The first install still works, because creating the admin returns a session,
+but rotations and other changes to the registration need <code>MATRIX_ADMIN_TOKEN</code>. The
+command says so instead of blaming the password. To get a token, register a
+temporary admin through the same shared-secret API, from somewhere that reaches
+the homeserver's internal URL: inside the Compose network, or with <code>kubectl exec</code>
+into a pod that reaches the homeserver's Service.</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nv">HOMESERVER</span><span class="o">=</span>http://&lt;homeserver<span class="w"> </span>internal<span class="w"> </span>URL&gt;<span class="w"> </span><span class="nv">SECRET</span><span class="o">=</span>&lt;registration<span class="w"> </span>secret&gt;<span class="w"> </span>python3<span class="w"> </span>-<span class="w"> </span><span class="s">&lt;&lt;'EOF'</span>
+<span class="s">import hashlib, hmac, json, os, secrets, urllib.request</span>
+
+<span class="s">def call(path, body=None):</span>
+<span class="s">    data = json.dumps(body).encode() if body else None</span>
+<span class="s">    request = urllib.request.Request(os.environ["HOMESERVER"] + path, data,</span>
+<span class="s">                                     {"Content-Type": "application/json"})</span>
+<span class="s">    return json.load(urllib.request.urlopen(request))</span>
+
+<span class="s">user, password = f"rotation-{secrets.token_hex(4)}", secrets.token_hex(32)</span>
+<span class="s">nonce = call("/_synapse/admin/v1/register")["nonce"]</span>
+<span class="s">mac = hmac.new(os.environ["SECRET"].encode(),</span>
+<span class="s">               "\0".join([nonce, user, password, "admin"]).encode(),</span>
+<span class="s">               hashlib.sha1).hexdigest()</span>
+<span class="s">print(call("/_synapse/admin/v1/register", {"nonce": nonce, "username": user,</span>
+<span class="s">      "password": password, "admin": True, "mac": mac})["access_token"])</span>
+<span class="s">EOF</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Run the command with that token in <code>MATRIX_ADMIN_TOKEN</code>. Then have the temporary
+admin deactivate itself in the admin room. That also signs it out, and nobody can
+sign in to the account again, not even through single sign-on. The snippet waits
+until the token stops working, and fails if it does not, because until then a
+homeserver admin with a known token is left behind:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nv">HOMESERVER</span><span class="o">=</span>http://&lt;homeserver<span class="w"> </span>internal<span class="w"> </span>URL&gt;<span class="w"> </span><span class="nv">TOKEN</span><span class="o">=</span>&lt;the<span class="w"> </span>token&gt;<span class="w"> </span>python3<span class="w"> </span>-<span class="w"> </span><span class="s">&lt;&lt;'EOF'</span>
+<span class="s">import json, os, secrets, sys, time, urllib.error, urllib.parse, urllib.request</span>
+
+<span class="s">def call(method, path, body=None):</span>
+<span class="s">    data = json.dumps(body).encode() if body is not None else None</span>
+<span class="s">    request = urllib.request.Request(</span>
+<span class="s">        os.environ["HOMESERVER"] + path, data, method=method,</span>
+<span class="s">        headers={"Authorization": "Bearer " + os.environ["TOKEN"],</span>
+<span class="s">                 "Content-Type": "application/json"})</span>
+<span class="s">    return json.load(urllib.request.urlopen(request))</span>
+
+<span class="s">me = call("GET", "/_matrix/client/v3/account/whoami")["user_id"]</span>
+<span class="s">try:</span>
+<span class="s">    alias = urllib.parse.quote("#admins:" + me.split(":", 1)[1], safe="")</span>
+<span class="s">    room = call("GET", "/_matrix/client/v3/directory/room/" + alias)["room_id"]</span>
+<span class="s">    call("PUT", f"/_matrix/client/v3/rooms/{urllib.parse.quote(room, safe='')}"</span>
+<span class="s">         f"/send/m.room.message/{secrets.token_hex(8)}",</span>
+<span class="s">         {"msgtype": "m.text", "body": f"!admin users deactivate {me}"})</span>
+<span class="s">except urllib.error.HTTPError as error:</span>
+<span class="s">    print("could not send the command:", error, file=sys.stderr)</span>
+<span class="s">for _ in range(20):</span>
+<span class="s">    time.sleep(0.5)</span>
+<span class="s">    try:</span>
+<span class="s">        call("GET", "/_matrix/client/v3/account/whoami")</span>
+<span class="s">    except urllib.error.HTTPError as error:</span>
+<span class="s">        if error.code == 401:  # M_UNKNOWN_TOKEN or M_USER_DEACTIVATED</span>
+<span class="s">            print("deactivated", me)</span>
+<span class="s">            break</span>
+<span class="s">else:</span>
+<span class="s">    sys.exit(f"deactivation not confirmed; deactivate {me} from #admins by hand")</span>
+<span class="s">EOF</span>
+</code></pre></div></td></tr></tbody></table></div>
 <p>Prerequisite fields (<code>homeserver_url</code>, <code>homeserver_domain</code>,
 <code>user_registration_secret</code>) are not overwritten — they are only persisted when the
 corresponding Constance value is still empty.</p>
+<h3 id="seeding-from-the-environment">Seeding from the environment</h3>
+<p>waldur-helm and waldur-docker-compose configure Matrix by running
+<code>waldur init_matrix_settings</code> on every deploy. The command reads each of these
+Constance settings from the environment variable of the same name, and leaves
+those that are not in the environment alone:</p>
+<ul>
+<li><code>MATRIX_ENABLED</code>, <code>MATRIX_AUTO_CREATE_PROJECT_ROOMS</code></li>
+<li><code>MATRIX_HOMESERVER_URL</code>, <code>MATRIX_HOMESERVER_PUBLIC_URL</code>, <code>MATRIX_HOMESERVER_DOMAIN</code></li>
+<li><code>MATRIX_APPSERVICE_AS_TOKEN</code>, <code>MATRIX_APPSERVICE_HS_TOKEN</code>,
+  <code>MATRIX_APPSERVICE_SENDER_LOCALPART</code></li>
+<li><code>MATRIX_USER_REGISTRATION_SECRET</code>, <code>MATRIX_USER_ID_FORMAT</code>,
+  <code>MATRIX_EXTERNAL_LOGIN_METHOD</code>, <code>MATRIX_SSO_REGISTRATION_METHOD</code></li>
+<li><code>MATRIX_HISTORY_EXPORT_ENABLED</code>, <code>MATRIX_EXPORT_MEDIA</code>,
+  <code>MATRIX_HISTORY_EXPORT_RETENTION_DAYS</code></li>
+<li><code>MATRIX_LIVEKIT_KEY</code>, <code>MATRIX_LIVEKIT_SECRET</code>, <code>MATRIX_LIVEKIT_URL</code>,
+  <code>MATRIX_LIVEKIT_PUBLIC_URL</code></li>
+</ul>
+<p>Any other <code>MATRIX_*</code> variable is ignored, including the homeserver credentials
+the packagers' setup Jobs carry (<code>MATRIX_BOOTSTRAP_PASSWORD</code>, <code>MATRIX_ADMIN_TOKEN</code>),
+so they never reach the database.</p>
+<p>These variables are required. If any of them is unset or blank, the command fails
+and writes nothing:</p>
+<ul>
+<li><code>MATRIX_HOMESERVER_URL</code></li>
+<li><code>MATRIX_HOMESERVER_DOMAIN</code></li>
+<li><code>MATRIX_APPSERVICE_AS_TOKEN</code></li>
+<li><code>MATRIX_APPSERVICE_HS_TOKEN</code></li>
+<li><code>MATRIX_USER_REGISTRATION_SECRET</code></li>
+</ul>
+<p>Every value is checked before any is saved. A malformed URL, or a domain or bot
+localpart the Setup wizard would refuse, fails the command and writes nothing.
+Tokens and other secrets are never printed.</p>
+<p><code>MATRIX_ENABLED</code> is applied whenever the environment sets it. When it does not,
+the command switches chat on at the first seeding, which is a run where neither
+<code>MATRIX_TOKENS_MANAGED_BY</code> nor an appservice token is stored yet. It leaves the
+flag alone after that, so an administrator who turns chat off keeps it off across
+deploys, including after clearing only <code>MATRIX_TOKENS_MANAGED_BY</code>. Clearing both
+appservice tokens as well, as the refusal below asks, starts over: the next
+deploy switches chat on again.</p>
+<p>The command always sets <code>MATRIX_TOKENS_MANAGED_BY</code> to <code>deployment</code>, and the
+environment cannot override it. While it is set, the setup endpoint answers <code>409</code>
+(see <a href="#token-rotation">Token rotation</a>). If the deployment stops seeding Matrix,
+clear it under <strong>Administration → Configuration → Matrix chat → Settings</strong>.</p>
+<p>If the Setup wizard already put other appservice tokens into Constance, the
+command refuses and writes nothing, because the homeserver is registered with the
+wizard's tokens. To hand the tokens to the deployment, clear
+<code>MATRIX_APPSERVICE_AS_TOKEN</code> and <code>MATRIX_APPSERVICE_HS_TOKEN</code> there and deploy
+again. The deploy then registers the appservice with the deployment's tokens.
+Otherwise start from a fresh stack.</p>
 <h2 id="chat-rooms">Chat Rooms</h2>
 <h3 id="creating-a-room">Creating a room</h3>
 <p>Staff and support users create a chat room for a project. Each project can have at most one room.</p>
@@ -20457,9 +20777,14 @@ nothing tells whose that account is. It names each skipped user; link the owner
 by hand. Run it only when every such account belongs to this Waldur's users.
 Back up the homeserver together with Waldur's database, so a restore brings
 both back to the same point.</p>
+<p>Users with <code>+</code> in their username who were provisioned before Waldur kept <code>+</code> in
+Matrix IDs hold an account with <code>_</code> in its place. <code>--all</code> derives the ID with
+<code>+</code>, finds no account and skips them, and their next chat creates a new, empty
+one. Link each of them by hand before they next open chat:
+<code>waldur link_matrix_account &lt;username&gt; @&lt;localpart with _ for +&gt;:&lt;domain&gt;</code>.</p>
 <p>Different users can derive the same ID: under <code>email_local</code> (<code>alice@a.org</code> and
-<code>alice@b.org</code>), and when usernames differ only in case or in characters Matrix
-does not allow, which become <code>_</code> (<code>a@b</code> and <code>a_b</code>). The first one provisioned
+<code>alice@b.org</code>), and when usernames differ only in case or in ASCII characters
+Matrix does not allow, which become <code>_</code> (<code>a@b</code> and <code>a_b</code>). The first one provisioned
 gets the account. The second gets no chat, and the log names the user who holds
 it; linking cannot help, since an ID is linked to one user only. A user deleted
 and recreated under the same username finds their old account, which outlives
@@ -20779,7 +21104,7 @@ also replaces any Matrix password the user generated for an external client.</p>
 </tr>
 <tr>
 <td><code>oidc</code></td>
-<td>The room, the homeserver and an instruction to sign in with single sign-on, which must be configured on the homeserver</td>
+<td>The room, the homeserver and an instruction to sign in with single sign-on, which must be configured on the homeserver; see <a href="../matrix-sso/">Single sign-on for Matrix clients</a></td>
 </tr>
 </tbody>
 </table>
@@ -20850,10 +21175,23 @@ also replaces any Matrix password the user generated for an external client.</p>
 <h3 id="making-the-bot-a-homeserver-admin">Making the bot a homeserver admin</h3>
 <p>Locking the Matrix account of a deactivated or deleted user, generating passwords, and refusing Waldur users whose Matrix account is a homeserver admin (see <a href="#existing-matrix-accounts">Existing Matrix accounts</a>) go through the homeserver's admin API (<code>/_synapse/admin</code>), which answers only homeserver admins. Every login method needs the first of these. Until the bot is an admin, or while the admin API is not reachable, a deactivated user's account stays unlocked, a deleted user's password is not replaced, generating a password answers <code>503</code>, and admin accounts are not refused.</p>
 <ul>
-<li><strong>Tuwunel:</strong> as an admin, send <code>!admin users make-user-admin @waldur-bot:&lt;homeserver domain&gt;</code> in <code>#admins</code>.</li>
+<li><strong>Tuwunel:</strong> <code>register_matrix_appservice</code> does it on every run that can act as an admin; see <a href="#registering-on-tuwunel-from-the-command-line">Registering on Tuwunel from the command line</a>. By hand, as an admin, send <code>!admin users make-user-admin @waldur-bot:&lt;homeserver domain&gt;</code> in <code>#admins</code>.</li>
 <li><strong>Synapse:</strong> set the bot's admin flag, for example with <code>PUT /_synapse/admin/v2/users/@waldur-bot:&lt;homeserver domain&gt;</code> and <code>{"admin": true}</code>, using an admin's access token.</li>
 </ul>
 <p>Use your bot's localpart if it is not <code>waldur-bot</code>. The appservice token (<code>MATRIX_APPSERVICE_AS_TOKEN</code>) already acts as every local user of the homeserver; as an admin's token it carries server-wide powers on top, such as setting any account's password, so protect it accordingly. Waldur calls the admin API at <code>MATRIX_HOMESERVER_URL</code>; if a proxy blocks <code>/_synapse/admin</code> there, point it at an internal address. The diagnostics check "Bot is a homeserver admin" (<code>bot_homeserver_admin</code>) shows whether the bot is an admin.</p>
+<h3 id="registration-secret">Registration secret</h3>
+<p><code>MATRIX_USER_REGISTRATION_SECRET</code> is the homeserver's registration token: Waldur
+registers each user's Matrix account with it, without a password. A user gets a
+password only by generating one; see <a href="#generated-passwords">Generated passwords</a>.</p>
+<p>With zero-touch setup it is also the homeserver's <code>registration_shared_secret</code>,
+which <code>register_matrix_appservice</code> uses to create its bootstrap admin. Whoever holds
+it can create homeserver admins. It sits in Constance, in the homeserver's
+configuration and in the deployment's Secret or <code>secrets.env</code>, so protect it like
+the appservice tokens.</p>
+<p>To rotate it, change it in Constance (or the deployment's secret) and in the
+homeserver's <code>registration_token</code> and <code>registration_shared_secret</code> together, then
+restart the homeserver, which reads them only at startup. Existing accounts are not
+affected.</p>
 <h2 id="calls">Calls</h2>
 <p>Calls run on LiveKit. Waldur issues the LiveKit tokens that Matrix clients (Waldur's chat drawer and Element Call) need to join a call, in place of lk-jwt-service. Point the homeserver's <code>.well-known/matrix/client</code> LiveKit focus at it: <code>livekit_service_url</code> is <code>https://&lt;waldur-api&gt;/api/matrix/livekit</code>.</p>
 <table>
@@ -20957,6 +21295,11 @@ also replaces any Matrix password the user generated for an external client.</p>
 <td>Bot user localpart</td>
 </tr>
 <tr>
+<td><code>MATRIX_TOKENS_MANAGED_BY</code></td>
+<td><code>""</code></td>
+<td><code>deployment</code> when <code>init_matrix_settings</code> seeds the tokens; the setup endpoint then answers <code>409</code>. Clear it when the deployment stops seeding Matrix</td>
+</tr>
+<tr>
 <td><code>MATRIX_HISTORY_EXPORT_ENABLED</code></td>
 <td><code>False</code></td>
 <td>Enable periodic and on-deletion exports</td>
@@ -20974,17 +21317,22 @@ also replaces any Matrix password the user generated for an external client.</p>
 <tr>
 <td><code>MATRIX_USER_REGISTRATION_SECRET</code></td>
 <td><code>""</code></td>
-<td>Shared secret for registering users on the homeserver</td>
+<td>The homeserver's registration token, and with zero-touch setup also its <code>registration_shared_secret</code>. See <a href="#registration-secret">Registration secret</a></td>
 </tr>
 <tr>
 <td><code>MATRIX_USER_ID_FORMAT</code></td>
 <td><code>username</code></td>
-<td>Format for generating Matrix user IDs: <code>username</code>, <code>uuid</code>, or <code>email_local</code>. Applies only to users provisioned afterwards; existing users keep their Matrix ID. See <a href="#existing-matrix-accounts">Existing Matrix accounts</a> for IDs two users share</td>
+<td>Format for generating Matrix user IDs: <code>username</code>, <code>uuid</code>, or <code>email_local</code>. Applies only to users provisioned afterwards; existing users keep their Matrix ID. See <a href="#existing-matrix-accounts">Existing Matrix accounts</a> for IDs two users share. Single sign-on needs <code>username</code></td>
 </tr>
 <tr>
 <td><code>MATRIX_EXTERNAL_LOGIN_METHOD</code></td>
 <td><code>none</code></td>
-<td>How users sign in to an external Matrix client: <code>none</code>, <code>password</code>, or <code>oidc</code>. See <a href="#external-clients">External clients</a></td>
+<td>How users sign in to an external Matrix client: <code>none</code>, <code>password</code>, or <code>oidc</code>. See <a href="#external-clients">External clients</a> and, for <code>oidc</code>, <a href="../matrix-sso/">Single sign-on for Matrix clients</a></td>
+</tr>
+<tr>
+<td><code>MATRIX_SSO_REGISTRATION_METHOD</code></td>
+<td>(empty)</td>
+<td>With <code>oidc</code>: the registration method of the users who sign in to Waldur through the homeserver's identity provider, such as <code>keycloak</code>. Only they get a Matrix account; while blank, no user does. See <a href="../matrix-sso/#waldur-configuration">Single sign-on for Matrix clients</a></td>
 </tr>
 </tbody>
 </table>
@@ -21035,7 +21383,7 @@ also replaces any Matrix password the user generated for an external client.</p>
 <tr>
 <td><code>&lt;id&gt; already belongs to an account this Waldur did not create</code></td>
 <td>The user's derived Matrix ID had an account before Waldur provisioned them</td>
-<td>If it is theirs, <code>waldur link_matrix_account &lt;username&gt; &lt;id&gt;</code>; after a database reset or restore, <code>waldur link_matrix_account --all</code>. Otherwise create another account for the user on the homeserver and link that; deactivating the existing account does not free its ID. See <a href="#existing-matrix-accounts">Existing Matrix accounts</a></td>
+<td>If it is theirs, <code>waldur link_matrix_account &lt;username&gt; &lt;id&gt;</code>; after a database reset or restore, <code>waldur link_matrix_account --all</code>. Otherwise create another account for the user on the homeserver and link that; deactivating the existing account does not free its ID. With <code>oidc</code>, single sign-on reaches only the account named after the user, never the linked one. See <a href="#existing-matrix-accounts">Existing Matrix accounts</a></td>
 </tr>
 <tr>
 <td><code>&lt;id&gt; is already linked to &lt;user&gt;; &lt;username&gt; cannot be linked to it too</code></td>

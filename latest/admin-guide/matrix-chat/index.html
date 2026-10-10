@@ -1800,6 +1800,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#single-sign-on-for-external-clients" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Single sign-on for external clients
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -11277,6 +11288,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer-guide/admin-guide/matrix-sso/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Matrix sso
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -19432,6 +19471,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#single-sign-on-for-external-clients" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Single sign-on for external clients
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -20091,7 +20141,68 @@ admin's account, but it makes the appservice token an admin credential.
 covers the trade-off and Synapse.</p>
 <p><code>none</code> and <code>oidc</code> only hide the option: password login still works on the
 homeserver, so switching away from <code>password</code> does not cut off users who
-have generated a password.</p>
+have generated a password. To stop new password logins, turn them off on the
+homeserver with <code>login_with_password = false</code>
+(Helm <code>matrixChat.homeserver.loginWithPassword: false</code>, docker-compose
+<code>WALDUR_MATRIX_LOGIN_WITH_PASSWORD=false</code>). Clients already signed in stay
+signed in until their sessions are signed out. Waldur's chat drawer signs in
+through the appservice and is unaffected, but an admin created with a password
+can then no longer sign in to a client either.</p>
+<p>The homeserver reads its configuration only at startup. With Helm, a
+<code>helm upgrade</code> that changes a non-secret <code>matrixChat.homeserver</code> value restarts
+it. The checksum that does this leaves out the secrets (<code>registrationToken</code>,
+<code>sso.clientSecret</code>) and any Secret you manage yourself, so after changing one
+run <code>kubectl rollout restart statefulset/matrix-homeserver</code>.
+(<code>sso.waldurRegistrationMethod</code> is left out too, but it is Waldur's setting,
+not the homeserver's, and needs no restart.) With docker-compose,
+re-render the configuration and restart Tuwunel, which an <code>up</code> leaves running
+with the old values:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>docker<span class="w"> </span>compose<span class="w"> </span>--profile<span class="w"> </span>matrix<span class="w"> </span>up<span class="w"> </span>-d
+docker<span class="w"> </span>compose<span class="w"> </span>restart<span class="w"> </span>tuwunel
+</code></pre></div></td></tr></tbody></table></div>
+<h3 id="single-sign-on-for-external-clients">Single sign-on for external clients</h3>
+<p>In <code>oidc</code> mode, users sign in to Element through the same identity provider
+(IdP) as Waldur and land in the Matrix account Waldur provisioned, with their
+project rooms. Waldur hands out no password.
+<a href="../../developer-guide/admin-guide/matrix-sso/">Single sign-on for Matrix clients</a>
+explains how the accounts line up, what each setting does and the limits. The
+"Single sign-on for Matrix clients" sections of the
+<a href="../deployment/helm/docs/matrix-chat/">Helm</a> and
+<a href="../deployment/docker-compose/matrix-chat-add-on/">docker-compose</a> guides list
+their values and what they check.</p>
+<ol>
+<li>Point Waldur's identity provider at the IdP with <code>user_field</code> set to
+   <code>username</code>, and set <code>MATRIX_USER_ID_FORMAT = username</code>,
+   <code>MATRIX_EXTERNAL_LOGIN_METHOD = oidc</code> and <code>MATRIX_SSO_REGISTRATION_METHOD</code>
+   to that identity provider's name in Waldur, such as <code>keycloak</code>. Waldur gives
+   a Matrix account only to users who registered through it; while the setting
+   is blank, no user gets one. The packagings seed it from Helm
+   <code>matrixChat.homeserver.sso.waldurRegistrationMethod</code> and docker-compose
+   <code>WALDUR_MATRIX_SSO_REGISTRATION_METHOD</code>.</li>
+<li>Register a client for the homeserver at the IdP with the redirect URI
+   <code>https://&lt;homeserver&gt;/_matrix/client/unstable/login/sso/callback/&lt;client id&gt;</code>.</li>
+<li>Turn on SSO on the homeserver (Helm <code>matrixChat.homeserver.sso</code>,
+   docker-compose <code>WALDUR_MATRIX_SSO_*</code>). Its claim must be the one Waldur's
+   identity provider uses as <code>user_claim</code>; keep the default <code>sub</code> unless the
+   IdP controls usernames.</li>
+<li>List every other homeserver admin in the forbidden usernames (Helm
+   <code>sso.forbiddenUsernames</code>, docker-compose
+   <code>WALDUR_MATRIX_SSO_FORBIDDEN_USERNAMES</code>). Both packagings trust the IdP,
+   which signs a user in to any existing account whose name matches their
+   claim, not only the ones Waldur provisioned. Both always reserve Waldur's
+   bot and <code>waldur-bootstrap</code>, the bootstrap admin that automatic registration
+   creates, ahead of the list, but nothing else, so without this step an IdP
+   user named like an admin gets the admin's account. The two take different
+   formats: Helm takes anchored patterns, such as <code>^admin$</code> (default <code>[]</code>),
+   and docker-compose takes plain localparts separated by commas, such as
+   <code>matrix-admin</code>. A bot localpart changed in Waldur's settings rather than in
+   the packaging has to be listed too.</li>
+<li>Turn off password login and restart the homeserver, as above.</li>
+</ol>
+<p>To check it, sign in to Element with the homeserver URL and the SSO button
+after the user has opened Waldur's chat once: Element shows the user's Waldur
+Matrix ID and project rooms, and no second account exists for them.</p>
 <hr>
 <h2 id="operational-notes">Operational notes</h2>
 <ul>
