@@ -2616,6 +2616,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Monitoring
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Monitoring">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#scraping-the-exporter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scraping the exporter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alert-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alert rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#calls" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -17870,6 +17909,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../../../user-guide/end-users/chat-encryption/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chat encryption
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../../../user-guide/end-users/interface/" class="md-nav__link">
         
   
@@ -19633,6 +19700,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Monitoring
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Monitoring">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#scraping-the-exporter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scraping the exporter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alert-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alert rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#calls" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -20471,6 +20577,168 @@ encrypted.</p>
   starts: otherwise a second bot runs as the same device, can read the
   original's rooms, and corrupts both bots' sessions.</li>
 </ul>
+<h2 id="monitoring">Monitoring</h2>
+<p>The metrics exporter (<code>waldur.metricsExporter</code>) calls Waldur's Matrix
+diagnostics, <code>GET /api/admin/matrix/diagnostics/</code>, about every two minutes
+and publishes:</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Labels</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>waldur_matrix_diagnostics_up</code></td>
+<td></td>
+<td><code>1</code> if the last diagnostics call succeeded, <code>0</code> if it failed</td>
+</tr>
+<tr>
+<td><code>waldur_matrix_check_passed</code></td>
+<td><code>check</code></td>
+<td><code>1</code> if the diagnostics check passed, <code>0</code> if not, e.g. <code>homeserver_reachable</code>, <code>bot_running</code>, <code>bot_whoami</code>, <code>appservice_ping</code></td>
+</tr>
+<tr>
+<td><code>waldur_matrix_rooms</code></td>
+<td><code>state</code></td>
+<td>Rooms per state: <code>creating</code>, <code>active</code>, <code>disabling</code>, <code>archived</code>, <code>error</code></td>
+</tr>
+</tbody>
+</table>
+<p>The exporter calls the endpoint with <code>waldur.supportToken</code>, which must belong
+to a support or staff user. If every call gets <code>403</code>, the token belongs to
+neither, or Waldur is too old to let support users read diagnostics and needs
+a staff user's token; <code>waldur_matrix_diagnostics_up</code> then stays <code>0</code>.</p>
+<h3 id="scraping-the-exporter">Scraping the exporter</h3>
+<p>A Prometheus that scrapes annotated Services finds the exporter through its
+<code>prometheus.io/scrape: "true"</code> annotation
+(<code>waldur.metricsExporter.includeAnnotations</code>, on by default). The Prometheus
+Operator ignores those annotations; for it, turn on the ServiceMonitor below.</p>
+<h3 id="alert-rules">Alert rules</h3>
+<p>The chart ships the alert rules as a <code>PrometheusRule</code>, off by default:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">waldur</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">supportToken</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;API token of a support or staff user&gt;</span>
+<span class="w">  </span><span class="nt">metricsExporter</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">serviceMonitor</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">labels</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">release</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kube-prometheus-stack</span><span class="w">   </span><span class="c1"># what your Prometheus selects by</span>
+<span class="nt">matrixChat</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">prometheusRule</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">labels</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">release</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kube-prometheus-stack</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Both objects need the Prometheus Operator's CRDs: the chart refuses to render
+them on a cluster without the CRDs, and refuses the rules without the
+exporter. <code>helm template</code> needs
+<code>--api-versions monitoring.coreos.com/v1/ServiceMonitor --api-versions monitoring.coreos.com/v1/PrometheusRule</code>
+to render them. kube-prometheus-stack picks up only ServiceMonitors and rules
+labelled <code>release: &lt;its release name&gt;</code>; others are applied and then ignored,
+without an error anywhere.</p>
+<p>Without the Prometheus Operator, load the same rules into your Prometheus from
+<a href="https://github.com/waldur/waldur-helm/blob/master/waldur/files/matrix-chat-alerts.yaml"><code>waldur/files/matrix-chat-alerts.yaml</code></a>,
+or copy them from the
+<a href="https://docs.waldur.com/latest/admin-guide/deployment/docker-compose/matrix-chat-add-on/#monitoring">Docker Compose guide</a>.
+The rules match the metrics of every Waldur the Prometheus scrapes, so with
+several releases on one Prometheus, enable them in one. A Waldur that never
+had Matrix chat raises no alert among them: its diagnostics report that no
+homeserver URL is set, and the alerts stay quiet where that is so. One where
+chat was switched off but <code>MATRIX_HOMESERVER_URL</code> is still set keeps raising
+the homeserver and bot alerts. The other side of it: if that setting is
+emptied on a Waldur that has chat, its four check alerts fall silent.
+<code>WaldurMatrixMetricsMissing</code> fires only when no exporter at all publishes
+Matrix metrics, so with several it does not notice one of them going away.</p>
+<table>
+<thead>
+<tr>
+<th>Alert</th>
+<th>Fires when</th>
+<th>Severity</th>
+<th>First thing to check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>WaldurMatrixMetricsMissing</code></td>
+<td>No <code>waldur_matrix_diagnostics_up</code> series for 15 minutes</td>
+<td>warning</td>
+<td>The exporter pod runs a version with Matrix metrics, and Prometheus lists it as a target: a ServiceMonitor without the right labels is ignored.</td>
+</tr>
+<tr>
+<td><code>WaldurMatrixDiagnosticsDown</code></td>
+<td>The diagnostics call failed for 10 minutes</td>
+<td>warning</td>
+<td>The exporter's log. <code>403</code> means <code>waldur.supportToken</code> belongs to neither a support nor a staff user, or Waldur is too old to let support users read diagnostics; anything else, the <code>waldur-mastermind-api</code> log.</td>
+</tr>
+<tr>
+<td><code>WaldurMatrixHomeserverUnreachable</code></td>
+<td><code>homeserver_reachable</code> failed for 5 minutes while a homeserver URL is set</td>
+<td>critical</td>
+<td><code>kubectl logs matrix-homeserver-0</code>. A homeserver that is up but not answering after an image change is migrating its database: do not restart it, see <a href="#upgrading">Upgrading</a>.</td>
+</tr>
+<tr>
+<td><code>WaldurMatrixBotNotRunning</code></td>
+<td><code>bot_running</code> failed for 10 minutes while a homeserver URL is set</td>
+<td>warning</td>
+<td><code>kubectl logs deployment/waldur-matrix-bot</code>, and that <code>matrixChat.bot.enabled</code> is on.</td>
+</tr>
+<tr>
+<td><code>WaldurMatrixBotSignInFailing</code></td>
+<td><code>bot_whoami</code> failed for 10 minutes while the homeserver is reachable</td>
+<td>warning</td>
+<td>The appservice registration: the <code>matrix-init-wire</code> Job's log, and <a href="#rotating-the-tokens">Rotating the tokens</a> if the tokens changed.</td>
+</tr>
+<tr>
+<td><code>WaldurMatrixAppservicePingFailing</code></td>
+<td><code>appservice_ping</code> failed for 10 minutes while <code>bot_whoami</code> passes</td>
+<td>warning</td>
+<td>That the homeserver can reach <code>waldur-mastermind-api</code> at the registered appservice URL: the API pods and, if on, the NetworkPolicies.</td>
+</tr>
+<tr>
+<td><code>WaldurMatrixRoomsErred</code></td>
+<td>At least one room in the <code>error</code> state for 30 minutes</td>
+<td>warning</td>
+<td><code>GET /api/matrix/rooms/?state=error</code> lists them with their <code>error_message</code>. Fix the cause, then retry each room as staff with <code>POST /api/matrix/rooms/&lt;uuid&gt;/retry/</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>When the homeserver is unreachable, the bot's whoami and the appservice ping
+fail with it, so their alerts stay quiet while
+<code>WaldurMatrixHomeserverUnreachable</code> fires. Waldur skips the ping when whoami
+fails, so the ping alert also stays quiet while <code>WaldurMatrixBotSignInFailing</code>
+fires.</p>
+<p>The alerts read the <code>:last20m</code> series the same rules record, which keep each
+check's and room count's last value for 20 minutes, so a brief exporter or
+Prometheus restart neither resolves a real alert nor starts its timer over.
+They are recorded per Waldur, not per scrape target. On Kubernetes, where a
+target has a <code>namespace</code> label, a Waldur is a namespace and job, so an
+exporter pod that is replaced continues the series. Elsewhere each target is
+a Waldur. On a Prometheus that holds several clusters whose Waldurs share a
+namespace name and job, the rules take those Waldurs for one. Leave
+<code>matrixChat.prometheusRule</code> off there and load a copy of the rules file with
+the cluster's label added to the <code>by</code> of the two <code>:per_waldur</code> rules.</p>
+<p>The thresholds follow the exporter's two-minute refresh: 5 minutes is two or
+three failed refreshes in a row and 10 minutes about five, which rides out a
+pod restart.</p>
+<p>Waldur never retries an erred room on its own, so <code>WaldurMatrixRoomsErred</code>
+keeps firing until staff retry the rooms; the 30 minutes give staff already
+handling an outage time to do that first.</p>
 <h2 id="calls">Calls</h2>
 <p>Matrix clients find calls in the homeserver's <code>.well-known/matrix/client</code>. With
 <code>livekit.publicUrl</code> set, the chart advertises one RTC focus there

@@ -2081,6 +2081,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Monitoring
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Monitoring">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#running-the-exporter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running the exporter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alert-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alert rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#apple-silicon" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -17813,6 +17852,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../../user-guide/end-users/chat-encryption/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chat encryption
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../../user-guide/end-users/interface/" class="md-nav__link">
         
   
@@ -19571,6 +19638,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Monitoring
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Monitoring">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#running-the-exporter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running the exporter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alert-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alert rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#apple-silicon" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -20147,6 +20253,433 @@ docker<span class="w"> </span>compose<span class="w"> </span>restart<span class=
 docker<span class="w"> </span>compose<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>livekit<span class="w"> </span>sh<span class="w"> </span>-c<span class="w"> </span><span class="s1">'ss -lun | grep :443 || netstat -lun | grep :443'</span>
 </code></pre></div></td></tr></tbody></table></div>
 <p>Coverage note: TURN/UDP rescues symmetric-NAT clients and any network that permits outbound UDP on 443. It does <strong>not</strong> help clients on networks that block all outbound UDP (strict corporate firewalls) — that requires TURN/TLS on TCP 443, which on a single host means giving LiveKit its own IP or a layer-4 load balancer (the helm topology). For a single-host compose deployment, TURN/UDP is the pragmatic option.</p>
+<h2 id="monitoring">Monitoring</h2>
+<p>The stack runs neither the metrics exporter nor Prometheus. To watch chat
+health from outside Waldur, run
+<a href="https://github.com/waldur/waldur-prometheus-exporter">waldur-prometheus-exporter</a>
+next to the stack and load the rules below into your Prometheus.</p>
+<p>The exporter calls Waldur's Matrix diagnostics,
+<code>GET /api/admin/matrix/diagnostics/</code>, about every two minutes and publishes:</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Labels</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>waldur_matrix_diagnostics_up</code></td>
+<td></td>
+<td><code>1</code> if the last diagnostics call succeeded, <code>0</code> if it failed</td>
+</tr>
+<tr>
+<td><code>waldur_matrix_check_passed</code></td>
+<td><code>check</code></td>
+<td><code>1</code> if the diagnostics check passed, <code>0</code> if not, e.g. <code>homeserver_reachable</code>, <code>bot_running</code>, <code>bot_whoami</code>, <code>appservice_ping</code></td>
+</tr>
+<tr>
+<td><code>waldur_matrix_rooms</code></td>
+<td><code>state</code></td>
+<td>Rooms per state: <code>creating</code>, <code>active</code>, <code>disabling</code>, <code>archived</code>, <code>error</code></td>
+</tr>
+</tbody>
+</table>
+<p>The exporter needs the API token of a support or staff user. If every call
+gets <code>403</code>, the token belongs to neither, or Waldur is too old to let support
+users read diagnostics and needs a staff user's token;
+<code>waldur_matrix_diagnostics_up</code> then stays <code>0</code>.</p>
+<h3 id="running-the-exporter">Running the exporter</h3>
+<p>Put the exporter in a <code>docker-compose.override.yml</code> next to
+<code>docker-compose.yml</code>, which <code>docker compose</code> reads unless <code>-f</code> names the files,
+and set <code>WALDUR_METRICS_EXPORTER_TOKEN</code> in <code>.env</code> to the API token of a
+support or staff user:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">services</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">waldur-metrics-exporter</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur-metrics-exporter</span>
+<span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="s">'${DOCKER_REGISTRY_PREFIX}opennode/waldur-prometheus-exporter:${WALDUR_MASTERMIND_IMAGE_TAG}'</span>
+<span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
+<span class="w">      </span><span class="c1"># The API's address inside the stack, as the appservice uses it.</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">WALDUR_API_URL=http://waldur-mastermind-api:8080/api/</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">WALDUR_API_TOKEN=${WALDUR_METRICS_EXPORTER_TOKEN}</span>
+<span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
+<span class="w">      </span><span class="c1"># Where your Prometheus scrapes /metrics; widen the address if it runs</span>
+<span class="w">      </span><span class="c1"># on another host.</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">'127.0.0.1:9180:8080'</span>
+<span class="w">    </span><span class="nt">restart</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">always</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Then have Prometheus scrape it and load the <a href="#alert-rules">alert rules</a> below,
+saved as <code>matrix-chat-alerts.yml</code> next to <code>prometheus.yml</code>:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">rule_files</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">matrix-chat-alerts.yml</span>
+<span class="nt">scrape_configs</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur-metrics-exporter</span>
+<span class="w">    </span><span class="nt">scrape_interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60s</span>
+<span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">'&lt;docker</span><span class="nv"> </span><span class="s">host&gt;:9180'</span><span class="p p-Indicator">]</span>
+</code></pre></div></td></tr></tbody></table></div>
+<h3 id="alert-rules">Alert rules</h3>
+<p>The same rules ship with the Helm chart as a <code>PrometheusRule</code>:</p>
+<!-- Copied from waldur-helm's waldur/files/matrix-chat-alerts.yaml: change both together. -->
+
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">  1</span>
+<span class="normal">  2</span>
+<span class="normal">  3</span>
+<span class="normal">  4</span>
+<span class="normal">  5</span>
+<span class="normal">  6</span>
+<span class="normal">  7</span>
+<span class="normal">  8</span>
+<span class="normal">  9</span>
+<span class="normal"> 10</span>
+<span class="normal"> 11</span>
+<span class="normal"> 12</span>
+<span class="normal"> 13</span>
+<span class="normal"> 14</span>
+<span class="normal"> 15</span>
+<span class="normal"> 16</span>
+<span class="normal"> 17</span>
+<span class="normal"> 18</span>
+<span class="normal"> 19</span>
+<span class="normal"> 20</span>
+<span class="normal"> 21</span>
+<span class="normal"> 22</span>
+<span class="normal"> 23</span>
+<span class="normal"> 24</span>
+<span class="normal"> 25</span>
+<span class="normal"> 26</span>
+<span class="normal"> 27</span>
+<span class="normal"> 28</span>
+<span class="normal"> 29</span>
+<span class="normal"> 30</span>
+<span class="normal"> 31</span>
+<span class="normal"> 32</span>
+<span class="normal"> 33</span>
+<span class="normal"> 34</span>
+<span class="normal"> 35</span>
+<span class="normal"> 36</span>
+<span class="normal"> 37</span>
+<span class="normal"> 38</span>
+<span class="normal"> 39</span>
+<span class="normal"> 40</span>
+<span class="normal"> 41</span>
+<span class="normal"> 42</span>
+<span class="normal"> 43</span>
+<span class="normal"> 44</span>
+<span class="normal"> 45</span>
+<span class="normal"> 46</span>
+<span class="normal"> 47</span>
+<span class="normal"> 48</span>
+<span class="normal"> 49</span>
+<span class="normal"> 50</span>
+<span class="normal"> 51</span>
+<span class="normal"> 52</span>
+<span class="normal"> 53</span>
+<span class="normal"> 54</span>
+<span class="normal"> 55</span>
+<span class="normal"> 56</span>
+<span class="normal"> 57</span>
+<span class="normal"> 58</span>
+<span class="normal"> 59</span>
+<span class="normal"> 60</span>
+<span class="normal"> 61</span>
+<span class="normal"> 62</span>
+<span class="normal"> 63</span>
+<span class="normal"> 64</span>
+<span class="normal"> 65</span>
+<span class="normal"> 66</span>
+<span class="normal"> 67</span>
+<span class="normal"> 68</span>
+<span class="normal"> 69</span>
+<span class="normal"> 70</span>
+<span class="normal"> 71</span>
+<span class="normal"> 72</span>
+<span class="normal"> 73</span>
+<span class="normal"> 74</span>
+<span class="normal"> 75</span>
+<span class="normal"> 76</span>
+<span class="normal"> 77</span>
+<span class="normal"> 78</span>
+<span class="normal"> 79</span>
+<span class="normal"> 80</span>
+<span class="normal"> 81</span>
+<span class="normal"> 82</span>
+<span class="normal"> 83</span>
+<span class="normal"> 84</span>
+<span class="normal"> 85</span>
+<span class="normal"> 86</span>
+<span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">groups</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur-matrix-chat</span>
+<span class="w">    </span><span class="nt">rules</span><span class="p">:</span>
+<span class="w">      </span><span class="c1"># One series per Waldur, not per scrape target. On Kubernetes, where a</span>
+<span class="w">      </span><span class="c1"># target has a namespace label, a Waldur is a namespace and job: a</span>
+<span class="w">      </span><span class="c1"># replaced exporter pod is a new target, with another instance and other</span>
+<span class="w">      </span><span class="c1"># pod, node or chart version labels. Held per target, its predecessor's</span>
+<span class="w">      </span><span class="c1"># last value would stay beside the new pod's live one for 20 minutes,</span>
+<span class="w">      </span><span class="c1"># firing for a check that has recovered, and an alert would resolve and</span>
+<span class="w">      </span><span class="c1"># start over under the new labels. Elsewhere a target is a Waldur and</span>
+<span class="w">      </span><span class="c1"># keeps its labels, so several Waldurs in one job stay apart.</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">record</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur_matrix_check_passed:per_waldur</span>
+<span class="w">        </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
+<span class="w">          </span><span class="no">min by (namespace, job, check) (waldur_matrix_check_passed{namespace!=""})</span>
+<span class="w">          </span><span class="no">or</span>
+<span class="w">          </span><span class="no">waldur_matrix_check_passed{namespace=""}</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">record</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur_matrix_rooms:per_waldur</span>
+<span class="w">        </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
+<span class="w">          </span><span class="no">max by (namespace, job, state) (waldur_matrix_rooms{namespace!=""})</span>
+<span class="w">          </span><span class="no">or</span>
+<span class="w">          </span><span class="no">waldur_matrix_rooms{namespace=""}</span>
+<span class="w">      </span><span class="c1"># The exporter drops every check and room series when a diagnostics</span>
+<span class="w">      </span><span class="c1"># call fails, and Prometheus drops them while the exporter is down or</span>
+<span class="w">      </span><span class="c1"># restarting. Holding the last value for 20 minutes keeps that from</span>
+<span class="w">      </span><span class="c1"># resolving an alert or restarting its "for"; DiagnosticsDown and</span>
+<span class="w">      </span><span class="c1"># MetricsMissing fire before the hold runs out.</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">record</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur_matrix_check_passed:last20m</span>
+<span class="w">        </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
+<span class="w">          </span><span class="no">waldur_matrix_check_passed:per_waldur</span>
+<span class="w">          </span><span class="no">or</span>
+<span class="w">          </span><span class="no">last_over_time(waldur_matrix_check_passed:per_waldur[20m])</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">record</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur_matrix_rooms:last20m</span>
+<span class="w">        </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
+<span class="w">          </span><span class="no">waldur_matrix_rooms:per_waldur</span>
+<span class="w">          </span><span class="no">or</span>
+<span class="w">          </span><span class="no">last_over_time(waldur_matrix_rooms:per_waldur[20m])</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">alert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">WaldurMatrixMetricsMissing</span>
+<span class="w">        </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">absent(waldur_matrix_diagnostics_up)</span>
+<span class="w">        </span><span class="nt">for</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">15m</span>
+<span class="w">        </span><span class="nt">labels</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">severity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">warning</span>
+<span class="w">        </span><span class="nt">annotations</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">summary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">No Matrix chat metrics from the Waldur metrics exporter</span>
+<span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
+<span class="w">            </span><span class="no">Prometheus has no waldur_matrix_diagnostics_up series: the metrics</span>
+<span class="w">            </span><span class="no">exporter is down, is not scraped, or is a version without Matrix</span>
+<span class="w">            </span><span class="no">metrics. None of the other Matrix chat alerts can fire until it is.</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">alert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">WaldurMatrixDiagnosticsDown</span>
+<span class="w">        </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur_matrix_diagnostics_up == 0</span>
+<span class="w">        </span><span class="nt">for</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10m</span>
+<span class="w">        </span><span class="nt">labels</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">severity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">warning</span>
+<span class="w">        </span><span class="nt">annotations</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">summary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">The metrics exporter cannot read Waldur's Matrix diagnostics</span>
+<span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
+<span class="w">            </span><span class="no">GET /api/admin/matrix/diagnostics/ has failed for 10 minutes, so the</span>
+<span class="w">            </span><span class="no">Matrix chat checks are not updated. The exporter's token must belong</span>
+<span class="w">            </span><span class="no">to a support or staff user: a 403 means it belongs to neither, or</span>
+<span class="w">            </span><span class="no">that Waldur is too old to let support users read diagnostics.</span>
+<span class="w">      </span><span class="c1"># Diagnostics answers for a Waldur without Matrix chat too, with these</span>
+<span class="w">      </span><span class="c1"># checks failing. This alert and BotNotRunning stay quiet where no</span>
+<span class="w">      </span><span class="c1"># homeserver URL is set, so such a Waldur on the same Prometheus does not</span>
+<span class="w">      </span><span class="c1"># raise them; the sign-in and ping alerts are quiet there already.</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">alert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">WaldurMatrixHomeserverUnreachable</span>
+<span class="w">        </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
+<span class="w">          </span><span class="no">waldur_matrix_check_passed:last20m{check="homeserver_reachable"} == 0</span>
+<span class="w">          </span><span class="no">unless ignoring(check)</span>
+<span class="w">          </span><span class="no">waldur_matrix_check_passed:last20m{check="homeserver_configured"} == 0</span>
+<span class="w">        </span><span class="nt">for</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5m</span>
+<span class="w">        </span><span class="nt">labels</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">severity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">critical</span>
+<span class="w">        </span><span class="nt">annotations</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">summary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Waldur cannot reach the Matrix homeserver</span>
+<span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
+<span class="w">            </span><span class="no">Waldur's backend has not reached the homeserver at</span>
+<span class="w">            </span><span class="no">MATRIX_HOMESERVER_URL for 5 minutes, so chat is down for everyone.</span>
+<span class="w">            </span><span class="no">The bot sign-in and appservice ping alerts stay quiet while it</span>
+<span class="w">            </span><span class="no">fires: both checks fail with it.</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">alert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">WaldurMatrixBotNotRunning</span>
+<span class="w">        </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
+<span class="w">          </span><span class="no">waldur_matrix_check_passed:last20m{check="bot_running"} == 0</span>
+<span class="w">          </span><span class="no">unless ignoring(check)</span>
+<span class="w">          </span><span class="no">waldur_matrix_check_passed:last20m{check="homeserver_configured"} == 0</span>
+<span class="w">        </span><span class="nt">for</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10m</span>
+<span class="w">        </span><span class="nt">labels</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">severity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">warning</span>
+<span class="w">        </span><span class="nt">annotations</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">summary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">The Matrix bot is not running</span>
+<span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
+<span class="w">            </span><span class="no">No matrix_bot process has held the bot's lease for 10 minutes.</span>
+<span class="w">            </span><span class="no">Messages Waldur posts in rooms wait in the outbox and chat commands</span>
+<span class="w">            </span><span class="no">get no answer until the bot runs again.</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">alert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">WaldurMatrixBotSignInFailing</span>
+<span class="w">        </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
+<span class="w">          </span><span class="no">waldur_matrix_check_passed:last20m{check="bot_whoami"} == 0</span>
+<span class="w">          </span><span class="no">unless ignoring(check)</span>
+<span class="w">          </span><span class="no">waldur_matrix_check_passed:last20m{check="homeserver_reachable"} == 0</span>
+<span class="w">        </span><span class="nt">for</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10m</span>
+<span class="w">        </span><span class="nt">labels</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">severity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">warning</span>
+<span class="w">        </span><span class="nt">annotations</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">summary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">The homeserver does not accept Waldur's appservice token</span>
+<span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
+<span class="w">            </span><span class="no">The homeserver has rejected the bot's whoami call for 10 minutes:</span>
+<span class="w">            </span><span class="no">the appservice is not registered, or is registered with other</span>
+<span class="w">            </span><span class="no">tokens. Waldur cannot create rooms or accounts until it is fixed.</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">alert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">WaldurMatrixAppservicePingFailing</span>
+<span class="w">        </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
+<span class="w">          </span><span class="no">waldur_matrix_check_passed:last20m{check="appservice_ping"} == 0</span>
+<span class="w">          </span><span class="no">unless ignoring(check)</span>
+<span class="w">          </span><span class="no">waldur_matrix_check_passed:last20m{check="bot_whoami"} == 0</span>
+<span class="w">        </span><span class="nt">for</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10m</span>
+<span class="w">        </span><span class="nt">labels</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">severity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">warning</span>
+<span class="w">        </span><span class="nt">annotations</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">summary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">The homeserver cannot reach Waldur's appservice endpoint</span>
+<span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
+<span class="w">            </span><span class="no">The appservice ping has failed for 10 minutes. The homeserver</span>
+<span class="w">            </span><span class="no">cannot deliver room events to Waldur, so membership and messages</span>
+<span class="w">            </span><span class="no">Waldur reacts to are not processed.</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">alert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">WaldurMatrixRoomsErred</span>
+<span class="w">        </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">waldur_matrix_rooms:last20m{state="error"} &gt; 0</span>
+<span class="w">        </span><span class="nt">for</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30m</span>
+<span class="w">        </span><span class="nt">labels</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">severity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">warning</span>
+<span class="w">        </span><span class="nt">annotations</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">summary</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Matrix rooms are stuck in the error state</span>
+<span class="w">          </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
+<span class="w">            </span><span class="no">{{ $value }} Matrix room(s) have been in the error state for</span>
+<span class="w">            </span><span class="no">30 minutes. Waldur does not retry them on its own.</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>The rules match the metrics of every Waldur the Prometheus scrapes. A stack
+that never ran the <code>matrix</code> profile raises no alert among them: the endpoint
+answers there too, its diagnostics report that no homeserver URL is set, and
+the alerts stay quiet where that is so. One that ran the profile and no longer
+does still has <code>MATRIX_HOMESERVER_URL</code> set, and keeps raising the homeserver
+and bot alerts. The other side of it: if that setting is emptied on a stack
+that has chat, its four check alerts fall silent.
+<code>WaldurMatrixMetricsMissing</code> fires only when no exporter at all publishes
+Matrix metrics, so with several it does not notice one of them going away.</p>
+<table>
+<thead>
+<tr>
+<th>Alert</th>
+<th>Fires when</th>
+<th>Severity</th>
+<th>First thing to check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>WaldurMatrixMetricsMissing</code></td>
+<td>No <code>waldur_matrix_diagnostics_up</code> series for 15 minutes</td>
+<td>warning</td>
+<td><code>docker logs waldur-metrics-exporter</code>, that the image is a version with Matrix metrics, and that Prometheus lists the exporter as a target.</td>
+</tr>
+<tr>
+<td><code>WaldurMatrixDiagnosticsDown</code></td>
+<td>The diagnostics call failed for 10 minutes</td>
+<td>warning</td>
+<td><code>docker logs waldur-metrics-exporter</code>. <code>403</code> means the token belongs to neither a support nor a staff user, or Waldur is too old to let support users read diagnostics; anything else, <code>docker logs waldur-mastermind-api</code>.</td>
+</tr>
+<tr>
+<td><code>WaldurMatrixHomeserverUnreachable</code></td>
+<td><code>homeserver_reachable</code> failed for 5 minutes while a homeserver URL is set</td>
+<td>critical</td>
+<td><code>docker logs tuwunel</code>. A <code>tuwunel</code> container that is up but not answering after a tag change is migrating its database: do not restart it, see <a href="#pinned-image-tags">Pinned image tags</a>.</td>
+</tr>
+<tr>
+<td><code>WaldurMatrixBotNotRunning</code></td>
+<td><code>bot_running</code> failed for 10 minutes while a homeserver URL is set</td>
+<td>warning</td>
+<td><code>docker logs waldur-matrix-bot</code>, see <a href="#the-matrix-bot">The Matrix bot</a>.</td>
+</tr>
+<tr>
+<td><code>WaldurMatrixBotSignInFailing</code></td>
+<td><code>bot_whoami</code> failed for 10 minutes while the homeserver is reachable</td>
+<td>warning</td>
+<td>The appservice registration: <code>docker logs waldur-matrix-register</code>, and <a href="#token-rotation">Token rotation</a> if the tokens changed.</td>
+</tr>
+<tr>
+<td><code>WaldurMatrixAppservicePingFailing</code></td>
+<td><code>appservice_ping</code> failed for 10 minutes while <code>bot_whoami</code> passes</td>
+<td>warning</td>
+<td>That <code>tuwunel</code> can reach the API at the registered URL (<code>http://waldur-mastermind-api:8080</code> unless <code>WALDUR_MATRIX_APPSERVICE_URL</code> changes it), and <code>docker logs waldur-mastermind-api</code> for <code>DisallowedHost</code>.</td>
+</tr>
+<tr>
+<td><code>WaldurMatrixRoomsErred</code></td>
+<td>At least one room in the <code>error</code> state for 30 minutes</td>
+<td>warning</td>
+<td><code>GET /api/matrix/rooms/?state=error</code> lists them with their <code>error_message</code>. Fix the cause, then retry each room as staff with <code>POST /api/matrix/rooms/&lt;uuid&gt;/retry/</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>When the homeserver is unreachable, the bot's whoami and the appservice ping
+fail with it, so their alerts stay quiet while
+<code>WaldurMatrixHomeserverUnreachable</code> fires. Waldur skips the ping when whoami
+fails, so the ping alert also stays quiet while <code>WaldurMatrixBotSignInFailing</code>
+fires.</p>
+<p>The alerts read the <code>:last20m</code> series the same rules record, which keep each
+check's and room count's last value for 20 minutes, so a brief exporter or
+Prometheus restart neither resolves a real alert nor starts its timer over.
+They are recorded per Waldur. Outside Kubernetes each scrape target is a
+Waldur, so several stacks can be targets of the one job above and keep their
+alerts apart.</p>
+<p>The thresholds follow the exporter's two-minute refresh: 5 minutes is two or
+three failed refreshes in a row and 10 minutes about five, which rides out a
+container restart. Waldur never retries an erred room on its own, so
+<code>WaldurMatrixRoomsErred</code> keeps firing until staff retry the rooms; the
+30 minutes give staff already handling an outage time to do that first.</p>
 <h2 id="apple-silicon">Apple Silicon</h2>
 <p>The Matrix component images already publish <code>linux/arm64</code>. The Waldur images may need a local arm64 rebuild because of <code>openportal</code>'s native dependency:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>

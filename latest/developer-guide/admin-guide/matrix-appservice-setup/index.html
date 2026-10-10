@@ -18143,6 +18143,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../user-guide/end-users/chat-encryption/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chat encryption
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../user-guide/end-users/interface/" class="md-nav__link">
         
   
@@ -20471,7 +20499,7 @@ would be reverted while the homeserver kept the old registration. See
 <span class="p">}</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h4 id="get-apiadminmatrixdiagnostics">GET /api/admin/matrix/diagnostics/</h4>
-<p>Runs live connectivity checks against the configured Matrix homeserver. Staff only.</p>
+<p>Runs live connectivity checks against the configured Matrix homeserver. Staff and support users can call it, so monitoring can poll it with a support token; the Diagnostics action in the UI stays staff-only. The response holds no token or password, only fingerprints of the appservice tokens, and what it does on the homeserver acts for the caller alone.</p>
 <p>Checks performed (the <code>checks</code> array in the response):</p>
 <ol>
 <li>Homeserver URL configured (<code>homeserver_configured</code>)</li>
@@ -20483,8 +20511,8 @@ would be reverted while the homeserver kept the old registration. See
 <li>HS token configured (<code>hs_token_configured</code>)</li>
 <li>Registration secret configured (<code>registration_secret_configured</code>)</li>
 <li>Bot authentication (<code>bot_whoami</code>, via <code>/account/whoami</code>; also how many rooms the bot is in)</li>
-<li>Appservice can act for users (<code>appservice_user_namespace</code>: <code>/account/whoami</code> as the staff user's Matrix ID. It fails when the homeserver's appservice registration does not cover users, which breaks chat sessions and room joins; register the appservice again with Waldur's registration. When it fails, it also counts room members recorded as invited, not joined)</li>
-<li>Chat drawer tokens expire (<code>web_token_lifetime</code>: signs the staff user in on a test device and reads the token's lifetime; fails when tokens never expire or live over an hour. Skipped until the staff user has opened the chat once)</li>
+<li>Appservice can act for users (<code>appservice_user_namespace</code>: <code>/account/whoami</code> as the caller's Matrix ID. It fails when the homeserver's appservice registration does not cover users, which breaks chat sessions and room joins; register the appservice again with Waldur's registration. When it fails, it also counts room members recorded as invited, not joined)</li>
+<li>Chat drawer tokens expire (<code>web_token_lifetime</code>: signs the caller in on a test device, reads the access token's lifetime and signs the device out again; fails when it never expires or lives over an hour. It does not look at the refresh token's lifetime. Until the caller has opened the chat once it is skipped and counts as passed, so monitor it with an account that has)</li>
 <li>Bot is a homeserver admin (<code>bot_homeserver_admin</code>; see <a href="#making-the-bot-a-homeserver-admin">Making the bot a homeserver admin</a>)</li>
 <li>Homeserver can reach Waldur (<code>appservice_ping</code>): Waldur asks the homeserver to ping
     the appservice (MSC2659), and the homeserver calls <code>POST /_matrix/app/v1/ping</code> with
@@ -20496,7 +20524,11 @@ would be reverted while the homeserver kept the old registration. See
 <li>Room statistics (<code>room_stats</code>: active, creating, errored counts)</li>
 <li>User profile statistics (<code>user_stats</code>: provisioned count, plus the active users whose roles put them in an active project room but who have no Matrix profile, named up to ten. Provisioning refused or failed for those; the worker log says why, and <a href="#existing-matrix-accounts">Existing Matrix accounts</a> says how to link one. Fails while any room member is unlinked)</li>
 <li>Single sign-on reaches only its own accounts (<code>sso_id_collisions</code>: with <code>MATRIX_EXTERNAL_LOGIN_METHOD = oidc</code>, the provisioned Matrix IDs another identity provider subject could sign in to, counted and named up to ten: those whose localpart is not the user's lowercased ASCII username, whose user does not sign in to Waldur through <code>MATRIX_SSO_REGISTRATION_METHOD</code>, or whose user's username another user's differs from only in case. Fails while <code>MATRIX_SSO_REGISTRATION_METHOD</code> is blank. Passes with "Not using single sign-on" otherwise; see <a href="../matrix-sso/">Single sign-on for Matrix clients</a>)</li>
+<li>Matrix bot running (<code>bot_running</code>: whether a <code>matrix_bot</code> process holds the bot's lease, plus how many messages wait for it to post them. Fails while none does)</li>
+<li>History exports (<code>history_exports</code>: the exports that failed in the last 24 hours. A day covers the last nightly export run; a failed export is never retried, so without a window one failure would fail the check until retention deletes it. Fails while any did; their <code>error_message</code> is in <a href="#listing-exports">Listing exports</a> with <code>state=failed</code>)</li>
+<li>Appservice endpoint errors (<code>webhook_errors</code>: the calls to <code>/_matrix/app/v1/transactions</code> and <code>/_matrix/app/v1/ping</code> answered with a 4xx or a 5xx in the last hour. Fails on a 5xx only, which is Waldur failing. A 4xx is a call with a wrong token or a malformed body, or one over the <code>matrix_webhook</code> rate limit; anyone can send those calls, and a homeserver with the wrong <code>hs_token</code> also fails <code>appservice_ping</code>. A call refused before it reaches the endpoint, such as one whose <code>Host</code> is not in <code>ALLOWED_HOSTS</code>, is not counted. The counts are kept in the Django cache, so every API process adds to them; errors in several processes at the same moment can be undercounted, never to zero)</li>
 </ol>
+<p>Three checks also carry <code>metrics</code>, their numbers as integers for monitoring: <code>appservice_ping</code> the round trip, <code>{"round_trip_ms": 12}</code>, when the ping succeeded; <code>history_exports</code> <code>{"failed": 1}</code>; <code>webhook_errors</code> <code>{"4xx": 2, "5xx": 0}</code>. Other checks have no <code>metrics</code>.</p>
 <p><strong>Example response (200):</strong></p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
@@ -20505,12 +20537,14 @@ would be reverted while the homeserver kept the old registration. See
 <span class="normal">5</span>
 <span class="normal">6</span>
 <span class="normal">7</span>
-<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="normal">8</span>
+<span class="normal">9</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
 <span class="w">  </span><span class="nt">"ok"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">"checks"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
 <span class="w">    </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"homeserver_domain_configured"</span><span class="p">,</span><span class="w"> </span><span class="nt">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Homeserver domain configured"</span><span class="p">,</span><span class="w"> </span><span class="nt">"ok"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="w"> </span><span class="s2">"matrix.example.com"</span><span class="p">},</span>
-<span class="w">    </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"homeserver_reachable"</span><span class="p">,</span><span class="w"> </span><span class="nt">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Homeserver reachable"</span><span class="p">,</span><span class="w"> </span><span class="nt">"ok"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="w"> </span><span class="s2">"OK — Tuwunel 1.9.0, Matrix up to v1.19"</span><span class="p">},</span>
-<span class="w">    </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"bot_whoami"</span><span class="p">,</span><span class="w"> </span><span class="nt">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Bot authentication (whoami)"</span><span class="p">,</span><span class="w"> </span><span class="nt">"ok"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="w"> </span><span class="s2">"OK — authenticated as @waldur-bot:matrix.example.com, in 3 room(s)"</span><span class="p">}</span>
+<span class="w">    </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"homeserver_reachable"</span><span class="p">,</span><span class="w"> </span><span class="nt">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Homeserver reachable"</span><span class="p">,</span><span class="w"> </span><span class="nt">"ok"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="w"> </span><span class="s2">"OK — Tuwunel 1.9.3, Matrix up to v1.19"</span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"bot_whoami"</span><span class="p">,</span><span class="w"> </span><span class="nt">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Bot authentication (whoami)"</span><span class="p">,</span><span class="w"> </span><span class="nt">"ok"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="w"> </span><span class="s2">"OK — authenticated as @waldur-bot:matrix.example.com, in 3 room(s)"</span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"webhook_errors"</span><span class="p">,</span><span class="w"> </span><span class="nt">"label"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Appservice endpoint errors"</span><span class="p">,</span><span class="w"> </span><span class="nt">"ok"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">"detail"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Calls to the appservice endpoints in the last hour: 2 answered with 4xx, 0 answered with 5xx; see the API log"</span><span class="p">,</span><span class="w"> </span><span class="nt">"metrics"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"4xx"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="nt">"5xx"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">}}</span>
 <span class="w">  </span><span class="p">]</span>
 <span class="p">}</span>
 </code></pre></div></td></tr></tbody></table></div>

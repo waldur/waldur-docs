@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-10T15:42:42.904687Z
+Generated: 2026-10-10T17:56:27.200951Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -486,6 +486,10 @@ graph TB
   - Requires API token for authentication
 
   - Exposes metrics on port 8080
+
+  - `waldur.metricsExporter.serviceMonitor.enabled` adds a ServiceMonitor for
+    the Prometheus Operator; the Matrix chat alert rules are under "Monitoring" in
+    [Matrix chat](matrix-chat.md)
 
 ### 6. UVK Everypay Integration
 
@@ -2658,6 +2662,107 @@ encrypted.
   `matrix_bot` schema and `matrix_chat_matrixbotidentity` rows, before the bot
   starts: otherwise a second bot runs as the same device, can read the
   original's rooms, and corrupts both bots' sessions.
+
+## Monitoring
+
+The metrics exporter (`waldur.metricsExporter`) calls Waldur's Matrix
+diagnostics, `GET /api/admin/matrix/diagnostics/`, about every two minutes
+and publishes:
+
+| Metric | Labels | Value |
+| --- | --- | --- |
+| `waldur_matrix_diagnostics_up` | | `1` if the last diagnostics call succeeded, `0` if it failed |
+| `waldur_matrix_check_passed` | `check` | `1` if the diagnostics check passed, `0` if not, e.g. `homeserver_reachable`, `bot_running`, `bot_whoami`, `appservice_ping` |
+| `waldur_matrix_rooms` | `state` | Rooms per state: `creating`, `active`, `disabling`, `archived`, `error` |
+
+The exporter calls the endpoint with `waldur.supportToken`, which must belong
+to a support or staff user. If every call gets `403`, the token belongs to
+neither, or Waldur is too old to let support users read diagnostics and needs
+a staff user's token; `waldur_matrix_diagnostics_up` then stays `0`.
+
+### Scraping the exporter
+
+A Prometheus that scrapes annotated Services finds the exporter through its
+`prometheus.io/scrape: "true"` annotation
+(`waldur.metricsExporter.includeAnnotations`, on by default). The Prometheus
+Operator ignores those annotations; for it, turn on the ServiceMonitor below.
+
+### Alert rules
+
+The chart ships the alert rules as a `PrometheusRule`, off by default:
+
+```yaml
+waldur:
+  supportToken: <API token of a support or staff user>
+  metricsExporter:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      labels:
+        release: kube-prometheus-stack   # what your Prometheus selects by
+matrixChat:
+  prometheusRule:
+    enabled: true
+    labels:
+      release: kube-prometheus-stack
+```
+
+Both objects need the Prometheus Operator's CRDs: the chart refuses to render
+them on a cluster without the CRDs, and refuses the rules without the
+exporter. `helm template` needs
+`--api-versions monitoring.coreos.com/v1/ServiceMonitor --api-versions monitoring.coreos.com/v1/PrometheusRule`
+to render them. kube-prometheus-stack picks up only ServiceMonitors and rules
+labelled `release: <its release name>`; others are applied and then ignored,
+without an error anywhere.
+
+Without the Prometheus Operator, load the same rules into your Prometheus from
+[`waldur/files/matrix-chat-alerts.yaml`](https://github.com/waldur/waldur-helm/blob/master/waldur/files/matrix-chat-alerts.yaml),
+or copy them from the
+[Docker Compose guide](https://docs.waldur.com/latest/admin-guide/deployment/docker-compose/matrix-chat-add-on/#monitoring).
+The rules match the metrics of every Waldur the Prometheus scrapes, so with
+several releases on one Prometheus, enable them in one. A Waldur that never
+had Matrix chat raises no alert among them: its diagnostics report that no
+homeserver URL is set, and the alerts stay quiet where that is so. One where
+chat was switched off but `MATRIX_HOMESERVER_URL` is still set keeps raising
+the homeserver and bot alerts. The other side of it: if that setting is
+emptied on a Waldur that has chat, its four check alerts fall silent.
+`WaldurMatrixMetricsMissing` fires only when no exporter at all publishes
+Matrix metrics, so with several it does not notice one of them going away.
+
+| Alert | Fires when | Severity | First thing to check |
+| --- | --- | --- | --- |
+| `WaldurMatrixMetricsMissing` | No `waldur_matrix_diagnostics_up` series for 15 minutes | warning | The exporter pod runs a version with Matrix metrics, and Prometheus lists it as a target: a ServiceMonitor without the right labels is ignored. |
+| `WaldurMatrixDiagnosticsDown` | The diagnostics call failed for 10 minutes | warning | The exporter's log. `403` means `waldur.supportToken` belongs to neither a support nor a staff user, or Waldur is too old to let support users read diagnostics; anything else, the `waldur-mastermind-api` log. |
+| `WaldurMatrixHomeserverUnreachable` | `homeserver_reachable` failed for 5 minutes while a homeserver URL is set | critical | `kubectl logs matrix-homeserver-0`. A homeserver that is up but not answering after an image change is migrating its database: do not restart it, see [Upgrading](#upgrading). |
+| `WaldurMatrixBotNotRunning` | `bot_running` failed for 10 minutes while a homeserver URL is set | warning | `kubectl logs deployment/waldur-matrix-bot`, and that `matrixChat.bot.enabled` is on. |
+| `WaldurMatrixBotSignInFailing` | `bot_whoami` failed for 10 minutes while the homeserver is reachable | warning | The appservice registration: the `matrix-init-wire` Job's log, and [Rotating the tokens](#rotating-the-tokens) if the tokens changed. |
+| `WaldurMatrixAppservicePingFailing` | `appservice_ping` failed for 10 minutes while `bot_whoami` passes | warning | That the homeserver can reach `waldur-mastermind-api` at the registered appservice URL: the API pods and, if on, the NetworkPolicies. |
+| `WaldurMatrixRoomsErred` | At least one room in the `error` state for 30 minutes | warning | `GET /api/matrix/rooms/?state=error` lists them with their `error_message`. Fix the cause, then retry each room as staff with `POST /api/matrix/rooms/<uuid>/retry/`. |
+
+When the homeserver is unreachable, the bot's whoami and the appservice ping
+fail with it, so their alerts stay quiet while
+`WaldurMatrixHomeserverUnreachable` fires. Waldur skips the ping when whoami
+fails, so the ping alert also stays quiet while `WaldurMatrixBotSignInFailing`
+fires.
+
+The alerts read the `:last20m` series the same rules record, which keep each
+check's and room count's last value for 20 minutes, so a brief exporter or
+Prometheus restart neither resolves a real alert nor starts its timer over.
+They are recorded per Waldur, not per scrape target. On Kubernetes, where a
+target has a `namespace` label, a Waldur is a namespace and job, so an
+exporter pod that is replaced continues the series. Elsewhere each target is
+a Waldur. On a Prometheus that holds several clusters whose Waldurs share a
+namespace name and job, the rules take those Waldurs for one. Leave
+`matrixChat.prometheusRule` off there and load a copy of the rules file with
+the cluster's label added to the `by` of the two `:per_waldur` rules.
+
+The thresholds follow the exporter's two-minute refresh: 5 minutes is two or
+three failed refreshes in a row and 10 minutes about five, which rides out a
+pod restart.
+
+Waldur never retries an erred room on its own, so `WaldurMatrixRoomsErred`
+keeps firing until staff retry the rooms; the 30 minutes give staff already
+handling an outage time to do that first.
 
 ## Calls
 
@@ -5006,9 +5111,9 @@ succeeds and all three pods report Ready. But every client connection is
 load-balanced onto an arbitrary node, and the nodes share no state, so:
 
 - a queue declared on one node does not exist on the others;
-- `celery inspect ping` — the worker's startup, liveness and readiness probe —
-  usually lands on a node without the worker's pidbox queue and returns
-  `Error: No nodes replied within time constraint`, so the worker fails its probes
+- the worker's ping probe (its startup, liveness and readiness probe) usually
+  lands on a node without the worker's pidbox queue and reports
+  `celery@<pod> did not reply to ping within 10s`, so the worker fails its probes
   and is killed and restarted while logging `celery@… ready.`;
 - published tasks strand on whichever node the publisher happened to reach,
   leaving durable queues with messages and `consumers=0`;
@@ -6469,6 +6574,239 @@ docker compose exec livekit sh -c 'ss -lun | grep :443 || netstat -lun | grep :4
 ```
 
 Coverage note: TURN/UDP rescues symmetric-NAT clients and any network that permits outbound UDP on 443. It does **not** help clients on networks that block all outbound UDP (strict corporate firewalls) — that requires TURN/TLS on TCP 443, which on a single host means giving LiveKit its own IP or a layer-4 load balancer (the helm topology). For a single-host compose deployment, TURN/UDP is the pragmatic option.
+
+## Monitoring
+
+The stack runs neither the metrics exporter nor Prometheus. To watch chat
+health from outside Waldur, run
+[waldur-prometheus-exporter](https://github.com/waldur/waldur-prometheus-exporter)
+next to the stack and load the rules below into your Prometheus.
+
+The exporter calls Waldur's Matrix diagnostics,
+`GET /api/admin/matrix/diagnostics/`, about every two minutes and publishes:
+
+| Metric | Labels | Value |
+| --- | --- | --- |
+| `waldur_matrix_diagnostics_up` | | `1` if the last diagnostics call succeeded, `0` if it failed |
+| `waldur_matrix_check_passed` | `check` | `1` if the diagnostics check passed, `0` if not, e.g. `homeserver_reachable`, `bot_running`, `bot_whoami`, `appservice_ping` |
+| `waldur_matrix_rooms` | `state` | Rooms per state: `creating`, `active`, `disabling`, `archived`, `error` |
+
+The exporter needs the API token of a support or staff user. If every call
+gets `403`, the token belongs to neither, or Waldur is too old to let support
+users read diagnostics and needs a staff user's token;
+`waldur_matrix_diagnostics_up` then stays `0`.
+
+### Running the exporter
+
+Put the exporter in a `docker-compose.override.yml` next to
+`docker-compose.yml`, which `docker compose` reads unless `-f` names the files,
+and set `WALDUR_METRICS_EXPORTER_TOKEN` in `.env` to the API token of a
+support or staff user:
+
+```yaml
+services:
+  waldur-metrics-exporter:
+    container_name: waldur-metrics-exporter
+    image: '${DOCKER_REGISTRY_PREFIX}opennode/waldur-prometheus-exporter:${WALDUR_MASTERMIND_IMAGE_TAG}'
+    environment:
+      # The API's address inside the stack, as the appservice uses it.
+      - WALDUR_API_URL=http://waldur-mastermind-api:8080/api/
+      - WALDUR_API_TOKEN=${WALDUR_METRICS_EXPORTER_TOKEN}
+    ports:
+      # Where your Prometheus scrapes /metrics; widen the address if it runs
+      # on another host.
+      - '127.0.0.1:9180:8080'
+    restart: always
+```
+
+Then have Prometheus scrape it and load the [alert rules](#alert-rules) below,
+saved as `matrix-chat-alerts.yml` next to `prometheus.yml`:
+
+```yaml
+rule_files:
+  - matrix-chat-alerts.yml
+scrape_configs:
+  - job_name: waldur-metrics-exporter
+    scrape_interval: 60s
+    static_configs:
+      - targets: ['<docker host>:9180']
+```
+
+### Alert rules
+
+The same rules ship with the Helm chart as a `PrometheusRule`:
+
+```yaml
+groups:
+  - name: waldur-matrix-chat
+    rules:
+      # One series per Waldur, not per scrape target. On Kubernetes, where a
+      # target has a namespace label, a Waldur is a namespace and job: a
+      # replaced exporter pod is a new target, with another instance and other
+      # pod, node or chart version labels. Held per target, its predecessor's
+      # last value would stay beside the new pod's live one for 20 minutes,
+      # firing for a check that has recovered, and an alert would resolve and
+      # start over under the new labels. Elsewhere a target is a Waldur and
+      # keeps its labels, so several Waldurs in one job stay apart.
+      - record: waldur_matrix_check_passed:per_waldur
+        expr: >-
+          min by (namespace, job, check) (waldur_matrix_check_passed{namespace!=""})
+          or
+          waldur_matrix_check_passed{namespace=""}
+      - record: waldur_matrix_rooms:per_waldur
+        expr: >-
+          max by (namespace, job, state) (waldur_matrix_rooms{namespace!=""})
+          or
+          waldur_matrix_rooms{namespace=""}
+      # The exporter drops every check and room series when a diagnostics
+      # call fails, and Prometheus drops them while the exporter is down or
+      # restarting. Holding the last value for 20 minutes keeps that from
+      # resolving an alert or restarting its "for"; DiagnosticsDown and
+      # MetricsMissing fire before the hold runs out.
+      - record: waldur_matrix_check_passed:last20m
+        expr: >-
+          waldur_matrix_check_passed:per_waldur
+          or
+          last_over_time(waldur_matrix_check_passed:per_waldur[20m])
+      - record: waldur_matrix_rooms:last20m
+        expr: >-
+          waldur_matrix_rooms:per_waldur
+          or
+          last_over_time(waldur_matrix_rooms:per_waldur[20m])
+      - alert: WaldurMatrixMetricsMissing
+        expr: absent(waldur_matrix_diagnostics_up)
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: No Matrix chat metrics from the Waldur metrics exporter
+          description: >-
+            Prometheus has no waldur_matrix_diagnostics_up series: the metrics
+            exporter is down, is not scraped, or is a version without Matrix
+            metrics. None of the other Matrix chat alerts can fire until it is.
+      - alert: WaldurMatrixDiagnosticsDown
+        expr: waldur_matrix_diagnostics_up == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: The metrics exporter cannot read Waldur's Matrix diagnostics
+          description: >-
+            GET /api/admin/matrix/diagnostics/ has failed for 10 minutes, so the
+            Matrix chat checks are not updated. The exporter's token must belong
+            to a support or staff user: a 403 means it belongs to neither, or
+            that Waldur is too old to let support users read diagnostics.
+      # Diagnostics answers for a Waldur without Matrix chat too, with these
+      # checks failing. This alert and BotNotRunning stay quiet where no
+      # homeserver URL is set, so such a Waldur on the same Prometheus does not
+      # raise them; the sign-in and ping alerts are quiet there already.
+      - alert: WaldurMatrixHomeserverUnreachable
+        expr: >-
+          waldur_matrix_check_passed:last20m{check="homeserver_reachable"} == 0
+          unless ignoring(check)
+          waldur_matrix_check_passed:last20m{check="homeserver_configured"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: Waldur cannot reach the Matrix homeserver
+          description: >-
+            Waldur's backend has not reached the homeserver at
+            MATRIX_HOMESERVER_URL for 5 minutes, so chat is down for everyone.
+            The bot sign-in and appservice ping alerts stay quiet while it
+            fires: both checks fail with it.
+      - alert: WaldurMatrixBotNotRunning
+        expr: >-
+          waldur_matrix_check_passed:last20m{check="bot_running"} == 0
+          unless ignoring(check)
+          waldur_matrix_check_passed:last20m{check="homeserver_configured"} == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: The Matrix bot is not running
+          description: >-
+            No matrix_bot process has held the bot's lease for 10 minutes.
+            Messages Waldur posts in rooms wait in the outbox and chat commands
+            get no answer until the bot runs again.
+      - alert: WaldurMatrixBotSignInFailing
+        expr: >-
+          waldur_matrix_check_passed:last20m{check="bot_whoami"} == 0
+          unless ignoring(check)
+          waldur_matrix_check_passed:last20m{check="homeserver_reachable"} == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: The homeserver does not accept Waldur's appservice token
+          description: >-
+            The homeserver has rejected the bot's whoami call for 10 minutes:
+            the appservice is not registered, or is registered with other
+            tokens. Waldur cannot create rooms or accounts until it is fixed.
+      - alert: WaldurMatrixAppservicePingFailing
+        expr: >-
+          waldur_matrix_check_passed:last20m{check="appservice_ping"} == 0
+          unless ignoring(check)
+          waldur_matrix_check_passed:last20m{check="bot_whoami"} == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: The homeserver cannot reach Waldur's appservice endpoint
+          description: >-
+            The appservice ping has failed for 10 minutes. The homeserver
+            cannot deliver room events to Waldur, so membership and messages
+            Waldur reacts to are not processed.
+      - alert: WaldurMatrixRoomsErred
+        expr: waldur_matrix_rooms:last20m{state="error"} > 0
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: Matrix rooms are stuck in the error state
+          description: >-
+            {{ $value }} Matrix room(s) have been in the error state for
+            30 minutes. Waldur does not retry them on its own.
+```
+
+The rules match the metrics of every Waldur the Prometheus scrapes. A stack
+that never ran the `matrix` profile raises no alert among them: the endpoint
+answers there too, its diagnostics report that no homeserver URL is set, and
+the alerts stay quiet where that is so. One that ran the profile and no longer
+does still has `MATRIX_HOMESERVER_URL` set, and keeps raising the homeserver
+and bot alerts. The other side of it: if that setting is emptied on a stack
+that has chat, its four check alerts fall silent.
+`WaldurMatrixMetricsMissing` fires only when no exporter at all publishes
+Matrix metrics, so with several it does not notice one of them going away.
+
+| Alert | Fires when | Severity | First thing to check |
+| --- | --- | --- | --- |
+| `WaldurMatrixMetricsMissing` | No `waldur_matrix_diagnostics_up` series for 15 minutes | warning | `docker logs waldur-metrics-exporter`, that the image is a version with Matrix metrics, and that Prometheus lists the exporter as a target. |
+| `WaldurMatrixDiagnosticsDown` | The diagnostics call failed for 10 minutes | warning | `docker logs waldur-metrics-exporter`. `403` means the token belongs to neither a support nor a staff user, or Waldur is too old to let support users read diagnostics; anything else, `docker logs waldur-mastermind-api`. |
+| `WaldurMatrixHomeserverUnreachable` | `homeserver_reachable` failed for 5 minutes while a homeserver URL is set | critical | `docker logs tuwunel`. A `tuwunel` container that is up but not answering after a tag change is migrating its database: do not restart it, see [Pinned image tags](#pinned-image-tags). |
+| `WaldurMatrixBotNotRunning` | `bot_running` failed for 10 minutes while a homeserver URL is set | warning | `docker logs waldur-matrix-bot`, see [The Matrix bot](#the-matrix-bot). |
+| `WaldurMatrixBotSignInFailing` | `bot_whoami` failed for 10 minutes while the homeserver is reachable | warning | The appservice registration: `docker logs waldur-matrix-register`, and [Token rotation](#token-rotation) if the tokens changed. |
+| `WaldurMatrixAppservicePingFailing` | `appservice_ping` failed for 10 minutes while `bot_whoami` passes | warning | That `tuwunel` can reach the API at the registered URL (`http://waldur-mastermind-api:8080` unless `WALDUR_MATRIX_APPSERVICE_URL` changes it), and `docker logs waldur-mastermind-api` for `DisallowedHost`. |
+| `WaldurMatrixRoomsErred` | At least one room in the `error` state for 30 minutes | warning | `GET /api/matrix/rooms/?state=error` lists them with their `error_message`. Fix the cause, then retry each room as staff with `POST /api/matrix/rooms/<uuid>/retry/`. |
+
+When the homeserver is unreachable, the bot's whoami and the appservice ping
+fail with it, so their alerts stay quiet while
+`WaldurMatrixHomeserverUnreachable` fires. Waldur skips the ping when whoami
+fails, so the ping alert also stays quiet while `WaldurMatrixBotSignInFailing`
+fires.
+
+The alerts read the `:last20m` series the same rules record, which keep each
+check's and room count's last value for 20 minutes, so a brief exporter or
+Prometheus restart neither resolves a real alert nor starts its timer over.
+They are recorded per Waldur. Outside Kubernetes each scrape target is a
+Waldur, so several stacks can be targets of the one job above and keep their
+alerts apart.
+
+The thresholds follow the exporter's two-minute refresh: 5 minutes is two or
+three failed refreshes in a row and 10 minutes about five, which rides out a
+container restart. Waldur never retries an erred room on its own, so
+`WaldurMatrixRoomsErred` keeps firing until staff retry the rooms; the
+30 minutes give staff already handling an outage time to do that first.
 
 ## Apple Silicon
 
@@ -55753,41 +56091,32 @@ flowchart LR
 
 ### API Endpoints
 
-#### Get/Update Attribute Configuration
+The configuration is read and written through actions on the provider offering:
 
-**Endpoint**: `/api/marketplace-offering-user-attribute-configs/`
-
-```http
-GET /api/marketplace-offering-user-attribute-configs/?offering_uuid={uuid}
-```
-
-```http
-POST /api/marketplace-offering-user-attribute-configs/
-Content-Type: application/json
-
-{
-  "offering": "https://api.example.com/api/marketplace-offerings/{uuid}/",
-  "expose_username": true,
-  "expose_full_name": true,
-  "expose_email": true,
-  "expose_phone_number": false,
-  "expose_organization": true,
-  "expose_nationality": true,
-  "expose_civil_number": false
-}
-```
-
-#### Update Existing Configuration
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| `GET` | `/api/marketplace-provider-offerings/{uuid}/user-attribute-config/` | Read the configuration (the defaults if none is stored) |
+| `POST` / `PUT` | `/api/marketplace-provider-offerings/{uuid}/update-user-attribute-config/` | Replace the configuration, creating it if missing |
+| `PATCH` | `/api/marketplace-provider-offerings/{uuid}/update-user-attribute-config/` | Change only the fields sent |
+| `DELETE` | `/api/marketplace-provider-offerings/{uuid}/delete-user-attribute-config/` | Remove it; the offering falls back to the defaults |
 
 ```http
-PATCH /api/marketplace-offering-user-attribute-configs/{uuid}/
+PATCH /api/marketplace-provider-offerings/{uuid}/update-user-attribute-config/
 Content-Type: application/json
 
 {
   "expose_phone_number": true,
-  "expose_nationality": false
+  "expose_civil_number": true
 }
 ```
+
+If the offering has no configuration yet, any of the update methods creates one, and attributes left out
+of the request take their model defaults (username, full name and email exposed, everything else hidden).
+
+In homeport the configuration is edited on the offering's integration settings, under
+**User attribute exposure**. That tab is only shown when the offering lets the service provider create
+offering users (`plugin_options.service_provider_can_create_offering_user`). For other offerings, use the
+API.
 
 ### Available Attributes
 
@@ -55873,8 +56202,9 @@ GET /api/marketplace-provider-resource-projects/{uuid}/list_users/
 
 ### Permissions
 
-- **View**: Users with `VIEW_OFFERING` permission on the offering
-- **Create/Update**: Offering owner or customer owner
+- **View**: owners of the offering's organization, or anyone with `UPDATE_OFFERING_USER` on the offering,
+  its organization or its service provider (this covers a site agent running as offering manager)
+- **Create/Update/Delete**: owners of the offering's organization
 
 ### GDPR Compliance
 
@@ -86223,6 +86553,118 @@ The AI Assistant is available as a chat sidebar. Click the assistant icon in the
 
 ---
 
+### Chat encryption
+<!-- Source: docs/user-guide/end-users/chat-encryption.md -->
+
+# Chat encryption
+
+Project chat rooms are end-to-end encrypted. Your browser encrypts a message
+before it leaves your computer, and only the people in the room can decrypt it.
+The chat server stores the content of your messages and files only in encrypted
+form; what it needs to deliver them, listed below, it can read.
+
+## What is encrypted
+
+Encrypted:
+
+- the text of messages, edits and replies;
+- files, images and voice messages you attach.
+
+Not encrypted, because the chat server needs it to deliver messages:
+
+- room names and topics;
+- who is in a room, and when people join or leave;
+- when each message was sent, and which message replies to, edits or reacts
+  to which;
+- the emoji of reactions.
+
+Calls are end-to-end encrypted too: audio, video and screen sharing are
+encrypted in your browser. The call server still sees who takes part and when,
+the kinds and sizes of their audio and video, and who is speaking.
+
+## Who holds the keys
+
+Your encryption keys are stored on the chat server, locked by a **recovery
+key**. Waldur keeps your recovery key for you, so the chat in Waldur unlocks
+your keys every time you open it, in any browser, without asking you for
+anything.
+
+This means that encryption protects your messages from anyone who gets hold of
+the chat server or its backups. It does not protect them from the operators of
+your Waldur deployment, who hold the recovery keys.
+
+Nothing is kept in your browser: each chat session starts afresh and unlocks
+your keys again.
+
+## Using Element or another Matrix app
+
+If your administrator allows external Matrix apps, you can read and write in
+your project rooms from Element or any other Matrix app as well.
+
+1. In the chat drawer, open the room menu and choose **Open in external Matrix
+   client**, or choose **Connect to Matrix…** in the room's actions on the
+   project's chat page.
+2. Sign in to your Matrix app with the details the dialog shows.
+3. Click **Show recovery key** in the same dialog. The key is hidden until you
+   click **Reveal**; the copy button copies it without showing it.
+4. When your Matrix app asks you to verify the session, choose the option to
+   use a recovery key (Element calls it a recovery key or a security key), and
+   paste the key.
+
+Your Matrix app can then read your encrypted messages, and the people in your
+rooms see messages from it as coming from you.
+
+!!! warning "Keep the recovery key private"
+    Anyone who has your recovery key and can sign in to your Matrix account can
+    read all of your encrypted messages. Do not share it or store it where
+    others can read it. Each time it is shown, Waldur records that in your
+    event log.
+
+The recovery key shown in Waldur is how you open your existing history in
+another app. Your Matrix app may offer to reset your encryption instead. Do not
+reset unless every copy of your key is lost: a reset replaces your keys, and the
+messages only your old keys could unlock are lost to you, in Waldur too. If you
+did reset, the chat in Waldur asks for your new recovery key once (see below);
+until you enter it, encrypted messages stay unreadable there.
+
+If the dialog says that Waldur holds no recovery key for you yet, open the chat
+in Waldur once. It either sets encryption up, or asks for a recovery key you
+already have (see below).
+
+## When the chat asks for your recovery key
+
+If you set encryption up in Element before you first opened the chat in Waldur,
+or reset it there later, Waldur's copy of your recovery key no longer unlocks
+your keys. The chat drawer then says **Encrypted messages cannot be read**:
+
+1. Click **Enter recovery key**.
+2. Enter the recovery key that Element gave you, the latest one if you reset
+   encryption more than once, and click **Unlock**.
+
+Waldur checks the key, keeps it, and unlocks the chat. You are asked only once:
+from then on the chat in Waldur unlocks your keys by itself again.
+
+If you have no recovery key, click **Reset encryption** instead. A reset creates
+new keys. Waldur's chat bot then writes the earlier messages it can read into
+your new key backup, so those become readable again; messages that only your old
+keys could unlock stay unreadable. Reset only if you cannot find your recovery
+key.
+
+## Messages from before you joined
+
+When you are added to a room, you can read what was said in it before you
+joined: Waldur's chat bot writes the room's earlier messages into your key
+backup, and the chat in Waldur restores them from there. The chat shows them
+like any other message, but their keys come from the bot rather than from the
+sender's own device, so it is not guaranteed in the same way that they really
+are from the person shown. Messages the bot could not read itself are not
+included.
+
+Whether Element and other Matrix apps show this earlier history, and whether
+they mark it, has not been checked yet.
+
+---
+
 ### Interface introduction
 <!-- Source: docs/user-guide/end-users/interface.md -->
 
@@ -86648,6 +87090,7 @@ for deployment-specific documentation.
 
 ## Practical guides for the end users
 
+* [Chat encryption](end-users/chat-encryption.md)
 * [How you reach services](end-users/service-access-modes.md)
 * [Interface overview](end-users/interface.md)
 
@@ -98023,7 +98466,8 @@ Messages are sent over the homeserver via matrix-js-sdk; the embedded
 client is started inside the homeport tab and tears down on Waldur logout.
 
 Rooms are end-to-end encrypted from creation, and the bot turns encryption on
-in rooms created before that. The drawer decrypts in the browser with a
+in rooms created before that (see [End-to-end encryption](#end-to-end-encryption)).
+The drawer decrypts in the browser with a
 WebAssembly module, so homeport's Content-Security-Policy must allow
 `'wasm-unsafe-eval'` in `script-src`. The Helm chart and docker-compose
 already do; add it if you serve homeport behind your own proxy.
@@ -98406,6 +98850,90 @@ Matrix ID and project rooms, and no second account exists for them.
 
 ---
 
+## End-to-end encryption
+
+The user guide's [Chat encryption](../user-guide/end-users/chat-encryption.md)
+page is what to point users at; this section is what operators need to know.
+
+**What is encrypted.** The content of messages and files: text, edits, replies,
+attachments and voice messages. Room names and topics, membership, timestamps,
+which event replies to, edits or reacts to which, and the emoji of reactions
+stay in plaintext on the homeserver, as Matrix needs them to route events. Say
+"message and file content is encrypted", not "the homeserver stores only
+encrypted data". Calls in encrypted rooms, which all of Waldur's rooms are, are
+end-to-end encrypted too, with a key per participant that goes Olm-encrypted to
+each member's devices;
+LiveKit still sees who takes part and when, the kinds and sizes of their tracks
+and who is speaking.
+
+**Who holds the keys.** Each user's encryption identity (cross-signing keys, key
+backup, and the dehydrated device that receives messages while no drawer is
+open) lives on the homeserver, encrypted under the user's recovery key. Waldur
+escrows every recovery key, encrypted at rest under `FIELD_ENCRYPTION_KEY`, and
+hands it only to the user's own sign-in: to the drawer at the start of each
+session, and to the user in the external client dialog. The Waldur bot holds the
+room keys of every room since its creation, in its crypto store in Waldur's
+database. The encryption therefore protects against someone who gets the
+homeserver's database or its backups, not against the operators of the Waldur
+deployment, who can read every message.
+
+**Back up together, and keep `FIELD_ENCRYPTION_KEY`.**
+
+- Back up the homeserver and Waldur's database together, and restore them
+  together. A Waldur database restored to a point before a user first opened the
+  chat, while the homeserver keeps newer data, leaves that user's identity
+  locked (see
+  [Locked identities](../developer-guide/admin-guide/matrix-appservice-setup.md#locked-identities)).
+- Without `FIELD_ENCRYPTION_KEY` no escrowed recovery key, and not the bot's
+  crypto store, can be read. Set a dedicated key rather than relying on the one
+  derived from `SECRET_KEY`, keep it outside the database backups, and never
+  rotate `SECRET_KEY` while `FIELD_ENCRYPTION_KEY` is unset: the derived key
+  changes with it. Rotate `FIELD_ENCRYPTION_KEY` only with `reencrypt_fields`
+  (see the [field encryption guide](../developer-guide/field-encryption.md)).
+- Never reset the bot's crypto store: room history the bot holds, and the
+  history export, depend on it.
+
+**Element and other clients.** In `password` and `oidc` mode the external
+client dialog has a **Show recovery key** button. Waldur returns the key only
+after checking that it still opens the user's secret storage on the homeserver,
+records each reveal in the user's event log (`matrix_recovery_key_viewed`), and
+refuses it to personal access tokens, OIDC access tokens and requests made while
+staff impersonate the user. That does not keep the key from staff: while
+impersonating, they can fetch the user's own Waldur API token, which the endpoint
+accepts. Operators are trusted with the keys anyway, as Waldur escrows them;
+binding key access to an interactive sign-in is planned. With the key, Element verifies its session and reads the user's
+history. The `matrix_recovery_key` rate limit (default 30/hour per user)
+applies.
+
+**Keys Waldur never saw.** A user who set encryption up in Element before ever
+opening the drawer, or who resets it there later, has a key that Waldur does not
+hold. The drawer then shows **Encrypted messages cannot be read** and offers
+**Enter recovery key** before **Reset encryption**. The key the user enters is
+checked against their secret storage in the browser and again by Waldur, then
+escrowed; the drawer does not ask again. Until the user enters it, chat in
+Waldur stays locked for them. Only a user without any working key
+needs the reset, which replaces the identity and deletes the old key backups;
+the bot then writes the history it holds into the new backup.
+
+**History for new members.** A member added to a room gets its earlier history
+through their key backup: the bot, which holds the room keys since the room was
+created, writes them into the member's backup, and the drawer restores them from
+there. The drawer shows these messages like any other, without a marker, but
+their keys were shared by the bot rather than by the sender's own device, so
+their authenticity is not guaranteed the way it is for keys from the sender
+(Element may mark them; not verified).
+This runs on every path that adds a member (a role, member sync, opening a room
+the user was invited to) and on a staff or support **Join**, which therefore gets
+the room's whole earlier history, for as long as the Join counts. After a setup
+or reset in the drawer, the bot writes everything it holds into the new backup.
+Only keys the bot holds are written, so history from before the bot was in a
+room, or that no member's device shared with it, is not covered. Whether Element
+shows this history has not been verified. The
+[setup guide](../developer-guide/admin-guide/matrix-appservice-setup.md) has the
+details, including how the bot decides which backup it may write into.
+
+---
+
 ## Operational notes
 
 - **Tear-down on logout.** The embedded Matrix client disconnects whenever
@@ -98428,8 +98956,9 @@ Matrix ID and project rooms, and no second account exists for them.
   which only the external-client dialog calls, uses the `matrix_credentials`
   scope (default 1000/hour per user), and `/api/matrix/credentials/password/`,
   behind its **Generate password** button, the `matrix_password` scope
-  (default 30/hour per user). All three return `404` when the integration is
-  disabled.
+  (default 30/hour per user). `/api/matrix/credentials/recovery-key/`, behind
+  **Show recovery key**, uses the `matrix_recovery_key` scope (default 30/hour
+  per user). All four return `404` when the integration is disabled.
 - **Periodic tasks.** Matrix chat runs these daily (UTC):
   `periodic_history_export` at 02:00 exports every active room's history when
   `MATRIX_HISTORY_EXPORT_ENABLED` is on; `cleanup_old_appservice_transactions`
@@ -100224,7 +100753,7 @@ Returns the current appservice configuration state.
 
 #### GET /api/admin/matrix/diagnostics/
 
-Runs live connectivity checks against the configured Matrix homeserver. Staff only.
+Runs live connectivity checks against the configured Matrix homeserver. Staff and support users can call it, so monitoring can poll it with a support token; the Diagnostics action in the UI stays staff-only. The response holds no token or password, only fingerprints of the appservice tokens, and what it does on the homeserver acts for the caller alone.
 
 Checks performed (the `checks` array in the response):
 
@@ -100237,8 +100766,8 @@ Checks performed (the `checks` array in the response):
 7. HS token configured (`hs_token_configured`)
 8. Registration secret configured (`registration_secret_configured`)
 9. Bot authentication (`bot_whoami`, via `/account/whoami`; also how many rooms the bot is in)
-10. Appservice can act for users (`appservice_user_namespace`: `/account/whoami` as the staff user's Matrix ID. It fails when the homeserver's appservice registration does not cover users, which breaks chat sessions and room joins; register the appservice again with Waldur's registration. When it fails, it also counts room members recorded as invited, not joined)
-11. Chat drawer tokens expire (`web_token_lifetime`: signs the staff user in on a test device and reads the token's lifetime; fails when tokens never expire or live over an hour. Skipped until the staff user has opened the chat once)
+10. Appservice can act for users (`appservice_user_namespace`: `/account/whoami` as the caller's Matrix ID. It fails when the homeserver's appservice registration does not cover users, which breaks chat sessions and room joins; register the appservice again with Waldur's registration. When it fails, it also counts room members recorded as invited, not joined)
+11. Chat drawer tokens expire (`web_token_lifetime`: signs the caller in on a test device, reads the access token's lifetime and signs the device out again; fails when it never expires or lives over an hour. It does not look at the refresh token's lifetime. Until the caller has opened the chat once it is skipped and counts as passed, so monitor it with an account that has)
 12. Bot is a homeserver admin (`bot_homeserver_admin`; see [Making the bot a homeserver admin](#making-the-bot-a-homeserver-admin))
 13. Homeserver can reach Waldur (`appservice_ping`): Waldur asks the homeserver to ping
     the appservice (MSC2659), and the homeserver calls `POST /_matrix/app/v1/ping` with
@@ -100250,6 +100779,11 @@ Checks performed (the `checks` array in the response):
 15. Room statistics (`room_stats`: active, creating, errored counts)
 16. User profile statistics (`user_stats`: provisioned count, plus the active users whose roles put them in an active project room but who have no Matrix profile, named up to ten. Provisioning refused or failed for those; the worker log says why, and [Existing Matrix accounts](#existing-matrix-accounts) says how to link one. Fails while any room member is unlinked)
 17. Single sign-on reaches only its own accounts (`sso_id_collisions`: with `MATRIX_EXTERNAL_LOGIN_METHOD = oidc`, the provisioned Matrix IDs another identity provider subject could sign in to, counted and named up to ten: those whose localpart is not the user's lowercased ASCII username, whose user does not sign in to Waldur through `MATRIX_SSO_REGISTRATION_METHOD`, or whose user's username another user's differs from only in case. Fails while `MATRIX_SSO_REGISTRATION_METHOD` is blank. Passes with "Not using single sign-on" otherwise; see [Single sign-on for Matrix clients](matrix-sso.md))
+18. Matrix bot running (`bot_running`: whether a `matrix_bot` process holds the bot's lease, plus how many messages wait for it to post them. Fails while none does)
+19. History exports (`history_exports`: the exports that failed in the last 24 hours. A day covers the last nightly export run; a failed export is never retried, so without a window one failure would fail the check until retention deletes it. Fails while any did; their `error_message` is in [Listing exports](#listing-exports) with `state=failed`)
+20. Appservice endpoint errors (`webhook_errors`: the calls to `/_matrix/app/v1/transactions` and `/_matrix/app/v1/ping` answered with a 4xx or a 5xx in the last hour. Fails on a 5xx only, which is Waldur failing. A 4xx is a call with a wrong token or a malformed body, or one over the `matrix_webhook` rate limit; anyone can send those calls, and a homeserver with the wrong `hs_token` also fails `appservice_ping`. A call refused before it reaches the endpoint, such as one whose `Host` is not in `ALLOWED_HOSTS`, is not counted. The counts are kept in the Django cache, so every API process adds to them; errors in several processes at the same moment can be undercounted, never to zero)
+
+Three checks also carry `metrics`, their numbers as integers for monitoring: `appservice_ping` the round trip, `{"round_trip_ms": 12}`, when the ping succeeded; `history_exports` `{"failed": 1}`; `webhook_errors` `{"4xx": 2, "5xx": 0}`. Other checks have no `metrics`.
 
 **Example response (200):**
 
@@ -100258,8 +100792,9 @@ Checks performed (the `checks` array in the response):
   "ok": true,
   "checks": [
     {"name": "homeserver_domain_configured", "label": "Homeserver domain configured", "ok": true, "detail": "matrix.example.com"},
-    {"name": "homeserver_reachable", "label": "Homeserver reachable", "ok": true, "detail": "OK — Tuwunel 1.9.0, Matrix up to v1.19"},
-    {"name": "bot_whoami", "label": "Bot authentication (whoami)", "ok": true, "detail": "OK — authenticated as @waldur-bot:matrix.example.com, in 3 room(s)"}
+    {"name": "homeserver_reachable", "label": "Homeserver reachable", "ok": true, "detail": "OK — Tuwunel 1.9.3, Matrix up to v1.19"},
+    {"name": "bot_whoami", "label": "Bot authentication (whoami)", "ok": true, "detail": "OK — authenticated as @waldur-bot:matrix.example.com, in 3 room(s)"},
+    {"name": "webhook_errors", "label": "Appservice endpoint errors", "ok": true, "detail": "Calls to the appservice endpoints in the last hour: 2 answered with 4xx, 0 answered with 5xx; see the API log", "metrics": {"4xx": 2, "5xx": 0}}
   ]
 }
 ```

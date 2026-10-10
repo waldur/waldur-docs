@@ -1828,6 +1828,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#end-to-end-encryption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        End-to-end encryption
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#operational-notes" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -17875,6 +17886,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../user-guide/end-users/chat-encryption/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Chat encryption
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../user-guide/end-users/interface/" class="md-nav__link">
         
   
@@ -19710,6 +19749,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#end-to-end-encryption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        End-to-end encryption
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#operational-notes" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -20159,7 +20209,8 @@ inherits the active language.</p>
 <p>Messages are sent over the homeserver via matrix-js-sdk; the embedded
 client is started inside the homeport tab and tears down on Waldur logout.</p>
 <p>Rooms are end-to-end encrypted from creation, and the bot turns encryption on
-in rooms created before that. The drawer decrypts in the browser with a
+in rooms created before that (see <a href="#end-to-end-encryption">End-to-end encryption</a>).
+The drawer decrypts in the browser with a
 WebAssembly module, so homeport's Content-Security-Policy must allow
 <code>'wasm-unsafe-eval'</code> in <code>script-src</code>. The Helm chart and docker-compose
 already do; add it if you serve homeport behind your own proxy.</p>
@@ -20539,6 +20590,82 @@ before you turn password login off in production.</p>
 after the user has opened Waldur's chat once: Element shows the user's Waldur
 Matrix ID and project rooms, and no second account exists for them.</p>
 <hr>
+<h2 id="end-to-end-encryption">End-to-end encryption</h2>
+<p>The user guide's <a href="../../user-guide/end-users/chat-encryption/">Chat encryption</a>
+page is what to point users at; this section is what operators need to know.</p>
+<p><strong>What is encrypted.</strong> The content of messages and files: text, edits, replies,
+attachments and voice messages. Room names and topics, membership, timestamps,
+which event replies to, edits or reacts to which, and the emoji of reactions
+stay in plaintext on the homeserver, as Matrix needs them to route events. Say
+"message and file content is encrypted", not "the homeserver stores only
+encrypted data". Calls in encrypted rooms, which all of Waldur's rooms are, are
+end-to-end encrypted too, with a key per participant that goes Olm-encrypted to
+each member's devices;
+LiveKit still sees who takes part and when, the kinds and sizes of their tracks
+and who is speaking.</p>
+<p><strong>Who holds the keys.</strong> Each user's encryption identity (cross-signing keys, key
+backup, and the dehydrated device that receives messages while no drawer is
+open) lives on the homeserver, encrypted under the user's recovery key. Waldur
+escrows every recovery key, encrypted at rest under <code>FIELD_ENCRYPTION_KEY</code>, and
+hands it only to the user's own sign-in: to the drawer at the start of each
+session, and to the user in the external client dialog. The Waldur bot holds the
+room keys of every room since its creation, in its crypto store in Waldur's
+database. The encryption therefore protects against someone who gets the
+homeserver's database or its backups, not against the operators of the Waldur
+deployment, who can read every message.</p>
+<p><strong>Back up together, and keep <code>FIELD_ENCRYPTION_KEY</code>.</strong></p>
+<ul>
+<li>Back up the homeserver and Waldur's database together, and restore them
+  together. A Waldur database restored to a point before a user first opened the
+  chat, while the homeserver keeps newer data, leaves that user's identity
+  locked (see
+  <a href="../../developer-guide/admin-guide/matrix-appservice-setup/#locked-identities">Locked identities</a>).</li>
+<li>Without <code>FIELD_ENCRYPTION_KEY</code> no escrowed recovery key, and not the bot's
+  crypto store, can be read. Set a dedicated key rather than relying on the one
+  derived from <code>SECRET_KEY</code>, keep it outside the database backups, and never
+  rotate <code>SECRET_KEY</code> while <code>FIELD_ENCRYPTION_KEY</code> is unset: the derived key
+  changes with it. Rotate <code>FIELD_ENCRYPTION_KEY</code> only with <code>reencrypt_fields</code>
+  (see the <a href="../../developer-guide/field-encryption/">field encryption guide</a>).</li>
+<li>Never reset the bot's crypto store: room history the bot holds, and the
+  history export, depend on it.</li>
+</ul>
+<p><strong>Element and other clients.</strong> In <code>password</code> and <code>oidc</code> mode the external
+client dialog has a <strong>Show recovery key</strong> button. Waldur returns the key only
+after checking that it still opens the user's secret storage on the homeserver,
+records each reveal in the user's event log (<code>matrix_recovery_key_viewed</code>), and
+refuses it to personal access tokens, OIDC access tokens and requests made while
+staff impersonate the user. That does not keep the key from staff: while
+impersonating, they can fetch the user's own Waldur API token, which the endpoint
+accepts. Operators are trusted with the keys anyway, as Waldur escrows them;
+binding key access to an interactive sign-in is planned. With the key, Element verifies its session and reads the user's
+history. The <code>matrix_recovery_key</code> rate limit (default 30/hour per user)
+applies.</p>
+<p><strong>Keys Waldur never saw.</strong> A user who set encryption up in Element before ever
+opening the drawer, or who resets it there later, has a key that Waldur does not
+hold. The drawer then shows <strong>Encrypted messages cannot be read</strong> and offers
+<strong>Enter recovery key</strong> before <strong>Reset encryption</strong>. The key the user enters is
+checked against their secret storage in the browser and again by Waldur, then
+escrowed; the drawer does not ask again. Until the user enters it, chat in
+Waldur stays locked for them. Only a user without any working key
+needs the reset, which replaces the identity and deletes the old key backups;
+the bot then writes the history it holds into the new backup.</p>
+<p><strong>History for new members.</strong> A member added to a room gets its earlier history
+through their key backup: the bot, which holds the room keys since the room was
+created, writes them into the member's backup, and the drawer restores them from
+there. The drawer shows these messages like any other, without a marker, but
+their keys were shared by the bot rather than by the sender's own device, so
+their authenticity is not guaranteed the way it is for keys from the sender
+(Element may mark them; not verified).
+This runs on every path that adds a member (a role, member sync, opening a room
+the user was invited to) and on a staff or support <strong>Join</strong>, which therefore gets
+the room's whole earlier history, for as long as the Join counts. After a setup
+or reset in the drawer, the bot writes everything it holds into the new backup.
+Only keys the bot holds are written, so history from before the bot was in a
+room, or that no member's device shared with it, is not covered. Whether Element
+shows this history has not been verified. The
+<a href="../../developer-guide/admin-guide/matrix-appservice-setup/">setup guide</a> has the
+details, including how the bot decides which backup it may write into.</p>
+<hr>
 <h2 id="operational-notes">Operational notes</h2>
 <ul>
 <li><strong>Tear-down on logout.</strong> The embedded Matrix client disconnects whenever
@@ -20561,8 +20688,9 @@ Matrix ID and project rooms, and no second account exists for them.</p>
   which only the external-client dialog calls, uses the <code>matrix_credentials</code>
   scope (default 1000/hour per user), and <code>/api/matrix/credentials/password/</code>,
   behind its <strong>Generate password</strong> button, the <code>matrix_password</code> scope
-  (default 30/hour per user). All three return <code>404</code> when the integration is
-  disabled.</li>
+  (default 30/hour per user). <code>/api/matrix/credentials/recovery-key/</code>, behind
+  <strong>Show recovery key</strong>, uses the <code>matrix_recovery_key</code> scope (default 30/hour
+  per user). All four return <code>404</code> when the integration is disabled.</li>
 <li><strong>Periodic tasks.</strong> Matrix chat runs these daily (UTC):
   <code>periodic_history_export</code> at 02:00 exports every active room's history when
   <code>MATRIX_HISTORY_EXPORT_ENABLED</code> is on; <code>cleanup_old_appservice_transactions</code>
