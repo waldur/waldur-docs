@@ -901,13 +901,14 @@ details, including how the bot decides which backup it may write into.
 - **Webhook rate limit.** The appservice endpoints
   (`/_matrix/app/v1/transactions/{txnId}` and `/_matrix/app/v1/ping`) are
   limited per client address via the `matrix_webhook` DRF throttle scope
-  (default 10000/hour), the two endpoints sharing one bucket. That includes
-  the homeserver's own calls, which carry its `hs_token`: it sends every
-  transaction from one address, about one per chat message, so a busy
-  homeserver can reach the limit, get `429` and retry the transaction later.
-  Raise `matrix_webhook` if that happens. When Matrix is disabled the
-  transactions endpoint returns `200` and discards the payload, so the
-  homeserver does not retry.
+  (default 10000/hour), the two endpoints sharing one bucket. Calls that
+  carry the homeserver's `hs_token` are not limited: the homeserver sends
+  every transaction from one address, about one per chat message, and would
+  otherwise reach the limit on a busy instance. The limit applies to every
+  other caller, such as a scanner or a homeserver with a stale token, and
+  those calls are counted in the `webhook_errors` diagnostic. When Matrix is
+  disabled the transactions endpoint returns `200` and discards the payload,
+  so the homeserver does not retry.
 - **Per-user limits.** `/api/matrix/session/` is rate-limited via the
   `matrix_session` scope (default 120/hour per user). The drawer calls it on
   connect, which includes the background connect on every page load for a
