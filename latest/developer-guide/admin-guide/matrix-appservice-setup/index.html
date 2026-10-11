@@ -9470,6 +9470,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../ui/tabs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tabs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../ui/tailwind-shadcn-migration-notes/" class="md-nav__link">
         
   
@@ -9649,10 +9677,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4_30">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4_31">
         
           
-          <label class="md-nav__link" for="__nav_3_4_30" id="__nav_3_4_30_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_4_31" id="__nav_3_4_31_label" tabindex="0">
             
   
   
@@ -9670,8 +9698,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_4_30_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_4_30">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_4_31_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4_31">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -11549,6 +11577,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#exports-when-a-room-is-disabled" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exports when a room is disabled
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#who-can-download-exports" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -11705,6 +11744,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Calls">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#call-encryption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Call encryption
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -20106,6 +20162,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#exports-when-a-room-is-disabled" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exports when a room is disabled
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#who-can-download-exports" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -20263,6 +20330,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Calls">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#call-encryption" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Call encryption
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -20394,7 +20478,8 @@
   cover them in their "Backup and restore", "Monitoring" and "Capacity"
   sections. Back up the homeserver and Waldur's database together, and keep
   <code>FIELD_ENCRYPTION_KEY</code> safe: without it no escrowed recovery key can be read
-  (see <a href="#locked-identities">Locked identities</a>). A history export is not a
+  (see <a href="#locked-identities">Locked identities</a>), and no history export can be
+  downloaded. A history export is not a
   backup.</p>
 <h2 id="appservice-setup">Appservice Setup</h2>
 <h3 id="via-the-ui">Via the UI</h3>
@@ -20955,7 +21040,8 @@ Otherwise start from a fresh stack.</p>
 <li><code>creating</code> → <code>active</code> (on successful creation)</li>
 <li>any state → <code>error</code> (on failure)</li>
 <li><code>active</code> / <code>error</code> → <code>disabling</code> (on disable action or project deletion)</li>
-<li><code>disabling</code> → <code>archived</code> (after members kicked and history exported)</li>
+<li><code>disabling</code> → <code>archived</code> (after members kicked and history exported; see
+  <a href="#exports-when-a-room-is-disabled">Exports when a room is disabled</a>)</li>
 <li><code>archived</code> → <code>active</code> (on reactivate action)</li>
 <li><code>error</code> / <code>creating</code> / <code>disabling</code> → <code>creating</code> (on retry action)</li>
 <li><code>active</code> → <code>creating</code> (on appservice reprovision)</li>
@@ -21166,11 +21252,99 @@ check.</p>
 </tbody>
 </table>
 <h3 id="export-process">Export process</h3>
+<p>Rooms are end-to-end encrypted, and the Matrix bot process (<code>waldur matrix_bot</code>) is the one member
+that holds their keys, so the bot makes every export. An export in <code>pending</code> is a request it takes
+in turn: exports of rooms being disabled first, then manual ones, then the daily ones, the oldest
+first within each.</p>
+<p>The bot runs up to three exports side by side, so rooms disabled together are each exported within
+the time disabling one waits. Rooms being disabled may take every slot; manual and daily exports
+take one slot at most between them, one at a time, and one gives way, between two pages or two
+attachments, when a room being disabled finds every slot taken: it goes back to <code>pending</code> and starts
+over afterwards.</p>
+<p>Messages are read and decrypted in parallel; attachments and saves are done one at a time, rooms
+being disabled first. Time an export spends waiting for another's attachment or save does not
+count toward its 10 minutes, though it does toward the 15 minutes disabling a room waits. An export
+keeps little in memory whatever the size of its room, about 4 MiB: it writes the messages, as it
+reads them, to working files encrypted under a key that exists only in the bot's memory, so nothing
+decrypted reaches the disk either. What takes memory is an attachment in flight (up to 50 MB, twice) and a
+save, which reads the stored files whole, and only one export at a time does either. That keeps the
+bot within the Helm chart's default 600Mi limit with three exports running.</p>
+<p>A room has at most one unfinished export of each type: asking for a manual export while one is
+pending or running returns that one (with <code>200</code> rather than <code>202</code>), and the daily run skips a room
+whose previous daily export the bot has not made yet. A room may have 10 manual exports in 24 hours;
+beyond that the request is refused with <code>429</code>.</p>
 <ol>
-<li>Messages are fetched from the homeserver via pagination</li>
-<li>If <code>MATRIX_EXPORT_MEDIA</code> is enabled, media files are downloaded and packaged into a ZIP archive</li>
-<li>Output: JSON file with messages and metadata, optionally a media ZIP</li>
+<li>The bot pages through the room's history and decrypts each message with the room keys in its
+   crypto store.</li>
+<li>If <code>MATRIX_EXPORT_MEDIA</code> is enabled, it downloads each attachment, checks the SHA-256 its message
+   records, decrypts it with the key the message carries, and packs it into a ZIP archive.</li>
+<li>Output: a JSON file with the messages and metadata, and the media ZIP if any media was exported.</li>
 </ol>
+<p>The JSON has the same layout as before rooms were encrypted, with these fields added to messages:</p>
+<ul>
+<li><code>encrypted</code> — whether the event was sent encrypted (stored by the homeserver as
+  <code>m.room.encrypted</code>, including one since redacted). In an encrypted room, an event sent in clear
+  comes from the homeserver or from a client that ignores the room's encryption: don't trust its
+  sender.</li>
+<li><code>verified</code>, <code>device_id</code>, <code>sender_key</code> — on every decrypted event: the device that sent it, and
+  whether that device is one its sender's cross-signing identity vouches for, as the chat drawer
+  shows it. The homeserver can put any sender on an event, but can't encrypt it with that sender's
+  keys, so treat <code>"verified": false</code> like the drawer's warning: the message may not be from who it
+  names. Keys the bot received from a backup or another device are never <code>verified</code>. Two limits:</li>
+<li>it trusts the cross-signing identity the homeserver publishes for the sender <strong>now</strong>. A
+    homeserver that replaced a user's identity with one of its own, and signed a device of its own
+    with it, would have that device's messages exported as <code>verified</code>;</li>
+<li>it is judged when the export is made, not when the message was sent: a device signed or
+    unsigned since then is judged as it is now.</li>
+</ul>
+<p><code>sender_identity</code> below checks the identity against what Waldur holds instead.
+- <code>sender_identity</code> — on every decrypted event, how far Waldur itself can vouch for the sender's
+  cross-signing identity, which <code>verified</code> takes from the homeserver. <code>escrowed</code>, <code>pinned</code> and <code>bot</code>
+  hold only when the message came from a device that identity signs (its keys as the room key's
+  Olm session vouches for them); a message from any other device is <code>changed</code>:
+  - <code>escrowed</code>: the recovery key Waldur holds for the user unlocks the master key the homeserver
+    publishes, so the homeserver cannot have replaced it;
+  - <code>pinned</code>: Waldur holds no recovery key for the user, and the master key is the one the bot
+    pinned when it first saw it (see <a href="#history-for-new-members">History for new members</a>);
+  - <code>changed</code>: neither. The user reset their identity, or the homeserver replaced it; read
+    <code>verified</code> on such messages with care. Devices are looked up as they are at export time, so a
+    message from a device the user has since signed out or deleted is <code>changed</code> too, as is one
+    whose room key reached the bot forwarded or from a backup: <code>changed</code> is a reason to look, not
+    by itself a sign of an attack;
+  - <code>bot</code>: the bot's own messages;
+  - <code>unknown</code>: not a Waldur user, no master key published or pinned yet, or the check failed.
+  It is judged when the export is made, like <code>verified</code>. Its limit: <code>escrowed</code> proves the master
+  key is one the escrowed recovery key unlocks, not that it is the latest. A homeserver that keeps
+  an older copy of the user's secret storage could serve an identity the user has since reset away
+  from, as long as it is still stored under the same recovery key.
+- <code>relation</code> — what a message relates to: <code>rel_type</code> and <code>event_id</code> for an edit (<code>m.replace</code>) or a
+  thread, <code>in_reply_to</code> for a reply. An edit is exported as its own message; <code>relation</code> tells it
+  apart from a new one.
+- <code>media_encrypted: true</code> on encrypted media. The key that decrypts it is never written to the
+  export.</p>
+<p>Some entries say why something is missing instead of leaving it out:</p>
+<ul>
+<li><code>"type": "m.room.encrypted", "undecryptable": true</code> — a message no room key the bot holds
+  decrypts, with its <code>session_id</code> and <code>device_id</code>. Its sender's client never shared the key with the
+  bot, or the bot's crypto store was reset.</li>
+<li><code>"replay": true</code> — an encrypted event that reuses the message index of another event under the
+  same room key: a copy of another message, not a new one. Its content is not exported.</li>
+<li><code>"bad_event": true</code> — an event whose content, once decrypted if it was encrypted, is not a valid
+  event of its type. Only its ID, sender, time and type are exported.</li>
+<li><code>"media_error"</code> on a message whose attachment is not in the ZIP: <code>download failed</code>,
+  <code>could not be decrypted</code> (the file does not match the hash its message records, or the message's
+  key is malformed), <code>too large to export</code> (over 50 MB), or <code>export size limit reached</code> (the export's
+  media passed 200 MB).</li>
+</ul>
+<p>One export may run for 10 minutes, not counting waits for other exports' attachments and saves; a
+manual or daily export ends after 30 minutes however long it waited. Past either, it fails. While no bot runs, exports stay <code>pending</code>
+and are made once it starts. An export the bot was in the middle of when it stopped is put back to
+<code>pending</code> on a normal stop, and fails if the bot crashed.</p>
+<p><strong>Exports depend on the bot's crypto store.</strong> It lives in Waldur's database (schema <code>matrix_bot</code>),
+unlocked by a key stored encrypted under <code>FIELD_ENCRYPTION_KEY</code>, and holds every room key the bot
+has received since it joined each room. Never reset or delete it, and restore it only together with
+the rest of Waldur's database: a bot with a new store reads nothing that was sent before, and every
+older message is exported as undecryptable.</p>
 <h3 id="export-states">Export states</h3>
 <table>
 <thead>
@@ -21182,11 +21356,11 @@ check.</p>
 <tbody>
 <tr>
 <td><code>pending</code></td>
-<td>Export has been scheduled</td>
+<td>Export has been requested and waits for the Matrix bot</td>
 </tr>
 <tr>
 <td><code>exporting</code></td>
-<td>Messages are being fetched</td>
+<td>The bot is reading and decrypting the room's history</td>
 </tr>
 <tr>
 <td><code>completed</code></td>
@@ -21198,10 +21372,43 @@ check.</p>
 </tr>
 </tbody>
 </table>
+<h3 id="exports-when-a-room-is-disabled">Exports when a room is disabled</h3>
+<p>A room is archived only once its history has been exported (when <code>MATRIX_HISTORY_EXPORT_ENABLED</code> is
+on and <code>delete_history</code> is not set). The disable task waits up to 15 minutes for the bot's export.
+A room's export starts at once unless three other rooms are being disabled at the same time, and
+then waits only for one of their exports to end. If the bot is not
+running, the export fails, or it does not finish in time, the room goes to <code>error</code>
+with the reason in <code>error_message</code> and is not archived; its members have already been removed.
+Disable it again to finish: the task uses the export it already requested instead of asking for
+another one, waiting for it if it is still pending or running, and archiving at once if the bot
+has made it meanwhile. Only a failed export is requested again. Archiving clears the error. A room
+reactivated and later disabled again gets a new export.</p>
 <h3 id="who-can-download-exports">Who can download exports</h3>
-<p>An export is the room's whole history, media included, so it goes to whoever manages the room and
-no further. Listing exports and downloading their files is open to the same people who can trigger
-an export:</p>
+<p>An export is the room's whole history, media included, <strong>decrypted</strong>: messages that are end-to-end
+encrypted in the room are plain text once downloaded. An export therefore goes to whoever manages
+the room and no further.</p>
+<p>At rest, export files are encrypted. Each export gets a random 256-bit key; its message file and
+media archive are encrypted under it with AES-256-GCM in 64 KiB chunks, each chunk bound to its
+position and to which file it belongs, so a file altered, cut short or reassembled in storage is
+refused. The export's key is kept in its row encrypted under <code>FIELD_ENCRYPTION_KEY</code> (see
+<code>docs/field-encryption.md</code>):</p>
+<ul>
+<li><strong>Losing <code>FIELD_ENCRYPTION_KEY</code> makes every export unreadable</strong>, as it does the escrowed recovery
+  keys. Back it up with the database.</li>
+<li><strong>Rotating it</strong> works as for every encrypted field: promote the new key, keep the old one in
+  <code>FIELD_ENCRYPTION_KEY_FALLBACKS</code>, run <code>waldur reencrypt_fields</code>, then retire the old key. Only the
+  per-export keys are rewritten; the files are not.</li>
+<li>The download endpoint below decrypts on the fly. It checks every chunk of the file before it sends
+  the first, and answers <code>409</code> if the file cannot be decrypted (altered in storage, or written
+  under a key no longer configured), or <code>404</code> if the file is gone from storage. A file changed in
+  storage while it is being sent aborts the download at the first chunk that no longer checks out:
+  nothing after it is sent, and the connection is dropped rather than ended as if complete. Downloads are limited to 120 an hour per user, and
+  sent with <code>Cache-Control: no-store</code>. The generic media
+  endpoint serves only the ciphertext.</li>
+<li>Exports written before this encryption was introduced are stored and served as they were, in
+  clear, until retention deletes them.</li>
+</ul>
+<p>Listing exports and downloading their files is open to the same people who can trigger an export:</p>
 <ul>
 <li>those holding <code>MATRIX_ROOM.CREATE</code> on the project or its organization, by default organization
   owners;</li>
@@ -21343,9 +21550,7 @@ messages were sent, which event replies to, edits or reacts to which, and the
 emoji of reactions stay in plaintext on the homeserver, as Matrix needs them to
 route and order events.</p>
 <p><strong>Calls</strong> in encrypted rooms, which all of Waldur's rooms are, are end-to-end
-encrypted too: each participant encrypts their media with their own key, which
-goes Olm-encrypted to each member's devices. LiveKit still sees the call's metadata: who takes
-part and when, the kinds and sizes of their tracks, and who is speaking.</p>
+encrypted too; see <a href="#call-encryption">Call encryption</a>.</p>
 <p>The drawer sets encryption up on a user's first session. Only one browser may do
 so at a time, and Waldur must hold the recovery key before any key is uploaded:</p>
 <p><strong>POST /api/matrix/crypto/lease/</strong> with <code>{"kind": "bootstrap"}</code> grants a lease
@@ -21661,6 +21866,62 @@ affected.</p>
 <li><strong>OpenID tokens:</strong> any Matrix OpenID token of a user lets its holder get call tokens for the rooms that user has joined, as with lk-jwt-service. A widget or integration the user hands an OpenID token to can therefore join their calls while the OpenID token is valid.</li>
 <li><strong>Limits:</strong> <code>matrix_livekit_token</code> per client address (default 600/hour) and <code>matrix_livekit_token_user</code> per Matrix user (default 120/hour); <code>MATRIX_LIVEKIT_KEY</code>, <code>MATRIX_LIVEKIT_SECRET</code> and <code>MATRIX_LIVEKIT_PUBLIC_URL</code> (the signalling URL browsers connect to) must be set, or the endpoints answer <code>503</code>.</li>
 </ul>
+<h3 id="call-encryption">Call encryption</h3>
+<p>A call is end-to-end encrypted when its room is encrypted (has <code>m.room.encryption</code>),
+as Element Call decides it; all of Waldur's rooms are. In other rooms, such as a
+direct message created unencrypted in Element, the call is encrypted only between
+each browser and LiveKit.</p>
+<ul>
+<li><strong>Media:</strong> camera, microphone, screen share and screen-share audio are encrypted
+  in the browser with AES-GCM before they reach LiveKit, each participant with
+  their own key. LiveKit forwards frames it cannot decode, and so does anyone who
+  joins with a token minted from <code>MATRIX_LIVEKIT_SECRET</code> without a call membership
+  in the Matrix room.</li>
+<li><strong>Keys:</strong> each participant sends their key as an Olm-encrypted to-device message
+  (<code>io.element.call.encryption_keys</code>) to every device that has a call membership
+  in the room, verified or not, as Element Call does. The web chat accepts a key
+  only from the Olm device that sent it. When a participant's membership ends or
+  they leave the room, the others switch to new keys, so media sent after that
+  cannot be decrypted with the keys they held.</li>
+<li><strong>Media in clear:</strong> the web chat never plays media that arrives unencrypted in an
+  encrypted call; it names the participants it comes from ("not end-to-end
+  encrypted") instead.</li>
+<li><strong>Interoperability:</strong> the web chat and Element Call exchange keys the same way,
+  so each decrypts the other's media. A client without call encryption cannot
+  decode an encrypted call.</li>
+</ul>
+<p>What stays visible:</p>
+<ul>
+<li><strong>To LiveKit</strong>, and whoever operates it: the call's metadata. Who takes part
+  (identities are <code>@user:server:DEVICE</code>) and when, the kinds, sizes and mute
+  state of their tracks, and who is speaking and how much (audio levels and packet
+  sizes are not encrypted).</li>
+<li><strong>To Waldur</strong>, and whoever operates it: Waldur can sign in as any of its users
+  through the appservice (the web chat does so for every session) and holds their
+  recovery keys, so it can add a device for a user, cross-sign it, give it a call
+  membership and receive the call's keys. This is not passive: the device's call
+  membership is a state event in the room, and it joins LiveKit as a participant
+  that the others see. The same holds for chat, whose key backup the recovery key
+  opens.</li>
+<li><strong>Recording:</strong> a server-side recorder or transcriber (LiveKit egress) would
+  record only encrypted frames. None is deployed with Waldur.</li>
+</ul>
+<p><strong>Browser requirements.</strong> Encrypting call media needs insertable streams
+(Chromium-based browsers such as Chrome and Edge) or <code>RTCRtpScriptTransform</code>
+(Firefox, Safari). In a browser with neither, the web chat refuses to join an
+encrypted call and says so ("This browser can't take part in encrypted calls.").
+The encryption runs in a Web Worker served from the web chat's own origin
+(<code>/assets/e2eeWorker-*.js</code>), which a Content-Security-Policy with <code>script-src
+'self'</code> and no <code>worker-src</code> already allows; a policy that sets <code>worker-src</code> must
+include <code>'self'</code>.</p>
+<p><strong>Checking it.</strong> <code>GET /api/admin/matrix/livekit/participants/?room=&lt;name&gt;</code> (staff)
+lists each participant's tracks with LiveKit's view of them. <code>encryption</code> is <code>GCM</code>
+for a track encrypted end to end, <code>NONE</code> for one sent in clear (<code>CUSTOM</code> for
+another scheme); <code>source</code> says which track it is (<code>CAMERA</code>, <code>MICROPHONE</code>,
+<code>SCREEN_SHARE</code>, <code>SCREEN_SHARE_AUDIO</code>). In an encrypted room every track should be
+<code>GCM</code>; a <code>NONE</code> track comes from a client that does not encrypt, and the other
+participants' web chat does not play it. The Calls tab of the Matrix
+administration shows the same per track, as <em>Encrypted</em> or <em>Not encrypted</em>.</p>
 <h2 id="webhook">Webhook</h2>
 <p><strong>PUT /_matrix/app/v1/transactions/{txnId}</strong></p>
 <p>The homeserver sends room events to this endpoint. Authentication is via the <code>hs_token</code> in the <code>Authorization: Bearer</code> header.</p>

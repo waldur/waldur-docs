@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-11T02:03:56.706578Z
+Generated: 2026-10-11T05:26:32.393131Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -70064,6 +70064,7 @@ Guides for working on Waldur HomePort. Start with [development-setup.md](develop
 | Guide                                                                    | Covers                                                                                                                     |
 | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
 | [component-library.md](component-library.md)                             | Reusable UI components: buttons, modals, tables, filters — with prop references                                            |
+| [tabs.md](tabs.md)                                                       | Tabs: `Tabs`, `TabNav`, `EmbeddedTabs`, mount modes, tokens, gotchas, migrating off Bootstrap `Nav`/`Tab`                  |
 | [a11y-decision-matrix.md](a11y-decision-matrix.md)                       | Accessibility decision matrix: SegmentedControl vs Tabs vs Action Buttons vs Nav                                           |
 | [button-ui-guide.md](button-ui-guide.md)                                 | Comprehensive button UI guide: BaseButton, tokens, tooltips, toggles, segmented controls                                   |
 | [ui-consistency-guidelines.md](ui-consistency-guidelines.md)             | Empty states, buttons, loading indicators, tooltips, null-value display                                                    |
@@ -70129,7 +70130,7 @@ Follow this decision order to determine the correct component:
 1. **Does it change the URL or navigate to another page/state?**<br>➔ **Navigation Link** (`@/core/Link` or `<nav>` + `<a>`).
 2. **Does it trigger an immediate action, preset, or calculation?**<br>➔ **Action Button Group** (`BaseButton` with `role="group"` and optional `aria-pressed`).
 3. **Can multiple options be active simultaneously?**<br>➔ **Multi-select Buttons / Checkboxes** (`role="group"` with `aria-pressed` or `Checkbox`).
-4. **Does each option own a distinct, large content panel?**<br>➔ **Tabs Pattern** (Radix `Tabs` styled via `segmentedListClassName` / `segmentedItemClassName`).
+4. **Does each option own a distinct, large content panel?**<br>➔ **Tabs** (`Tabs` from `waldur-ui`; see [tabs.md](tabs.md), which also covers the segmented look).
 5. **Is it a question in a submission form with validation errors?**<br>➔ **Form RadioGroup** (`RadioGroup` inside `<fieldset>` + `<legend>`).
 6. **Does it switch a display lens, interval, or in-memory list filter?**<br>➔ **View Lens / Filter** (`SegmentedControl` with `role="radiogroup"`).
 
@@ -70137,14 +70138,14 @@ Follow this decision order to determine the correct component:
 
 ## 2. Comparative Matrix
 
-| UI Pattern                   | Standard Component                  | Underlying Semantics                                                     | Keyboard Model                                                                                                          | Valid Contexts                                                                               | Prohibited Anti-Patterns                                                       |
-| :--------------------------- | :---------------------------------- | :----------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------- |
-| **View Lens / Filter**       | `SegmentedControl` (`waldur-ui`)    | `role="radiogroup"`<br>`role="radio"`<br>`aria-checked`                  | Single <kbd>Tab</kbd> stop;<br><kbd>←</kbd> / <kbd>→</kbd> select option                                                | Filtering a list in place (All/Unread), chart intervals (Day/Month), diff modes (Table/JSON) | **Never** use for actions (+1h extend), routing tabs, or tab panels            |
-| **Action Preset / Shortcut** | Group of `BaseButton` (`waldur-ui`) | `role="group"`<br>`<button>`<br>`aria-pressed`                           | Normal <kbd>Tab</kbd> stop per button;<br><kbd>Enter</kbd> / <kbd>Space</kbd> activates                                 | Offset buttons (+30m, +1h), preset calculators, filter clearers                              | **Never** use `SegmentedControl` (radios imply persistent state, not actions)  |
-| **Tabbed Panels**            | Radix `Tabs` (or `Tab.Container`)   | `role="tablist"`<br>`role="tab"`<br>`role="tabpanel"`<br>`aria-controls` | Single <kbd>Tab</kbd> stop;<br><kbd>←</kbd> / <kbd>→</kbd> moves tabs;<br><kbd>Space</kbd> / <kbd>Enter</kbd> activates | Swapping major DOM sections (e.g. Overview vs Settings vs Audit Log)                         | **Never** use `SegmentedControl` without `role="tabpanel"` and `aria-controls` |
-| **Page Navigation**          | `@/core/Link` or `<nav>` + `<a>`    | `<nav aria-label="...">`<br>`<a href="...">`                             | Normal <kbd>Tab</kbd> per link;<br><kbd>Enter</kbd> navigates;<br>Right-click "Open in new tab"                         | UI-Router state tabs (`TableTabs`), page headers, sidebar links                              | **Never** use `SegmentedControl` or `<button>` for URL transitions             |
-| **Form Question**            | `RadioGroup` (`waldur-ui`)          | `<fieldset>`<br>`<legend>`<br>native `<input type="radio">`              | Single <kbd>Tab</kbd> stop;<br>Arrow keys select                                                                        | Standard form questions with error messages and form serialization                           | Don't use `SegmentedControl` when validation errors or descriptions are needed |
-| **Multi-Select Filter**      | Button group with `aria-pressed`    | `role="group"`<br>`<button aria-pressed="...">`                          | <kbd>Tab</kbd> between buttons;<br><kbd>Space</kbd> toggles                                                             | Filter tags, multi-select chips, facet bars                                                  | `SegmentedControl` strictly supports one active value                          |
+| UI Pattern                   | Standard Component                              | Underlying Semantics                                                     | Keyboard Model                                                                                                          | Valid Contexts                                                                               | Prohibited Anti-Patterns                                                       |
+| :--------------------------- | :---------------------------------------------- | :----------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------- |
+| **View Lens / Filter**       | `SegmentedControl` (`waldur-ui`)                | `role="radiogroup"`<br>`role="radio"`<br>`aria-checked`                  | Single <kbd>Tab</kbd> stop;<br><kbd>←</kbd> / <kbd>→</kbd> select option                                                | Filtering a list in place (All/Unread), chart intervals (Day/Month), diff modes (Table/JSON) | **Never** use for actions (+1h extend), routing tabs, or tab panels            |
+| **Action Preset / Shortcut** | Group of `BaseButton` (`waldur-ui`)             | `role="group"`<br>`<button>`<br>`aria-pressed`                           | Normal <kbd>Tab</kbd> stop per button;<br><kbd>Enter</kbd> / <kbd>Space</kbd> activates                                 | Offset buttons (+30m, +1h), preset calculators, filter clearers                              | **Never** use `SegmentedControl` (radios imply persistent state, not actions)  |
+| **Tabbed Panels**            | `Tabs` (`waldur-ui`, Radix; [tabs.md](tabs.md)) | `role="tablist"`<br>`role="tab"`<br>`role="tabpanel"`<br>`aria-controls` | Single <kbd>Tab</kbd> stop;<br><kbd>←</kbd> / <kbd>→</kbd> moves tabs;<br><kbd>Space</kbd> / <kbd>Enter</kbd> activates | Swapping major DOM sections (e.g. Overview vs Settings vs Audit Log)                         | **Never** use `SegmentedControl` without `role="tabpanel"` and `aria-controls` |
+| **Page Navigation**          | `@/core/Link` or `<nav>` + `<a>`                | `<nav aria-label="...">`<br>`<a href="...">`                             | Normal <kbd>Tab</kbd> per link;<br><kbd>Enter</kbd> navigates;<br>Right-click "Open in new tab"                         | UI-Router state tabs (`TableNav`), page headers, sidebar links                               | **Never** use `SegmentedControl` or `<button>` for URL transitions             |
+| **Form Question**            | `RadioGroup` (`waldur-ui`)                      | `<fieldset>`<br>`<legend>`<br>native `<input type="radio">`              | Single <kbd>Tab</kbd> stop;<br>Arrow keys select                                                                        | Standard form questions with error messages and form serialization                           | Don't use `SegmentedControl` when validation errors or descriptions are needed |
+| **Multi-Select Filter**      | Button group with `aria-pressed`                | `role="group"`<br>`<button aria-pressed="...">`                          | <kbd>Tab</kbd> between buttons;<br><kbd>Space</kbd> toggles                                                             | Filter tags, multi-select chips, facet bars                                                  | `SegmentedControl` strictly supports one active value                          |
 
 ---
 
@@ -70242,73 +70243,9 @@ export const QuickExtendSection = ({ onApply, activeKey, submitting }) => (
 
 ---
 
-### Pattern 3: Segmented Tab Panels (Radix `Tabs` with Segmented Styling)
+### Pattern 3: Page & Route Navigation (`TabNav` / `@/core/Link`)
 
-When you want the sleek segmented look (inset shadows, connected borders) for full tab panels:
-
-```tsx
-// ✅ CORRECT: Real tabs with segmented styling
-import * as Tabs from '@radix-ui/react-tabs';
-import { segmentedListClassName, segmentedItemClassName } from 'waldur-ui';
-import { translate } from '@/i18n';
-
-export const SettingsTabs = () => (
-  <Tabs.Root defaultValue="account">
-    <Tabs.List className={segmentedListClassName({ fullWidth: true })}>
-      <Tabs.Trigger
-        value="account"
-        className={segmentedItemClassName({ size: 'md', fullWidth: true })}
-      >
-        {translate('Account')}
-      </Tabs.Trigger>
-      <Tabs.Trigger
-        value="security"
-        className={segmentedItemClassName({ size: 'md', fullWidth: true })}
-      >
-        {translate('Security')}
-      </Tabs.Trigger>
-    </Tabs.List>
-
-    <Tabs.Content value="account">{/* Account panel */}</Tabs.Content>
-    <Tabs.Content value="security">{/* Security panel */}</Tabs.Content>
-  </Tabs.Root>
-);
-```
-
-**Why this is superior to `SegmentedControl`:**
-
-- Emits WAI-ARIA `role="tablist"`, `role="tab"`, and `role="tabpanel"`.
-- Establishes `aria-controls` links from triggers to content containers.
-- Assistive technologies announce `"Tab 1 of 2"` and support shortcuts to navigate into the active panel.
-
----
-
-### Pattern 4: Page & Route Navigation (`TableTabs` / `@/core/Link`)
-
-When selecting a tab changes the URL or router state (`router.stateService.go`):
-
-```tsx
-// ✅ CORRECT: URL navigation bar
-import { Nav } from 'react-bootstrap';
-import { Link } from '@/core/Link';
-
-export const NavigationBar = ({ tabs, activeState }) => (
-  <nav aria-label={translate('Secondary navigation')}>
-    <Nav variant="tabs" className="nav-line-tabs">
-      {tabs.map((tab) => (
-        <Nav.Item key={tab.key}>
-          <Link
-            state={tab.state}
-            className={`nav-link ${tab.state === activeState ? 'active' : ''}`}
-          >
-            {tab.title}
-          </Link>
-        </Nav.Item>
-      ))}
-    </Nav>
-  </nav>
-);
-```
+When selecting a tab changes the URL or router state, the items must stay real links. Give each `TabNav` item a `link: <Link … />`; see [tabs.md](tabs.md) for the markup.
 
 **Prohibited Anti-Pattern:**
 
@@ -70323,7 +70260,7 @@ Before choosing or migrating a switcher component, run this checklist:
 - [ ] **What happens on click?**
   - Updates URL/route? ➔ **Use `Link` / `<nav>`**.
   - Triggers calculation or modal action? ➔ **Use `BaseButton` (`role="group"` + `aria-pressed`)**.
-  - Swaps a large tab panel? ➔ **Use Radix `Tabs` with `segmentedItemClassName`**.
+  - Swaps a large tab panel? ➔ **Use `Tabs`** (see [tabs.md](tabs.md)).
   - Filters or changes view parameters in place? ➔ **Use `SegmentedControl`**.
 - [ ] **Does `SegmentedControl` have an accessible label?**
   - Every `<SegmentedControl>` must have `aria-label={translate('...')}` or `aria-labelledby`.
@@ -71558,7 +71495,7 @@ Under flexbox's default `align-items: stretch`, a control placed in a flex row a
 
 ### Shared Styling with Real Tab Panels (`SigninForm`)
 
-When options own full tab panels, use Radix `Tabs` rather than `SegmentedControl`. However, import `segmentedListClassName` and `segmentedItemClassName` from `waldur-ui` to style the `Tabs.List` and `Tabs.Trigger` elements so they visually match `SegmentedControl` identically.
+When options own full tab panels, use `waldur-ui`'s `Tabs` with `<TabsList variant="segmented">` rather than `SegmentedControl`; the triggers then share `SegmentedControl`'s segment styles (see [tabs.md](tabs.md)).
 
 ---
 
@@ -71956,14 +71893,15 @@ The application uses a unified button system built on Tailwind v4 and Radix UI. 
 
 #### Core Button Components
 
-| Component             | Location                          | Description                    | Key Features                                                                                   |
-| --------------------- | --------------------------------- | ------------------------------ | ---------------------------------------------------------------------------------------------- |
-| **BaseButton**        | `waldur-ui`                       | General purpose action button  | Direct Tooltip, loading spinner, icon support, 12 variants, sizes (`sm`, `md` [default], `lg`) |
-| **SubmitButton**      | `src/form/SubmitButton.tsx`       | Form submission                | Loading spinner, disabled states, large size (`lg` default, `sm` for compact)                  |
-| **CompactEditButton** | `src/form/CompactEditButton.tsx`  | Edit button for key-value rows | Used in key-value component where label and edit button appear in the same row                 |
-| **CloseDialogButton** | `src/modal/CloseDialogButton.tsx` | Modal cancel/close             | Auto-closes dialog, customizable label, large size (`lg` default)                              |
-| **SaveButton**        | `src/core/SaveButton.tsx`         | Form save with dirty state     | Tracks form changes, dirty badge indicator, conditional visibility                             |
-| **SegmentedControl**  | `waldur-ui`                       | View switcher (a lens)         | Radix RadioGroup: arrows select, one tab stop; `segmentedItemClassName` styles `Tabs.Trigger`  |
+| Component             | Location                          | Description                                    | Key Features                                                                                                                         |
+| --------------------- | --------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| **BaseButton**        | `waldur-ui`                       | General purpose action button                  | Direct Tooltip, loading spinner, icon support, 12 variants, sizes (`sm`, `md` [default], `lg`)                                       |
+| **SubmitButton**      | `src/form/SubmitButton.tsx`       | Form submission                                | Loading spinner, disabled states, large size (`lg` default, `sm` for compact)                                                        |
+| **CompactEditButton** | `src/form/CompactEditButton.tsx`  | Edit button for key-value rows                 | Used in key-value component where label and edit button appear in the same row                                                       |
+| **CloseDialogButton** | `src/modal/CloseDialogButton.tsx` | Modal cancel/close                             | Auto-closes dialog, customizable label, large size (`lg` default)                                                                    |
+| **SaveButton**        | `src/core/SaveButton.tsx`         | Form save with dirty state                     | Tracks form changes, dirty badge indicator, conditional visibility                                                                   |
+| **Tabs / TabNav**     | `waldur-ui`                       | Tab bars: panels on the page, or router-driven | `Tabs` (`mount`, `activationMode`), `TabNav` (`items` with router `link`s); `EmbeddedTabs` for table panels — see [tabs.md](tabs.md) |
+| **SegmentedControl**  | `waldur-ui`                       | View switcher (a lens)                         | Radix RadioGroup: arrows select, one tab stop; for panels use `TabsList variant="segmented"`                                         |
 
 #### Button Selection Guide
 
@@ -73677,6 +73615,11 @@ Removing a hook below breaks that suite without failing anything in HomePort, as
 | `.menu-content.filter-field`                           | `.filter-field`                                                                                              | yes                     |
 | `[data-kt-menu-trigger='click']` (role picker trigger) | `[data-testid="role-project-select"]`, then `get_by_role("combobox", name="Role for <email>")`               | no                      |
 | `.role-project-select-popup .menu-item`                | `get_by_role("option", name=…)`, not scoped to the row                                                       | no                      |
+| `.nav-tabs` / `.nav-line-tabs` (router tab bar)        | `nav[aria-label="Tabs"]` (`TAB_BAR` in `homeport_hooks.py`); a page hero, table sub-tabs or reporting        | no                      |
+| `get_by_role("tab")` in a router tab bar               | `get_by_role("link", name=…)`, or `"button"` for a disabled tab (`tab_item()`)                               | no                      |
+| `.card-body .nav-tabs` (in-page section tabs)          | `[role="tablist"]` with `get_by_role("tab", name=…)` (`SECTION_TABS`)                                        | yes                     |
+
+Tab bars moved to waldur-ui's `TabNav` / `Tabs` in waldur/waldur-homeport!7825; the suite matches both markups since waldur/waldur-integration-testing!193. A router tab bar's `aria-label` defaults to "Tabs"; keep that default (or update `TAB_BAR`) when labelling a bar.
 
 The role picker is two selects since waldur/waldur-homeport!7762: Role, then Project for a project-level role (`name="Project for <email>"`). Each is named after its row's email, or `Role for row <n>` while the email is empty. Their menus are portalled to `<body>`, so look up options on the page, not inside the row.
 
@@ -74227,7 +74170,7 @@ export const MySettingsPanel = ({ settings, update, canUpdate }) => (
 
 ### Key Features
 
-1. **URL Synchronization**: Automatically syncs the active tab to the URL query string using `useSettingsUrlSync`, allowing users to share links to specific tabs.
+1. **URL Synchronization**: Automatically syncs the active tab to the URL query string using `useUrlTab` (`@/navigation/useUrlTab`), allowing users to share links to specific tabs.
 2. **Built-in Search (`enableSearch`)**: When enabled, provides a search input that filters fields across all tabs by matching against their `label` and `description` props.
 3. **Auto-jump**: When searching, if the current tab yields no results, it automatically jumps to the first tab containing matching fields.
 4. **Field Counters**: Displays a badge on each tab showing the number of matching fields during a search.
@@ -77682,7 +77625,7 @@ When rendering multiple tables within tabs, use the `TableWithTabs` wrapper comp
 
 ## Table with Tabs Wrapper Component (`TableWithTabs`)
 
-`TableWithTabs` (`src/table/TableWithTabs.tsx`) is a layout wrapper that renders standard Bootstrap Nav tabs. Each tab maps to a lazy-loaded child component.
+`TableWithTabs` (`src/table/TableWithTabs.tsx`) is a layout wrapper that renders waldur-ui `Tabs` (see [tabs.md](../tabs.md)). Each tab maps to a lazy-loaded child component.
 
 This wrapper manages:
 
@@ -77734,15 +77677,15 @@ export const ChecklistManagement = () => {
 
 ## Component Properties
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `title` | `ReactNode` | Card title text / elements. |
-| `subtitle` | `ReactNode` | Optional card subtitle. |
-| `tabs` | `TableTab[]` | Array of tab settings (each must have a `component` key). |
-| `syncWithUrlKey` | `string` | Query parameter key used to sync the active tab in the URL (optional). |
-| `data` | `Record<string, any>` | Optional properties/payload automatically passed down to all child tab components. |
-| `headerActions` | `ReactNode` | Actions rendered directly next to the tab navigation list. |
-| `actions` | `ReactNode` or `Array<{ activeKeys, component }>` | Actions rendered in the header toolbar. |
+| Property         | Type                                              | Description                                                                        |
+| ---------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `title`          | `ReactNode`                                       | Card title text / elements.                                                        |
+| `subtitle`       | `ReactNode`                                       | Optional card subtitle.                                                            |
+| `tabs`           | `TableTab[]`                                      | Array of tab settings (each must have a `component` key).                          |
+| `syncWithUrlKey` | `string`                                          | Query parameter key used to sync the active tab in the URL (optional).             |
+| `data`           | `Record<string, any>`                             | Optional properties/payload automatically passed down to all child tab components. |
+| `headerActions`  | `ReactNode`                                       | Actions rendered directly next to the tab navigation list.                         |
+| `actions`        | `ReactNode` or `Array<{ activeKeys, component }>` | Actions rendered in the header toolbar.                                            |
 
 ---
 
@@ -78270,6 +78213,282 @@ export const ReviewerPoolSection = ({ call }) => {
 
 ---
 
+### Tabs
+<!-- Source: docs/developer-guide/ui/tabs.md -->
+
+# Tabs
+
+Every tab bar in HomePort is built from `waldur-ui` primitives (`Tabs`, `TabNav`) or from a wrapper over them (`EmbeddedTabs`, `TableWithTabs`, `TableNav`, `TabbedSection`). The Bootstrap/Metronic `.nav` stylesheet and react-bootstrap's `Tab`, `Tabs` and `Nav` are gone, and the `waldur-custom/no-bootstrap-tabs` lint rule keeps them out (see [Lint rule](#lint-rule)).
+
+## Choosing a tab component
+
+| The tab bar…                                                            | Use                                                                               |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| switches panels held on the page, state-driven                          | `Tabs` + `TabsList` / `TabsTrigger` / `TabsContent`                               |
+| changes the URL; the router draws the panel (no panels here)            | `TabNav` with link `items`                                                        |
+| switches panels that are tables, in an expandable row or a card section | `EmbeddedTabs` (`@/table/EmbeddedTabs`)                                           |
+| shares one card header and toolbar between several tables               | `TableWithTabs` (see [layout-wrappers](table/layout-wrappers.md))                 |
+| is a table's own router-driven sub-navigation (`tabs` prop of `Table`)  | `TableNav` (formerly `TableTabs`), a `TabNav`                                     |
+| groups form fields into URL-synced, searchable sections                 | `TabbedSection` (see [forms.md](forms.md))                                        |
+| is a segmented bar over a few large panels (e.g. the sign-in method)    | `Tabs` with `TabsList variant="segmented"`, see [Segmented tabs](#segmented-tabs) |
+| is a two-or-three-way view switch rather than tabs of content           | `SegmentedControl` (see [a11y-decision-matrix.md](a11y-decision-matrix.md))       |
+
+The rule of thumb: if clicking changes the URL, the items must stay real links, so use `TabNav`; if it only changes what the page shows, use `Tabs`.
+
+## `Tabs`
+
+Radix Tabs with HomePort's look. Import everything from `waldur-ui`.
+
+```tsx
+import { Tabs, TabsContent, TabsList, TabsTrigger } from 'waldur-ui';
+
+<Tabs mount="active" defaultValue="details">
+  <TabsList className="mb-4">
+    <TabsTrigger value="details">{translate('Details')}</TabsTrigger>
+    <TabsTrigger value="events" disabled={!canSeeEvents} tooltip={reason}>
+      {translate('Events')}
+    </TabsTrigger>
+  </TabsList>
+  <TabsContent value="details">…</TabsContent>
+  <TabsContent value="events">…</TabsContent>
+</Tabs>;
+```
+
+| Prop                      | Notes                                                                                                                                         |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `value` / `onValueChange` | Controlled. Values are strings, and so are `TabNav` and `TableTab` keys.                                                                      |
+| `defaultValue`            | Uncontrolled. Unlike react-bootstrap, nothing is open until you set it, so pass the first tab's key.                                          |
+| `mount`                   | `'active'` (default), `'visited'` or `'all'`. See below.                                                                                      |
+| `activationMode`          | `'automatic'` by default (arrow keys select, as Bootstrap tabs did). Pass `'manual'` to move focus with the arrows and select on Enter/Space. |
+| `TabsTrigger` `tooltip`   | Works on disabled triggers too (the tooltip trigger wraps the button).                                                                        |
+| `TabsTrigger` `hint`      | Help text: the tooltip (unless `tooltip` is set) plus a question-mark icon. Use it instead of a `HelpIcon`, which can't sit inside the tab.   |
+| `TabsTrigger` `count`     | A count badge after the title; `countLoading` shows a spinner in it instead. `undefined` shows no badge, `0` shows `0`.                       |
+| `TabsList` `variant`      | `'line'` (default) or `'segmented'`; `fullWidth` stretches a segmented row.                                                                   |
+| `TabsList` `bordered`     | `false` drops the strip's own bottom line, for a strip in a card header that already draws one. `TabNav` takes it too.                        |
+
+### Data form
+
+Pass `items` and `Tabs` draws the strip and the panels itself, the way `TabNav` takes `items`. Prefer it whenever the tabs come from an array or a conditional list:
+
+```tsx
+<Tabs
+  defaultValue="details"
+  listProps={{ className: 'mb-4' }}
+  items={[
+    { value: 'details', title: translate('Details'), content: <Details /> },
+    {
+      value: 'events',
+      title: translate('Events'),
+      count: events.length,
+      hidden: !canSeeEvents,
+      content: <Events />,
+    },
+  ]}
+/>
+```
+
+An item takes `value`, `title`, `content` and the trigger props (`count`, `countLoading`, `hint`, `tooltip`, `disabled`), plus `hidden` to leave it out, `className` (trigger) and `contentClassName` (panel). `listProps` go to the generated `TabsList`, `panelsClassName` wraps the panels in a div, and `children` render above the strip (a title row).
+
+The open tab falls back to the first visible, enabled item when none is chosen, or when the chosen one is hidden, disabled or goes away later, so the bar never opens on an empty panel. The rule is `resolveTabValue(selectable, requested)` from `waldur-ui`, which `useUrlTab` uses too.
+
+### Mount modes
+
+`TabsContent` decides whether an inactive panel exists in the DOM. Pick the mode that matches what each panel does, because a mounted panel runs its effects and fetches:
+
+| `mount`     | Behaviour                                                   | react-bootstrap equivalent       |
+| ----------- | ----------------------------------------------------------- | -------------------------------- |
+| `'active'`  | Only the open panel is mounted; leaving a tab unmounts it.  | `mountOnEnter` + `unmountOnExit` |
+| `'visited'` | A panel mounts when first opened and stays mounted, hidden. | `mountOnEnter`                   |
+| `'all'`     | Every panel is mounted up front and hidden with `hidden`.   | the default (no flags)           |
+
+Use `'all'` when state must survive a tab switch or panels must be ready (forms, a chat connection). To keep just one panel alive in an `'active'` group, give its `TabsContent` `forceMount`. Radix itself would then render that panel visible even when inactive, so `TabsContent` hides it for you (`hidden` plus the `hidden` class) while keeping it mounted.
+
+## `TabNav`
+
+For bars whose panel is drawn elsewhere by the router. It renders a `<nav>` (named "Tabs" unless you pass `aria-label`) with `aria-current="page"` on the active link, not `role="tab"` with orphan `aria-controls`.
+
+**Don't use `TabNav` to switch panels held on the page**, even if the bar looks the same: that is `Tabs`. A `TabNav` there loses `role="tab"`/`tabpanel`, `aria-selected` and arrow-key navigation, and claims a "current page" that does not exist.
+
+`TabNav` takes its tabs as data, like the `items` form of `Tabs`; there are no item components to compose.
+
+**Items are links.** Give a navigating item `link: <Link state="…" params={…} />` so the tab stays a real anchor: middle-click, Ctrl/Cmd-click, "open in new tab" and the URL preview all work. `TabNav` replaces the link's children with the item's `title` (in a span, so a string title doesn't pick up Metronic's `.text-anchor`) and asserts the tab colours over the global `a { color }` rule. Don't navigate with `onSelect` + `router.stateService.go(...)`: that makes the tabs buttons.
+
+```tsx
+import { TabNav } from 'waldur-ui';
+import { Link } from '@/core/Link';
+
+<TabNav
+  activeKey={state.name}
+  listClassName="mb-4"
+  items={[
+    {
+      key: 'project.dashboard',
+      title: translate('View'),
+      link: <Link state="project.dashboard" params={{ uuid }} />,
+    },
+    {
+      key: 'project-manage',
+      title: translate('Edit'),
+      link: <Link state="project-manage" params={{ uuid }} />,
+      disabled: !canEdit,
+      tooltip: reason,
+    },
+  ]}
+/>;
+```
+
+| Item field          | Notes                                                                                                                                                    |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `key`               | Matched against `activeKey`; using the state name lets `activeKey={state.name}` mark the current tab.                                                    |
+| `active`            | Overrides the match, for a looser one (`active: router.stateService.includes(tab.state)`).                                                               |
+| `link`              | The anchor the tab renders as. Without it the tab is a `<button>`.                                                                                       |
+| `onClick`           | Button tabs only. `TabNav`'s `onSelect(key)` runs after it. A link tab gets no click handler, since a router `Link` with one turns into `role="button"`. |
+| `disabled`          | A disabled link drops out of the tab order and ignores the pointer; a disabled button is `disabled`. `tooltip` still shows on both.                      |
+| `tooltip`, `testId` | A tooltip on the tab; `data-testid` on it.                                                                                                               |
+
+`TabNav` itself takes `activeKey`, `onSelect`, `aria-label`, and for the strip `listClassName`, `bordered`, `scrollable` and `scrollClassName`. A link tab is marked `aria-current="page"`; a button tab `aria-current="true"` (the current item of a set, not a page). Button tabs are for `TableNav`' local-state mode and for disabled placeholders.
+
+## Keeping the tab in the URL
+
+`useUrlTab(tabs, param)` (`@/navigation/useUrlTab`) holds the open tab of a `Tabs` bar in a query param, falls back to the first tab for a missing or unknown value or a tab that went away, and follows Back/Forward. Without `param` it is plain local state. `TableWithTabs` (`syncWithUrlKey`) and `TabbedSection` use it; declare the param `dynamic` on the route (see Gotchas).
+
+```tsx
+const { activeKey, handleSelect } = useUrlTab(tabs, 'tab');
+
+<Tabs value={activeKey} onValueChange={handleSelect}>
+  …
+</Tabs>;
+```
+
+## `EmbeddedTabs`
+
+Tabs embedded in another surface, an expandable row or a card section, whose panels are tables or row details: the data form of `Tabs` with the strip and table-card styling those places share. (Formerly `PanelTabs`.) Only the open panel is mounted, so only its table fetches. Every expandable row with tabs uses it.
+
+```tsx
+import { EmbeddedTabs } from '@/table/EmbeddedTabs';
+
+<EmbeddedTabs
+  framed
+  defaultValue="projects"
+  className="min-h-375px"
+  tabs={[
+    {
+      key: 'projects',
+      title: translate('Projects'),
+      count: projectsCount.data,
+      countLoading: projectsCount.isLoading,
+      content: <SummaryProjects customer={row} />,
+    },
+    {
+      key: 'team',
+      title: translate('Team'),
+      hidden: !canListUsers, // replaces `cond && <Tab…>`
+      content: <SummaryTeamTable scope={row} context="organization" />,
+    },
+  ]}
+/>;
+```
+
+| Field / prop                 | Notes                                                                                                |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `count`, `countLoading`      | Passed to `TabsTrigger` (see above). Pass `?? 0` if a missing count should read `0`.                 |
+| `hidden`                     | Leaves the tab out entirely.                                                                         |
+| `framed`                     | Frames the strip like the card of an expandable row. Set it for rows inside `ExpandableContainer`.   |
+| `defaultValue` / `value`     | Optional. A missing or `hidden` choice falls back to the first visible tab, so no panel opens empty. |
+| `header`                     | A title row above the strip. The strip then draws no frame of its own.                               |
+| `className`, `listClassName` | On the root and on the strip.                                                                        |
+| `value` / `onValueChange`    | Controlled mode, e.g. when a toolbar must follow the open tab (`OrganizationExpandableRow`).         |
+
+A table card directly inside a panel sits flush under the strip (no top border or top radius), so don't add your own.
+
+Reference: `src/user/affiliations/OrganizationExpandableRow.tsx` (controlled, framed), `src/marketplace/resources/projects/ResourceProjectExpandable.tsx` (with a header), `src/proposals/team/TeamSection.tsx` (conditional tabs in a card).
+
+## Segmented tabs
+
+For the segmented look (connected, button-like segments) over a few large panels, give `TabsList` `variant="segmented"`; `fullWidth` stretches the row. The triggers pick the look up from the list. `src/auth/SigninForm.tsx` is the example in the app:
+
+```tsx
+<Tabs value={method} onValueChange={setMethod} className="w-100 mb-5">
+  <TabsList
+    variant="segmented"
+    fullWidth
+    aria-label={translate('Sign in method')}
+  >
+    <TabsTrigger value="username">{translate('Username')}</TabsTrigger>
+    <TabsTrigger value="token">{translate('Access token')}</TabsTrigger>
+  </TabsList>
+  <TabsContent value="username">…</TabsContent>
+  <TabsContent value="token">…</TabsContent>
+</Tabs>
+```
+
+Use this instead of `SegmentedControl` whenever each option owns a distinct, large panel. Real tabs emit `role="tablist"`, `role="tab"` and `role="tabpanel"` with `aria-controls` links, and assistive technology announces "Tab 1 of 2" and can jump into the active panel; a `SegmentedControl` is a radio group with none of that. Give the list an `aria-label`.
+
+## Look and tokens
+
+- The line tab matches the metrics of the old Metronic `.nav-line-tabs`: 14px semibold text, `4px 4px 10px` padding, a 1px list border and a flat 2px indicator, with a gap of `1.23rem` between tabs.
+- Colours come from the `--tabs-*` tokens in `packages/design-tokens/src/tabColors.css` (light and dark). Change them there; don't hard-code colours at call sites.
+- Every state keys off `data-state`, which both `TabsTrigger` and `TabNav` set. Hover touches only an inactive, enabled tab and uses neutral colours (`--tabs-text-hover`, `--tabs-indicator-hover`), so a hovered tab never looks selected. Disabled keys off `aria-disabled`, which anchor tabs carry too.
+- A `scrollable` strip scrolls the active tab into view when it changes (sideways only, never the page), so a deep link to a late tab does not open with it off-screen.
+- The indicator is a bottom border on the trigger with `-mb-px`, so it overlaps the list border. That 1px overhang is **clipped by any `overflow` container**, which shows up as a vertical scrollbar or a missing underline. Don't wrap a strip in your own scroll container; give the list `scrollable` (`TabsList`, or `TabNav` itself) and it supplies a frame that keeps the underline whole:
+
+  ```tsx
+  <TabsList scrollable scrollClassName="flex-grow-1">…</TabsList>
+  <TabNav items={items} scrollable className="min-w-0 flex-grow-1" />
+  ```
+
+  `scrollClassName` is for layout on the frame (`flex-grow-1`); `className` stays on the list. When the strip sits in a card header that already draws the bottom line (`TableNav`, `ReviewerProfilePanel`, `AccessControlTabsContainer`), also give the list `bordered={false}` so there is only one line. Don't try to cancel the frame's `pb-px` with `-mb-px`; it clips the underline.
+
+- The keyboard focus ring is **inset** (`ring-inset`), drawn inside the trigger's own box. An offset ring sits outside the tab and is clipped by the scroll frame's `overflow`, which cut off its top and left edges.
+- Count badges inside tabs are ordinary `Badge`s and keep their own variant colours. The old rule that tinted them brand-coloured on the active tab was removed.
+
+## Gotchas
+
+- **Bootstrap utilities are `!important` and sit in a lower layer, but they still win.** `border`, `border-0`, `border-x-0`, `border-start-0` and similar Bootstrap classes override Tailwind's, because important declarations in an earlier layer beat important ones in a later layer and any normal declaration. When you need a specific border width on a tab strip, use arbitrary values (`border-[1px]`, `border-x-[0px]`), which have no Bootstrap counterpart. `border-0` is fine when you _want_ Bootstrap's behaviour (no border at all).
+- **Anchor tabs and colour.** Give a `TabNav` item a `link`; don't style a bare `<a>` as a tab.
+- **Card bodies in a tab panel keep their top padding.** `_table.scss` drops the top padding of a table card's body, except inside a tab panel. It keys off `[role="tabpanel"]`, which every `TabsContent` has, so no wrapper class is needed; the older `.tab-content` hook still works where it is set by hand. Use `[role="tabpanel"]` in new CSS.
+- **Tab and search params must be `dynamic` in the route.** A tab bar that keeps its state in the URL (`?tab=…`, `useUrlTab`, `TableWithTabs syncWithUrlKey`) writes it with `router.stateService.go(...)`. If the route does not declare the param `dynamic`, UI-Router exits and re-enters the state on every change, so the whole page remounts on each tab switch (and a `?q=` search box loses focus on every keystroke). Declare it once on the route:
+
+  ```ts
+  { name: 'admin-features', url: 'features/?tab&q',
+    params: { tab: { dynamic: true }, q: { dynamic: true } }, … }
+  ```
+
+  The `waldur-custom/dynamic-tab-params` rule enforces this for query params named `tab`, `q`, `*_tab` and `*Tab` in route files, and `eslint --fix` adds the missing entry.
+
+  **Don't make every param dynamic.** `dynamic` only helps a param the page rewrites with `stateService.go` on the _same_ state while it is mounted, and only if the page reads that param reactively (`useCurrentStateAndParams`, `useUrlTab`). Leave it alone when:
+
+  - the page reads it **once at mount** (`useState(params.mode)`), because a remount is what picks up a new value. The reporting analytics routes' `?mode` is the example: made dynamic, a deep link to another mode would leave the page stale;
+  - it is a **table filter**, because filters are written with `router.urlService.url(...)` (`src/core/filters.ts`), which updates the URL without a state transition, so the page never remounts for them;
+  - it is only set **on entry** (`?token=…`, `?review_uuid=…`, links from other pages).
+
+  The rule is limited to `tab`, `q` and `*_tab` / `*Tab` for that reason. A tab bar driven by another param name (the call lists use `?state`) has to be declared dynamic by hand, after checking that the page reads the param reactively.
+
+- **Panels are mounted according to `mount`**, so a hidden panel under `'all'` still runs its effects. A test that looks for text in a closed panel needs `mount="all"` or to open the tab first.
+- **Query by role in tests**: `getByRole('tab', { name })` for `Tabs`, `getByRole('link', { name })` for `TabNav` link tabs and `getByRole('button', { name })` for its button tabs. `aria-selected` marks the open `Tabs` trigger; `aria-current="page"` marks the current link and `aria-current="true"` the current button.
+- **No controls inside a trigger.** A `HelpIcon`, button, link or input inside a tab's button is invalid HTML and muddles the tab's name. Use `hint`, `tooltip` or `count`; `waldur-custom/no-interactive-in-tab-trigger` reports the rest in `TabsTrigger`. `TabNav` titles are data, so keep controls out of them too.
+- **Don't reach into the DOM by class.** `.nav-item`, `.nav-link` and `.active` no longer exist on tab bars; measure or select `[role="tab"]` instead.
+
+## Migrating old code
+
+| Bootstrap                                        | Now                                                              |
+| ------------------------------------------------ | ---------------------------------------------------------------- |
+| `Tab.Container activeKey onSelect`               | `Tabs value onValueChange`                                       |
+| `defaultActiveKey`                               | `defaultValue` (string)                                          |
+| `unmountOnExit` / `mountOnEnter` / neither       | `mount="active"` / `"visited"` / `"all"`                         |
+| `Nav variant="tabs" className="nav-line-tabs …"` | `TabsList` (or `TabNav`'s `listClassName`); keep only the extras |
+| `Nav.Item` + `Nav.Link eventKey`                 | `TabsTrigger value` (or a `TabNav` item); drop the `Nav.Item`    |
+| `Tab.Content` / `Tab.Pane eventKey`              | a plain `div` / `TabsContent value` (or the `items` data form)   |
+| `<Tabs><Tab eventKey title>…</Tab></Tabs>`       | `Tabs` + `TabsList` of triggers + `TabsContent` panels           |
+| bar with no `Tab.Pane` (router-driven)           | `TabNav` with link `items`                                       |
+| table panels in an expandable row                | `EmbeddedTabs`                                                   |
+
+## Lint rule
+
+`waldur-custom/no-bootstrap-tabs` (error) reports react-bootstrap `Tab`, `Tabs`, `Nav` and their parts, `Navbar` and `NavDropdown`, by named or deep-path import, and any `nav`, `nav-item`, `nav-link`, `nav-tabs`, `nav-pills`, `nav-line-tabs` (and similar) class token, since those classes no longer style anything. `.tab-content` and `btn-nav-item` are allowed. It also reports `@radix-ui/react-tabs` imported outside `waldur-ui`'s own Tabs. `waldur-custom/no-interactive-in-tab-trigger` (error) reports a `HelpIcon`, button, link or form control inside a `TabsTrigger`. A third rule, `waldur-custom/dynamic-tab-params`, covers route definitions (see the Gotchas section).
+
+---
+
 ### Tailwind & shadcn UI Architecture
 <!-- Source: docs/developer-guide/ui/tailwind-shadcn-migration-notes.md -->
 
@@ -78793,7 +79012,7 @@ Implemented in `packages/eslint-plugin-waldur` and enabled as `waldur-custom/*` 
 | `enforce-featured-icon`            | `error`  | Requires `FeaturedIcon` (with `tone`/`size`) for highlighted icon emblems.                                                |
 | `enforce-phosphor-icon-weight`     | `error`  | Consistent `weight` prop on Phosphor icons.                                                                               |
 | `enforce-border-radius-tokens`     | `error`  | Design-token radius classes instead of hard-coded values.                                                                 |
-| `enforce-nav-tabs-pattern`         | `error`  | Navigation tabs use the `nav-line-tabs` class.                                                                            |
+| `no-bootstrap-tabs`                | `error`  | `Tabs` / `TabNav` from `waldur-ui`; no react-bootstrap `Tab`/`Tabs`/`Nav` or `nav-*` classes.                             |
 | `enforce-breadcrumb-colors`        | `error`  | Breadcrumb links use the `$text-brand-secondary` token.                                                                   |
 | `no-bootstrap-form-check`          | `error`  | `Checkbox` / `Radio` / `Switch` from `waldur-ui`; no `FormCheck`, `Form.Check` or `form-check*` / `form-switch*` classes. |
 
@@ -98102,6 +98321,7 @@ graph TB
     BOT -->|encrypted replies and notices| ROOMHS
     PROJ -->|pre_delete| ROOM
     ROOM -->|disable + archive| EXPORT
+    BOT -->|reads + decrypts history| EXPORT
     ROOM -.->|room_id| ROOMHS
 ```
 
@@ -98116,11 +98336,13 @@ Rooms are end-to-end encrypted, so commands and everything Waldur posts go
 through a long-running bot process, `waldur matrix_bot`: the Helm Deployment
 `waldur-matrix-bot`, or the `waldur-matrix-bot` service in docker-compose's
 `matrix` profile. It syncs the rooms as Waldur's bot user, decrypts the
-commands, answers them if the sender holds an active project role, and posts
-the messages Waldur queues in its outbox, encrypted for the room. Run exactly
+commands, answers them if the sender holds an active project role, posts
+the messages Waldur queues in its outbox, encrypted for the room, and makes
+the history exports. Run exactly
 one: the bot holds a lease in Waldur's database, and a second process refuses
 to start while the first holds it. Without a running bot, commands go
-unanswered and Waldur's notices stay in the outbox. The appservice webhook
+unanswered, Waldur's notices stay in the outbox, and history exports stay
+pending, so a room being disabled with export on is not archived. The appservice webhook
 (`PUT /_matrix/app/v1/transactions/{txnId}`) only records and acknowledges the
 homeserver's transactions; it no longer handles commands. Project deletion
 runs the same disable path that the staff "Disable room" action uses,
@@ -98309,8 +98531,9 @@ not yet have the appservice registered (see below).
 
 ## Registering the appservice on the homeserver
 
-Tuwunel and other Conduit-family homeservers register appservices via an
-admin-room command rather than a config file. On Tuwunel, one command does it
+Waldur registers its appservice on Tuwunel through an admin-room command;
+Tuwunel can also read registrations from its config file, which Waldur does
+not use. On Tuwunel, one command does it
 once Setup has generated the tokens:
 
 ```bash
@@ -98747,10 +98970,12 @@ Then check that **Bot is a homeserver admin** passes in **Diagnostics**. Make
 the bot an admin in the other modes too: without it, Waldur cannot lock the
 Matrix account of a deactivated user, and a user whose recovery key is lost
 cannot reset their chat encryption from the drawer. It also lets Waldur refuse
-to give a user a homeserver admin's account. The cost is that the appservice
-token becomes an admin credential.
+to give a user a homeserver admin's account, and lets the appservice token use
+the admin API as the bot. Treat that token as a homeserver admin credential
+whether or not the bot is an admin: it can act as any account of the
+homeserver, admins included, from the moment the appservice is registered.
 [Making the bot a homeserver admin](../developer-guide/admin-guide/matrix-appservice-setup.md#making-the-bot-a-homeserver-admin)
-covers the trade-off and Synapse.
+explains why and covers Synapse.
 
 `none` and `oidc` only hide the option: password login still works on the
 homeserver, so switching away from `password` does not cut off users who
@@ -98944,10 +99169,16 @@ details, including how the bot decides which backup it may write into.
   workstation never leaks one user's session to the next. The same teardown
   removes the matrix-js-sdk `Sync` listener and any per-call sub-module
   handlers.
-- **Webhook rate limit.** The `/_matrix/app/v1/transactions/{txnId}` endpoint
-  is rate-limited via the `matrix_webhook` DRF throttle scope (default
-  10000/hour). When Matrix is disabled the endpoint returns `200` and
-  discards the payload, so the homeserver does not retry.
+- **Webhook rate limit.** The appservice endpoints
+  (`/_matrix/app/v1/transactions/{txnId}` and `/_matrix/app/v1/ping`) are
+  limited per client address via the `matrix_webhook` DRF throttle scope
+  (default 10000/hour), the two endpoints sharing one bucket. That includes
+  the homeserver's own calls, which carry its `hs_token`: it sends every
+  transaction from one address, about one per chat message, so a busy
+  homeserver can reach the limit, get `429` and retry the transaction later.
+  Raise `matrix_webhook` if that happens. When Matrix is disabled the
+  transactions endpoint returns `200` and discards the payload, so the
+  homeserver does not retry.
 - **Per-user limits.** `/api/matrix/session/` is rate-limited via the
   `matrix_session` scope (default 120/hour per user). The drawer calls it on
   connect, which includes the background connect on every page load for a
@@ -98971,9 +99202,14 @@ details, including how the bot decides which backup it may write into.
   [scheduled jobs reference](mastermind-configuration/scheduled.md) lists every
   task Waldur schedules.
 - **History export.** Disabling a room can optionally export its history.
-  The export reads the room without the bot's keys, so for an encrypted room
-  it gets only ciphertext: message bodies of encrypted rooms are not included
-  until the export goes through the bot, which is planned. Exports go only to
+  The bot process makes every export: it pages through the room and decrypts
+  each message with the room keys in its crypto store, so an export holds the
+  messages in clear, apart from those the bot never received a key for. While
+  no bot runs, exports stay pending. At rest, each export's files are
+  encrypted under a key of its own, which is stored encrypted under
+  `FIELD_ENCRYPTION_KEY`; the download view decrypts them. See
+  [Export process](../developer-guide/admin-guide/matrix-appservice-setup.md#export-process).
+  Exports go only to
   those holding `MATRIX_ROOM.CREATE` on the project or its organization
   (organization owners by default) and to staff and support; everyone else gets `404`, room members included. Files
   are served through a permission-checked view rather than the raw storage
@@ -98985,9 +99221,11 @@ details, including how the bot decides which backup it may write into.
 - **Stored secrets.** Waldur stores no Matrix access token for any user. The
   drawer's tokens live only in the browser's memory, and registering a user
   creates no device. Waldur does store the bot's encryption keys and access
-  token, users' recovery keys and the secret Matrix settings in Constance; all
-  of them are encrypted at rest with `FIELD_ENCRYPTION_KEY`. Back that key up
-  separately from the database dumps: without it they cannot be decrypted.
+  token, users' recovery keys, each history export's data key and the secret
+  Matrix settings in Constance; all of them are encrypted at rest with
+  `FIELD_ENCRYPTION_KEY`, or with a key derived from `SECRET_KEY` while that is
+  unset. Back that key up separately from the database dumps: without it they
+  cannot be decrypted, and neither can any history export.
 - **Deactivated and deleted users.** Deactivating or deleting a Waldur user
   signs out every one of their Matrix devices, Element included, and removes
   them from their rooms, through background tasks that retry failures, even
@@ -100634,7 +100872,8 @@ The Setup appservice wizard collects everything else it needs. If the homeserver
   cover them in their "Backup and restore", "Monitoring" and "Capacity"
   sections. Back up the homeserver and Waldur's database together, and keep
   `FIELD_ENCRYPTION_KEY` safe: without it no escrowed recovery key can be read
-  (see [Locked identities](#locked-identities)). A history export is not a
+  (see [Locked identities](#locked-identities)), and no history export can be
+  downloaded. A history export is not a
   backup.
 
 ## Appservice Setup
@@ -101127,7 +101366,8 @@ State transitions:
 - `creating` → `active` (on successful creation)
 - any state → `error` (on failure)
 - `active` / `error` → `disabling` (on disable action or project deletion)
-- `disabling` → `archived` (after members kicked and history exported)
+- `disabling` → `archived` (after members kicked and history exported; see
+  [Exports when a room is disabled](#exports-when-a-room-is-disabled))
 - `archived` → `active` (on reactivate action)
 - `error` / `creating` / `disabling` → `creating` (on retry action)
 - `active` → `creating` (on appservice reprovision)
@@ -101314,24 +101554,155 @@ Only a reactivation unlocks an account, and it unlocks it whoever locked it. If 
 
 ### Export process
 
-1. Messages are fetched from the homeserver via pagination
-2. If `MATRIX_EXPORT_MEDIA` is enabled, media files are downloaded and packaged into a ZIP archive
-3. Output: JSON file with messages and metadata, optionally a media ZIP
+Rooms are end-to-end encrypted, and the Matrix bot process (`waldur matrix_bot`) is the one member
+that holds their keys, so the bot makes every export. An export in `pending` is a request it takes
+in turn: exports of rooms being disabled first, then manual ones, then the daily ones, the oldest
+first within each.
+
+The bot runs up to three exports side by side, so rooms disabled together are each exported within
+the time disabling one waits. Rooms being disabled may take every slot; manual and daily exports
+take one slot at most between them, one at a time, and one gives way, between two pages or two
+attachments, when a room being disabled finds every slot taken: it goes back to `pending` and starts
+over afterwards.
+
+Messages are read and decrypted in parallel; attachments and saves are done one at a time, rooms
+being disabled first. Time an export spends waiting for another's attachment or save does not
+count toward its 10 minutes, though it does toward the 15 minutes disabling a room waits. An export
+keeps little in memory whatever the size of its room, about 4 MiB: it writes the messages, as it
+reads them, to working files encrypted under a key that exists only in the bot's memory, so nothing
+decrypted reaches the disk either. What takes memory is an attachment in flight (up to 50 MB, twice) and a
+save, which reads the stored files whole, and only one export at a time does either. That keeps the
+bot within the Helm chart's default 600Mi limit with three exports running.
+
+A room has at most one unfinished export of each type: asking for a manual export while one is
+pending or running returns that one (with `200` rather than `202`), and the daily run skips a room
+whose previous daily export the bot has not made yet. A room may have 10 manual exports in 24 hours;
+beyond that the request is refused with `429`.
+
+1. The bot pages through the room's history and decrypts each message with the room keys in its
+   crypto store.
+2. If `MATRIX_EXPORT_MEDIA` is enabled, it downloads each attachment, checks the SHA-256 its message
+   records, decrypts it with the key the message carries, and packs it into a ZIP archive.
+3. Output: a JSON file with the messages and metadata, and the media ZIP if any media was exported.
+
+The JSON has the same layout as before rooms were encrypted, with these fields added to messages:
+
+- `encrypted` — whether the event was sent encrypted (stored by the homeserver as
+  `m.room.encrypted`, including one since redacted). In an encrypted room, an event sent in clear
+  comes from the homeserver or from a client that ignores the room's encryption: don't trust its
+  sender.
+- `verified`, `device_id`, `sender_key` — on every decrypted event: the device that sent it, and
+  whether that device is one its sender's cross-signing identity vouches for, as the chat drawer
+  shows it. The homeserver can put any sender on an event, but can't encrypt it with that sender's
+  keys, so treat `"verified": false` like the drawer's warning: the message may not be from who it
+  names. Keys the bot received from a backup or another device are never `verified`. Two limits:
+  - it trusts the cross-signing identity the homeserver publishes for the sender **now**. A
+    homeserver that replaced a user's identity with one of its own, and signed a device of its own
+    with it, would have that device's messages exported as `verified`;
+  - it is judged when the export is made, not when the message was sent: a device signed or
+    unsigned since then is judged as it is now.
+
+  `sender_identity` below checks the identity against what Waldur holds instead.
+- `sender_identity` — on every decrypted event, how far Waldur itself can vouch for the sender's
+  cross-signing identity, which `verified` takes from the homeserver. `escrowed`, `pinned` and `bot`
+  hold only when the message came from a device that identity signs (its keys as the room key's
+  Olm session vouches for them); a message from any other device is `changed`:
+  - `escrowed`: the recovery key Waldur holds for the user unlocks the master key the homeserver
+    publishes, so the homeserver cannot have replaced it;
+  - `pinned`: Waldur holds no recovery key for the user, and the master key is the one the bot
+    pinned when it first saw it (see [History for new members](#history-for-new-members));
+  - `changed`: neither. The user reset their identity, or the homeserver replaced it; read
+    `verified` on such messages with care. Devices are looked up as they are at export time, so a
+    message from a device the user has since signed out or deleted is `changed` too, as is one
+    whose room key reached the bot forwarded or from a backup: `changed` is a reason to look, not
+    by itself a sign of an attack;
+  - `bot`: the bot's own messages;
+  - `unknown`: not a Waldur user, no master key published or pinned yet, or the check failed.
+  It is judged when the export is made, like `verified`. Its limit: `escrowed` proves the master
+  key is one the escrowed recovery key unlocks, not that it is the latest. A homeserver that keeps
+  an older copy of the user's secret storage could serve an identity the user has since reset away
+  from, as long as it is still stored under the same recovery key.
+- `relation` — what a message relates to: `rel_type` and `event_id` for an edit (`m.replace`) or a
+  thread, `in_reply_to` for a reply. An edit is exported as its own message; `relation` tells it
+  apart from a new one.
+- `media_encrypted: true` on encrypted media. The key that decrypts it is never written to the
+  export.
+
+Some entries say why something is missing instead of leaving it out:
+
+- `"type": "m.room.encrypted", "undecryptable": true` — a message no room key the bot holds
+  decrypts, with its `session_id` and `device_id`. Its sender's client never shared the key with the
+  bot, or the bot's crypto store was reset.
+- `"replay": true` — an encrypted event that reuses the message index of another event under the
+  same room key: a copy of another message, not a new one. Its content is not exported.
+- `"bad_event": true` — an event whose content, once decrypted if it was encrypted, is not a valid
+  event of its type. Only its ID, sender, time and type are exported.
+- `"media_error"` on a message whose attachment is not in the ZIP: `download failed`,
+  `could not be decrypted` (the file does not match the hash its message records, or the message's
+  key is malformed), `too large to export` (over 50 MB), or `export size limit reached` (the export's
+  media passed 200 MB).
+
+One export may run for 10 minutes, not counting waits for other exports' attachments and saves; a
+manual or daily export ends after 30 minutes however long it waited. Past either, it fails. While no bot runs, exports stay `pending`
+and are made once it starts. An export the bot was in the middle of when it stopped is put back to
+`pending` on a normal stop, and fails if the bot crashed.
+
+**Exports depend on the bot's crypto store.** It lives in Waldur's database (schema `matrix_bot`),
+unlocked by a key stored encrypted under `FIELD_ENCRYPTION_KEY`, and holds every room key the bot
+has received since it joined each room. Never reset or delete it, and restore it only together with
+the rest of Waldur's database: a bot with a new store reads nothing that was sent before, and every
+older message is exported as undecryptable.
 
 ### Export states
 
 | State | Description |
 | --- | --- |
-| `pending` | Export has been scheduled |
-| `exporting` | Messages are being fetched |
+| `pending` | Export has been requested and waits for the Matrix bot |
+| `exporting` | The bot is reading and decrypting the room's history |
 | `completed` | Export finished successfully |
 | `failed` | Export failed — see `error_message` |
 
+### Exports when a room is disabled
+
+A room is archived only once its history has been exported (when `MATRIX_HISTORY_EXPORT_ENABLED` is
+on and `delete_history` is not set). The disable task waits up to 15 minutes for the bot's export.
+A room's export starts at once unless three other rooms are being disabled at the same time, and
+then waits only for one of their exports to end. If the bot is not
+running, the export fails, or it does not finish in time, the room goes to `error`
+with the reason in `error_message` and is not archived; its members have already been removed.
+Disable it again to finish: the task uses the export it already requested instead of asking for
+another one, waiting for it if it is still pending or running, and archiving at once if the bot
+has made it meanwhile. Only a failed export is requested again. Archiving clears the error. A room
+reactivated and later disabled again gets a new export.
+
 ### Who can download exports
 
-An export is the room's whole history, media included, so it goes to whoever manages the room and
-no further. Listing exports and downloading their files is open to the same people who can trigger
-an export:
+An export is the room's whole history, media included, **decrypted**: messages that are end-to-end
+encrypted in the room are plain text once downloaded. An export therefore goes to whoever manages
+the room and no further.
+
+At rest, export files are encrypted. Each export gets a random 256-bit key; its message file and
+media archive are encrypted under it with AES-256-GCM in 64 KiB chunks, each chunk bound to its
+position and to which file it belongs, so a file altered, cut short or reassembled in storage is
+refused. The export's key is kept in its row encrypted under `FIELD_ENCRYPTION_KEY` (see
+`docs/field-encryption.md`):
+
+- **Losing `FIELD_ENCRYPTION_KEY` makes every export unreadable**, as it does the escrowed recovery
+  keys. Back it up with the database.
+- **Rotating it** works as for every encrypted field: promote the new key, keep the old one in
+  `FIELD_ENCRYPTION_KEY_FALLBACKS`, run `waldur reencrypt_fields`, then retire the old key. Only the
+  per-export keys are rewritten; the files are not.
+- The download endpoint below decrypts on the fly. It checks every chunk of the file before it sends
+  the first, and answers `409` if the file cannot be decrypted (altered in storage, or written
+  under a key no longer configured), or `404` if the file is gone from storage. A file changed in
+  storage while it is being sent aborts the download at the first chunk that no longer checks out:
+  nothing after it is sent, and the connection is dropped rather than ended as if complete. Downloads are limited to 120 an hour per user, and
+  sent with `Cache-Control: no-store`. The generic media
+  endpoint serves only the ciphertext.
+- Exports written before this encryption was introduced are stored and served as they were, in
+  clear, until retention deletes them.
+
+Listing exports and downloading their files is open to the same people who can trigger an export:
 
 - those holding `MATRIX_ROOM.CREATE` on the project or its organization, by default organization
   owners;
@@ -101423,9 +101794,7 @@ emoji of reactions stay in plaintext on the homeserver, as Matrix needs them to
 route and order events.
 
 **Calls** in encrypted rooms, which all of Waldur's rooms are, are end-to-end
-encrypted too: each participant encrypts their media with their own key, which
-goes Olm-encrypted to each member's devices. LiveKit still sees the call's metadata: who takes
-part and when, the kinds and sizes of their tracks, and who is speaking.
+encrypted too; see [Call encryption](#call-encryption).
 
 The drawer sets encryption up on a user's first session. Only one browser may do
 so at a time, and Waldur must hold the recovery key before any key is uploaded:
@@ -101660,6 +102029,65 @@ Both answer `{url, jwt}`. The Matrix OpenID token authenticates the caller, veri
 - **Client address:** the per-address limit keys on the last `X-Forwarded-For` entry, the address the proxy in front of Waldur saw (a port, as Azure Application Gateway adds, is dropped). Behind a further load balancer or CDN that does not pass the real client address on (real-IP or PROXY protocol), every client appears as that balancer and all share one bucket: calls then fail with `429` under load rather than going unlimited.
 - **OpenID tokens:** any Matrix OpenID token of a user lets its holder get call tokens for the rooms that user has joined, as with lk-jwt-service. A widget or integration the user hands an OpenID token to can therefore join their calls while the OpenID token is valid.
 - **Limits:** `matrix_livekit_token` per client address (default 600/hour) and `matrix_livekit_token_user` per Matrix user (default 120/hour); `MATRIX_LIVEKIT_KEY`, `MATRIX_LIVEKIT_SECRET` and `MATRIX_LIVEKIT_PUBLIC_URL` (the signalling URL browsers connect to) must be set, or the endpoints answer `503`.
+
+### Call encryption
+
+A call is end-to-end encrypted when its room is encrypted (has `m.room.encryption`),
+as Element Call decides it; all of Waldur's rooms are. In other rooms, such as a
+direct message created unencrypted in Element, the call is encrypted only between
+each browser and LiveKit.
+
+- **Media:** camera, microphone, screen share and screen-share audio are encrypted
+  in the browser with AES-GCM before they reach LiveKit, each participant with
+  their own key. LiveKit forwards frames it cannot decode, and so does anyone who
+  joins with a token minted from `MATRIX_LIVEKIT_SECRET` without a call membership
+  in the Matrix room.
+- **Keys:** each participant sends their key as an Olm-encrypted to-device message
+  (`io.element.call.encryption_keys`) to every device that has a call membership
+  in the room, verified or not, as Element Call does. The web chat accepts a key
+  only from the Olm device that sent it. When a participant's membership ends or
+  they leave the room, the others switch to new keys, so media sent after that
+  cannot be decrypted with the keys they held.
+- **Media in clear:** the web chat never plays media that arrives unencrypted in an
+  encrypted call; it names the participants it comes from ("not end-to-end
+  encrypted") instead.
+- **Interoperability:** the web chat and Element Call exchange keys the same way,
+  so each decrypts the other's media. A client without call encryption cannot
+  decode an encrypted call.
+
+What stays visible:
+
+- **To LiveKit**, and whoever operates it: the call's metadata. Who takes part
+  (identities are `@user:server:DEVICE`) and when, the kinds, sizes and mute
+  state of their tracks, and who is speaking and how much (audio levels and packet
+  sizes are not encrypted).
+- **To Waldur**, and whoever operates it: Waldur can sign in as any of its users
+  through the appservice (the web chat does so for every session) and holds their
+  recovery keys, so it can add a device for a user, cross-sign it, give it a call
+  membership and receive the call's keys. This is not passive: the device's call
+  membership is a state event in the room, and it joins LiveKit as a participant
+  that the others see. The same holds for chat, whose key backup the recovery key
+  opens.
+- **Recording:** a server-side recorder or transcriber (LiveKit egress) would
+  record only encrypted frames. None is deployed with Waldur.
+
+**Browser requirements.** Encrypting call media needs insertable streams
+(Chromium-based browsers such as Chrome and Edge) or `RTCRtpScriptTransform`
+(Firefox, Safari). In a browser with neither, the web chat refuses to join an
+encrypted call and says so ("This browser can't take part in encrypted calls.").
+The encryption runs in a Web Worker served from the web chat's own origin
+(`/assets/e2eeWorker-*.js`), which a Content-Security-Policy with `script-src
+'self'` and no `worker-src` already allows; a policy that sets `worker-src` must
+include `'self'`.
+
+**Checking it.** `GET /api/admin/matrix/livekit/participants/?room=<name>` (staff)
+lists each participant's tracks with LiveKit's view of them. `encryption` is `GCM`
+for a track encrypted end to end, `NONE` for one sent in clear (`CUSTOM` for
+another scheme); `source` says which track it is (`CAMERA`, `MICROPHONE`,
+`SCREEN_SHARE`, `SCREEN_SHARE_AUDIO`). In an encrypted room every track should be
+`GCM`; a `NONE` track comes from a client that does not encrypt, and the other
+participants' web chat does not play it. The Calls tab of the Matrix
+administration shows the same per track, as *Encrypted* or *Not encrypted*.
 
 ## Webhook
 
@@ -106909,6 +107337,7 @@ accepted limitations. For the resource API key lifecycle specifically, see
 | `matrix_chat.MatrixBotIdentity.pickle_key` | whole value | key the Matrix bot's crypto store is pickled under; without it the store is unreadable |
 | `matrix_chat.MatrixBotIdentity.cross_signing_seeds` | whole value | the Matrix bot's cross-signing private keys |
 | `matrix_chat.MatrixBotIdentity.access_token` | whole value | the Matrix bot's access token for its own device |
+| `matrix_chat.MatrixHistoryExport.data_key` | whole value | key a Matrix history export's files are encrypted under; without it the export is unreadable |
 | Constance settings of type `secret_field` | whole value | see [Secret settings](#secret-settings) |
 
 Encryption is transparent: values are encrypted at the database-serialization
@@ -109825,6 +110254,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`ResourceDetailsMixin`](#resourcedetailsmixin) | `waldur_mastermind.marketplace.models` | Mixin combining resource details with cost estimation |
 | [`SafeAttributesMixin`](#safeattributesmixin) | `waldur_mastermind.marketplace.models` | Mixin for safe attribute handling |
 | [`MemberSyncFieldsMixin`](#membersyncfieldsmixin) | `waldur_mastermind.marketplace.serializers` | Adds agent-reported sync fields to a UserRole-shaped serializer |
+| [`UserProfileAttributeFieldsMixin`](#userprofileattributefieldsmixin) | `waldur_mastermind.marketplace.serializers` | Read-only ``user_<attr>`` fields for the personal-data attributes an offering... |
 | [`DerivedLimitsOrderMixin`](#derivedlimitsordermixin) | `waldur_mastermind.marketplace.tests.test_derived_limits` | No description available |
 | [`LimitActionPermissionMixin`](#limitactionpermissionmixin) | `waldur_mastermind.marketplace.tests.test_order_creation_permission` | No description available |
 | [`ScopeHelperAgreementMixin`](#scopehelperagreementmixin) | `waldur_mastermind.marketplace.tests.test_scope_helpers_by_permission` | Each helper must list exactly the scopes has_permission allows |
@@ -109835,6 +110265,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`TenantMixin`](#tenantmixin) | `waldur_mastermind.marketplace_openstack.processors` | No description available |
 | [`SelectiveDNSMockMixin`](#selectivednsmockmixin) | `waldur_mastermind.marketplace_remote.tests.dns_utils` | Mixin class that provides selective DNS mocking for test classes |
 | [`ContainerExecutorMixin`](#containerexecutormixin) | `waldur_mastermind.marketplace_script.utils` | Mixin to execute scripts in containers for marketplace script processing |
+| [`AppserviceErrorCountMixin`](#appserviceerrorcountmixin) | `waldur_mastermind.matrix_chat.views` | Counts the view's 4xx and 5xx answers for the webhook_errors diagnostic |
 | [`MatrixEnabledWriteGuardMixin`](#matrixenabledwriteguardmixin) | `waldur_mastermind.matrix_chat.views` | Reject mutating requests while the Matrix integration is disabled |
 | [`EstimatedCostPolicyMixin`](#estimatedcostpolicymixin) | `waldur_mastermind.policy.models` | Make subclasses preserve the alters_data attribute on overridden methods |
 | [`OfferingPolicySerializerMixin`](#offeringpolicyserializermixin) | `waldur_mastermind.policy.serializers` | This mixin provides several extensions to stock Serializer class:  1 |
@@ -111144,6 +111575,21 @@ which is distinct from any real state.
 
 **Base classes:** `Serializer`
 
+### UserProfileAttributeFieldsMixin
+
+**Module:** `waldur_mastermind.marketplace.serializers`
+
+**Description:**
+
+Read-only ``user_<attr>`` fields for the personal-data attributes an
+offering may expose to its service provider (OfferingUserAttributeConfig).
+
+Sources are relative to an object with a ``user`` attribute, so the mixin
+serves both offering users and user role grants. Username, full name and
+email are declared by the serializers themselves.
+
+**Base classes:** `Serializer`
+
 ### DerivedLimitsOrderMixin
 
 **Module:** `waldur_mastermind.marketplace.tests.test_derived_limits`
@@ -111233,6 +111679,14 @@ class MyTestClass(SelectiveDNSMockMixin, test.APITransactionTestCase):
 **Description:**
 
 Mixin to execute scripts in containers for marketplace script processing.
+
+### AppserviceErrorCountMixin
+
+**Module:** `waldur_mastermind.matrix_chat.views`
+
+**Description:**
+
+Counts the view's 4xx and 5xx answers for the webhook_errors diagnostic.
 
 ### MatrixEnabledWriteGuardMixin
 
