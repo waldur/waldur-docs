@@ -50,6 +50,7 @@ graph TB
     BOT -->|encrypted replies and notices| ROOMHS
     PROJ -->|pre_delete| ROOM
     ROOM -->|disable + archive| EXPORT
+    BOT -->|reads + decrypts history| EXPORT
     ROOM -.->|room_id| ROOMHS
 ```
 
@@ -64,11 +65,13 @@ Rooms are end-to-end encrypted, so commands and everything Waldur posts go
 through a long-running bot process, `waldur matrix_bot`: the Helm Deployment
 `waldur-matrix-bot`, or the `waldur-matrix-bot` service in docker-compose's
 `matrix` profile. It syncs the rooms as Waldur's bot user, decrypts the
-commands, answers them if the sender holds an active project role, and posts
-the messages Waldur queues in its outbox, encrypted for the room. Run exactly
+commands, answers them if the sender holds an active project role, posts
+the messages Waldur queues in its outbox, encrypted for the room, and makes
+the history exports. Run exactly
 one: the bot holds a lease in Waldur's database, and a second process refuses
 to start while the first holds it. Without a running bot, commands go
-unanswered and Waldur's notices stay in the outbox. The appservice webhook
+unanswered, Waldur's notices stay in the outbox, and history exports stay
+pending, so a room being disabled with export on is not archived. The appservice webhook
 (`PUT /_matrix/app/v1/transactions/{txnId}`) only records and acknowledges the
 homeserver's transactions; it no longer handles commands. Project deletion
 runs the same disable path that the staff "Disable room" action uses,
@@ -257,8 +260,9 @@ not yet have the appservice registered (see below).
 
 ## Registering the appservice on the homeserver
 
-Tuwunel and other Conduit-family homeservers register appservices via an
-admin-room command rather than a config file. On Tuwunel, one command does it
+Waldur registers its appservice on Tuwunel through an admin-room command;
+Tuwunel can also read registrations from its config file, which Waldur does
+not use. On Tuwunel, one command does it
 once Setup has generated the tokens:
 
 ```bash
@@ -695,10 +699,12 @@ Then check that **Bot is a homeserver admin** passes in **Diagnostics**. Make
 the bot an admin in the other modes too: without it, Waldur cannot lock the
 Matrix account of a deactivated user, and a user whose recovery key is lost
 cannot reset their chat encryption from the drawer. It also lets Waldur refuse
-to give a user a homeserver admin's account. The cost is that the appservice
-token becomes an admin credential.
+to give a user a homeserver admin's account, and lets the appservice token use
+the admin API as the bot. Treat that token as a homeserver admin credential
+whether or not the bot is an admin: it can act as any account of the
+homeserver, admins included, from the moment the appservice is registered.
 [Making the bot a homeserver admin](../developer-guide/admin-guide/matrix-appservice-setup.md#making-the-bot-a-homeserver-admin)
-covers the trade-off and Synapse.
+explains why and covers Synapse.
 
 `none` and `oidc` only hide the option: password login still works on the
 homeserver, so switching away from `password` does not cut off users who
@@ -892,10 +898,16 @@ details, including how the bot decides which backup it may write into.
   workstation never leaks one user's session to the next. The same teardown
   removes the matrix-js-sdk `Sync` listener and any per-call sub-module
   handlers.
-- **Webhook rate limit.** The `/_matrix/app/v1/transactions/{txnId}` endpoint
-  is rate-limited via the `matrix_webhook` DRF throttle scope (default
-  10000/hour). When Matrix is disabled the endpoint returns `200` and
-  discards the payload, so the homeserver does not retry.
+- **Webhook rate limit.** The appservice endpoints
+  (`/_matrix/app/v1/transactions/{txnId}` and `/_matrix/app/v1/ping`) are
+  limited per client address via the `matrix_webhook` DRF throttle scope
+  (default 10000/hour), the two endpoints sharing one bucket. That includes
+  the homeserver's own calls, which carry its `hs_token`: it sends every
+  transaction from one address, about one per chat message, so a busy
+  homeserver can reach the limit, get `429` and retry the transaction later.
+  Raise `matrix_webhook` if that happens. When Matrix is disabled the
+  transactions endpoint returns `200` and discards the payload, so the
+  homeserver does not retry.
 - **Per-user limits.** `/api/matrix/session/` is rate-limited via the
   `matrix_session` scope (default 120/hour per user). The drawer calls it on
   connect, which includes the background connect on every page load for a
@@ -919,9 +931,14 @@ details, including how the bot decides which backup it may write into.
   [scheduled jobs reference](mastermind-configuration/scheduled.md) lists every
   task Waldur schedules.
 - **History export.** Disabling a room can optionally export its history.
-  The export reads the room without the bot's keys, so for an encrypted room
-  it gets only ciphertext: message bodies of encrypted rooms are not included
-  until the export goes through the bot, which is planned. Exports go only to
+  The bot process makes every export: it pages through the room and decrypts
+  each message with the room keys in its crypto store, so an export holds the
+  messages in clear, apart from those the bot never received a key for. While
+  no bot runs, exports stay pending. At rest, each export's files are
+  encrypted under a key of its own, which is stored encrypted under
+  `FIELD_ENCRYPTION_KEY`; the download view decrypts them. See
+  [Export process](../developer-guide/admin-guide/matrix-appservice-setup.md#export-process).
+  Exports go only to
   those holding `MATRIX_ROOM.CREATE` on the project or its organization
   (organization owners by default) and to staff and support; everyone else gets `404`, room members included. Files
   are served through a permission-checked view rather than the raw storage
@@ -933,9 +950,11 @@ details, including how the bot decides which backup it may write into.
 - **Stored secrets.** Waldur stores no Matrix access token for any user. The
   drawer's tokens live only in the browser's memory, and registering a user
   creates no device. Waldur does store the bot's encryption keys and access
-  token, users' recovery keys and the secret Matrix settings in Constance; all
-  of them are encrypted at rest with `FIELD_ENCRYPTION_KEY`. Back that key up
-  separately from the database dumps: without it they cannot be decrypted.
+  token, users' recovery keys, each history export's data key and the secret
+  Matrix settings in Constance; all of them are encrypted at rest with
+  `FIELD_ENCRYPTION_KEY`, or with a key derived from `SECRET_KEY` while that is
+  unset. Back that key up separately from the database dumps: without it they
+  cannot be decrypted, and neither can any history export.
 - **Deactivated and deleted users.** Deactivating or deleting a Waldur user
   signs out every one of their Matrix devices, Element included, and removes
   them from their rooms, through background tasks that retry failures, even
