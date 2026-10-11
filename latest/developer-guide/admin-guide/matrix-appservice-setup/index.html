@@ -11532,6 +11532,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#chat-history-retention-and-ownership" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chat history retention and ownership
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#history-exports" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -11675,6 +11686,45 @@
     <span class="md-ellipsis">
       
         History for new members
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#backup-and-restore" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backup and restore
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Backup and restore">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#restoring-only-the-homeserver" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Restoring only the homeserver
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#restoring-only-waldurs-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Restoring only Waldur's database
       
     </span>
   </a>
@@ -20117,6 +20167,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#chat-history-retention-and-ownership" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chat history retention and ownership
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#history-exports" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -20260,6 +20321,45 @@
     <span class="md-ellipsis">
       
         History for new members
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#backup-and-restore" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backup and restore
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Backup and restore">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#restoring-only-the-homeserver" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Restoring only the homeserver
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#restoring-only-waldurs-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Restoring only Waldur's database
       
     </span>
   </a>
@@ -20479,8 +20579,11 @@
   sections. Back up the homeserver and Waldur's database together, and keep
   <code>FIELD_ENCRYPTION_KEY</code> safe: without it no escrowed recovery key can be read
   (see <a href="#locked-identities">Locked identities</a>), and no history export can be
-  downloaded. A history export is not a
-  backup.</p>
+  downloaded. A history export is not a backup; see
+  <a href="#backup-and-restore">Backup and restore</a>.
+- <strong>Chat history is kept for the room's lifetime.</strong> Waldur deletes no messages,
+  and the operator holds the history for each project's organization. See
+  <a href="#chat-history-retention-and-ownership">Chat history retention and ownership</a>.</p>
 <h2 id="appservice-setup">Appservice Setup</h2>
 <h3 id="via-the-ui">Via the UI</h3>
 <p>The page lives at <strong>Administration → Configuration → Matrix chat</strong> and is split into a <strong>Rooms</strong> tab and a staff-only <strong>Settings</strong> tab. Support users see only the Rooms tab; the Setup appservice and Diagnostics actions are staff-only.</p>
@@ -21227,6 +21330,46 @@ check.</p>
 </ul>
 <p>Kicks that fail are retried for several minutes, and each retry checks again whether the user still has access. A member whose kick never succeeds stays recorded as a member. A sign-out that fails is retried the same way while the account could not be locked. Once it is locked, the devices left signed in are refused like any other, but work again if the user is reactivated.</p>
 <p>Only a reactivation unlocks an account, and it unlocks it whoever locked it. If its unlock fails for longer than the retries last, or the admin API is not usable then, the account stays locked: the user's chat answers "Your chat account is locked; ask your administrator." until staff deactivates and reactivates the user, or an admin unlocks the account on the homeserver (<code>PUT /_synapse/admin/v2/users/&lt;Matrix ID&gt;</code> with <code>{"locked": false}</code>) and then runs a member sync of the user's rooms, which only a reactivation starts by itself. A new user who gets the Matrix ID of a deleted one is refused before that, like anyone whose ID has an account Waldur did not create for them (see <a href="#existing-matrix-accounts">Existing Matrix accounts</a>). Linked deliberately, it is still the deleted user's account, with their direct messages and other rooms, and it stays locked until staff or an admin does one of those two.</p>
+<h2 id="chat-history-retention-and-ownership">Chat history retention and ownership</h2>
+<p>Waldur does not delete chat history. Messages and media stay on the homeserver
+for as long as the room exists there. Rooms are created with their history
+visible to members who join later (<code>history_visibility: shared</code>), and the bot
+writes the room's earlier keys into a new member's key backup, so they read the
+history the bot holds (see <a href="#history-for-new-members">History for new members</a>).
+Nothing from before the bot was in the room is covered.</p>
+<p>Disabling a room keeps its history too. Whether it comes from the <code>disable</code>
+action or from deleting the project, it posts a notice, removes every member,
+ends a running call, has the bot export the history when
+<code>MATRIX_HISTORY_EXPORT_ENABLED</code> is on (unless <code>delete_history</code> is set), and
+archives the room only once that export is done; otherwise the room goes to
+<code>error</code> (see <a href="#exports-when-a-room-is-disabled">Exports when a room is disabled</a>).
+The room and its messages stay on the homeserver, and <code>reactivate</code> brings the
+members back to the same history. Deleting the room in Waldur removes Waldur's
+record of it and its exports, not the room on the homeserver, which then stays
+there unmanaged.</p>
+<p><a href="#history-exports">History exports</a> are made by the bot and are unencrypted once
+downloaded. At rest they are encrypted under a key of their own, which is kept
+encrypted under <code>FIELD_ENCRYPTION_KEY</code>; losing that key makes them unreadable.
+How long they are kept is described under <a href="#retention">Retention</a>.</p>
+<p>The history of a project's room belongs to the organization the project belongs
+to. The operator who runs Waldur and the homeserver holds it for that
+organization, backups included. The homeserver holds the messages only as
+ciphertext, but Waldur's database holds the users' recovery keys and the room
+keys the bot has received, so the operator can decrypt them.</p>
+<p>Where rules require deleting history, Waldur offers:</p>
+<ul>
+<li>deleting exports: retention, <code>disable</code> with <code>delete_history</code>, or deleting the
+  room, which deletes its exports with their files;</li>
+<li>removing people: disabling a room removes its members, and deactivating or
+  deleting a user removes them from their rooms and locks their Matrix account
+  (see <a href="#automatic-member-management">Automatic member management</a>). Their
+  messages stay in the rooms, and so do the room keys: the bot's crypto store
+  and members' key backups keep them. Deleting a Waldur user also
+  deletes their Matrix profile, and with it the recovery key Waldur held for
+  them.</li>
+</ul>
+<p>Purging messages on the homeserver, old ones or a whole room's, is not built.
+Doing it with the homeserver's own admin tools is outside Waldur.</p>
 <h2 id="history-exports">History Exports</h2>
 <h3 id="export-triggers">Export triggers</h3>
 <table>
@@ -21636,7 +21779,8 @@ history it holds into the new one, see
 <a href="#history-for-new-members">History for new members</a>), and in password mode it
 also replaces any Matrix password the user generated for an external client.</p>
 <p>Back up the homeserver and the Waldur database <strong>together</strong>, and keep
-<code>FIELD_ENCRYPTION_KEY</code> safe: without it, no escrowed recovery key can be read.</p>
+<code>FIELD_ENCRYPTION_KEY</code> safe: without it, no escrowed recovery key can be read
+(see <a href="#backup-and-restore">Backup and restore</a>).</p>
 <h3 id="showing-the-recovery-key">Showing the recovery key</h3>
 <p>Element and other Matrix clients need the recovery key to unlock the user's
 secret storage and key backup, and so their history. The external client dialog
@@ -21729,6 +21873,186 @@ resets or hands over a key through Waldur.</p>
 on the homeserver, so a member removed in the meantime gets nothing. A fill that
 can't be written yet, because the join hasn't reached the homeserver or the
 homeserver failed, is retried with backoff for about seven hours.</p>
+<h2 id="backup-and-restore">Backup and restore</h2>
+<p>Chat comes back from a backup only if all of these are in it, taken at the same
+moment:</p>
+<table>
+<thead>
+<tr>
+<th>What</th>
+<th>Holds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The homeserver's data (on Tuwunel, its database directory, media included)</td>
+<td>Rooms, messages, accounts, devices, the keys users upload (cross-signing, key backups) and the appservice registration</td>
+</tr>
+<tr>
+<td>Waldur's database</td>
+<td>Rooms and Matrix profiles, the Matrix settings in Constance (tokens and secrets included), users' escrowed recovery keys and the master keys the bot pinned, the bot's identity (<code>MatrixBotIdentity</code>: its crypto store's key, its cross-signing seeds and its access token), the bot's crypto store and read position (schema <code>matrix_bot</code>), the outbox of messages the bot has yet to post, and history exports: each export's key (<code>data_key</code>) and, with Waldur's default storage, its encrypted files</td>
+</tr>
+<tr>
+<td><code>FIELD_ENCRYPTION_KEY</code>, or <code>SECRET_KEY</code> while it is unset, and <code>FIELD_ENCRYPTION_KEY_FALLBACKS</code> while a rotation is in progress</td>
+<td>The key to the recovery keys, the bot's crypto-store key, cross-signing seeds and access token, every export's key, and the secret Constance settings (<code>MATRIX_APPSERVICE_AS_TOKEN</code>, <code>MATRIX_APPSERVICE_HS_TOKEN</code>, <code>MATRIX_USER_REGISTRATION_SECRET</code>, <code>MATRIX_LIVEKIT_SECRET</code>). With a wrong key, secret settings read as an unguessable value, so the appservice stops working, and the bot refuses to start; see <code>docs/field-encryption.md</code></td>
+</tr>
+<tr>
+<td>The appservice tokens, the registration secret, the LiveKit API key and secret, and the bootstrap admin's password, wherever the deployment keeps them</td>
+<td>What the deployment seeds into Constance and registers with. Lost, it generates new ones, and replacing the homeserver's registration then takes a homeserver admin's token</td>
+</tr>
+</tbody>
+</table>
+<p>The homeserver and Waldur's database each hold half of the same accounts, rooms
+and keys, so a restore that brings them back from different moments leaves each
+pointing at things the other does not have. Stop the bot, and the homeserver,
+while the copies are taken: the bot's keys and read position in the database then
+match the homeserver's. The
+<a href="https://docs.waldur.com/latest/admin-guide/deployment/helm/docs/matrix-chat/#backup-and-restore">Helm</a>
+and
+<a href="https://docs.waldur.com/latest/admin-guide/deployment/docker-compose/matrix-chat-add-on/#backup-and-restore">Docker Compose</a>
+guides show how to take the backup and restore it, and how to run the <code>waldur</code>
+commands below there.</p>
+<p><strong>A history export is not a backup.</strong> Nothing imports an export back into a
+homeserver.</p>
+<h3 id="restoring-only-the-homeserver">Restoring only the homeserver</h3>
+<p>Restored alone, for example after losing only its volume or to roll back a
+Tuwunel upgrade, the homeserver is older than Waldur's database. Messages, rooms,
+accounts and devices created after the backup are gone, and:</p>
+<ul>
+<li><strong>The bot skips events.</strong> It stores how far it has read as a position in the
+  homeserver's event count. A restored homeserver counts from an earlier point,
+  and a bot still at the later position skips the events that arrive until the
+  count catches up. Delete the position before the bot starts again:</li>
+</ul>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>waldur<span class="w"> </span>shell<span class="w"> </span>-c<span class="w"> </span><span class="s2">"from django.db import connection; connection.cursor().execute('DELETE FROM matrix_bot.synctokens')"</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>The bot then reads the homeserver afresh. As on its first start, it does not
+  answer the commands it finds in that first read.
+- <strong>For a while, a new chat session may not reach the bot.</strong> The restored
+  homeserver still hands out the one-time keys the bot used up after the backup,
+  one for each chat session that sent a message then, and the bot cannot read
+  what a session given such a key sends. Once they are all claimed, it works
+  again.
+- <strong>Users and rooms created after the backup are missing.</strong> A user provisioned
+  after it has a Matrix profile and no account, and their chat answers "Chat is
+  unavailable right now". A room created after it is active in Waldur and does
+  not exist on the homeserver. Diagnostics reports neither: its user and room
+  counts come from Waldur's database. This repairs both. Set <code>BACKUP_TAKEN_AT</code>
+  to when the restored backup was taken, in UTC. The profiles provisioned since
+  then are marked unprovisioned, so the member sync creates their accounts
+  again. Earlier profiles are left alone: provisioning checks an account against
+  the single sign-on rules again, and would refuse accounts kept from before
+  the switch to <code>oidc</code>. The snippet then recreates the rooms the bot is not in
+  under their old aliases, and syncs the members of the others:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span></pre></div></td><td class="code"><div><pre><span></span><code>waldur<span class="w"> </span>shell<span class="w"> </span><span class="s">&lt;&lt;'EOF'</span>
+<span class="s">import httpx</span>
+<span class="s">from constance import config</span>
+<span class="s">from django.db import transaction</span>
+<span class="s">from django.utils.dateparse import parse_datetime</span>
+<span class="s">from waldur_mastermind.matrix_chat import models, tasks</span>
+
+<span class="s"># When the restored backup was taken, in UTC, e.g. "2026-01-31T03:00:00Z".</span>
+<span class="s"># A few minutes early is safe; late misses the accounts provisioned in between.</span>
+<span class="s">BACKUP_TAKEN_AT = parse_datetime("YYYY-MM-DDTHH:MM:SSZ")</span>
+<span class="s">assert BACKUP_TAKEN_AT, "Set BACKUP_TAKEN_AT first"</span>
+
+<span class="s">homeserver = httpx.Client(</span>
+<span class="s">    base_url=config.MATRIX_HOMESERVER_URL,</span>
+<span class="s">    headers={"Authorization": f"Bearer {config.MATRIX_APPSERVICE_AS_TOKEN}"},</span>
+<span class="s">)</span>
+<span class="s"># The bot is a member of every active Waldur room</span>
+<span class="s">joined = set(homeserver.get("/_matrix/client/v3/joined_rooms").raise_for_status().json()["joined_rooms"])</span>
+<span class="s">models.MatrixUserProfile.objects.filter(</span>
+<span class="s">    provisioned=True, provisioned_at__gte=BACKUP_TAKEN_AT</span>
+<span class="s">).update(provisioned=False, provisioned_at=None)</span>
+<span class="s">with transaction.atomic():</span>
+<span class="s">    for room in models.MatrixRoom.objects.select_for_update().filter(state=models.RoomStates.ACTIVE):</span>
+<span class="s">        uuid = str(room.uuid)</span>
+<span class="s">        if room.room_id in joined:</span>
+<span class="s">            transaction.on_commit(lambda uuid=uuid: tasks.sync_project_members_to_room.delay(uuid))</span>
+<span class="s">        else:</span>
+<span class="s">            print("Recreating the room of", room.room_name)</span>
+<span class="s">            room.begin_reprovisioning()</span>
+<span class="s">            room.room_id, room.room_alias = None, ""</span>
+<span class="s">            room.save(update_fields=["state", "error_message", "closing_export", "room_id", "room_alias"])</span>
+<span class="s">            transaction.on_commit(lambda uuid=uuid: tasks.create_room.delay(uuid))</span>
+<span class="s">EOF</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>That is a member sync of every active room at once, so on a large site expect
+  a burst of worker tasks and homeserver calls.
+- <strong>Encryption.</strong> A user who set encryption up after the backup sets it up again
+  in their next chat, as the homeserver has no identity for them. A user who
+  reset theirs after the backup is locked: the key Waldur holds opens nothing
+  the restored homeserver has, and the reset this offers deletes their key
+  backups (see <a href="#locked-identities">Locked identities</a>).
+- <strong>Members' key backups and dehydrated devices roll back</strong> to the backup, so
+  the room keys the bot wrote into a backup after it are gone (see
+  <a href="#history-for-new-members">History for new members</a>). The bot fills a backup
+  again by itself only when its version changes, the member is added to a room,
+  or they set encryption up or reset it, not when its content goes back. Ask for a fill of every current
+  membership; the bot skips the keys a backup already holds:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>waldur<span class="w"> </span>shell<span class="w"> </span>-c<span class="w"> </span><span class="s2">"from waldur_mastermind.matrix_chat import history_backfill, models; history_backfill.request(models.MatrixRoomMember.objects.all())"</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>The appservice registration comes back with the homeserver's data, so the
+deployment's next registration run changes nothing, unless the tokens were
+rotated after the backup. It then replaces the registration, as after a
+<a href="#token-rotation">token rotation</a>.</p>
+<h3 id="restoring-only-waldurs-database">Restoring only Waldur's database</h3>
+<p>Restored alone to an older dump, Waldur's database is older than the homeserver:</p>
+<ul>
+<li>Users provisioned after the dump have an account and no profile. Link them
+  with <code>waldur link_matrix_account --all</code> (see
+  <a href="#existing-matrix-accounts">Existing Matrix accounts</a>).</li>
+<li>Users who set encryption up after the dump are locked (see
+  <a href="#locked-identities">Locked identities</a>).</li>
+<li>The bot's keys go back to the dump, so the homeserver lists one-time keys of
+  the bot that the restored bot never had, and a session given one cannot reach
+  the bot, as above. Its Olm sessions with other devices roll back too.</li>
+<li>The bot loses every room key it received after the dump. The messages those
+  keys open are exported as undecryptable, and are never written into a new
+  member's key backup.</li>
+<li>Exports made after the dump are gone, and exports deleted after it, by
+  retention or with their room, come back.</li>
+<li>Rooms created after the dump exist on the homeserver, and Waldur does not know
+  them. Creating the project's room again makes a new room, without the alias,
+  which the old room still holds.</li>
+</ul>
+<p>Where you can, restore the homeserver from the same backup set as well, and
+accept losing the chat since then.</p>
+<p>Not tested: restoring only Waldur's database, the encryption cases above, and
+the refill of members' key backups.</p>
 <h2 id="external-clients">External Clients</h2>
 <p><code>MATRIX_EXTERNAL_LOGIN_METHOD</code> decides whether users can open their rooms in Element or another Matrix client:</p>
 <table>
