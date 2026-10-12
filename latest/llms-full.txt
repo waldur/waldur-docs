@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-12T02:03:58.866440Z
+Generated: 2026-10-12T18:57:26.652627Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -11850,7 +11850,7 @@ Toggler for support plugin.
 
 **Type:** choice_field
 
-**Default value:** atlassian
+**Default value:** basic
 
 Type of support backend. Possible values: basic, atlassian, zammad, smax.
 
@@ -14179,6 +14179,10 @@ Enable display of project digest configuration in organization settings.
 ## dashboard.spend_forecast
 
 Show credit burn-down with a projected exhaustion date on the project dashboard.
+
+## dashboard.usage_include_terminated
+
+Let usage charts include terminated resources: an organization dashboard switch, and a removed project's own usage. While off, the usage endpoints ignore include_terminated.
 
 ## dashboard.usage_limit_horizon
 
@@ -29098,6 +29102,147 @@ Waldur requires OpenPortal 0.91.0 or later.
 
 ---
 
+### OpenStack compatibility check
+<!-- Source: docs/admin-guide/providers/openstack-compatibility/index.md -->
+
+# OpenStack compatibility check
+
+Before you connect an OpenStack cloud to Waldur, you can check that Waldur can
+perform every OpenStack operation it supports on that cloud. The check is a
+single Python script,
+[`waldur_openstack_compat.py`](waldur_openstack_compat.py). It drives a Waldur
+deployment through the full lifecycle of an OpenStack tenant and reports each
+operation as passed, failed or skipped.
+
+Waldur's own backend makes every call to the cloud, so a pass means Waldur's
+code works there: the OpenStack client libraries it ships, the API
+microversions it requests, and the way it reads the responses. A script that
+called OpenStack directly would only show that the cloud works.
+
+## What it checks
+
+About a hundred operations, grouped as follows:
+
+| Area | Operations |
+|------|-----------|
+| Discovery | Credentials, external networks, flavors, volume types, availability zones |
+| Service settings | Registering the cloud, pulling flavors, images and volume types; hypervisors and Placement inventories, usages and allocation candidates |
+| Tenant | Create (Keystone project, user and roles, router, network, subnet), update, change password, set and pull quotas, pull security groups, server groups and floating IPs |
+| Security groups | Create with rules, replace rules (including a remote group), update, delete |
+| Networking | Network create, update and MTU; subnet create, host routes, connect and disconnect; router static routes, external gateway, interfaces, a second router |
+| Ports | Create, change fixed IP, allowed address pairs, security groups, enable and disable, port security on and off |
+| Floating IPs | Allocate, attach to and detach from a port, description, release |
+| Instances | Create (boot from volume, data volume, floating IP, security groups, server group), console URL and log, metadata, Placement allocations, stop, resize, start, restart, rescue, security groups, ports, allowed address pairs, floating IPs |
+| Volumes | Create, update, attach, detach, extend (also while attached), retype |
+| Snapshots and backups | Snapshot, restore to a volume, delete; instance backup, restore to a new instance, delete |
+| Load balancers | Load balancer, pool, listener, member, health monitor, floating IP on the VIP, VIP security groups, delete |
+| Network sharing | RBAC share of a network with a second tenant and its revocation |
+| Teardown | Every resource is deleted the way a user would delete it, then both tenants are terminated |
+
+An operation is **skipped** when the cloud or the options give it nothing to
+work with. For example, retype needs a second volume type, and rescue needs an
+image with the `hw_rescue_device` or `hw_rescue_bus` property that the tenant
+can see. The reason is printed next to it.
+
+## Requirements
+
+- **A Waldur deployment** with a running Celery worker, and a staff user's API
+  token or credentials for it. The Waldur must reach the cloud's public API
+  endpoints.
+- **Admin credentials for the cloud**, as an RC file sets them (`OS_AUTH_URL`,
+  `OS_USERNAME`, `OS_PASSWORD`, `OS_PROJECT_NAME`, `OS_USER_DOMAIN_NAME`).
+- **Python 3.9 or later** with `requests`, on any host that can reach the Waldur
+  API. A controller of the cloud works well: the RC file is already there, and
+  the password never has to leave it.
+- **Capacity for one small tenant**: two instances at once (the second is a
+  backup restored and deleted again), a few volumes, one load balancer, and
+  **three free addresses** on the external network: the tenant router's
+  gateway and two floating IPs. A second tenant is created without an external
+  gateway for the network-sharing check.
+
+## Running it
+
+```bash
+source admin-openrc.sh
+python3 waldur_openstack_compat.py \
+    --waldur-url https://waldur.example.com \
+    --waldur-token <staff API token> \
+    --external-network public \
+    --image "Ubuntu 24.04" \
+    --flavor m1.small \
+    --volume-type ssd
+```
+
+Without `--image`, `--flavor` and `--volume-type`, the script picks from what
+the new tenant sees: the first image, the smallest flavor by RAM, and the first
+volume type. The resize target defaults to the next larger flavor with the same
+disk size.
+
+A run takes 30 to 45 minutes, mostly waiting on instances, volumes and the load
+balancer. It prints each operation as it completes, then a table, and writes the
+same results to `openstack-compat.json`. The exit status is 0 when no operation
+failed.
+
+### Options
+
+| Option | Default | Purpose |
+|--------|---------|---------|
+| `--waldur-url` | `WALDUR_URL` | Waldur API, e.g. `https://waldur.example.com` |
+| `--waldur-token` | `WALDUR_TOKEN` | Staff API token; or `--waldur-username` and `--waldur-password` |
+| `--waldur-insecure` | off | Do not verify the Waldur API's TLS certificate |
+| `--os-auth-url`, `--os-username`, `--os-project`, `--os-domain` | `OS_*` variables | Cloud admin credentials; the password is read only from `OS_PASSWORD` |
+| `--os-verify-ssl` | off | Have Waldur verify the cloud's TLS certificates |
+| `--external-network` | first external network | Name or ID of the network floating IPs come from |
+| `--image`, `--flavor`, `--volume-type` | picked | What the instance and volumes use |
+| `--resize-flavor` | next larger flavor | Target of the resize |
+| `--retype-to` | none | A second volume type; retype is skipped without it |
+| `--rescue-image` | any rescue image | Image to rescue the instance with |
+| `--live-volume-resize` | off | Enable live volume resize on the offering and extend a volume while its instance runs |
+| `--no-rbac` | off | Skip the second tenant and the network-sharing check |
+| `--image-upload` | off | Also upload a small image into the tenant; Waldur cannot delete it afterwards |
+| `--timeout` | 600 | Seconds to wait for each asynchronous operation |
+| `--report` | `openstack-compat.json` | Where to write the results |
+| `-v`, `--verbose` | off | Log each failed operation's traceback as well |
+
+## What it leaves behind
+
+The script registers the cloud in Waldur as a new offering, under a new
+organization and project whose names carry the run's random suffix (`OS compat
+3f9a1c`). The cloud admin password is therefore stored in that Waldur's service
+settings, as it would be when the cloud is onboarded for real.
+
+At the end, everything the run created in the cloud is deleted, and the offering
+is archived. The organization and project stay in Waldur and can be removed
+there. If a teardown step fails, its line in the table names the resource, which
+is then left in the cloud project of the tenant `oscompat-<suffix>` (or
+`oscompat-b-<suffix>`) and has to be deleted there by hand.
+
+## Reading the results
+
+Each failed operation shows Waldur's error, which usually quotes the cloud's
+response. Some things to check:
+
+- **A whole section is skipped:** an earlier operation it depends on failed,
+  and the line says which. Fix that one first.
+- **Load balancer operations fail:** the cloud has no Octavia, or its default
+  provider does not support the TCP listener and `SOURCE_IP_PORT` algorithm the
+  check uses.
+- **Backup deletion is slow or fails while a restored instance exists:** on
+  copy-on-write storage such as Ceph RBD, volumes restored from a snapshot
+  depend on it, and the storage refuses to delete it until they are gone. The
+  check deletes the restored instance first for this reason.
+- **Extending an attached volume fails while its instance is stopped:** a known
+  Waldur issue when live volume resize is off on the offering. Run with
+  `--live-volume-resize` to check the in-use extend instead, if the cloud's
+  block storage supports it.
+- **Rescue fails with "No space left on device":** the compute host copies the
+  rescue image to its local disk, which needs room for it.
+- **Rescue is skipped:** no rescue image is visible to the tenant. A rescue
+  image needs `hw_rescue_device` or `hw_rescue_bus` set, and must be public or
+  shared with the tenant.
+
+---
+
 ### OpenStack
 <!-- Source: docs/admin-guide/providers/openstack.md -->
 
@@ -29135,6 +29280,11 @@ To integrate an OpenStack-based cloud as a shared provider, the following data i
 - Admin credentials (username/password) and the domain name (if a non-default domain is used).
 - External network UUID — the network connected by default to the OpenStack projects (tenants)
   that Waldur creates.
+
+!!! tip "Check a cloud before onboarding it"
+    The [OpenStack compatibility check](openstack-compatibility/index.md) runs every OpenStack
+    operation Waldur performs against your cloud through your Waldur deployment, and reports
+    which ones work. Run it before you onboard a new cloud or after you upgrade one.
 
 ## Marketplace offerings
 
@@ -46100,6 +46250,105 @@ kubectl describe mrp <name> -n waldur-system
 # Operator logs (cleanup, member sync, drift)
 kubectl logs deploy/rko-rancher-keycloak-operator -n waldur-system --tail=100 -f
 ```
+
+---
+
+## Importing access from existing clusters
+
+The sync is one-way: Waldur is the source of truth, and the agent never reads the bindings a
+cluster already has. Pointed at a cluster that is already in use, it adopts each Rancher project
+whose name matches a ResourceProject and grants only what Waldur knows. Existing project and
+cluster role bindings keep working, because the operator only touches bindings for its own
+groups, but Waldur doesn't show them. Import them **before the agent's first sync** with
+`waldur-rancher-kc-crd-import`.
+
+This assumes the offering's Resources already exist in Waldur with `backend_id` set to the
+Rancher cluster ID. The command reads the agent config for the offering, `role_map`,
+`cluster_role_map` and the identity settings, and takes the Rancher and Keycloak credentials from
+the environment variables the operator uses:
+
+```bash
+export RANCHER_URL=https://rancher.example.com RANCHER_BEARER_TOKEN=token-...
+export KEYCLOAK_URL=https://keycloak.example.com KEYCLOAK_REALM=rancher \
+       KEYCLOAK_USERNAME=... KEYCLOAK_PASSWORD=...   # also KEYCLOAK_USER_REALM, *_VERIFY_SSL
+export WALDUR_API_TOKEN=...   # a staff token; see below
+
+# 1. Read every cluster of the offering: projects, PRTBs, CRTBs, and the Keycloak
+#    users behind them (group principals expand to the group's direct members).
+uv run waldur-rancher-kc-crd-import inventory -c waldur-site-agent-config.yaml \
+    -o inventory.json
+
+# 2. Review the plan (dry run), then apply it.
+uv run waldur-rancher-kc-crd-import apply -c waldur-site-agent-config.yaml -i inventory.json
+uv run waldur-rancher-kc-crd-import apply -c waldur-site-agent-config.yaml -i inventory.json \
+    --execute --report import-report.json
+```
+
+To try the import on part of the offering first, narrow both commands with the same filters
+(each can be repeated):
+
+| Filter | Matches |
+|--------|---------|
+| `--cluster c-m-abc12345` | Rancher cluster ID (`Resource.backend_id`) |
+| `--resource <uuid-or-name>` | Waldur Resource |
+| `--project <name-or-id>` | Rancher project, by name, `c-m-…:p-…` ID or bare `p-…` ID |
+
+`--project` imports project-scope bindings only. Cluster role bindings don't belong to any one
+project, so they are left out.
+
+```bash
+uv run waldur-rancher-kc-crd-import inventory -c waldur-site-agent-config.yaml \
+    --cluster c-m-abc12345 -o inventory-c-m-abc12345.json
+uv run waldur-rancher-kc-crd-import apply -c waldur-site-agent-config.yaml \
+    -i inventory-c-m-abc12345.json --project analytics
+```
+
+`apply` creates a ResourceProject for each Rancher project, named exactly like the project so
+that the operator adopts it, and records the Rancher project ID as its `backend_id`. It then
+grants each user the Waldur role that maps back to their Rancher role template: `role_map` for
+project bindings, `cluster_role_map` for cluster bindings. It can be re-run safely: existing
+ResourceProjects and roles are left as they are, and a missing `backend_id` is filled in.
+
+The Waldur token must be a **staff token**. The import lists the offering's resources as their
+provider, records backend IDs through the provider API, and looks users up across organizations;
+neither the agent's own token nor an organization owner's token can do all three.
+
+**Quotas.** The operator replaces a project's Rancher quota with the ResourceProject's `limits`
+on every sync, so a ResourceProject without limits clears the quota. `apply` therefore copies
+each project's `resourceQuota.limit` into the new ResourceProject: `limitsCpu` becomes `cpu`
+(millicores), `limitsMemory` becomes `memory`, and `requestsStorage` becomes `storage`. Other quota
+keys (pods, `requests.cpu`, and so on) have no Waldur equivalent. The plan flags them with
+`WARN`, because the first sync removes them. It also flags an existing ResourceProject that has
+no limits while its Rancher project has a quota. The offering must accept these limits, or the
+creation fails and is reported.
+
+The plan lists everything it skips, with the reason:
+
+- the `Default` and `System` projects (`--include-system` imports them);
+- a Rancher project already linked, by `backend_id`, to a ResourceProject with a different
+  name: the operator adopts by name, so a second ResourceProject would put two CRs on one
+  project;
+- several projects on one cluster sharing a name, because the operator would adopt an arbitrary
+  one of them;
+- role templates that no Waldur role maps to, and Waldur roles the offering doesn't define;
+- principals that aren't Keycloak OIDC users or groups (local Rancher users, other auth
+  providers);
+- Keycloak users with no matching active Waldur user under the configured identity settings,
+  for example a user who has never logged in to Waldur.
+
+Rancher makes whoever creates a project its `project-owner`. Projects created by one admin
+therefore all carry that admin's binding, and the import grants the matching Waldur role on every
+one of them if the admin has a Waldur account. Drop those entries from the inventory if that
+isn't wanted.
+
+The inventory is a plain JSON file, so you can drop entries from it before running `apply`. It
+is written with mode `0600`, because it names users and, in civil-code mode, contains civil
+codes.
+
+After the agent's first sync, confirm the CRs are `Ready` and that users have access through the
+new groups. Then delete the old bindings in Rancher; the operator never removes them. Keep in
+mind that an adopted project is treated like any other: **removing its ResourceProject from
+Waldur deletes the Rancher project**.
 
 ---
 
@@ -73858,6 +74107,15 @@ They live with the tokens they document, so a token change and its story change 
   `--surface-*`/`--btn-*`/`--pill-*` files.
 - **Non-colour scales** — spacing, type, radii, shadows.
 
+## Component token files
+
+Component tokens are plain CSS files in `packages/design-tokens/src/` (`checkColors.css`,
+`progressColors.css`, …), imported by `src/tailwind.css`. They are hand-written: they reference
+ramp steps (`var(--color-gray-100)`) and the runtime brand variable, never raw hex, and redeclare
+only what differs in `:root[data-theme='dark']`. `progressColors.css` holds the `--progress-*`
+fills, track, label colours and heights; `progressTokens.test.ts` checks that every variant has
+a fill and label, that fills match `Badge` `solid`, and that labels stay readable.
+
 ## Adding or changing a value
 
 1. Edit `tokens/colors.json`.
@@ -78886,7 +79144,7 @@ export const ReviewerPoolSection = ({ call }) => {
 
 # Tabs
 
-Every tab bar in HomePort is built from `waldur-ui` primitives (`Tabs`, `TabNav`) or from a wrapper over them (`EmbeddedTabs`, `TableWithTabs`, `TableNav`, `TabbedSection`). The Bootstrap/Metronic `.nav` stylesheet and react-bootstrap's `Tab`, `Tabs` and `Nav` are gone, and the `waldur-custom/no-bootstrap-tabs` lint rule keeps them out (see [Lint rule](#lint-rule)).
+Every tab bar in HomePort is built from `waldur-ui` primitives (`Tabs`, `TabNav`) or from a wrapper over them (`EmbeddedTabs`, `TableWithTabs`, `TableNav`, `TabbedSection`). The Bootstrap/Metronic `.nav` stylesheet and react-bootstrap's `Tab`, `Tabs` and `Nav` are gone, and the `waldur-custom/no-bootstrap-tabs` lint rule keeps them out.
 
 ## Choosing a tab component
 
@@ -79137,24 +79395,6 @@ Use this instead of `SegmentedControl` whenever each option owns a distinct, lar
 - **No controls inside a trigger.** A `HelpIcon`, button, link or input inside a tab's button is invalid HTML and muddles the tab's name. Use `hint`, `tooltip` or `count`; `waldur-custom/no-interactive-in-tab-trigger` reports the rest in `TabsTrigger`. `TabNav` titles are data, so keep controls out of them too.
 - **Don't reach into the DOM by class.** `.nav-item`, `.nav-link` and `.active` no longer exist on tab bars; measure or select `[role="tab"]` instead.
 
-## Migrating old code
-
-| Bootstrap                                        | Now                                                              |
-| ------------------------------------------------ | ---------------------------------------------------------------- |
-| `Tab.Container activeKey onSelect`               | `Tabs value onValueChange`                                       |
-| `defaultActiveKey`                               | `defaultValue` (string)                                          |
-| `unmountOnExit` / `mountOnEnter` / neither       | `mount="active"` / `"visited"` / `"all"`                         |
-| `Nav variant="tabs" className="nav-line-tabs …"` | `TabsList` (or `TabNav`'s `listClassName`); keep only the extras |
-| `Nav.Item` + `Nav.Link eventKey`                 | `TabsTrigger value` (or a `TabNav` item); drop the `Nav.Item`    |
-| `Tab.Content` / `Tab.Pane eventKey`              | a plain `div` / `TabsContent value` (or the `items` data form)   |
-| `<Tabs><Tab eventKey title>…</Tab></Tabs>`       | `Tabs` + `TabsList` of triggers + `TabsContent` panels           |
-| bar with no `Tab.Pane` (router-driven)           | `TabNav` with link `items`                                       |
-| table panels in an expandable row                | `EmbeddedTabs`                                                   |
-
-## Lint rule
-
-`waldur-custom/no-bootstrap-tabs` (error) reports react-bootstrap `Tab`, `Tabs`, `Nav` and their parts, `Navbar` and `NavDropdown`, by named or deep-path import, and any `nav`, `nav-item`, `nav-link`, `nav-tabs`, `nav-pills`, `nav-line-tabs` (and similar) class token, since those classes no longer style anything. `.tab-content` and `btn-nav-item` are allowed. It also reports `@radix-ui/react-tabs` imported outside `waldur-ui`'s own Tabs. `waldur-custom/no-interactive-in-tab-trigger` (error) reports a `HelpIcon`, button, link or form control inside a `TabsTrigger`. A third rule, `waldur-custom/dynamic-tab-params`, covers route definitions (see the Gotchas section).
-
 ---
 
 ### Tailwind & shadcn UI Architecture
@@ -79188,6 +79428,7 @@ Current architecture and implementation guidance for Tailwind CSS v4, shadcn UI,
    - [Tooltip](#tooltip)
    - [Popover](#popover)
    - [Checkbox, Radio & Switch](#checkbox-radio-switch)
+   - [Progress](#progress)
    - [Buttons](#buttons)
    - [Sidebar & Mobile Sheet](#sidebar-mobile-sheet)
    - [Content Drawer (`#kt_drawer`)](#content-drawer-kt-drawer)
@@ -79213,7 +79454,7 @@ Waldur Homeport operates on two active UI component patterns:
 1. **Modern Tailwind / Radix Primitives (`packages/ui`, exported as `waldur-ui`)**
    - Built with pure Tailwind v4 utilities and CSS design tokens from `packages/design-tokens`.
    - Free of all Bootstrap and Metronic classes, SCSS variables, and runtime mixins.
-   - Includes `BaseButton`, `SegmentedControl`, `AlertItem`, `Badge`, `Tooltip`, `Popover`, `Sidebar`, `Sheet`, `Dialog`, `Menu`, `MenuPopover`, `Checkbox`, `Radio`, `Switch`, `RadioGroup`, `Tag`, `Card`, `Avatar`, `Toast`, `FeaturedIcon`, `StatusPill`, `StatCard`, `CopyButton`, `LoadingSpinner`, `Accordion`, `AccordionCard`, `Collapsible`, and `TablePagination` (with `Pagination` and `PageSizeSelect`).
+   - Includes `BaseButton`, `SegmentedControl`, `AlertItem`, `Badge`, `Tooltip`, `Popover`, `Sidebar`, `Sheet`, `Dialog`, `Menu`, `MenuPopover`, `Checkbox`, `Radio`, `Switch`, `RadioGroup`, `Progress`, `Tag`, `Card`, `Avatar`, `Toast`, `FeaturedIcon`, `StatusPill`, `StatCard`, `CopyButton`, `LoadingSpinner`, `Accordion`, `AccordionCard`, `Collapsible`, and `TablePagination` (with `Pagination` and `PageSizeSelect`).
    - Exports `buttonVariants()`, `ButtonVariant` and `ButtonSize` so elements that cannot be a `BaseButton` (links, Radix triggers that need a specific child shape) still get the exact same classes.
 
 2. **Transitional Shells (Radix Engine with Themed Skins)**
@@ -79226,24 +79467,25 @@ Waldur Homeport operates on two active UI component patterns:
 
 ### Component Standards & Usage Guide
 
-| UI Element                    | Standard Component          | Package       | Usage & Styling Notes                                                                                                              | Prohibited                                                          |
-| :---------------------------- | :-------------------------- | :------------ | :--------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------ |
-| **Alert / Banner**            | `AlertItem`                 | `waldur-ui`   | Pure Tailwind, `--surface-card-border`, 5 variants                                                                                 | `react-bootstrap` `Alert`                                           |
-| **Badge / Pill**              | `Badge`                     | `waldur-ui`   | 15 variants × 3 tones, structural `border-[1px]`                                                                                   | `react-bootstrap` `Badge`                                           |
-| **Tooltip**                   | `Tooltip`                   | `waldur-ui`   | Radix Tooltip (hover/focus) + Popover (click fallback)                                                                             | `react-bootstrap` `Tooltip`, `OverlayTrigger`                       |
-| **Popover**                   | `Popover`, `PopoverContent` | `waldur-ui`   | Radix Popover with `--surface-card-*` tokens                                                                                       | `react-bootstrap` `Popover`                                         |
-| **Button**                    | `BaseButton`                | `waldur-ui`   | 12 variants × 3 sizes, inset `box-shadow` border, outline focus ring, semantic button tokens                                       | `react-bootstrap` `Button`, hand-written `btn` class markup         |
-| **Link styled as button**     | `Link` with `buttonVariant` | `@/core/Link` | Same classes as `BaseButton` via `buttonVariants()`; keeps anchor semantics and routing                                            | `<a className="btn …">`                                             |
-| **Checkbox / radio**          | `Checkbox`, `Radio`         | `waldur-ui`   | Hidden native input + drawn box and SVG mark, `md` 20px / `sm` 16px, `--check-*` tokens; `label` / `description` / `tooltip` props | `react-bootstrap` `FormCheck` / `Form.Check`, `form-check*` classes |
-| **On/off toggle**             | `Switch`                    | `waldur-ui`   | Hidden native checkbox + drawn track and knob, `md` 44×24 / `sm` 36×20, `--switch-*` tokens                                        | `type="switch"` `FormCheck`, `form-switch*` classes                 |
-| **Mutually exclusive choice** | `SegmentedControl`          | `waldur-ui`   | Radix RadioGroup, `neutral` / `brand` variants, button sizes                                                                       | `react-bootstrap` `ToggleButtonGroup`, `btn-group` markup           |
-| **Expandable panel group**    | `Accordion`                 | `waldur-ui`   | Radix Accordion, `single` / `multiple`, open header in runtime brand colour; closed panels unmount                                 | `react-bootstrap` `Accordion`                                       |
-| **Single expandable panel**   | `Collapsible`               | `waldur-ui`   | Radix Collapsible, unstyled; `keepMounted` keeps form fields mounted while closed                                                  | `react-bootstrap` `Collapse`, `useAccordionButton`                  |
-| **Sidebar Navigation**        | `Sidebar`, `Sheet`          | `waldur-ui`   | Collapsible desktop rail + mobile Radix Sheet                                                                                      | Metronic sidebar JS                                                 |
-| **Table pagination**          | `TablePagination`           | `waldur-ui`   | `--pagination-*` tokens; `bordered={false}` under a non-table list; desktop/mobile layouts                                         | `react-bootstrap` `Pagination`, `page-link` markup                  |
-| **Table Actions**             | `ActionsMenu`               | `@/table`     | `Menu` in the actions look, with the kebab / labeled / Add toggles                                                                 | `react-bootstrap` `DropdownButton`                                  |
-| **Header Chrome Menu**        | `Menu`                      | `waldur-ui`   | `Menu` in the nav look; `openOnHover="desktop"` for hover triggers                                                                 | N/A                                                                 |
-| **Slide-Over Drawer**         | `DrawerRoot`                | `@/drawer`    | Radix Dialog with CSS keyframe transitions                                                                                         | N/A                                                                 |
+| UI Element                    | Standard Component          | Package       | Usage & Styling Notes                                                                                                                                    | Prohibited                                                            |
+| :---------------------------- | :-------------------------- | :------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------- |
+| **Alert / Banner**            | `AlertItem`                 | `waldur-ui`   | Pure Tailwind, `--surface-card-border`, 5 variants                                                                                                       | `react-bootstrap` `Alert`                                             |
+| **Badge / Pill**              | `Badge`                     | `waldur-ui`   | 15 variants × 3 tones, structural `border-[1px]`                                                                                                         | `react-bootstrap` `Badge`                                             |
+| **Tooltip**                   | `Tooltip`                   | `waldur-ui`   | Radix Tooltip (hover/focus) + Popover (click fallback)                                                                                                   | `react-bootstrap` `Tooltip`, `OverlayTrigger`                         |
+| **Popover**                   | `Popover`, `PopoverContent` | `waldur-ui`   | Radix Popover with `--surface-card-*` tokens                                                                                                             | `react-bootstrap` `Popover`                                           |
+| **Button**                    | `BaseButton`                | `waldur-ui`   | 12 variants × 3 sizes, inset `box-shadow` border, outline focus ring, semantic button tokens                                                             | `react-bootstrap` `Button`, hand-written `btn` class markup           |
+| **Link styled as button**     | `Link` with `buttonVariant` | `@/core/Link` | Same classes as `BaseButton` via `buttonVariants()`; keeps anchor semantics and routing                                                                  | `<a className="btn …">`                                               |
+| **Checkbox / radio**          | `Checkbox`, `Radio`         | `waldur-ui`   | Hidden native input + drawn box and SVG mark, `md` 20px / `sm` 16px, `--check-*` tokens; `label` / `description` / `tooltip` props                       | `react-bootstrap` `FormCheck` / `Form.Check`, `form-check*` classes   |
+| **Progress meter**            | `Progress`                  | `waldur-ui`   | One value, stacked `segments` or `indeterminate`; neutral track, `variant` colours the fill; `xs` 4 / `sm` 6 / `md` 8 / `lg` 24px; `--progress-*` tokens | `react-bootstrap` `ProgressBar`, `.progress` / `.progress-bar` markup |
+| **On/off toggle**             | `Switch`                    | `waldur-ui`   | Hidden native checkbox + drawn track and knob, `md` 44×24 / `sm` 36×20, `--switch-*` tokens                                                              | `type="switch"` `FormCheck`, `form-switch*` classes                   |
+| **Mutually exclusive choice** | `SegmentedControl`          | `waldur-ui`   | Radix RadioGroup, `neutral` / `brand` variants, button sizes                                                                                             | `react-bootstrap` `ToggleButtonGroup`, `btn-group` markup             |
+| **Expandable panel group**    | `Accordion`                 | `waldur-ui`   | Radix Accordion, `single` / `multiple`, open header in runtime brand colour; closed panels unmount                                                       | `react-bootstrap` `Accordion`                                         |
+| **Single expandable panel**   | `Collapsible`               | `waldur-ui`   | Radix Collapsible, unstyled; `keepMounted` keeps form fields mounted while closed                                                                        | `react-bootstrap` `Collapse`, `useAccordionButton`                    |
+| **Sidebar Navigation**        | `Sidebar`, `Sheet`          | `waldur-ui`   | Collapsible desktop rail + mobile Radix Sheet                                                                                                            | Metronic sidebar JS                                                   |
+| **Table pagination**          | `TablePagination`           | `waldur-ui`   | `--pagination-*` tokens; `bordered={false}` under a non-table list; desktop/mobile layouts                                                               | `react-bootstrap` `Pagination`, `page-link` markup                    |
+| **Table Actions**             | `ActionsMenu`               | `@/table`     | `Menu` in the actions look, with the kebab / labeled / Add toggles                                                                                       | `react-bootstrap` `DropdownButton`                                    |
+| **Header Chrome Menu**        | `Menu`                      | `waldur-ui`   | `Menu` in the nav look; `openOnHover="desktop"` for hover triggers                                                                                       | N/A                                                                   |
+| **Slide-Over Drawer**         | `DrawerRoot`                | `@/drawer`    | Radix Dialog with CSS keyframe transitions                                                                                                               | N/A                                                                   |
 
 The _Prohibited_ column is convention; the subset that lint enforces is listed under [Linting & Guardrails](#linting-guardrails) (`ToggleButtonGroup` and `btn-group` markup are not).
 
@@ -79502,6 +79744,20 @@ Waldur does **not** toggle dark mode via a `.dark` HTML class. Instead:
 
 ---
 
+### Progress
+
+`packages/ui/src/Progress/` (exported from `waldur-ui`); tokens in `packages/design-tokens/src/progressColors.css`.
+
+- **Three modes**: `<Progress value max variant />`, `<Progress segments={[{ value, variant, label? }]} max />` for stacked bars, and `<Progress indeterminate />` for an unknown amount (a sweeping bar; a static half-opaque bar under `prefers-reduced-motion`).
+- **No height override**: `size` is `xs` (4px), `sm` (6px), `md` (8px, default) or `lg` (24px, the only size meant for text inside a segment). There is no `style`/`h-*` escape hatch; pick a size.
+- **Neutral track**: the track never takes the variant's colour (a tinted track made an empty meter look full). `variant` is a `BadgeVariant` minus `secondary`, and the fills are Badge's `solid` colours in both themes. `primary` reads `--waldur-brand-600`, so tenant re-branding applies.
+- **Accessibility**: the track carries `role="progressbar"` with `aria-valuenow/min/max`; `label` is its accessible name. A non-finite `value` or a `max <= 0` (a 0/0 quota) reads as 0, never `NaN`. Segments are clamped so they never exceed the track.
+- **`PercentProgress`** (`src/core/PercentProgress.tsx`) is the bar plus its share of `max` printed under it (`unit`, `compact`). Use plain `Progress` when the surrounding markup already prints the figure.
+- **Inner labels**: each variant has its own `--progress-label-{variant}` (white or gray-900, whichever reads better on the fill); a token test keeps every pair at or above 4.4:1.
+- **Enforcement**: the custom rule `no-bootstrap-progress` reports react-bootstrap's `ProgressBar` (by name or deep path) and any `progress`, `progress-bar*` or `progress-themed` class token. The Bootstrap/Metronic `.progress` styles and the `$progress-*` variables are deleted.
+
+---
+
 ### Checkbox, Radio & Switch
 
 `packages/ui/src/Check/`: `Checkbox.tsx`, `Radio.tsx`, `RadioGroup.tsx` and `Switch.tsx` (exported from `waldur-ui` through `Check/index.ts`), plus the internal `CheckLabel.tsx` (label row), `CheckMark.tsx` (the check path, also drawn by the select) and `checkStyles.ts` (class recipes); colours in `waldur-design-tokens/checkColors.css`.
@@ -79683,6 +79939,7 @@ Implemented in `packages/eslint-plugin-waldur` and enabled as `waldur-custom/*` 
 | `no-bootstrap-tabs`                | `error`  | `Tabs` / `TabNav` from `waldur-ui`; no react-bootstrap `Tab`/`Tabs`/`Nav` or `nav-*` classes.                             |
 | `enforce-breadcrumb-colors`        | `error`  | Breadcrumb links use the `$text-brand-secondary` token.                                                                   |
 | `no-bootstrap-form-check`          | `error`  | `Checkbox` / `Radio` / `Switch` from `waldur-ui`; no `FormCheck`, `Form.Check` or `form-check*` / `form-switch*` classes. |
+| `no-bootstrap-progress`            | `error`  | `Progress` from `waldur-ui`; no react-bootstrap `ProgressBar` or `progress` / `progress-bar*` classes.                    |
 
 #### Code hygiene
 
@@ -108798,6 +109055,9 @@ td:nth-child(4) {
 | `schedule_cleanup_for_deleted_object` | `Django Signal (post_delete)` | `marketplace.OfferingUser` | Signal handler to schedule cleanup of user actions for a deleted object. |
 | `schedule_user_sync` | `Custom Signal (role_granted)` | `—` | No description |
 | `schedule_user_sync` | `Custom Signal (role_revoked)` | `—` | No description |
+| `scrub_logged_request` | `Custom Signal (bind_extra_request_metadata)` | `—` | Mask credentials in the query of the request django-structlog logs. |
+| `scrub_logged_request` | `Custom Signal (bind_extra_request_finished_metadata)` | `—` | Mask credentials in the query of the request django-structlog logs. |
+| `scrub_logged_request` | `Custom Signal (bind_extra_request_failed_metadata)` | `—` | Mask credentials in the query of the request django-structlog logs. |
 | `set_default_token_lifetime` | `Django Signal (post_save)` | `core.User` | Set the default token lifetime for a new user. |
 | `stash_customer_slug` | `Django Signal (pre_save)` | `structure.Customer` | Remember the persisted slug before save so the change can be detected. |
 | `update_customer_users_count` | `Custom Signal (recalculate_quotas)` | `—` | Update the user count for all customers. |
@@ -109259,11 +109519,11 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 755
+Total unique handlers found: 758
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 2 handlers
-- **waldur_core**: 345 handlers
+- **waldur_core**: 348 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
 - **waldur_mastermind**: 349 handlers
@@ -112538,9 +112798,10 @@ Shared logic for customer/project per-offering usage ViewSets.
 Subclasses provide:
 
 - `queryset` — Customer or Project queryset (the route lookup target)
-- `_scope_resources(scope, offering=None)` — returns the non-terminated
+- `_scope_resources(scope, offering=None)` — returns the resources at this
 
-  resources visible at this scope, optionally filtered to one offering
+  scope (non-terminated unless `include_terminated` is set), optionally
+  filtered to one offering
 
 ### PublicViewsetMixin
 
@@ -123275,11 +123536,11 @@ Open-source ticketing system:
 
 #### 4. Basic Backend
 
-No-op implementation for:
+The built-in service desk, and the default backend. Tickets live only in Waldur:
 
-- Development and testing
-- Environments without external ticketing
-- Minimal support requirements
+- Status transitions, SLA deadlines and auto-assignment are handled in Waldur
+- No external system, URL or credentials to configure
+- Suits deployments without an external ticketing system, and development and testing
 
 ### Backend Interface
 
@@ -123429,7 +123690,7 @@ Dynamic configuration via admin:
 WALDUR_SUPPORT_ENABLED = True
 
 # Select active backend
-WALDUR_SUPPORT_ACTIVE_BACKEND_TYPE = 'atlassian'  # or 'zammad', 'smax', 'basic'
+WALDUR_SUPPORT_ACTIVE_BACKEND_TYPE = 'atlassian'  # default 'basic'; or 'zammad', 'smax'
 
 # Enable custom field mapping for enhanced integration
 ATLASSIAN_CUSTOM_ISSUE_FIELD_MAPPING_ENABLED = True
@@ -123607,7 +123868,7 @@ Scheduled background tasks:
 - Use JIRA for enterprise environments with existing Atlassian infrastructure
 - Use SMAX for ITIL-compliant service management
 - Use Zammad for open-source, multi-channel support
-- Use Basic for development or minimal requirements
+- Use Basic, the default, when tickets don't need to leave Waldur
 
 ### 2. Status Configuration
 
