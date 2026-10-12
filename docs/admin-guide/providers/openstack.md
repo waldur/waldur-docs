@@ -33,6 +33,11 @@ To integrate an OpenStack-based cloud as a shared provider, the following data i
 - External network UUID — the network connected by default to the OpenStack projects (tenants)
   that Waldur creates.
 
+!!! tip "Check a cloud before onboarding it"
+    The [OpenStack compatibility check](openstack-compatibility/index.md) runs every OpenStack
+    operation Waldur performs against your cloud through your Waldur deployment, and reports
+    which ones work. Run it before you onboard a new cloud or after you upgrade one.
+
 ## Marketplace offerings
 
 OpenStack is exposed to end users through three marketplace offering types:
