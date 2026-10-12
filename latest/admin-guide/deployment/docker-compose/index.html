@@ -20081,6 +20081,15 @@ API will listen on <a href="https://localhost/api">https://localhost/api</a>.</p
 <h2 id="logs">Logs</h2>
 <p>Logs emitted by the containers are collected and saved in the <code>waldur_logs</code> folder. You can change the location by
 editing environment variable (<code>.env</code>) and updating <code>LOG_FOLDER</code> value.</p>
+<p>The log files are owned by <code>root</code>. New log files are created with mode <code>0600</code> and new subfolders with
+mode <code>0750</code>, so reading them on the host requires <code>root</code>. Files and folders created before the upgrade
+to <code>docker-logger</code> v1.4.1 keep their old modes (<code>0644</code> and <code>0755</code>).</p>
+<p>The <code>logger</code> container resets the ownership of everything under <code>LOG_FOLDER</code> to <code>root</code> every time it
+starts. That includes automatic restarts under <code>restart: always</code>, so ownership changed on the host,
+for example for a log shipper, does not last. Give such a reader access through <code>root</code> group
+membership or ACLs instead.</p>
+<p>Each time <code>logger</code> starts, it re-reads the last 10 lines of every container it follows, so a restart
+repeats up to 10 lines per log file.</p>
 <h2 id="known-issues">Known issues</h2>
 <p>When Waldur is launched for the first time, it applies initial database migrations.
 It means that you may need to wait few minutes until these migrations are applied.
