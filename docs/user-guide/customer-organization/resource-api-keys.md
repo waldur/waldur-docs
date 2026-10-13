@@ -49,9 +49,30 @@ Any member of the resource's project can reveal a shared key. A key with an
 **assignee** can be revealed only by that person (and by staff and support).
 
 !!! tip
-    If a key may have been exposed, use **Rotate**. The backend issues a new
-    value and the old one stops working. Anything using the key needs the new
-    value afterwards.
+    If a key may have been exposed, [rotate it](#rotating-a-key).
+
+## Rotating a key
+
+Choose **Rotate** to replace a key's value. The backend issues a new value and
+the old one stops working, so anything using the key needs the new value
+afterwards. The resource's other keys are not affected.
+
+Who can rotate a key:
+
+- **Organization owners** can rotate any key of the resource.
+- The **assignee** of a key can rotate their own key, from the **Actions** menu
+  or with the **Rotate** button shown when revealing it. They do not need an
+  organization owner for it, so a key that may have leaked can be replaced
+  straight away.
+- Other project members cannot rotate keys. A key shared by the project has no
+  assignee, so it is rotated by an organization owner.
+
+Rotating is the only change an assignee can make to their key. Pausing,
+resuming, deleting and editing it stay with organization owners.
+
+A paused key cannot be rotated until it has been resumed. Where limits are
+enforced, an assignee also cannot rotate a key that has reached one of its
+monthly [limits](#limits): such a key is about to be paused.
 
 ## Requesting a key
 
@@ -121,6 +142,9 @@ If the provider cannot carry out a change, the key shows **Erred** and the row
 keeps the error message. An erred key offers **Retry**, which repeats the failed
 change, and **Delete**. A key whose settings update failed can also be corrected
 with **Edit key settings**, which sends the update again.
+
+The assignee of a key is offered **Retry** only when the change that failed was
+a rotation of it. Any other failed change is retried by an organization owner.
 
 ## For service providers
 
