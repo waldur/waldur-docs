@@ -267,6 +267,20 @@ itself for cluster-wide roles. They can do this directly or by invitation; throu
 `/api/marketplace-resource-projects/<uuid>/add_user/` or `/api/user-invitations/`. If the offering has terms of service
 and consent is enforced, users appear only after accepting them.
 
+## Pointing the agent at a cluster already in use
+
+The sync is one-way: Waldur is the source of truth, and the agent never reads the bindings a cluster
+already has. Pointed at a cluster that is in use, it adopts each Rancher project whose name matches a
+resource project and grants only what Waldur knows — so access that was granted in Rancher before the
+agent arrived keeps working but is invisible in Waldur, and Waldur can revoke it on the next sync.
+
+Import that access **before the agent's first sync** with the plugin's
+`waldur-rancher-kc-crd-import` command, which reads the clusters, their project and cluster role
+bindings and the Keycloak users behind them, and writes the matching Waldur resource projects, roles
+and grants. It needs a **staff** Waldur token, and the same Rancher and Keycloak credentials as the
+operator. See [importing access from existing clusters](site-agent/plugins/rancher-kc-crd/README.md)
+for the two-step `inventory` / `apply` procedure, its filters, and what it skips.
+
 ## Verify
 
 ```bash

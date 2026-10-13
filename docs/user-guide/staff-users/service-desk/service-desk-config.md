@@ -18,8 +18,10 @@ To set up the configuration, navigate to the Service Desk configuration page by 
 
 | Backend | Where tickets live | When to use it |
 |---------|--------------------|----------------|
-| **Basic** | In Waldur | You have no external service desk, or you want to keep support inside the portal. |
+| **Basic** (the default) | In Waldur | You have no external service desk, or you want to keep support inside the portal. |
 | **Atlassian**, **Zammad**, **Smax** | In that system | Your team already works in an external service desk and Waldur should mirror it. |
+
+**Basic** is the backend a deployment starts with. An installation that has always run an external service desk must therefore select it explicitly in **Waldur support active backend type**; until then tickets stay in Waldur.
 
 The difference matters for who owns a ticket's status. With **Basic**, Waldur owns the whole lifecycle and your agents change the status in Waldur. With the external backends the remote system is the source of truth: status flows *into* Waldur through synchronisation and webhooks, so it cannot be edited in the portal.
 

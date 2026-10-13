@@ -33,3 +33,14 @@ For configuration details, see [Configuring billing model per component](../user
 
 In addition to that, Waldur offers convenient way for exporting the usage information for visualization [with
 Grafana](grafana.md).
+
+## Invoice notifications
+
+When an invoice is issued, Waldur emails the organization's owners a notification that carries
+the invoice itself as a **PDF attachment** alongside the link to view it in the portal. The
+attachment is rendered by the deployment, so the email is still sent when rendering fails: the
+notification then drops the attachment and keeps the link, rather than going out without the
+invoice or not at all.
+
+The notification is `invoices.notification`, and like every other one it is off until an
+administrator enables it — see [Notification management](../user-guide/staff-users/notification-management.md).

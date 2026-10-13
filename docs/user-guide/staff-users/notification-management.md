@@ -90,7 +90,8 @@ The following notifications are available for call management:
 |---|---|---|
 | New proposal submitted | Call managers | Researcher submits a proposal |
 | New review submitted | Call managers | Reviewer submits evaluation |
-| Proposal cancelled | Proposal creator | Round cutoff passes (auto-cancel) |
+| Draft carried over | Proposal creator | A draft left open at the round cut-off moves to the call's next round |
+| Proposal cancelled | Proposal creator | Round cutoff passes (auto-cancel) — only when carry-over is off or there is no later round |
 | Proposal state changed | Proposal creator | Any state transition |
 | Submission deadline approaching | Draft proposers | 3 days before round cutoff |
 | Review assigned | Reviewer | Manager assigns a review |

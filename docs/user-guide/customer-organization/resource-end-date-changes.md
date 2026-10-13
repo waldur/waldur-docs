@@ -94,6 +94,17 @@ is the point of routing the change through a request rather than a silent edit.
 
 ![End date change requests in the audit log](../img/resource-end-date-audit-log.png)
 
+## When the end date arrives
+
+A resource whose termination date has passed is terminated by Waldur, and it does
+not matter whether the person who asked for the date still has access to it. If
+they have since left the project or lost their role, Waldur looks for someone
+else who may terminate the resource — another project manager, the organization's
+owner, or the service provider — and places the order under that name. An end date
+therefore keeps its meaning after the requester moves on, and resources are not
+left running because the only person who asked for the termination can no longer
+do it.
+
 ## Enabling the flow (service provider)
 
 Requests are off by default; every offering keeps the permission-only behaviour

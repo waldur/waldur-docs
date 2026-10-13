@@ -36,11 +36,20 @@ A service provider can define the policy via User Interface:
         - `FreeIPA`: uses the username field of a corresponding FreeIPA profile;
         - `Identity claim`: uses dedicated attribute released by the IdP as a username.
 
-    - **Initial UID number**: refers to the lowest numerical user ID (UID) assigned to regular users;
-    - **Initial primary group number**: refers to Group ID (GID) assigned to a user when they are created;
     - **Home directory prefix**: Allows to define home directory prefix for the offering users.
 
 4. After this, the usernames are regenerated for all the linked offering users.
+
+Starting numbers for user and group IDs are no longer set per offering. Waldur allocates them from the provider's [POSIX ID pool](../user-guide/service-provider-organization/posix-id-pools.md), which reserves the number blocks every offering of that provider draws on.
+
+## SCIM login nodes
+
+When **Enable SCIM entitlements** is on, a **SCIM login nodes** field appears in the same section. It lists the bare hostnames of the offering's login nodes (for example `login.example.org`), separated by commas, and these are what Waldur reports as entitlements to the remote SCIM service.
+
+The field accepts DNS hostnames only — no `ssh://` prefix, no `user@`, no port. Entries are stored lowercased, duplicates are dropped, and anything that is not a bare hostname is refused. These hosts are not access links, so they do not appear in a resource's access dropdown.
+
+!!! note "Upgrading from SSH access endpoints"
+    Earlier releases read the offering's `ssh://` access endpoints instead. On upgrade, for every offering that already had **Enable SCIM entitlements** on, Waldur copies the hostnames out of those endpoints into **SCIM login nodes** and removes the endpoints, which frees the access dropdown of entries that were never access links. An offering that had SSH endpoints but had not opted in is left as it is. Changing the list afterwards schedules an entitlement sync for the offering's users.
 
 ## Granting user access to resource
 

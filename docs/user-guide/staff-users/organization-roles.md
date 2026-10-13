@@ -107,3 +107,14 @@ cannot list the members.
   `permissions-override.yaml`); `import_roles` warns about roles that lack it.
 
 Staff and support users always see every team.
+
+## What the organization reader can read
+
+The built-in **Organization reader** role (`CUSTOMER.READER`) is a view-only role. Besides
+seeing the team, its holders can read the organization's **users**, **projects**,
+**resources**, **orders** and **invitations** — enough to audit what the organization holds
+without being able to change it. The role grants no create, update or delete permission, so
+an order raised by a reader is refused even though the order list is readable.
+
+A deployment can widen or narrow this in its own role definitions; the list above is what
+`permissions.yaml` grants out of the box.

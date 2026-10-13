@@ -170,6 +170,11 @@ pulls with tenant credentials or deletes it, and refuses every change to it, its
 their subnets through the API. Only the networks it shares with Waldur tenants are imported,
 together with their subnets.
 
+Each of those subnets carries a `tenant_is_managed` field saying which kind of owner it has.
+It is `false` for a subnet of a network shared into a tenant from a project Waldur does not
+manage, and `true` otherwise, so an API client can tell a subnet the tenant owns from one it
+merely reaches through a share.
+
 **What the tenant can do.** The shared network and its subnets are listed in the tenant's
 Networks and Subnets tabs and can be used like the tenant's own:
 

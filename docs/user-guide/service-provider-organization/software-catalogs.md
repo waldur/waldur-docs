@@ -59,6 +59,22 @@ System administrators can import catalogs from the **Administration** > **Softwa
 3. Imported catalogs can be updated by clicking **Update catalog** to sync with the
    upstream source.
 
+### Several versions of one catalog
+
+A catalog is identified by its name, type **and version**, so several versions can
+live side by side — EESSI releases such as `2023.06` and `2026.06`, or successive
+Spack snapshots — and an offering can link to more than one of them.
+
+**Import** takes the version from upstream and stores it as a new catalog when that
+exact version is not held yet. A different version already in the database does not
+block the import. **Update catalog** refreshes the version it belongs to and never
+rewrites its version string; import a newer upstream release to add another row.
+
+When scheduled cleanup is enabled it collapses only true duplicates — rows sharing
+the same name, type and version — and never merges distinct versions. A catalog
+that has not been successfully updated for longer than `SOFTWARE_CATALOG_RETENTION_DAYS`
+is deleted, so keep the automatic updates on for every version you still offer.
+
 ### Catalog types
 
 | Type | Description | Example |

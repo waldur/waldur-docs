@@ -46,3 +46,18 @@ To check the current resource allocation limit:
 
 1. On the same window, the plan details for Allocation components (CPU, GPU, and storage) can be found on the top-right side.
    ![Resource limits](../img/Resource_usage_limits.jpg)
+
+## Including terminated resources
+
+Usage charts normally count only resources that still exist, so terminating one removes
+its usage from the totals and from a project's own history. An administrator can enable
+the **Include terminated resources** feature flag, which adds a switch of the same name
+to the organization dashboard. Turning it on:
+
+- counts the usage that terminated resources reported in the current month, and
+- keeps a removed project's usage visible on the organization dashboard.
+
+Terminated usage is reported separately: the API returns it as `usage_terminated` and
+`limit_usage_terminated` alongside `usage` and `limit_usage`, and a component's limit
+never includes it. While the feature flag is off, the usage endpoints ignore the
+`include_terminated` parameter.
