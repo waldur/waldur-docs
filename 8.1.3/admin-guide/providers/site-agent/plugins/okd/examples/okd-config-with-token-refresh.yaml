@@ -1,0 +1,60 @@
+# Agent configuration for the OKD plugin with token refresh.
+# The cluster RBAC for the agent's service account is in kubernetes/okd-agent-rbac.yaml.
+
+log_level: INFO
+
+offerings:
+  - name: "OKD projects"
+    waldur_api_url: "https://waldur.example.com/api/"
+    waldur_api_token: "<waldur api token>"
+    waldur_offering_uuid: "<okd offering uuid>"
+
+    backend_type: "okd"
+    order_processing_backend: "okd"
+    membership_sync_backend: "okd"
+    reporting_backend: "okd"
+
+    backend_settings:
+      api_url: "https://api.okd.example.com:6443"
+      verify_cert: true
+
+      # OPTION 1: service account token, re-read when it rotates (agent running in the cluster)
+      token_config:
+        token_type: service_account
+        service_account_path: /var/run/secrets/kubernetes.io/serviceaccount
+
+      # OPTION 2: token file maintained by an external system
+      # token_config:
+      #   token_type: file
+      #   token_file_path: /etc/okd-tokens/current-token
+
+      # OPTION 3: static token, no refresh (testing)
+      # token: "<okd token>"
+
+      namespace_prefix: "waldur-"
+      customer_prefix: "org-"
+      project_prefix: "proj-"
+      allocation_prefix: "alloc-"
+      default_role: "edit"
+
+    backend_components:
+      cpu:
+        measured_unit: "Core"
+        accounting_type: "limit"
+        label: "CPU cores"
+        unit_factor: 1
+      memory:
+        measured_unit: "GB"
+        accounting_type: "limit"
+        label: "Memory (GB)"
+        unit_factor: 1
+      storage:
+        measured_unit: "GB"
+        accounting_type: "limit"
+        label: "Storage (GB)"
+        unit_factor: 1
+      pods:
+        measured_unit: "Count"
+        accounting_type: "limit"
+        label: "Pod count"
+        unit_factor: 1
