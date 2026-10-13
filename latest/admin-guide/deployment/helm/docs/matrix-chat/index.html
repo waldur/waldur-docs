@@ -2456,17 +2456,6 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#migrating-an-existing-deployment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Migrating an existing deployment
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#opting-out" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2599,6 +2588,17 @@
     <span class="md-ellipsis">
       
         Restoring everything
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#losing-the-setup-secret" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Losing the setup Secret
       
     </span>
   </a>
@@ -2784,23 +2784,6 @@
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Calls">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#upgrading-from-lk-jwt-service" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Upgrading from lk-jwt-service
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -19776,17 +19759,6 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#migrating-an-existing-deployment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Migrating an existing deployment
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#opting-out" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19919,6 +19891,17 @@
     <span class="md-ellipsis">
       
         Restoring everything
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#losing-the-setup-secret" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Losing the setup Secret
       
     </span>
   </a>
@@ -20105,23 +20088,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Calls">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#upgrading-from-lk-jwt-service" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Upgrading from lk-jwt-service
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
         <li class="md-nav__item">
@@ -20212,7 +20178,9 @@ call tokens itself, and only to joined members of the room (see
 <span class="normal">10</span>
 <span class="normal">11</span>
 <span class="normal">12</span>
-<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">matrixChat</span><span class="p">:</span>
+<span class="normal">13</span>
+<span class="normal">14</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">apiScheme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https</span><span class="w">   </span><span class="c1"># the chart refuses calls over http; see below</span>
+<span class="nt">matrixChat</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <span class="w">  </span><span class="nt">networkPolicy</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">   </span><span class="c1"># ships the livekit/homeserver NetworkPolicies; independent of the chart-wide networkPolicy.enabled</span>
@@ -20289,121 +20257,16 @@ access token, handed to the Job as <code>MATRIX_ADMIN_TOKEN</code>. Otherwise it
 as the bootstrap admin. The chart never generates <code>admin_token</code>. Add it for the
 sync that needs it and remove it afterwards: the Job uses it ahead of the
 bootstrap password, so a revoked token left there makes the next change fail.</p>
-<p><strong>Older mastermind images.</strong> The setup Jobs and LiveKit's node-IP discovery run
-<code>matrix-init</code>, a script in the mastermind image, together with the
-<code>init_matrix_settings</code> command it calls. An image without them cannot run the
-setup: the secrets Job fails with <code>executable file not found</code>, and so does the
-upgrade. Point <code>waldur.imageTag</code> at an image that has <code>matrix-init</code>, or turn
-<code>setup.enabled</code> off. With <code>registerAppservice</code> on, the wiring Job also needs
-<code>waldur register_matrix_appservice</code>. On an image without it, the Job logs a
-warning, seeds Constance, skips the registration and exits 0, and chat stays
-down until the appservice is registered.</p>
 <p>While the chart seeds the tokens, the Setup wizard in Waldur refuses to rotate
 them (it answers <code>409</code>): the next sync would write the old ones back. It knows
 from the <code>MATRIX_TOKENS_MANAGED_BY</code> setting, which the wiring Job sets to
 <code>deployment</code> on every run. The other way round, <code>init_matrix_settings</code> refuses
 appservice tokens in Constance that the deployment did not seed, for example
-from an earlier run of the Setup wizard: the wiring Job then fails and writes
-nothing. A deployment that ran Matrix chat before <code>setup</code> existed hands its
-tokens over as <a href="#migrating-an-existing-deployment">Migrating an existing deployment</a>
-describes.</p>
-<h3 id="migrating-an-existing-deployment">Migrating an existing deployment</h3>
-<p>Charts before <code>matrixChat.setup</code> took the registration token from
-<code>homeserver.registrationToken</code> and left the appservice tokens to the Setup
-wizard. <code>setup.enabled</code> is on by default now, so upgrading such a release
-without preparation would have the setup Job mint new tokens: the homeserver
-would restart with a registration token Waldur does not have, and the wiring
-Job would refuse the appservice tokens the wizard configured. Hand the current
-tokens to the setup Secret before upgrading instead.</p>
-<ol>
-<li>Create <code>matrix-appservice-secret</code> from Waldur's current settings, with a new
-   bootstrap password. The values go from the API pod straight into the Secret,
-   never through a command line or a file:</li>
-</ol>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
-<span class="normal"> 2</span>
-<span class="normal"> 3</span>
-<span class="normal"> 4</span>
-<span class="normal"> 5</span>
-<span class="normal"> 6</span>
-<span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span>
-<span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span>
-<span class="normal">14</span></pre></div></td><td class="code"><div><pre><span></span><code>kubectl<span class="w"> </span>-n<span class="w"> </span>&lt;namespace&gt;<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>deploy/waldur-mastermind-api<span class="w"> </span>--<span class="w"> </span>waldur<span class="w"> </span>shell<span class="w"> </span>-c<span class="w"> </span><span class="s1">'</span>
-<span class="s1">import json, secrets</span>
-<span class="s1">from constance import config</span>
-<span class="s1">print("SECRET " + json.dumps({</span>
-<span class="s1">    "apiVersion": "v1", "kind": "Secret", "type": "Opaque",</span>
-<span class="s1">    "metadata": {"name": "matrix-appservice-secret"},</span>
-<span class="s1">    "stringData": {</span>
-<span class="s1">        "as_token": config.MATRIX_APPSERVICE_AS_TOKEN,</span>
-<span class="s1">        "hs_token": config.MATRIX_APPSERVICE_HS_TOKEN,</span>
-<span class="s1">        "registration_token": config.MATRIX_USER_REGISTRATION_SECRET,</span>
-<span class="s1">        "bootstrap_password": secrets.token_hex(32),</span>
-<span class="s1">    },</span>
-<span class="s1">}))</span>
-<span class="s1">'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sed<span class="w"> </span>-n<span class="w"> </span><span class="s1">'s/^SECRET //p'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>kubectl<span class="w"> </span>-n<span class="w"> </span>&lt;namespace&gt;<span class="w"> </span>create<span class="w"> </span>-f<span class="w"> </span>-
-</code></pre></div></td></tr></tbody></table></div>
-<p>The keys are the ones the setup Jobs use: <code>as_token</code>, <code>hs_token</code>,
-   <code>registration_token</code> and <code>bootstrap_password</code>, plus an optional
-   <code>admin_token</code>. <code>registration_token</code> has to be the homeserver's current
-   registration token, the value of <code>homeserver.registrationToken</code>. Earlier
-   charts required Waldur's <code>MATRIX_USER_REGISTRATION_SECRET</code> to equal it, which
-   is why it is read from there; if yours differ, put the homeserver's value in
-   instead. To keep the tokens in your own secret manager, store the same keys
-   there and set <code>setup.existingSecret.name</code>.</p>
-<ol>
-<li>
-<p>Remove <code>homeserver.registrationToken</code> and
-   <code>homeserver.registrationTokenExistingSecret</code> from your values. With setup on,
-   either is a render error. If you pinned <code>livekit.rtc.nodeIp</code>, also set
-   <code>livekit.rtc.autoDiscoverNodeIp: false</code>, which is on by default now, or
-   remove <code>nodeIp</code> to have the address discovered.</p>
-</li>
-<li>
-<p>Upgrade as usual, deleting the init-whitelabeling job first, and with
-   <code>--wait</code>, so that the wiring Job runs after the homeserver has restarted
-   with the new configuration:</p>
-</li>
-</ol>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>kubectl<span class="w"> </span>-n<span class="w"> </span>&lt;namespace&gt;<span class="w"> </span>delete<span class="w"> </span>job<span class="w"> </span>waldur-mastermind-init-whitelabeling-job<span class="w"> </span>--ignore-not-found
-helm<span class="w"> </span>upgrade<span class="w"> </span>waldur<span class="w"> </span>waldur/<span class="w"> </span>-n<span class="w"> </span>&lt;namespace&gt;<span class="w"> </span>-f<span class="w"> </span>&lt;your<span class="w"> </span>values&gt;<span class="w"> </span>--wait<span class="w"> </span>--timeout<span class="w"> </span>20m
-</code></pre></div></td></tr></tbody></table></div>
-<p>The secrets Job finds the Secret and reuses it. The wiring Job seeds the same
-   tokens into Waldur, which it accepts because they match what Waldur holds,
-   and marks them as the deployment's from then on. The registration on the
-   homeserver keeps working, and the Job reports it as already registered.
-   It also warns that it could not compare the registration, because no
-   <code>@waldur-bootstrap</code> exists yet; see below.</p>
-<p><strong>The bootstrap admin.</strong> The homeserver already has its own admins: the first
-account registered on it, which earlier charts made an admin. The wiring Job
-does not use them. It creates <code>@waldur-bootstrap</code> through the shared-secret
-API, which the chart now keys with the registration token, but only when it
-has to change the registration: at the first token rotation, say. While the
-registration works it creates no account, and only warns that it could not
-compare the registration. The shared-secret API works however many users and
-admins the homeserver has, so <code>bootstrap_password</code> is all a later rotation
-needs, provided no <code>@waldur-bootstrap</code> account exists from an earlier attempt.
-If one does, put a homeserver admin's access token into the Secret under
-<code>admin_token</code> for that sync and remove it afterwards. Review the existing
-admins in <code>#admins:&lt;serverName&gt;</code>: the first account kept its admin rights, and
-since this chart sets <code>grant_admin_to_first_user = false</code>, no account gains
-them that way any more.</p>
-<p><strong>If the upgrade ran without the Secret.</strong> With plain Helm it cannot: an
-upgrade that turns setup on while the <code>matrix-homeserver</code> StatefulSet runs and
-the Secret is missing fails at render time and points here. ArgoCD renders
-without access to the cluster, so the check cannot run there. The secrets Job
-then mints new tokens and the wiring Job fails, with a pointer here, and
-leaves Waldur's settings as they were, so the old tokens are still in Waldur.
-To recover, delete the minted <code>matrix-appservice-secret</code>, create it as in step
-1, sync again, and restart the homeserver, which read the minted registration
-token at startup:
-<code>kubectl -n &lt;namespace&gt; rollout restart statefulset/matrix-homeserver</code>.</p>
+from a run of the Setup wizard while setup was off: the wiring Job then fails
+and writes nothing. To hand the tokens to the deployment, clear
+<code>MATRIX_APPSERVICE_AS_TOKEN</code> and <code>MATRIX_APPSERVICE_HS_TOKEN</code> under
+<strong>Administration → Configuration → Matrix chat → Settings</strong> and sync again,
+which registers the appservice with the Secret's tokens.</p>
 <h3 id="opting-out">Opting out</h3>
 <p>To manage the tokens by hand again:</p>
 <ol>
@@ -20426,41 +20289,17 @@ token at startup:
    not become an admin (<code>grant_admin_to_first_user = false</code>), because Waldur
    registers an account for whoever opens the chat first.</li>
 </ol>
-<p>Register an admin through the shared-secret API instead. The chart sets the
-   homeserver's <code>registration_shared_secret</code> to the registration token with
-   setup on or off, and no route reaches that API from outside the cluster.
-   Run this in the API pod once the backend's <code>MATRIX_HOMESERVER_URL</code> and
-   <code>MATRIX_USER_REGISTRATION_SECRET</code> are set (the latter to the registration
-   token). It prints the account and its password, to sign in to a Matrix
-   client with:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
-<span class="normal"> 2</span>
-<span class="normal"> 3</span>
-<span class="normal"> 4</span>
-<span class="normal"> 5</span>
-<span class="normal"> 6</span>
-<span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span>
-<span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code>kubectl<span class="w"> </span>-n<span class="w"> </span>&lt;namespace&gt;<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>deploy/waldur-mastermind-api<span class="w"> </span>--<span class="w"> </span>waldur<span class="w"> </span>shell<span class="w"> </span>-c<span class="w"> </span><span class="s1">'</span>
-<span class="s1">import hashlib, hmac, secrets, httpx</span>
-<span class="s1">from constance import config</span>
-<span class="s1">user, password = "homeserver-admin", secrets.token_hex(32)</span>
-<span class="s1">homeserver = httpx.Client(base_url=config.MATRIX_HOMESERVER_URL)</span>
-<span class="s1">nonce = homeserver.get("/_synapse/admin/v1/register").raise_for_status().json()["nonce"]</span>
-<span class="s1">mac = hmac.new(config.MATRIX_USER_REGISTRATION_SECRET.encode(),</span>
-<span class="s1">               "\0".join([nonce, user, password, "admin"]).encode(), hashlib.sha1)</span>
-<span class="s1">homeserver.post("/_synapse/admin/v1/register", json={</span>
-<span class="s1">    "nonce": nonce, "username": user, "password": password, "admin": True,</span>
-<span class="s1">    "mac": mac.hexdigest()}).raise_for_status()</span>
-<span class="s1">print(user, password)</span>
-<span class="s1">'</span>
-</code></pre></div></td></tr></tbody></table></div>
-<p>With <code>homeserver.loginWithPassword: false</code> the account cannot sign in with
-   that password: keep password login on until the appservice is registered.</p>
+<p>Register a temporary admin through the shared-secret API instead, as
+   <a href="#rotating-with-password-login-off">Rotating with password login off</a>
+   describes. The snippets read the secret from Waldur's
+   <code>MATRIX_USER_REGISTRATION_SECRET</code>, which has to be the registration token
+   that step 1 gives the homeserver: the chart sets the homeserver's
+   <code>registration_shared_secret</code> to that token with setup on or off. The
+   registration answers with the admin's access token, which works with
+   password login off too. Hand it to <code>register_matrix_appservice</code> as
+   <code>MATRIX_ADMIN_TOKEN</code>, as under
+   <a href="#runtime-steps-and-what-now-handles-them">Runtime steps</a>, then have the
+   admin deactivate itself.</p>
 <p>The generated Secret stays where it is: Helm never owned it, so neither turning
 setup off nor <code>helm uninstall</code> deletes it.</p>
 <h3 id="rotating-the-tokens">Rotating the tokens</h3>
@@ -20536,43 +20375,33 @@ registration, either set <code>loginWithPassword: true</code> for that sync and 
 <code>false</code> afterwards (the homeserver restarts on each change), or put an
 <code>admin_token</code> into the Secret, along with the new tokens in step 1 of a
 rotation, and remove it after the sync.</p>
-<p>To get a token, register a temporary admin through the shared-secret API, as
+<p>To get a token, register a temporary admin with the two snippets under
 <a href="https://docs.waldur.com/latest/developer-guide/admin-guide/matrix-appservice-setup/#token-rotation">Token rotation</a>
-in the setup guide describes. On helm, run it in the API pod, which reaches the
-homeserver and holds the registration token in Constance, so the registration
-token never passes through a command line. It prints the account and its
-access token:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
-<span class="normal"> 2</span>
-<span class="normal"> 3</span>
-<span class="normal"> 4</span>
-<span class="normal"> 5</span>
-<span class="normal"> 6</span>
-<span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span>
-<span class="normal">11</span>
-<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code>kubectl<span class="w"> </span>-n<span class="w"> </span>&lt;namespace&gt;<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>deploy/waldur-mastermind-api<span class="w"> </span>--<span class="w"> </span>waldur<span class="w"> </span>shell<span class="w"> </span>-c<span class="w"> </span><span class="s1">'</span>
-<span class="s1">import hashlib, hmac, secrets, httpx</span>
-<span class="s1">from constance import config</span>
-<span class="s1">user, password = "rotation-" + secrets.token_hex(4), secrets.token_hex(32)</span>
-<span class="s1">homeserver = httpx.Client(base_url=config.MATRIX_HOMESERVER_URL)</span>
-<span class="s1">nonce = homeserver.get("/_synapse/admin/v1/register").raise_for_status().json()["nonce"]</span>
-<span class="s1">mac = hmac.new(config.MATRIX_USER_REGISTRATION_SECRET.encode(),</span>
-<span class="s1">               "\0".join([nonce, user, password, "admin"]).encode(), hashlib.sha1)</span>
-<span class="s1">print(user, homeserver.post("/_synapse/admin/v1/register", json={</span>
-<span class="s1">    "nonce": nonce, "username": user, "password": password, "admin": True,</span>
-<span class="s1">    "mac": mac.hexdigest()}).raise_for_status().json()["access_token"])</span>
-<span class="s1">'</span>
+in the setup guide, and after the sync have it deactivate itself. They read the
+homeserver URL and the registration secret from Waldur's settings, so run them
+in the API pod, which reaches the homeserver's admin API inside the cluster;
+nothing outside does. The token goes into the Secret through standard input,
+never on a command line:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nv">TOKEN</span><span class="o">=</span><span class="k">$(</span>kubectl<span class="w"> </span>-n<span class="w"> </span>&lt;namespace&gt;<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>deploy/waldur-mastermind-api<span class="w"> </span>--<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>waldur<span class="w"> </span>shell<span class="w"> </span>-c<span class="w"> </span><span class="s1">'&lt;first snippet from the guide&gt;'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sed<span class="w"> </span>-n<span class="w"> </span><span class="s1">'s/^TOKEN //p'</span><span class="k">)</span>
+<span class="nb">printf</span><span class="w"> </span><span class="s1">'{"stringData":{"admin_token":"%s"}}'</span><span class="w"> </span><span class="s2">"</span><span class="nv">$TOKEN</span><span class="s2">"</span><span class="w"> </span><span class="p">|</span>
+<span class="w">  </span>kubectl<span class="w"> </span>-n<span class="w"> </span>&lt;namespace&gt;<span class="w"> </span>patch<span class="w"> </span>secret<span class="w"> </span>matrix-appservice-secret<span class="w"> </span>--type<span class="w"> </span>merge<span class="w"> </span>--patch-file<span class="w"> </span>/dev/stdin
 </code></pre></div></td></tr></tbody></table></div>
-<p>After the sync, have the temporary admin deactivate itself in the admin room,
-with the deactivate step under the same
-<a href="https://docs.waldur.com/latest/developer-guide/admin-guide/matrix-appservice-setup/#token-rotation">Token rotation</a>
-section, run with <code>HOMESERVER=https://&lt;serverName&gt;</code> and <code>TOKEN=&lt;token&gt;</code>. It uses
-only the public client API. That also signs it out, and nobody can sign in to
-the account again, not even through single sign-on. The step exits non-zero if
-the temporary admin is still active; then deactivate it from <code>#admins</code> by hand.</p>
+<p>After the sync, remove <code>admin_token</code> from the Secret and have the admin
+deactivate itself:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code>kubectl<span class="w"> </span>-n<span class="w"> </span>&lt;namespace&gt;<span class="w"> </span>patch<span class="w"> </span>secret<span class="w"> </span>matrix-appservice-secret<span class="w"> </span>--type<span class="w"> </span>json<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-p<span class="w"> </span><span class="s1">'[{"op": "remove", "path": "/data/admin_token"}]'</span>
+<span class="nb">printf</span><span class="w"> </span><span class="s1">'%s\n'</span><span class="w"> </span><span class="s2">"</span><span class="nv">$TOKEN</span><span class="s2">"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>kubectl<span class="w"> </span>-n<span class="w"> </span>&lt;namespace&gt;<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-i<span class="w"> </span>deploy/waldur-mastermind-api<span class="w"> </span>--<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>waldur<span class="w"> </span>shell<span class="w"> </span>-c<span class="w"> </span><span class="s1">'&lt;second snippet from the guide&gt;'</span>
+<span class="nb">unset</span><span class="w"> </span>TOKEN
+</code></pre></div></td></tr></tbody></table></div>
 <p>Calls need encrypted transports. With <code>livekit.publicUrl</code> set, the chart
 refuses to render unless <code>publicUrl</code> is a <code>wss://</code> URL and <code>apiScheme</code> is
 <code>https</code>: clients send their Matrix OpenID token to Waldur's call token API and
@@ -20688,7 +20517,12 @@ client-server and federation surfaces are exposed through the Matrix ingress.</p
   its ingress; the PVC and its history are kept. Waldur keeps offering chat
   until you also switch <code>MATRIX_ENABLED</code> off under <strong>Administration →
   Configuration → Matrix chat → Settings</strong> and hide it with
-  <code>waldur.featureFlags: {"project.show_matrix_chat": false}</code>.</li>
+  <code>waldur.featureFlags: {"project.show_matrix_chat": false}</code>. To turn chat
+  back on, set <code>matrixChat.enabled=true</code>, remove that <code>featureFlags</code> entry and
+  switch <code>MATRIX_ENABLED</code> on again: the wiring Job switches it on only at the
+  first seeding. To keep the switch in your values instead, set
+  <code>waldur.settingsOverrides.MATRIX_ENABLED</code>, which the chart applies on every
+  sync.</li>
 </ul>
 <h2 id="backup-and-restore">Backup and restore</h2>
 <p>Back up these four together, with the bot and the homeserver stopped.
@@ -20763,7 +20597,11 @@ that mounts the claim:</p>
 <span class="normal">31</span>
 <span class="normal">32</span>
 <span class="normal">33</span>
-<span class="normal">34</span></pre></div></td><td class="code"><div><pre><span></span><code>kubectl<span class="w"> </span>scale<span class="w"> </span>--replicas<span class="o">=</span><span class="m">0</span><span class="w"> </span>statefulset/matrix-homeserver<span class="w"> </span>deployment/waldur-matrix-bot
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span></pre></div></td><td class="code"><div><pre><span></span><code>kubectl<span class="w"> </span>scale<span class="w"> </span>--replicas<span class="o">=</span><span class="m">0</span><span class="w"> </span>statefulset/matrix-homeserver<span class="w"> </span>deployment/waldur-matrix-bot
 kubectl<span class="w"> </span><span class="nb">wait</span><span class="w"> </span>--for<span class="o">=</span>delete<span class="w"> </span>pod/matrix-homeserver-0<span class="w"> </span>--timeout<span class="o">=</span>5m
 kubectl<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>-<span class="w"> </span><span class="s">&lt;&lt;'EOF'</span>
 <span class="s">apiVersion: v1</span>
@@ -20788,7 +20626,11 @@ kubectl<span class="w"> </span><span class="nb">wait</span><span class="w"> </sp
 kubectl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>matrix-homeserver-copy<span class="w"> </span>--<span class="w"> </span>tar<span class="w"> </span>-C<span class="w"> </span>/var/lib/tuwunel<span class="w"> </span>-czf<span class="w"> </span>-<span class="w"> </span>.<span class="w"> </span>&gt;<span class="w"> </span>tuwunel_data.tar.gz
 gzip<span class="w"> </span>-t<span class="w"> </span>tuwunel_data.tar.gz
 kubectl<span class="w"> </span>delete<span class="w"> </span>pod<span class="w"> </span>matrix-homeserver-copy
-kubectl<span class="w"> </span>get<span class="w"> </span>secret<span class="w"> </span>matrix-appservice-secret<span class="w"> </span>-o<span class="w"> </span>yaml<span class="w"> </span>&gt;<span class="w"> </span>matrix-appservice-secret.yaml
+<span class="c1"># Only what a restore needs: the API server refuses to create an object that</span>
+<span class="c1"># carries a resourceVersion, and a new cluster may use another namespace.</span>
+kubectl<span class="w"> </span>get<span class="w"> </span>secret<span class="w"> </span>matrix-appservice-secret<span class="w"> </span>-o<span class="w"> </span>json<span class="w"> </span><span class="p">|</span>
+<span class="w">  </span>jq<span class="w"> </span><span class="s1">'{apiVersion, kind, type, data, metadata: {name: .metadata.name, labels: .metadata.labels}}'</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>&gt;<span class="w"> </span>matrix-appservice-secret.json
 <span class="c1"># Waldur's database, while the bot is stopped. With postgresBackup.enabled, run</span>
 <span class="c1"># the chart's backup CronJob now and wait for it:</span>
 kubectl<span class="w"> </span>create<span class="w"> </span>job<span class="w"> </span>--from<span class="o">=</span>cronjob/waldur-db-backup-cronjob<span class="w"> </span>waldur-db-backup-matrix
@@ -20887,9 +20729,14 @@ see <a href="https://docs.waldur.com/latest/developer-guide/admin-guide/matrix-a
 <p>On a new cluster, or after losing the namespace, restore in this order, so that
 nothing starts on an empty volume or mints new tokens:</p>
 <ol>
-<li><code>kubectl apply -f matrix-appservice-secret.yaml</code>. For a namespace of
-   another name, delete the file's <code>namespace:</code> line first. The secrets Job
-   then reuses the tokens instead of generating new ones.</li>
+<li>Create the namespace and the Secret from the saved copy. The secrets Job
+   then reuses the tokens instead of generating new ones:</li>
+</ol>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>kubectl<span class="w"> </span>create<span class="w"> </span>namespace<span class="w"> </span>&lt;namespace&gt;
+kubectl<span class="w"> </span>-n<span class="w"> </span>&lt;namespace&gt;<span class="w"> </span>create<span class="w"> </span>-f<span class="w"> </span>matrix-appservice-secret.json
+</code></pre></div></td></tr></tbody></table></div>
+<ol>
 <li>Restore Waldur's database, and set the same <code>waldur.secretKey</code> and
    <code>waldur.fieldEncryptionKey</code>, and <code>waldur.fieldEncryptionKeyFallbacks</code> if a
    key rotation was under way. This order needs the database outside the
@@ -20899,6 +20746,49 @@ nothing starts on an empty volume or mints new tokens:</p>
 <li><code>helm install</code>. The wiring Job finds the appservice already registered and
    changes nothing.</li>
 </ol>
+<h3 id="losing-the-setup-secret">Losing the setup Secret</h3>
+<p>If <code>matrix-appservice-secret</code> is deleted while the homeserver keeps its data,
+put it back before the next sync: the secrets Job would otherwise mint new
+tokens that neither the homeserver nor Waldur holds. <code>helm upgrade</code> refuses to
+render while the <code>matrix-homeserver</code> StatefulSet runs and the Secret is
+missing. ArgoCD renders without access to the cluster, so the check cannot run
+there: pause automated sync until the Secret is back.</p>
+<p>Create it from the backup, as in step 1 above. Without a backup, rebuild it
+from Waldur's settings, which hold the same tokens. The values go from the API
+pod straight into the Secret, never through a command line or a file:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span></pre></div></td><td class="code"><div><pre><span></span><code>kubectl<span class="w"> </span>-n<span class="w"> </span>&lt;namespace&gt;<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>deploy/waldur-mastermind-api<span class="w"> </span>--<span class="w"> </span>waldur<span class="w"> </span>shell<span class="w"> </span>-c<span class="w"> </span><span class="s1">'</span>
+<span class="s1">import json</span>
+<span class="s1">from constance import config</span>
+<span class="s1">print("SECRET " + json.dumps({</span>
+<span class="s1">    "apiVersion": "v1", "kind": "Secret", "type": "Opaque",</span>
+<span class="s1">    "metadata": {"name": "matrix-appservice-secret",</span>
+<span class="s1">                 "labels": {"app.kubernetes.io/managed-by": "matrix-init"}},</span>
+<span class="s1">    "stringData": {</span>
+<span class="s1">        "as_token": config.MATRIX_APPSERVICE_AS_TOKEN,</span>
+<span class="s1">        "hs_token": config.MATRIX_APPSERVICE_HS_TOKEN,</span>
+<span class="s1">        "registration_token": config.MATRIX_USER_REGISTRATION_SECRET,</span>
+<span class="s1">    },</span>
+<span class="s1">}))</span>
+<span class="s1">'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sed<span class="w"> </span>-n<span class="w"> </span><span class="s1">'s/^SECRET //p'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>kubectl<span class="w"> </span>-n<span class="w"> </span>&lt;namespace&gt;<span class="w"> </span>create<span class="w"> </span>-f<span class="w"> </span>-
+</code></pre></div></td></tr></tbody></table></div>
+<p>The bootstrap password is lost with the Secret, since Waldur never stores it,
+and a new one would not match <code>@waldur-bootstrap</code>. Syncs keep working: the
+wiring Job only warns that it could not compare the registration. The next
+change to the registration, a token rotation say, needs an <code>admin_token</code> in the
+Secret, as in <a href="#rotating-with-password-login-off">Rotating with password login off</a>.</p>
 <h3 id="checking-a-restore">Checking a restore</h3>
 <p><code>GET /api/admin/matrix/diagnostics/</code> (staff) passes the checks it passed before
 the restore, <code>history_exports</code> among them with no failures. Then send <code>!help</code> in
@@ -21239,7 +21129,7 @@ with registration closed; create any homeserver admin before closing it.</p>
 <tr>
 <td><code>sso.forbiddenUsernames</code></td>
 <td><code>[]</code></td>
-<td><code>forbidden_usernames</code>: anchored patterns SSO never signs in to and Tuwunel refuses to register, so create an admin before you list it. The chart always puts the bot's localpart and <code>waldur-bootstrap</code>, reserved for the bootstrap admin that automatic registration creates, ahead of the list, so list only the other homeserver admins, such as <code>admin</code> above. The bot's localpart is <code>MATRIX_APPSERVICE_SENDER_LOCALPART</code> from <code>waldur.settingsOverrides</code>, else <code>waldur-bot</code>; if you changed it in Waldur's settings instead, list it here too.</td>
+<td><code>forbidden_usernames</code>: anchored patterns SSO never signs in to and Tuwunel refuses to register, so create an admin before you list it. The chart always puts the bot's localpart and <code>waldur-bootstrap</code>, reserved for the bootstrap admin that automatic registration creates, ahead of the list, so list only the other homeserver admins, such as <code>admin</code> above. The bot's localpart is <code>setup.botLocalpart</code>, or with setup off <code>MATRIX_APPSERVICE_SENDER_LOCALPART</code> from <code>waldur.settingsOverrides</code> where that is set; if you changed it in Waldur's settings instead, list it here too.</td>
 </tr>
 <tr>
 <td><code>loginWithPassword</code></td>
@@ -21258,16 +21148,12 @@ keep <code>homeserver.loginWithPassword: true</code>.</p>
 <p>Waldur sets the passwords through the homeserver's admin API, so the bot has to
 be a homeserver admin; see
 <a href="https://docs.waldur.com/latest/developer-guide/admin-guide/matrix-appservice-setup/#making-the-bot-a-homeserver-admin">Making the bot a homeserver admin</a>
-for what that costs. On helm, sign in to a Matrix client such as Element, with
-the homeserver <code>https://&lt;serverName&gt;</code>, as <code>@waldur-bootstrap:&lt;serverName&gt;</code> with
-the bootstrap password:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>kubectl<span class="w"> </span>-n<span class="w"> </span>&lt;namespace&gt;<span class="w"> </span>get<span class="w"> </span>secret<span class="w"> </span>matrix-appservice-secret<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">'{.data.bootstrap_password}'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>base64<span class="w"> </span>-d
-</code></pre></div></td></tr></tbody></table></div>
-<p>In the <code>#admins:&lt;serverName&gt;</code> room, send
-<code>!admin users make-user-admin @&lt;setup.botLocalpart&gt;:&lt;serverName&gt;</code>, then sign
-out.</p>
+for what that costs. The registration step makes it one, on every sync with
+<code>registerAppservice</code> on, and Diagnostics shows the result as <strong>Bot is a
+homeserver admin</strong>. If it could not, the wiring Job's log says why; add an
+<code>admin_token</code> to the Secret for one sync, as in
+<a href="#rotating-with-password-login-off">Rotating with password login off</a>, and it
+tries again.</p>
 <h2 id="runtime-steps-and-what-now-handles-them">Runtime steps, and what now handles them</h2>
 <p>Four steps used to be manual, and all four failed silently when skipped. With
 <code>setup.enabled</code> the chart handles all four.</p>
@@ -21423,8 +21309,7 @@ and publishes:</p>
 </table>
 <p>The exporter calls the endpoint with <code>waldur.supportToken</code>, which must belong
 to a support or staff user. If every call gets <code>403</code>, the token belongs to
-neither, or Waldur is too old to let support users read diagnostics and needs
-a staff user's token; <code>waldur_matrix_diagnostics_up</code> then stays <code>0</code>.</p>
+neither, and <code>waldur_matrix_diagnostics_up</code> stays <code>0</code>.</p>
 <h3 id="scraping-the-exporter">Scraping the exporter</h3>
 <p>A Prometheus that scrapes annotated Services finds the exporter through its
 <code>prometheus.io/scrape: "true"</code> annotation
@@ -21498,7 +21383,7 @@ Matrix metrics, so with several it does not notice one of them going away.</p>
 <td><code>WaldurMatrixDiagnosticsDown</code></td>
 <td>The diagnostics call failed for 10 minutes</td>
 <td>warning</td>
-<td>The exporter's log. <code>403</code> means <code>waldur.supportToken</code> belongs to neither a support nor a staff user, or Waldur is too old to let support users read diagnostics; anything else, the <code>waldur-mastermind-api</code> log.</td>
+<td>The exporter's log. <code>403</code> means <code>waldur.supportToken</code> belongs to neither a support nor a staff user; anything else, the <code>waldur-mastermind-api</code> log.</td>
 </tr>
 <tr>
 <td><code>WaldurMatrixHomeserverUnreachable</code></td>
@@ -21600,23 +21485,6 @@ token request; check it in the browser's network tab. <code>403</code> means Wal
 refused the caller (not joined to the room, or an unknown device). <code>503</code> means
 Waldur could not reach the homeserver or LiveKit, or the LiveKit settings above
 are missing.</p>
-<h3 id="upgrading-from-lk-jwt-service">Upgrading from lk-jwt-service</h3>
-<p>Earlier charts deployed <code>lk-jwt-service</code> to issue call tokens. Waldur issues
-them now, and the service is removed:</p>
-<ol>
-<li>Delete <code>matrixChat.lkJwt</code> and <code>matrixChat.homeserver.livekitServiceUrl</code> from
-   your values. The chart ignores both; the RTC focus now always points at
-   Waldur's API.</li>
-<li>Upgrade the chart together with a Waldur image that serves
-   <code>/api/matrix/livekit</code> (delete the init-whitelabeling job first, as usual).
-   <code>helm upgrade</code> removes the lk-jwt-service Deployment, Service,
-   NetworkPolicy and its <code>/get_token</code> and <code>/sfu</code> routes.</li>
-<li>Restart the homeserver so it reads the new <code>.well-known</code>:
-   <code>kubectl rollout restart statefulset/matrix-homeserver</code>.</li>
-<li>Calls already running keep their LiveKit connection. Clients pick up the new
-   focus the next time they read <code>.well-known</code>; reloading Element or the
-   Waldur page is enough.</li>
-</ol>
 <h2 id="open-registration-guard">Open-registration guard</h2>
 <p>With <code>setup.enabled</code> (the default) the registration token is always generated, so
 this guard cannot trip. With <code>setup.enabled: false</code>, if
@@ -21669,13 +21537,11 @@ The only fix is a TURN relay both peers connect <em>out</em> to.</p>
 <span class="normal">4</span>
 <span class="normal">5</span>
 <span class="normal">6</span>
-<span class="normal">7</span>
-<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">matrixChat</span><span class="p">:</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">matrixChat</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">livekit</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">turn</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <span class="w">      </span><span class="nt">domain</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">turn.matrix.example.org</span><span class="w">   </span><span class="c1"># must resolve to the livekit-rtc LB IP</span>
-<span class="w">      </span><span class="nt">tlsPort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5349</span>
 <span class="w">      </span><span class="nt">tls</span><span class="p">:</span>
 <span class="w">        </span><span class="nt">existingSecret</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">livekit-turn-tls</span><span class="w">  </span><span class="c1"># cert/key for `domain`</span>
 </code></pre></div></td></tr></tbody></table></div>
@@ -21690,8 +21556,9 @@ The only fix is a TURN relay both peers connect <em>out</em> to.</p>
    <code>turn.domain</code> in <code>turn.tls.existingSecret</code> (e.g. a cert-manager <code>Certificate</code>).</li>
 </ol>
 <p>TURNS on <code>tlsPort</code> also tunnels through TLS-only firewalls, so it covers both
-symmetric NAT and restrictive networks. Plain TURN/UDP is intentionally not
-exposed — relayed media always rides TLS.</p>
+symmetric NAT and restrictive networks. That holds only on 443, the default:
+those firewalls allow nothing else, so keep it. Plain TURN/UDP is
+intentionally not exposed — relayed media always rides TLS.</p>
 <h2 id="what-the-chart-wires-automatically">What the chart wires automatically</h2>
 <ul>
 <li><strong>Homeport CSP.</strong> Enabling matrix injects the homeserver host into the homeport
@@ -21742,7 +21609,9 @@ external instance and the bundled SFU is never needed.</p>
 <span class="normal">10</span>
 <span class="normal">11</span>
 <span class="normal">12</span>
-<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">matrixChat</span><span class="p">:</span>
+<span class="normal">13</span>
+<span class="normal">14</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">apiScheme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https</span><span class="w">                                </span><span class="c1"># the chart refuses calls over http</span>
+<span class="nt">matrixChat</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <span class="w">  </span><span class="nt">livekit</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w">                              </span><span class="c1"># don't deploy the bundled SFU</span>
@@ -21764,7 +21633,10 @@ would have no key to sign call tokens with.</p>
 <p>With <code>livekit.enabled=false</code> the chart drops the in-cluster LiveKit Service, its
 <code>config.yaml</code>, network policy, RTC LoadBalancer, and the <code>/rtc</code> ingress
 route. The browser connects straight to <code>publicUrl</code>, so reachability, TLS, and the
-media plane are the external operator's responsibility.</p>
+media plane are the external operator's responsibility. The chart adds the
+<code>publicUrl</code> origin to the homeport Content-Security-Policy <code>connect-src</code> on every
+ingress variant, so the browser is allowed to open the signalling websocket to it;
+nothing needs configuring for that.</p>
 
 
 

@@ -20195,6 +20195,10 @@ setup, so make sure you understand what you are doing.</p>
 docker<span class="w"> </span>compose<span class="w"> </span>down
 docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d
 </code></pre></div></td></tr></tbody></table></div>
+<p>With the Matrix chat add-on, set <code>COMPOSE_PROFILES</code> in <code>.env</code> as described in
+<code>docs/matrix-chat-add-on.md</code>, or pass the same <code>--profile</code> flags to each of
+these commands. Without the profiles, <code>pull</code> and <code>up -d</code> neither update nor
+restart the Matrix services.</p>
 <h3 id="config-folder-changes">Config folder changes</h3>
 <p>Every file under <code>${CONFIG_FOLDER}/waldur-mastermind</code> listed in
 <code>docker-compose.yml</code> is a <strong>file</strong> bind mount. If the source is missing on the
@@ -20424,6 +20428,10 @@ means nothing was generated, so check the notifications above.</p>
 <p>Example:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nv">TLS</span><span class="o">=</span>cert.pem<span class="w"> </span>key.pem
 </code></pre></div></td></tr></tbody></table></div>
+<p>Caddy sends <code>Strict-Transport-Security: max-age=31536000</code> with HomePort's pages,
+so after one visit over a trusted certificate, browsers refuse plain HTTP to
+<code>WALDUR_DOMAIN</code> for a year. They ignore the header when the certificate is not
+trusted, as with <code>TLS=internal</code> without its CA installed.</p>
 <h2 id="custom-caddy-configuration-files">Custom Caddy configuration files</h2>
 <p>To add additional caddy config snippets into the caddy virtual host configuration add .conf files to config/caddy-includes/</p>
 <h2 id="keycloak">Keycloak</h2>

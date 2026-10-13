@@ -19529,12 +19529,10 @@ refuse claims that are not valid localparts, so that no such user exists in the 
 </ul>
 <p>Accounts also fail to line up when a user's Matrix ID no longer follows from their username, because
 Waldur keeps the ID it derived when it first provisioned them. That covers users renamed afterwards,
-including to the claim by <code>OIDC_MATCHMAKING_BY_EMAIL</code>, users provisioned while <code>MATRIX_USER_ID_FORMAT</code> was
-<code>uuid</code> or <code>email_local</code>, <code>+</code> usernames provisioned before Waldur kept <code>+</code> (they still have <code>_</code>), and <code>=</code>
-usernames provisioned before Waldur escaped <code>=</code> (they still have <code>=</code> where it now derives <code>=3d</code>).
-After a database reset, <code>waldur link_matrix_account --all</code> looks those <code>+</code> and <code>=</code> users up under the
-ID derived now and misses them, and their next chat creates a new, empty account. Link each of them by
-hand before they next open chat: <code>waldur link_matrix_account &lt;username&gt; &lt;their old matrix id&gt;</code>.</p>
+including to the claim by <code>OIDC_MATCHMAKING_BY_EMAIL</code>, and users provisioned while <code>MATRIX_USER_ID_FORMAT</code>
+was <code>uuid</code> or <code>email_local</code>. After a database reset, <code>waldur link_matrix_account --all</code> looks those users
+up under the ID derived now and misses them, and their next chat creates a new, empty account. Link each
+of them by hand before they next open chat: <code>waldur link_matrix_account &lt;username&gt; &lt;their old matrix id&gt;</code>.</p>
 <p>Waldur provisions a user's Matrix account when they open its chat or are added to a project room. Tuwunel
 also remembers the account an IdP identity first signed in to, so a stray account created by an earlier
 test login keeps winning. Waldur also refuses to provision a user whose Matrix ID such a stray account
@@ -19604,7 +19602,7 @@ but is safe only if users cannot pick or change their username at the IdP, throu
   power level in every room it manages, so an IdP user whose claim reads <code>waldur-bot</code> would otherwise take
   it over. The same goes for homeserver admins. Use the bot's localpart
   (<code>MATRIX_APPSERVICE_SENDER_LOCALPART</code>), <code>waldur-bootstrap</code> (a name reserved for the bootstrap admin
-  that automatic registration will create) and any other admin's username, anchored as shown. When the
+  that automatic registration creates) and any other admin's username, anchored as shown. When the
   Helm chart or docker-compose configures single sign-on, it forbids the bot and <code>waldur-bootstrap</code> for
   you. Tuwunel creates the bot when the appservice is registered, and a forbidden name can still be
   created that way or through the shared-secret registration API; SSO cannot sign in to it.</li>
@@ -19619,11 +19617,13 @@ but is safe only if users cannot pick or change their username at the IdP, throu
 <li><strong><code>brand</code></strong> names the IdP software (<code>keycloak</code>); Tuwunel applies provider-specific workarounds by it.
   <code>name</code> is the label on the login button.</li>
 <li><strong><code>login_with_password = false</code></strong> removes the password form from clients. An admin created with a
-  password then cannot sign in to a client either; keep it <code>true</code> while you still need to. That includes
-  making the bot a homeserver admin, which locking deactivated users depends on (see
-  <a href="../matrix-appservice-setup/#making-the-bot-a-homeserver-admin">Making the bot a homeserver admin</a>), and
-  registering the appservice again after a Setup rotates its tokens. Keep an admin signed in to a client
-  for those, or turn password login on while you do them. It is also
+  password then cannot sign in to a client either. The first registration still works: creating the
+  bootstrap admin returns a session, and the same run makes the bot a homeserver admin, which locking
+  deactivated users depends on (see
+  <a href="../matrix-appservice-setup/#making-the-bot-a-homeserver-admin">Making the bot a homeserver admin</a>).
+  Later runs that change the registration, such as a token rotation, cannot sign in as the bootstrap
+  admin and need <code>MATRIX_ADMIN_TOKEN</code>, a homeserver admin's access token, instead; see
+  <a href="../matrix-appservice-setup/#token-rotation">Token rotation</a>. It is also
   <strong>untested</strong> with the drawer's encryption reset: the drawer answers the homeserver's interactive
   authentication with a temporary password that Waldur sets through the admin API, and the homeserver
   may refuse password authentication altogether once it is off. Reset encryption for a test user from
@@ -19665,8 +19665,8 @@ but is safe only if users cannot pick or change their username at the IdP, throu
   identity provider and <code>well_known.client</code> are configured, and Element versions with next-generation
   authentication (MSC2965) sign in through it. For such a session Tuwunel allows the reset once the user
   signs in at the IdP again (MSC4312). A session that signed in through the older SSO redirect
-  (<code>m.login.sso</code>) has to answer with the account's password, which SSO users do not have, so it cannot
-  reset. (Tuwunel offers single sign-on for that prompt only to accounts it registered itself at an SSO
+  (<code>m.login.sso</code>) has to answer with the account's password, which SSO users do not know (Waldur
+  registers every account with a random one), so it cannot reset. (Tuwunel offers single sign-on for that prompt only to accounts it registered itself at an SSO
   login with a single identity provider; the accounts Waldur provisions are not among them.) Either way, the recovery key Waldur shows is how to open the user's history in Element; tell
   users not to reset elsewhere unless every key is lost. A reset replaces the identity whose recovery key
   Waldur holds and deletes the user's key backup. Element then shows a new recovery key, and the drawer
