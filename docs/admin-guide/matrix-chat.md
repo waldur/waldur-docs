@@ -73,7 +73,7 @@ to start while the first holds it. Without a running bot, commands go
 unanswered, Waldur's notices stay in the outbox, and history exports stay
 pending, so a room being disabled with export on is not archived. The appservice webhook
 (`PUT /_matrix/app/v1/transactions/{txnId}`) only records and acknowledges the
-homeserver's transactions; it no longer handles commands. Project deletion
+homeserver's transactions; it does not handle commands. Project deletion
 runs the same disable path that the staff "Disable room" action uses,
 optionally exporting history before the room is archived.
 
@@ -107,12 +107,12 @@ themselves:
   refuses Setup but not a change to a seeded setting, so change those in the
   deployment instead.
 - Tokens are rotated in the Secret or the secrets volume, followed by a
-  deploy, which replaces the registration on the homeserver. Then restart the
-  bot process (`waldur-matrix-bot`), which reads the appservice token only when
-  it starts. Each guide has the steps under "Rotating the tokens" (Helm) and
-  "Token rotation" (docker-compose).
-- Helm turns on the `project.show_matrix_chat` feature flag; on
-  docker-compose,
+  deploy, which replaces the registration on the homeserver. The bot process
+  (`waldur-matrix-bot`) notices a rotated appservice token within 30 seconds
+  and starts over with it, so it needs no restart. Each guide has the steps
+  under "Rotating the tokens" (Helm) and "Token rotation" (docker-compose).
+- Helm turns on the `project.show_matrix_chat` feature flag, which shows the
+  chat in homeport and the **Matrix chat** admin page; on docker-compose,
   [turn it on](deployment/docker-compose/matrix-chat-add-on.md#enabling-the-homeport-ui)
   yourself.
 - Helm refuses to run Matrix chat without its bundled homeserver.
@@ -131,8 +131,10 @@ You need:
 - A Matrix homeserver with the Application Service API enabled and
   reachable from Waldur over HTTP/HTTPS. The homeserver must be able to
   reach Waldur back via the URL you provide during setup (webhook callbacks).
-- The homeserver's user-registration shared secret (Waldur uses it to
-  provision the per-user Matrix accounts that drive the embedded chat).
+- The homeserver's registration token, `MATRIX_USER_REGISTRATION_SECRET`.
+  Waldur registers the per-user Matrix accounts behind the embedded chat with
+  it. To register the appservice with `waldur register_matrix_appservice`, set
+  the homeserver's `registration_shared_secret` to the same value.
 - A staff account in Waldur. The Setup wizard, connectivity diagnostics, and
   the **Settings** tab are staff-only.
 - For voice/video calls (optional): a LiveKit SFU reachable from the browser.
@@ -167,8 +169,26 @@ There is no token service in the stack: the call tokens come from the Waldur
 API. `tuwunel.toml` advertises
 `http://localhost:10780/api/matrix/livekit` as the LiveKit focus, the
 mastermind dev API on the default port; change it if your API runs elsewhere.
-The `dev_matrix_settings` settings module defaults the LiveKit Constance keys
-to the stack's key, secret and URLs.
+
+Run Waldur's API with the `dev_matrix_settings` settings module, and the bot
+next to it with the same module:
+
+```bash
+export DJANGO_SETTINGS_MODULE=waldur_core.server.dev_matrix_settings
+waldur runserver 0.0.0.0:10780
+# in a second terminal, with the same DJANGO_SETTINGS_MODULE
+waldur matrix_bot
+```
+
+The settings module runs Celery tasks inline, because a dev machine has no
+worker: room creation and member sync are Celery tasks, so without it rooms
+stay in `creating` and nobody is invited. It also adds `host.docker.internal`,
+the name Tuwunel reaches Waldur by, to `ALLOWED_HOSTS`, and defaults the
+LiveKit Constance keys to the stack's key, secret and URLs. If you run a
+Celery worker instead, add `host.docker.internal` to `ALLOWED_HOSTS` yourself.
+The bot waits until the homeserver and the appservice token are configured,
+so it can start before Setup. Without it, commands go unanswered and **Matrix
+bot running** fails in **Diagnostics**.
 
 Health check:
 
@@ -203,7 +223,7 @@ config.MATRIX_ENABLED = True
 config.MATRIX_HOMESERVER_URL = "http://localhost:6167"
 config.MATRIX_HOMESERVER_DOMAIN = "localhost"
 config.MATRIX_USER_REGISTRATION_SECRET = "devregistrationsecret"  # match tuwunel.toml
-config.MATRIX_EXTERNAL_LOGIN_METHOD = "none"  # "password" or "oidc" to allow Element
+config.MATRIX_EXTERNAL_LOGIN_METHOD = "none"  # "password" allows Element; "oidc" needs the SSO steps below
 config.MATRIX_APPSERVICE_SENDER_LOCALPART = "waldur-bot"
 config.MATRIX_HISTORY_EXPORT_ENABLED = True
 # Calls (optional): the LiveKit key pair Waldur signs call tokens with
@@ -218,8 +238,10 @@ of these values are also editable in the **Settings** tab under
 **Administration → Configuration → Matrix chat**. On a packaged deployment
 the values the deployment seeds are read-only there.
 
-To make the per-project Communication tab visible in homeport, enable the
-`project.show_matrix_chat` feature flag. The backend continues to gate
+Turn on the `project.show_matrix_chat` feature flag too, under
+**Administration → User interface → Features** or with `waldur load_features`.
+It shows the chat in homeport and also the **Matrix chat** admin page, so the
+Setup and Diagnostics steps below need it. The backend continues to gate
 access on `MATRIX_ENABLED` regardless — the feature flag only toggles the UI.
 
 After changing Constance values, the homeport reads them on its next full
@@ -280,62 +302,51 @@ the result. Run it again with the same password after rotating the tokens.
 [setup guide](../developer-guide/admin-guide/matrix-appservice-setup.md) has
 the details.
 
-To do the same by hand: the first user registered on a fresh Tuwunel
-instance is automatically invited to the admin room. To register Waldur's
-appservice on the local dev stack:
+To register by hand instead, act as a homeserver admin in the admin room,
+`#admins:<homeserver domain>`:
 
-```bash
-# 1. Register a bootstrap user (uses tuwunel.toml's registration token)
-curl -s -X POST 'http://localhost:6167/_matrix/client/v3/register?kind=user' \
-  -H 'Content-Type: application/json' \
-  -d '{"auth":{"type":"m.login.registration_token","token":"devregistrationsecret"},
-       "username":"matrix-admin","password":"admin","device_id":"BOOTSTRAP"}'
-# → captures access_token + the admin room id from joined_rooms
-```
+1. Print the registration once Setup has stored the tokens, with
+   `waldur generate_appservice_registration --url <URL the homeserver uses to reach Waldur>`
+   (`http://host.docker.internal:10780` on the dev stack). Setup's result step
+   shows the same YAML.
+2. Create an admin through the homeserver's shared-secret registration API,
+   with `"admin": true`. Don't rely on the first account registered becoming
+   an admin: the Helm chart and docker-compose turn Tuwunel's
+   `grant_admin_to_first_user` off, because Waldur registers an account for
+   whoever opens the chat first. The setup guide's
+   [Token rotation](../developer-guide/admin-guide/matrix-appservice-setup.md#token-rotation)
+   has a script that creates such an admin, and one that deactivates it when
+   you are done. On the dev stack the secret is `devregistrationsecret`.
+3. As that admin, send `!admin appservices register` in the admin room, with
+   the YAML in a `yaml` code block below it. Send it from a Matrix client, or
+   with the admin's access token through the client API; the docker-compose
+   guide's
+   [Registering by hand](deployment/docker-compose/matrix-chat-add-on.md#registering-by-hand)
+   script shows the calls. Tuwunel replies
+   `Appservice registered with ID: waldur` and creates the bot's account.
+4. Send `!admin users make-user-admin @<bot localpart>:<homeserver domain>`
+   (see
+   [Making the bot a homeserver admin](../developer-guide/admin-guide/matrix-appservice-setup.md#making-the-bot-a-homeserver-admin)).
 
-The response contains an `access_token` for `@matrix-admin:localhost`. Use a
-name no Waldur user maps to: with the default
-`MATRIX_USER_ID_FORMAT = username`, a Waldur user called `admin` maps to
-`@admin:localhost`. List the admin room (the only joined room):
-
-```bash
-curl -s -H "Authorization: Bearer <ACCESS_TOKEN>" \
-  http://localhost:6167/_matrix/client/v3/joined_rooms
-```
-
-Send the registration YAML as a `!admin appservices register` message inside
-that room:
-
-```bash
-YAML=$(cat docker/matrix-dev/waldur-registration.yaml)
-BODY=$(printf '!admin appservices register\n```yaml\n%s\n```' "$YAML")
-BODY_JSON=$(printf '%s' "$BODY" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read()))")
-curl -s -X PUT "http://localhost:6167/_matrix/client/v3/rooms/<ADMIN_ROOM_ID>/send/m.room.message/$(date +%s)" \
-  -H "Authorization: Bearer <ACCESS_TOKEN>" \
-  -H "Content-Type: application/json" \
-  -d "{\"msgtype\":\"m.text\",\"body\":${BODY_JSON}}"
-```
-
-Tuwunel's admin user replies `Appservice registered with ID: waldur`, and
-creates the bot's account itself. There is nothing more to run: under
-**Administration → Configuration → Matrix chat**, **Diagnostics** should now
-show **Bot authentication (whoami)** passing. Don't run Setup again to
-provision the bot. Setup generates new tokens, and the registration you just
-made would stop working.
+Under **Administration → Configuration → Matrix chat**, **Diagnostics** should
+then show **Bot authentication (whoami)** and **Bot is a homeserver admin**
+passing. Don't run Setup again to provision the bot. Setup generates new
+tokens, and the registration you just made would stop working.
 
 For Synapse, the equivalent is to drop the registration YAML into a path
 listed in `app_service_config_files` and restart the homeserver. Other
 Conduit-derived homeservers follow the same admin-room workflow as
 Tuwunel.
 
-If you rotate the AS/HS tokens (by running the Setup wizard again), register
-the new YAML the same way, after removing the old registration with
-`!admin appservices unregister waldur`: Tuwunel refuses to register an ID that
-is already registered, and rejects appservice requests under the old tokens
-once they change in Waldur. Then restart the bot process (`waldur matrix_bot`;
-`waldur-matrix-bot` on Helm and docker-compose), which reads the appservice
-token only when it starts. On Helm and docker-compose, Setup is refused while
-the deployment manages the tokens; rotate them as
+If you rotate the AS/HS tokens (by running the Setup wizard again), run
+`waldur register_matrix_appservice` again, which replaces the old
+registration. By hand, remove the old registration with
+`!admin appservices unregister waldur` and then register the new YAML:
+Tuwunel refuses to register an ID that is already registered, and rejects
+Waldur's requests under the new tokens until it has them. The bot process
+(`waldur matrix_bot`) notices the new appservice token within 30 seconds and
+starts over with it, so it needs no restart. On Helm and docker-compose,
+Setup is refused while the deployment manages the tokens; rotate them as
 [Packaged deployments](#packaged-deployments) describes.
 
 ---
@@ -363,19 +374,29 @@ lists the checks.
 
 ## Creating a project room
 
-From the **Rooms** tab on the same page, click **Create** and pick a
-project from the list — only projects without an existing Matrix room are
-shown. Owners see their own projects; staff and support see every project.
+From the **Rooms** tab on the same page, click **Create**, then pick an
+organization and one of its projects. Only projects without a Matrix room are
+listed. The page is for staff and support. Users who hold `MATRIX_ROOM.CREATE`
+on a project or its organization (organization owners by default) create the
+project's room from its **Settings → Chat** tab instead.
+
+To give every new project a room, turn on `MATRIX_AUTO_CREATE_PROJECT_ROOMS`;
+`waldur provision_matrix_rooms` creates rooms for existing projects. See
+[Creating project rooms](../developer-guide/admin-guide/matrix-appservice-setup.md#creating-project-rooms).
 
 Once created, the room synchronises its members (see
 [Who is in a project room](#who-is-in-a-project-room)):
 
 ![Admin Rooms tab with the Demo Project room](img/matrix-chat/10-admin-rooms-tab.png)
 
-The same screen offers per-room actions (Sync members, Disable, Reactivate,
-Export history, Retry) once you expand the row. State transitions go
+Each row's action menu has **Open in team chat**, **Connect to Matrix…**
+(when external clients are allowed), **Join room** or **Leave room**,
+**Sync members** and **Export history**, and for staff also **Retry**,
+**Re-enable chat** and **Disable chat**. Expanding a
+row shows the room's **History exports** and **Members**. State transitions go
 through the standard Matrix room lifecycle and are guarded server-side
-against concurrent calls.
+against concurrent calls. Staff also get a **Calls** tab with the calls
+running on LiveKit, and **How it works** explains the integration.
 
 ### Who is in a project room
 
@@ -404,8 +425,11 @@ resources, service providers or calls do not put anyone in a project room.
 
 ## Using the chat in homeport
 
-When `project.show_matrix_chat` is enabled and a project has an active room,
-the page header's **Open chat** button opens the team-chat drawer:
+When `project.show_matrix_chat` and `MATRIX_ENABLED` are both on, the chat
+icon in the page header (tooltip **Support**) opens a drawer whose **Team
+chat** tab holds the user's rooms; a **Helpdesk** tab sits next to it when
+support is enabled. A project with an active room also gets a
+**Communication** page with the same chat:
 
 ![Team-chat drawer open](img/matrix-chat/05-chat-drawer-open.png)
 
@@ -417,8 +441,8 @@ inherits the active language.
 Messages are sent over the homeserver via matrix-js-sdk; the embedded
 client is started inside the homeport tab and tears down on Waldur logout.
 
-Rooms are end-to-end encrypted from creation, and the bot turns encryption on
-in rooms created before that (see [End-to-end encryption](#end-to-end-encryption)).
+Rooms are end-to-end encrypted from creation (see
+[End-to-end encryption](#end-to-end-encryption)).
 The drawer decrypts in the browser with a
 WebAssembly module, so homeport's Content-Security-Policy must allow
 `'wasm-unsafe-eval'` in `script-src`. The Helm chart and docker-compose
@@ -430,9 +454,9 @@ already do; add it if you serve homeport behind your own proxy.
 
 ## Multiple users in the same room
 
-Each project member gets their own per-user Matrix account (provisioned
-via the `MATRIX_USER_REGISTRATION_SECRET` shared secret) and an
-independent matrix-js-sdk session inside their browser tab. Sending a
+Each project member gets their own per-user Matrix account (registered
+with the homeserver's registration token, `MATRIX_USER_REGISTRATION_SECRET`)
+and an independent matrix-js-sdk session inside their browser tab. Sending a
 message from one user propagates to every other room member through
 the homeserver in real time. The drawer attributes each message with
 the **Waldur display name**, not the raw Matrix ID — so an `@manager:
@@ -455,10 +479,10 @@ replies; opening the room cleared it.
 
 ### Full-screen view
 
-The drawer's **Expand to full screen** corner button (top-right of the
-drawer header) swaps the docked drawer for a full-page chat layout:
-the room list moves to a left rail, the conversation takes the
-remainder of the page, and the page-level navigation is hidden. The
+On desktop screens, the drawer's **Expand to full screen** corner button
+(top-right of the drawer header) widens the drawer over the whole content
+area, next to the page's sidebar, which stays visible: the room list
+moves to a left rail and the conversation takes the remainder. The
 **Collapse to panel** button on the same corner returns to the docked
 drawer.
 
@@ -471,9 +495,10 @@ reconnect, re-paginate, or lose typing buffers.
 
 ### Sharing files
 
-The paperclip icon (**Attach file**) in the message composer opens the
+The **Attach** button (paperclip icon) in the message composer opens the
 browser's file picker. Uploaded files are sent through the homeserver's
-authenticated media API (`/_matrix/media/v3/upload` → `/v3/download`)
+authenticated media API (`/_matrix/media/v3/upload` →
+`/_matrix/client/v1/media/download`)
 and rendered inline for image and video MIME types.
 
 ![Cat picture uploaded — full-screen view of the sender](img/matrix-chat/23-fullscreen-cat-upload.png)
@@ -513,8 +538,11 @@ The conditions are:
 
 When **Start call** runs, the browser exchanges the user's Matrix
 OpenID token for a short-lived LiveKit JWT by posting it to
-`/get_token` under the `livekit_service_url` the homeserver advertised,
-then connects to the LiveKit room. While the
+`/sfu/get` under the `livekit_service_url` the homeserver advertised,
+then connects to the LiveKit room. `/sfu/get` is the older endpoint, the one
+Element Call uses in its compatibility mode. The drawer falls back to
+`/get_token` only when `/sfu/get` is missing and the call is unencrypted, and
+every Waldur room is encrypted. Element Call may use either. While the
 call is connecting (15-second budget), a spinner replaces the message
 list; on success the call view renders inline with the LiveKit
 participant tiles and call controls (mute, camera, screenshare, hang
@@ -530,8 +558,8 @@ the call provider never gets stuck on a spinner.
 ### Joining an in-progress call
 
 When one room member is on a call, every other member sees a
-**Call in progress: \<initiator name\>** banner above the message list
-with a **Join** button. The banner is driven by Matrix RTC membership
+**Call in progress** banner above the message list
+with a **Join call** button. The banner is driven by Matrix RTC membership
 events: each participant publishes a per-device call-membership state
 event, and the homeport tracks the room's set of live members through
 the matrix-js-sdk timeline.
@@ -541,10 +569,9 @@ the matrix-js-sdk timeline.
 Joining produces a multi-participant view with a tile per LiveKit
 publisher. The local tile is labelled with the user's Waldur display
 name; remote tiles show the display name once the Matrix call
-membership event for that participant has propagated. In a federated
-deployment, the LiveKit identity (a base64 hash of the user ID, device ID
-and call member ID)
-may briefly show until the membership event lands, after which the
+membership event for that participant has propagated. Until it lands, a
+tile may briefly show the participant's LiveKit identity, their Matrix ID
+and device (`@user:domain:DEVICE`), after which the
 homeport's `NameOverrider` swaps the visible label.
 
 ![Owner side of a two-participant call](img/matrix-chat/21-owner-in-call.png)
@@ -591,9 +618,12 @@ For each token request Waldur:
    LiveKit renews the token of a connected participant.
 
 Every refusal to join gets the same `403 M_FORBIDDEN` answer, so the response
-does not reveal whether a room exists or who is in it. If `MATRIX_LIVEKIT_KEY`,
-`MATRIX_LIVEKIT_SECRET` or `MATRIX_LIVEKIT_PUBLIC_URL` is unset, or the
-homeserver cannot be reached, the endpoints answer `503`.
+does not reveal whether a room exists or who is in it. An OpenID token the
+homeserver does not accept, or one for another user than the request claims,
+gets `401 M_UNAUTHORIZED`. If `MATRIX_LIVEKIT_KEY`, `MATRIX_LIVEKIT_SECRET` or
+`MATRIX_LIVEKIT_PUBLIC_URL` is unset, the homeserver cannot be reached, or
+Waldur cannot create the call's room through LiveKit's API at
+`MATRIX_LIVEKIT_URL`, the endpoints answer `503`.
 
 Element Call can hand its delayed leave event (MSC4140) over to the token
 service, which then sends the leave once the member drops off the SFU. Waldur
@@ -877,7 +907,7 @@ their keys were shared by the bot rather than by the sender's own device, so
 their authenticity is not guaranteed the way it is for keys from the sender
 (Element may mark them; not verified).
 This runs on every path that adds a member (a role, member sync, opening a room
-the user was invited to) and on a staff or support **Join**, which therefore gets
+the user was invited to) and on a staff or support **Join room**, which therefore gets
 the room's whole earlier history, for as long as the Join counts. After a setup
 or reset in the drawer, the bot writes everything it holds into the new backup.
 Only keys the bot holds are written, so history from before the bot was in a
@@ -919,7 +949,11 @@ details, including how the bot decides which backup it may write into.
   behind its **Generate password** button, the `matrix_password` scope
   (default 30/hour per user). `/api/matrix/credentials/recovery-key/`, behind
   **Show recovery key**, uses the `matrix_recovery_key` scope (default 30/hour
-  per user). All four return `404` when the integration is disabled.
+  per user), and the `/api/matrix/crypto/` endpoints, which the drawer calls to
+  set up or reset encryption, the `matrix_crypto` scope (default 30/hour per
+  user). All of these return `404` when the integration is disabled. History
+  export downloads use the `matrix_export_download` scope (default 120/hour per
+  user).
 - **Periodic tasks.** Matrix chat runs these daily (UTC):
   `periodic_history_export` at 02:00 exports every active room's history when
   `MATRIX_HISTORY_EXPORT_ENABLED` is on; `cleanup_old_appservice_transactions`
@@ -941,7 +975,8 @@ details, including how the bot decides which backup it may write into.
   [Export process](../developer-guide/admin-guide/matrix-appservice-setup.md#export-process).
   Exports go only to
   those holding `MATRIX_ROOM.CREATE` on the project or its organization
-  (organization owners by default) and to staff and support; everyone else gets `404`, room members included. Files
+  (organization owners by default) and to staff and support. Everyone else,
+  room members included, gets an empty export list and `404` on a download. Files
   are served through a permission-checked view rather than the raw storage
   URL. Exports older than `MATRIX_HISTORY_EXPORT_RETENTION_DAYS` (default 90)
   are deleted daily, except each room's newest completed export; `0` or less
@@ -984,9 +1019,29 @@ details, including how the bot decides which backup it may write into.
   registration on a homeserver that Waldur uses, and treat the token
   (`MATRIX_USER_REGISTRATION_SECRET`) like a password: Helm and Docker Compose
   also use it as the homeserver's registration shared secret, which can create
-  admin accounts. If it may have leaked, replace it on the homeserver and in
-  Waldur (with Docker Compose this regenerates the appservice tokens too, so register
-  the appservice again), and review the accounts registered since.
+  admin accounts. If it may have leaked, replace it, and review the accounts
+  registered since. With Helm, follow
+  [Rotating the tokens](deployment/helm/docs/matrix-chat.md#rotating-the-tokens).
+  With Docker Compose, change only the `REG_TOKEN=` line in `secrets.env`,
+  bring the profile up so Waldur gets the new token, wait for the register
+  container, and restart Tuwunel, which reads the token only at start:
+
+    ```bash
+    docker compose --profile matrix run --rm --no-deps --entrypoint sh waldur-matrix-init-volume -c '
+      sed -i "s/^REG_TOKEN=.*/REG_TOKEN=$(openssl rand -hex 32)/" /var/lib/waldur/matrix/secrets.env'
+    docker compose --profile matrix up -d
+    docker wait waldur-matrix-register
+    docker compose restart tuwunel
+    ```
+
+    The appservice tokens stay the same, so nothing needs registering again.
+    Don't delete `secrets.env` to get a new token: that also replaces the
+    bootstrap password, and registration then fails (see
+    [Token rotation](deployment/docker-compose/matrix-chat-add-on.md#token-rotation)).
+    On a homeserver you run yourself, change it in Waldur and in the
+    homeserver's `registration_token` and `registration_shared_secret`
+    together, then restart the homeserver (see
+    [Registration secret](../developer-guide/admin-guide/matrix-appservice-setup.md#registration-secret)).
 
 ---
 
@@ -996,17 +1051,23 @@ details, including how the bot decides which backup it may write into.
 | --- | --- | --- |
 | The chat drawer shows **Your chat session has ended.** | Matrix chat was switched off (`MATRIX_ENABLED`) while the drawer was open, or the homeserver signed the drawer's device out again within a minute of reconnecting | Re-enable chat. If sessions keep being signed out, look for what removes `WALDUR_WEB_*` devices on the homeserver. **Reload** in the drawer starts a new session. A deactivated, deleted or signed-out user is returned to the login page instead. A rate-limited connect shows **Too many chat requests. Please try again in …** |
 | One user's chat always answers **Chat is unavailable right now**, and the worker log says their Matrix ID "already belongs to an account this Waldur did not create" | The homeserver already had an account with that ID when Waldur provisioned the user: one registered by hand, or one Waldur created before its database was restored from an older dump or reset | If the account is the user's, link it with `waldur link_matrix_account <username> @<localpart>:<homeserver domain>`. After restoring or resetting Waldur's database against the same homeserver, run `waldur link_matrix_account --all`. If it is not theirs, the user gets no chat under that ID: deactivating the other account does not free the ID. See [Existing Matrix accounts](../developer-guide/admin-guide/matrix-appservice-setup.md#existing-matrix-accounts). |
-| Bot commands go unanswered and Waldur's notices do not appear in rooms | The `matrix_bot` process is not running, failed to start, or still uses an appservice token rotated since it started | Check that `waldur-matrix-bot` runs and read its log. Restart it after a token rotation. A second process exits with "Another Matrix bot process holds the lease" while the first runs; run exactly one. |
+| Bot commands go unanswered and Waldur's notices do not appear in rooms | The `matrix_bot` process is not running or failed to start | Check that `waldur-matrix-bot` runs and read its log. A second process exits with "Another Matrix bot process holds the lease" while the first runs; run exactly one. |
 | `bot_provision_status: "failed: M_UNKNOWN_TOKEN"` after Setup | The homeserver has no registration with the tokens this Setup generated, which is expected on a first Setup | Register the YAML Setup returned via the admin-room command (see above). Tuwunel then creates the bot itself. Don't run Setup again: it generates new tokens. |
-| Webhook reaches Waldur but returns `400 DisallowedHost` | The hostname the homeserver uses to reach Waldur is not in Django's `ALLOWED_HOSTS` | Add the hostname (e.g. `host.docker.internal`) to `ALLOWED_HOSTS` and restart. |
-| Diagnostics shows `Bot authentication: 401 Unauthorized — AS token rejected` or `403 Forbidden — AS token not recognized by homeserver` | The homeserver holds a registration with other tokens than Waldur's, for example after Setup was run again | On Helm or docker-compose, deploy again: the register step replaces a registration that differs from Waldur's. With password login off, pass an admin token (see [External clients](#external-clients)). On a homeserver you run yourself, register the tokens Waldur has: `waldur generate_appservice_registration --url <URL the homeserver uses to reach Waldur>` prints their YAML. Send `!admin appservices unregister waldur`, then register it. Either way, restart the bot process (`waldur-matrix-bot`) afterwards, which reads the appservice token only when it starts. |
+| Webhook reaches Waldur but returns `400 DisallowedHost` | The hostname the homeserver uses to reach Waldur is not in Django's `ALLOWED_HOSTS` | Add the hostname (e.g. `host.docker.internal`) to `ALLOWED_HOSTS` and restart. On the dev stack, run Waldur with `dev_matrix_settings`, which adds `host.docker.internal`. |
+| Diagnostics shows `Bot authentication: 401 Unauthorized — AS token rejected` or `403 Forbidden — AS token not recognized by homeserver` | The homeserver holds a registration with other tokens than Waldur's, for example after Setup was run again | On Helm or docker-compose, deploy again: the register step replaces a registration that differs from Waldur's. With password login off, pass an admin token (see [External clients](#external-clients)). On a homeserver you run yourself, register the tokens Waldur has: `waldur generate_appservice_registration --url <URL the homeserver uses to reach Waldur>` prints their YAML. Send `!admin appservices unregister waldur`, then register it. |
 | Voice/video call fails to connect | The `livekit_service_url` in `.well-known/matrix/client` does not point at Waldur's `/api/matrix/livekit`, or the browser cannot reach it | Set it to `https://<waldur-api-host>/api/matrix/livekit` and check the token request in the browser's network tab. |
-| The browser's token request returns `503` | LiveKit keys or public URL are not set in Waldur, or Waldur cannot reach the homeserver's `/_matrix/federation/v1/openid/userinfo` at `MATRIX_HOMESERVER_URL` | Set `MATRIX_LIVEKIT_KEY`, `MATRIX_LIVEKIT_SECRET` and `MATRIX_LIVEKIT_PUBLIC_URL`; make sure the homeserver's federation endpoints are reachable at `MATRIX_HOMESERVER_URL`. |
+| The browser's token request returns `503` | LiveKit keys or public URL are not set in Waldur, Waldur cannot reach the homeserver's `/_matrix/federation/v1/openid/userinfo` at `MATRIX_HOMESERVER_URL`, or Waldur cannot reach LiveKit's API at `MATRIX_LIVEKIT_URL` (the log says "Could not create the LiveKit room") | Set `MATRIX_LIVEKIT_KEY`, `MATRIX_LIVEKIT_SECRET` and `MATRIX_LIVEKIT_PUBLIC_URL`; make sure the homeserver's federation endpoints are reachable at `MATRIX_HOMESERVER_URL`, and LiveKit at `MATRIX_LIVEKIT_URL` (default `http://livekit:7880`). |
+| The browser's token request returns `401 M_UNAUTHORIZED` | The homeserver did not accept the OpenID token, or the token belongs to another user than the request claims | Check that `MATRIX_HOMESERVER_URL` reaches the same homeserver the user's client signed in to. |
 | The browser's token request returns `403 M_FORBIDDEN` | The user is not joined to the room, the device is not theirs, the user belongs to another homeserver, or the Waldur user is deactivated | Join the room first; check the Waldur logs for "Refused a call token". |
 | The browser's token request returns `429` | Rate limit hit. Behind a load balancer that does not pass the client address on, all clients share one per-address bucket | Pass the real client address to the proxy in front of Waldur, or raise `matrix_livekit_token`. |
 | The browser's token request returns `404` | Matrix chat is switched off (`MATRIX_ENABLED`), or a reverse proxy does not route `/api/matrix/livekit` to Waldur | Enable Matrix chat; route the whole `/api/matrix/livekit` prefix to the Waldur API. |
+| A call fails with **This browser can't take part in encrypted calls.** | The browser cannot encrypt call media (it has neither insertable streams nor `RTCRtpScriptTransform`), and every call in Waldur's rooms is encrypted | Use a current version of Chrome, Edge, Firefox or Safari. |
+| The call view says **Not shown, not end-to-end encrypted:** and names participants | Their media reaches the call unencrypted, for example from a client that does not encrypt calls. The drawer does not play media in clear, which could as well come from the call server as from them | Have them join from Waldur's chat, or from a Matrix client that encrypts calls. |
 
-For an unauthenticated denial reply from the bot, double-check that the
-Matrix sender ID is mapped to a Waldur user in `MatrixUserProfile` and
-that the user holds an active role on the room's project — only those
-two facts gate bot dispatch.
+If the bot answers a command with "You don't have access to this room's
+project in Waldur.", check that the Matrix sender ID is mapped to a Waldur
+user in `MatrixUserProfile`, that the user is active, and that a role puts
+them in the room: an active role on the room's project, or an organization
+role with `MATRIX_ROOM.CREATE`. Staff and support who only used **Join room**
+get the same answer. In a room that is not active, the bot answers no
+commands at all.
