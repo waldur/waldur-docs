@@ -8954,6 +8954,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#slug-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Slug permissions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#permission-system-behavior" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19727,6 +19738,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#slug-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Slug permissions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#permission-system-behavior" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -20075,6 +20097,65 @@ project role it loads without the matching permission.</p>
 <code>conftest.py</code> adds the matching permission to every customer- and
 project-scoped system role that <code>get_system_role</code> creates. A test that needs
 the permission absent calls <code>role.delete_permission(...)</code>.</p>
+<h2 id="slug-permissions">Slug permissions</h2>
+<p>Site agents name backend accounts after slugs: a SLURM account from the resource
+or project slug, a Kubernetes namespace from the resource slug. A wrong or late
+slug points an account at another allocation, so <code>PROJECT.SET_SLUG</code> and
+<code>RESOURCE.SET_SLUG</code> are granted to <strong>no role</strong> in <code>permissions.yaml</code>, and out of
+the box only staff can set a slug.</p>
+<p>A deployment that wants others to name allocations grants the permission to the
+roles it chooses, in <code>permissions-override.yaml</code>:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">OFFERING.MANAGER</span>
+<span class="w">  </span><span class="nt">add_permissions</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">RESOURCE.SET_SLUG</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CUSTOMER.OWNER</span>
+<span class="w">  </span><span class="nt">add_permissions</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PROJECT.SET_SLUG</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p><code>initdb</code> runs <code>import_roles</code> and then <code>override_roles</code> on every deploy, so the
+grant is re-applied each time. Do <strong>not</strong> grant them through the role editor in
+the UI: <code>import_roles</code> resets system roles to <code>permissions.yaml</code> on the next
+deploy and the grant disappears.</p>
+<p>What a holder can do:</p>
+<table>
+<thead>
+<tr>
+<th>Permission</th>
+<th>Checked on</th>
+<th>Where it applies</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RESOURCE.SET_SLUG</code></td>
+<td>the resource's project or organization, its offering, the offering's organization or service provider</td>
+<td><code>POST .../marketplace-resources/{uuid}/set_slug/</code> (and the provider-resources twin); <code>slug</code> on order create names the new resource</td>
+</tr>
+<tr>
+<td><code>PROJECT.SET_SLUG</code></td>
+<td>the project or its organization</td>
+<td><code>POST /api/projects/{uuid}/set_slug/</code>; <code>slug</code> on project create</td>
+</tr>
+</tbody>
+</table>
+<p>Without the permission, <code>slug</code> on create is ignored, even when malformed, and
+the slug template applies, as before. Other than staff, a holder cannot change
+a slug once a backend account may exist or is being created:</p>
+<ul>
+<li>a resource is locked once it has a <code>backend_id</code>, or once its creation order
+  is executing, done or erred. While the order still awaits approval or its
+  start date, the slug can change;</li>
+<li>a project is locked once any of its non-terminated resources is.</li>
+</ul>
+<p>The check and the save run under row locks on the resources and their creation
+orders, so an order cannot start executing in between. Slugs must be unique
+per model. Every change is recorded in the event log with the old and new slug
+and the caller.</p>
 <h2 id="permission-system-behavior">Permission System Behavior</h2>
 <h3 id="expiration-handling">Expiration Handling</h3>
 <ul>

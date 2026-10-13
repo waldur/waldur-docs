@@ -1410,6 +1410,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#keep-the-encryption-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keep the encryption key
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#matrix-chat" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19397,6 +19408,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#keep-the-encryption-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keep the encryption key
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#matrix-chat" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19455,6 +19477,14 @@ attachments and the like — are stored in the database too
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>zcat<span class="w"> </span>waldur-20260819T101500.sql.gz<span class="w"> </span><span class="p">|</span><span class="w"> </span>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-i<span class="w"> </span>waldur-db<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>waldur<span class="w"> </span>waldur
 </code></pre></div></td></tr></tbody></table></div>
 <p>We suggest to make sure that backups are running regularly, e.g. using cron.</p>
+<h2 id="keep-the-encryption-key">Keep the encryption key</h2>
+<p>A dump does not hold the key Waldur encrypts credentials in the database with:
+<code>FIELD_ENCRYPTION_KEY</code>, or, while that is unset, <code>SECRET_KEY</code> (<code>GLOBAL_SECRET_KEY</code>
+with docker-compose, <code>waldur.secretKey</code> with Helm), which the key is then derived from.
+During a key rotation, <code>FIELD_ENCRYPTION_KEY_FALLBACKS</code> holds the old ones. Back
+them up as carefully as the dumps, but separately: restored without them, the
+encrypted columns cannot be read, and nothing recovers them. See
+<a href="../../developer-guide/field-encryption/#backups">Field encryption at rest</a>.</p>
 <h2 id="matrix-chat">Matrix chat</h2>
 <p>With Matrix chat on, the homeserver is a third component to back up: it keeps
 the chat rooms, their messages and the users' Matrix accounts in its own
@@ -19466,6 +19496,14 @@ StatefulSet to zero). Also back up the tokens Waldur and the homeserver
 share: with docker-compose, the <code>waldur_matrix_secrets</code> volume; with Helm, the
 <code>matrix-appservice-secret</code> Secret, unless <code>setup.existingSecret</code> keeps it in
 your secret manager. Both also hold the bootstrap password.</p>
+<p>Chat depends on the encryption key above too. Users' escrowed recovery keys,
+the bot's encryption keys and access token, every history export's key and the
+appservice tokens in Waldur's settings are encrypted with it. Restored with
+another key, the bot refuses to start, the appservice stops working, and no
+recovery key or history export can be read. The
+<a href="../deployment/helm/docs/matrix-chat/#backup-and-restore">Helm</a> and
+<a href="../deployment/docker-compose/matrix-chat-add-on/#backup-and-restore">docker-compose</a>
+guides have the full backup and restore steps.</p>
 <p>After restoring an older Waldur dump, or resetting Waldur's database, against
 the same homeserver, the users provisioned since have a Matrix account that
 Waldur no longer knows, and Waldur refuses to take it over: their chat stays
