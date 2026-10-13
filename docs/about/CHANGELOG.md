@@ -71,6 +71,10 @@ This release makes team chat secure and quick to set up. Every Matrix room is no
 - **Waldur Helm**: [69 commits](https://github.com/waldur/waldur-helm/compare/8.1.2...8.1.3) - Matrix setup at deploy time with SSO and alerts, Gateway API, CloudPirates subcharts, IPv6/dual-stack, Matrix bot deployment
 - **Waldur Docker Compose**: [139 commits](https://github.com/waldur/waldur-docker-compose/compare/8.1.2...8.1.3) - Automatic Matrix setup, SSO, call tokens from Waldur, Matrix operations docs, configurable email, web shell profile
 
+### Resources
+
+- [OpenAPI Schema](../API/waldur-openapi-schema-8.1.3.yaml)
+
 ---
 
 
