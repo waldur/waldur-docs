@@ -899,6 +899,17 @@ Waldur stays locked for them. Only a user without any working key
 needs the reset, which replaces the identity and deletes the old key backups;
 the bot then writes the history it holds into the new backup.
 
+**Keys Waldur can no longer read.** A recovery key escrowed under a
+`FIELD_ENCRYPTION_KEY` that is since lost, or under the key derived from a
+`SECRET_KEY` that was since rotated, is still in the database but cannot be
+decrypted. Waldur treats it as no key: the drawer shows the same **Encrypted
+messages cannot be read** notice with **Enter recovery key** and **Reset
+encryption**, and **Show recovery key** returns nothing. A user who kept the key
+in another client enters it and Waldur escrows it again; the others reset. The
+old key put back in `FIELD_ENCRYPTION_KEY_FALLBACKS` (not as the primary key,
+which would lock out everything encrypted since) makes the escrowed keys of
+every user who has not reset meanwhile work again without anyone doing anything.
+
 **History for new members.** A member added to a room gets its earlier history
 through their key backup: the bot, which holds the room keys since the room was
 created, writes them into the member's backup, and the drawer restores them from
