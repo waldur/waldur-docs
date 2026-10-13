@@ -1,0 +1,4586 @@
+{
+  "schema_version": "1.0.0",
+  "version": "8.1.3",
+  "date": "2026-10-13",
+  "type": "stable",
+  "summary": "Waldur 8.1.3 is a large release covering the backend, the frontend and the Helm and Docker Compose deployments. New features include passkey login with enforcement for privileged accounts, an in-portal changelog with security alerts, custom metrics with goals, offering merges, and provider-level user accounts with shared POSIX identities and per-project POSIX groups. Billing gains per-plan billing modes and a prepaid plan mode, and invoices are now emailed as PDFs. Matrix chat gets a large overhaul: end-to-end encrypted rooms and calls, a bot that joins every room, escrowed recovery keys, Waldur-issued call tokens, single sign-on, and deploy-time setup in Helm and Compose. Call management adds a round lifecycle, awarded resources, call export and import, and a proposal administrator role. OpenStack gains broad IPv6 support, and networks shared over RBAC by projects that Waldur does not manage now appear. Some changes need operator attention. The Azure integration and the legacy SLURM module are removed, and their resources are migrated or terminated. The built-in service desk becomes the default support backend, telemetry is now on by default with an opt-out, and limit change requests become an opt-in offering feature. Secret Constance settings are encrypted at rest. The Helm chart replaces its Bitnami subcharts with CloudPirates charts. The frontend continues its migration from Bootstrap/Metronic to Tailwind and Radix, and has many accessibility fixes.",
+  "entries": [
+    {
+      "type": "feature",
+      "category": "ui",
+      "title": "About us page and additional languages",
+      "description": "Previously, there was no configurable About us page, and Croatian, Macedonian and Albanian were not offered. Now an About us page can be configured and is linked from the footer, and the three languages are available.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add translation fields for the new languages.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "5ab37139f",
+        "a9dd1c95f5",
+        "8916fd220",
+        "bc81ca52a",
+        "c3f66692c7",
+        "919d5960cd",
+        "ae53f6c01b"
+      ],
+      "id": "8.1.3-1"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Administration menu reorganised into tabbed pages",
+      "description": "Previously, the administration menu had many separate entries. Now the System management, Marketplace, and Organizations and compliance menus are grouped into tabbed pages, the three role routes are one tabbed page, and clicking a parent tab opens its first child page. Support can read administration settings, and staff can delete users from the Users table.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "e87a44276d",
+        "96490c631a",
+        "a1912ef09e",
+        "37623e6fc8",
+        "77a130b0cd",
+        "9508141704",
+        "0ae25e6d2f",
+        "5ae0b1d72f",
+        "85d94ed011"
+      ],
+      "id": "8.1.3-2"
+    },
+    {
+      "type": "feature",
+      "category": "ai_assistant",
+      "title": "AI assistant discovery, offering metadata and header placement",
+      "description": "Previously, the AI assistant tools did not see offering access routes, and the anonymous chat KPIs were limited. Now offering access-route metadata is exposed to the tools, anonymous discovery has guidance and a validation scenario pack, and anonymous chat reports a clarification rate and a sortable severity rank. test_evaluation scores the assistant rather than the harness. The assistant is placed in the header and labelled for visitors.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "d15116ba5",
+        "d84898731",
+        "5dde26d32",
+        "508a8a1f6",
+        "d73f59bc0",
+        "636295f2b8",
+        "0b027b4055",
+        "b72be76759",
+        "4a6cb16cc4"
+      ],
+      "id": "8.1.3-3"
+    },
+    {
+      "type": "improvement",
+      "category": "support",
+      "title": "Built-in service desk and support workflow improvements",
+      "description": "Previously, the built-in helpdesk could not change issue status, and some support notifications never fired. Now the helpdesk can change issue status, staff are notified when a ticket arrives, and the helpdesk is notified when the caller comments. Authors can edit and delete their own comments, and resolved and canceled tickets no longer accept comments. Staff can open a support request with an opening message addressed to a user. Notification emails are threaded, and no update notification is sent when a ticket is created. Provider tickets and stats can be scoped to one helpdesk. The Service Desk client's credentials are used for direct JSM REST calls, Atlassian setup is guided, and duplicate Zammad SupportUser rows are handled.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.support"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "1da7c8cdb",
+        "6051ec29c",
+        "be2128642",
+        "c53be3023",
+        "e90d345bd",
+        "e01c33bd0",
+        "d770254c8",
+        "ba849a949",
+        "da0c8cb6a",
+        "07fa2f111",
+        "39400cde2",
+        "31e855401",
+        "1d21eb0dd",
+        "e83ce5b17",
+        "f4729ecc8",
+        "63bdfd3aaa",
+        "9ecd01a651",
+        "9c90d29c68",
+        "4326999ff5",
+        "f1d7c9c744",
+        "3bd24b3da4"
+      ],
+      "id": "8.1.3-4"
+    },
+    {
+      "type": "breaking",
+      "category": "support",
+      "title": "Built-in service desk is the default support backend",
+      "description": "Previously, deployments had to choose a support backend explicitly. Now the built-in service desk is the default in the backend and the Helm chart. Its defaults are seeded on init, and its ticket key prefix can be configured.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "helm"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "review",
+          "description": "Deployments that rely on an external support backend without setting it explicitly should confirm their support backend configuration.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "6861de10d",
+        "f49cbb1",
+        "1a49df826",
+        "124068184",
+        "0de6836ca",
+        "ce78ff57a"
+      ],
+      "id": "8.1.3-5"
+    },
+    {
+      "type": "security",
+      "category": "infrastructure",
+      "title": "Bump multidict to 6.9.1 for GHSA-54p9-h82j-f925",
+      "description": "Waldur shipped a multidict version affected by advisory GHSA-54p9-h82j-f925. The dependency is now bumped to 6.9.1.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "Waldur releases that ship multidict older than 6.9.1",
+        "exploitability": "Not described in the commit data.",
+        "mitigation": "Upgrade to Waldur 8.1.3.",
+        "ghsa": "GHSA-54p9-h82j-f925"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "1e3ec882e"
+      ],
+      "id": "8.1.3-6"
+    },
+    {
+      "type": "feature",
+      "category": "proposal",
+      "title": "Call configuration: field config, notification rules and order authors",
+      "description": "Previously, a call's Project details fields and notifications were fixed. Now each call configures its Project details fields and has notification rules for workflow steps. Call managers can see who evaluates each step and can flag a panel chair. Call-allocated orders and support tickets are attributed to a real, reachable person the call chooses, and proposals collect a science domain instead of an OECD code. The UI warns when a call has no role mappings and lets call managers set applicant eligibility.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.proposal"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add call field configuration, workflow notification rules, the order author setting, and the science domain field.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "6ef6925ed",
+        "05fa7a2fd",
+        "865f4e4ad",
+        "b93831d00",
+        "59f49d9be",
+        "27631db83",
+        "d486c540e",
+        "ec14a8e19",
+        "c54b89e958",
+        "905fd1d50d",
+        "b4d9f14255",
+        "61c9df4c10",
+        "0dd5473b69"
+      ],
+      "id": "8.1.3-7"
+    },
+    {
+      "type": "security",
+      "category": "auth",
+      "title": "Close several authorization gaps",
+      "description": "Several checks were missing. Users could change the state of their own offering users. Any caller could create support requests on someone else's behalf. Ticket access was not limited to the project or organization the ticket was raised in. Resources could use another organization's private service settings. Offering secret options could be read without the permission needed to write them. Each of these is now checked: on-behalf requests are limited to staff and support, tickets are scoped to where they were raised, private service settings of other organizations are rejected, and reading secret options requires the write permission.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "Waldur releases before 8.1.3",
+        "exploitability": "Requires an authenticated user.",
+        "mitigation": "Upgrade to Waldur 8.1.3."
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "138b9a9a4",
+        "472998295",
+        "9ad3976dc",
+        "315544b21",
+        "0f0de06e4"
+      ],
+      "id": "8.1.3-8"
+    },
+    {
+      "type": "feature",
+      "category": "invoices",
+      "title": "Credit ledger, live credit balance and cost policy ETA",
+      "description": "Previously, credit drawdown was inferred from other data. Now drawdown is recorded in a ledger per project and split by kind, and a backfill command fills in earlier periods. Credit-funded cost policies are gated on the live credit balance. A cost policy reports when it will fire (eta_days) and the cost it evaluates, and project credit reports show the cost the credit will actually cover. The dashboard reads these values from the server instead of estimating them, and credit reports are shown for every project that has a credit.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add ledger fields to credit transactions.",
+          "automatic": true
+        },
+        {
+          "type": "review",
+          "description": "Run backfill_credit_ledger to populate the ledger for earlier periods if needed.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "37733308c",
+        "fc6306b4f",
+        "70aad1ef1",
+        "8703041be",
+        "b66d892db",
+        "777da7de7",
+        "aed913ff4",
+        "d3ebb612f",
+        "d436db0b4",
+        "e8412c2bb",
+        "72afc9e9c4",
+        "6720358419",
+        "4bd2507e19",
+        "a6cfaad1c0",
+        "773f526d88",
+        "1afdeecf31"
+      ],
+      "id": "8.1.3-9"
+    },
+    {
+      "type": "feature",
+      "category": "reporting",
+      "title": "Custom metrics with roll-ups, goals and per-resource breakdowns",
+      "description": "Previously, offerings had only an experimental KPI definition model. Now a marketplace_metrics app provides a metric catalogue, ingestion (including OTLP), roll-ups, retention and goals, and the earlier KPI models are deleted. Metrics can be broken down by resource, and a period so far is compared with the same days of the previous period. Offerings and projects get metric cards, breakdown dialogs and goal setting in the UI.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "highlight": true,
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.marketplace_metrics"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations create the metrics tables and delete the earlier KPI models.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "a0866561e",
+        "0d200d2fa",
+        "702cffdf1",
+        "003537f5d",
+        "6c4f2fe584",
+        "ea8a8b3227",
+        "d9c66c47b9",
+        "7f9df4acb8",
+        "f3483ba536"
+      ],
+      "id": "8.1.3-10"
+    },
+    {
+      "type": "feature",
+      "category": "notifications",
+      "title": "Dedicated invitation emails and invitation fixes",
+      "description": "Previously, calls and proposals used generic invitation emails, and duplicate-role checks gave no detail. Now calls and proposals have their own invitation emails. The invitation duplicate check reports the user's existing roles, and the add-user and invitation flows show duplicate-role feedback. The submitted-request email is skipped for invitations that approve automatically, a notification drop that silences an email is logged, and orphaned notification rows are reported and pruned.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "A migration seeds the call and proposal invitation notifications.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "593b34783",
+        "82e7ec46d",
+        "cc36892ae",
+        "8c010daef",
+        "1e9641855",
+        "6e077e9267",
+        "790631543a"
+      ],
+      "id": "8.1.3-11"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Dependency upgrades for scanner findings",
+      "description": "Several dependencies had known vulnerabilities flagged by scanners. Django is bumped to 6.0.8, djangorestframework to 3.18.0, sqlparse to 0.6.0, and urllib3, oauthlib, pyjwt, anyio and soupsieve to fixed versions. The frontend bumps vulnerable transitive dependencies flagged by OSV. pycountry is replaced with a vendored ISO 3166-1 table, django-dbtemplates is removed, and html2text is replaced with markdownify.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "08d04d09e",
+        "8a474ddcb",
+        "c2658f6b7",
+        "81928888c",
+        "b8c6cb0f4",
+        "d962ae73f",
+        "f51836e04",
+        "412106ec2",
+        "d5deaff84",
+        "f106ca771f",
+        "57776ee46e",
+        "257dc06019",
+        "d064b2f361",
+        "684814619c",
+        "29d870b901"
+      ],
+      "id": "8.1.3-12"
+    },
+    {
+      "type": "feature",
+      "category": "notifications",
+      "title": "Deploy-time Matrix setup in Helm and Compose",
+      "description": "Previously, the Matrix appservice was registered by hand. Now init_matrix_settings seeds the Constance settings from the environment, and register_matrix_appservice registers the appservice on Tuwunel from the command line. Helm and Compose run both at deploy time, and a redeploy can rotate the tokens. Owners can create Matrix rooms and existing projects can be backfilled. Diagnostics report failed exports and appservice errors, and support can read them. Helm adds opt-in alert rules and an exporter ServiceMonitor, and Tuwunel is bumped to v1.9.3.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend",
+        "helm",
+        "docker"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.matrix_chat"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "config",
+          "description": "Helm and Compose now register the Matrix appservice and seed its settings at deploy time.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "07e6863c9",
+        "6017a153c",
+        "809455380",
+        "9fc42df0d",
+        "526bb1c25",
+        "0baa4f52a",
+        "2ab36ba2a",
+        "66b6356bd",
+        "1bd4a98a2",
+        "f3bb75b66",
+        "206f423ad",
+        "8fc97966d",
+        "c773189f6",
+        "c303a7b5f",
+        "fef5b567e",
+        "943eb2d8c",
+        "d28d53d",
+        "4cd675b",
+        "2e481ba",
+        "dce3072",
+        "bfc0b96",
+        "cb4ba27",
+        "d51d2f1",
+        "bb1cacb",
+        "990c06a",
+        "8d020a7",
+        "2c37392",
+        "3c780053bc",
+        "be037d64b5"
+      ],
+      "id": "8.1.3-13"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Docker Compose configuration improvements",
+      "description": "Previously, Compose had no settings for outgoing email or Celery concurrency, and the language list was overridden on every boot. Now outgoing email is configurable, Celery worker concurrency can be set from the environment, and languages.yaml is mounted so operators can edit the list. The Celery healthcheck closes its AMQP connection, docker-logger is bumped to v1.4.1, and the database cache table is capped explicitly. The homeport nginx and gunicorn listen on IPv6 as well as IPv4.",
+      "scope": "infra",
+      "component": [
+        "docker"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "e6339f8",
+        "134d805",
+        "43a189c",
+        "8e291621a",
+        "a807071",
+        "966f6f4",
+        "41e91a7",
+        "dc96afeae",
+        "c522bb5a0d"
+      ],
+      "id": "8.1.3-14"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Encrypt secret Constance settings and offering secret options at rest",
+      "description": "Previously, secret Constance settings and offering secret options were stored in plain text. Now both are encrypted at rest. reencrypt_fields finds the columns it rotates from their field class, and support can read configuration settings with secret values redacted.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations encrypt existing secret Constance settings and offering secret options, and scrub secret options from reversion history.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "cc59e590b",
+        "11b3c937b",
+        "92b06f59a",
+        "40e417ce7",
+        "bcdc45219",
+        "0ae25e6d2f"
+      ],
+      "id": "8.1.3-15"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Faster resource and order lists",
+      "description": "Previously, resource and order list rows were loaded one at a time. Now they are loaded per page. Paginated resource querysets also get a total ordering, so pages are stable.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "1ae175bc5",
+        "b8243c552",
+        "222b4c6f3"
+      ],
+      "id": "8.1.3-16"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Fractional limits and component precision",
+      "description": "Previously, fractional limits could lose precision in billing and in the site agent. Now each component has a precision setting that gates fractional limits, and billing keeps fractional values. Total-period billing coerces them to Decimal, and set_limits values are clamped to the offering bounds. A warning is shown when a fractional limit will not survive the site agent, and the UI uses the component's precision for input.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "A migration adds OfferingComponent.limit_precision.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "c3d319fc9",
+        "6fb965653",
+        "595327dac",
+        "e666a47d9",
+        "51ca9384e",
+        "8c07cb285",
+        "03cd0247b2",
+        "183b6e4fa0"
+      ],
+      "id": "8.1.3-17"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Frontend migration to Tailwind and Radix",
+      "description": "Previously, the frontend used Bootstrap and Metronic components. Now dropdowns, menus, tabs, the sidebar, the drawer, accordions, tooltips, popovers, badges, buttons, toasts, selects, pagination, progress bars, checkboxes and the date picker (a react-day-picker calendar replacing flatpickr) use shared Tailwind/Radix components from the waldur-ui package. Design tokens and Storybook coverage are added. The release includes many follow-up fixes for menu positioning, focus rings, dark mode and dialog layout.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "95eb6cce7c",
+        "0feb9dbe47",
+        "a126a125d4",
+        "c4f55ab4fe",
+        "de2cd1bdc1",
+        "1406f020a0",
+        "d4db9f36c5",
+        "5bbb24101a",
+        "9178786d3a",
+        "bb6dbc07de",
+        "16dc534d15",
+        "98371faa8b",
+        "0359be0f80",
+        "1fe3c89e84",
+        "285dae8635",
+        "f4c14faa1c",
+        "f50f15bf2d",
+        "d5a99f005b",
+        "a55b556545",
+        "ad27282df2",
+        "e1136eeb9d",
+        "594325820d",
+        "4d77850356",
+        "1a8ee6aaf1",
+        "4ca280fea6"
+      ],
+      "id": "8.1.3-18"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Grace-period pausing and policy reconciliation",
+      "description": "Previously, grace-period resources were not paused from the first day, and could be resumed. Now they are paused on the first day and stay paused. Idempotent immediate actions are reconciled on policies that have already fired, and cost policy evaluation is skipped on saves that only change last_sync.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "A migration adds Resource.paused_by_grace_period.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "af9d33e80",
+        "5a7c83543",
+        "e9b26045f",
+        "625c47f6b",
+        "84f60663d"
+      ],
+      "id": "8.1.3-19"
+    },
+    {
+      "type": "breaking",
+      "category": "infrastructure",
+      "title": "Helm chart replaces Bitnami subcharts with CloudPirates charts",
+      "description": "Previously, the chart bundled Bitnami subcharts for PostgreSQL, RabbitMQ and MinIO. Now it uses CloudPirates charts built on official images, and the reference values and database docs are updated to match. The chart also drops the legacy networking.k8s.io/v1beta1 Ingress fallback and the unused ArgoCD sync job.",
+      "scope": "infra",
+      "component": [
+        "helm"
+      ],
+      "impact": {
+        "risk": "high"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration_plan",
+          "description": "Review the updated PostgreSQL, RabbitMQ and MinIO values and the migration docs before upgrading Helm deployments that use the bundled subcharts.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "a0a817c",
+        "ae8a7d9",
+        "04f77cd",
+        "da275ab"
+      ],
+      "id": "8.1.3-20"
+    },
+    {
+      "type": "feature",
+      "category": "infrastructure",
+      "title": "Helm Gateway API support and deployment hardening",
+      "description": "Previously, the chart supported only Ingress. Now it supports the Gateway API alongside Ingress. API and worker pods wait for migrations to finish, the whitelabeling job waits for the schema, and Celery worker probes close their AMQP connection. The chart also adds generic Constance and feature-flag overrides, waldur.customRoles, SMTP credential delivery, a DISABLE_SERVER_SIDE_CURSORS toggle, IPv4/IPv6/dual-stack services, RabbitMQ on IPv6-only clusters, three clustered RabbitMQ replicas, and an HTTPS redirect only when the deployment is served over HTTPS.",
+      "scope": "infra",
+      "component": [
+        "helm"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "ddc32df",
+        "a5e32bc",
+        "9e1b30d",
+        "30b3245",
+        "c0e8ea2",
+        "9b2d513",
+        "2d5100c",
+        "beeca16",
+        "6a2f566",
+        "acda004",
+        "33b6c5d",
+        "a56c6b1",
+        "de58082",
+        "70ceb26",
+        "d728971"
+      ],
+      "id": "8.1.3-21"
+    },
+    {
+      "type": "feature",
+      "category": "infrastructure",
+      "title": "In-portal changelog with security alerts",
+      "description": "Previously, upgrade information was only available outside Waldur. Now Waldur has a context-aware changelog. Staff can list releases, filter and sort entries, and see an upgrade report with announcement and command helpers. Deployments running release candidates are offered newer ones, and each change appears once across an RC cycle. The frontend adds a security alert banner, a footer badge and an admin changelog page.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "highlight": true,
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "A migration adds the changelog tables.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "ea0509347",
+        "c11227beb",
+        "340c18ee3",
+        "adbb3665b",
+        "2349c6e1a",
+        "f05380d89",
+        "bf09cec95c"
+      ],
+      "id": "8.1.3-22"
+    },
+    {
+      "type": "feature",
+      "category": "invoices",
+      "title": "Invoices attached to notification emails as PDFs",
+      "description": "Previously, invoice notification emails did not include the invoice. Now the invoice is rendered to PDF with Typst and attached to the email, and volume discounts are printed under the item they reduce.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "a7b676472",
+        "f80d19ce9"
+      ],
+      "id": "8.1.3-23"
+    },
+    {
+      "type": "feature",
+      "category": "openstack",
+      "title": "IPv6 support across OpenStack networking",
+      "description": "Previously, OpenStack networking in Waldur mostly assumed IPv4. Now subnets can be created with SLAAC or DHCPv6 address modes, and IPv6 tenants get an IPv6 default subnet and IPv6 default security group rules. Routers are attached to IPv6 subnets by subnet, and every subnet of a dual-stack network is attached. IPv6 default routes are reported, and IPv6 load balancer VIPs and allowed address pairs are accepted. Floating IPs are refused on IPv6-only external networks, IPv6 brackets are kept in access and console URLs, and ExternalSubnet.cidr is wide enough for an IPv6 prefix.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "highlight": true,
+      "relevant_when": {
+        "plugins": [
+          "waldur_openstack"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add subnet IPv6 modes, widen ExternalSubnet.cidr, and allow any address family for load balancer VIPs.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "ccdbd6f08",
+        "dfbe961b7",
+        "2e30bc42b",
+        "d9ff80620",
+        "608146ea5",
+        "375b28ddd",
+        "52c3f56ef",
+        "d54c7a1e2",
+        "66ee86dd1",
+        "06d087105",
+        "0d43aab5e",
+        "536d1befa",
+        "fa60b8c8b",
+        "005d2617f",
+        "e2dbaad42b"
+      ],
+      "id": "8.1.3-24"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Keyboard and screen reader accessibility",
+      "description": "Previously, many controls could only be used with a mouse and some had no accessible name. Now header tab submenus, the global search, the Add filter menu, the invite role and project pickers, and the row menu's Show all can be used from the keyboard. Every focusable element has the brand focus ring. Icon tooltips are reachable with the keyboard, and quota bars, the footer health button and the sidebar logo have accessible names. axe-core WCAG 2.2 AA findings are fixed.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "136c8bea25",
+        "aebd3a184d",
+        "8057c7e44a",
+        "0de6595df5",
+        "e334e1086c",
+        "7e6be55441",
+        "e6573d9359",
+        "0c4a92c9fe",
+        "873a80fc33",
+        "aad64f9ef9",
+        "bcfcd3da29",
+        "cf1f5c3099",
+        "8d7a01136a",
+        "672f851af4"
+      ],
+      "id": "8.1.3-25"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Logging, Sentry and Celery robustness",
+      "description": "Previously, Sentry log scrubbing could break audit event inserts, background task locks were not released after completion, and the image config replaced LOGGING wholesale. Now scrubbing no longer affects event inserts, locks are released, and the image patches LOGGING. Credential query parameters are masked in request logs. Celery exception results are converted to strings before they are written to error_message. State transitions save only the fields they change. Celery is upgraded to 5.6.3 and kombu to 5.6.2, and control-plane queues are declared exclusive for RabbitMQ 4.3.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "docker"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "6e6116f1f",
+        "98f94c742",
+        "864a66781",
+        "4d92c2ec1",
+        "cbb366dac",
+        "5b44a2704",
+        "30d59f2fc",
+        "cfb9b1323",
+        "f97201381",
+        "a45f922",
+        "5f86f70"
+      ],
+      "id": "8.1.3-26"
+    },
+    {
+      "type": "improvement",
+      "category": "auth",
+      "title": "Login and OIDC fixes",
+      "description": "Several login paths misbehaved. Fixes in this release: The session is renewed when a login records its authentication method, and login is authenticated by credentials rather than by the session cookie. OIDC users are looked up by email ignoring case, and list-valued lookup claims are unwrapped instead of stored as their repr. Email patterns are matched against the whole address. registration_method is updated on OAuth login. OIDC bearer introspection no longer depends on a DRF token existing, and its registration method is configurable. api-auth/default/init/ starts login with the default IdP. SAML_ATTRIBUTE_MAPPING accepts list values.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "A migration unwraps OIDC lookup values that were stored as a list repr.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "bb0791491",
+        "3aeb4da03",
+        "5beed8ce7",
+        "b957fcbcc",
+        "7a8fd3cf7",
+        "881d25d8f",
+        "0d6fc6b1c",
+        "d19caca02",
+        "207bb930d",
+        "5af3817a5",
+        "aac503558",
+        "3fcc190a6",
+        "c8bb387fd",
+        "df9ee6e15",
+        "64975449ed",
+        "f43c3b4857",
+        "dc403a2e5e"
+      ],
+      "id": "8.1.3-27"
+    },
+    {
+      "type": "feature",
+      "category": "notifications",
+      "title": "Matrix chat with end-to-end encryption and a room bot",
+      "description": "Previously, Matrix rooms were unencrypted and Waldur posted into them directly. Now every room is created encrypted. A bot runs as an encrypted member of every room, posts Waldur's messages and exports encrypted room history. Its crypto store is kept in Postgres. Recovery keys are escrowed behind a per-user setup lease, a key the user already has can be escrowed, a room's earlier keys are written into new members' key backups, and an escrowed key that no longer decrypts is treated as no key. The chat drawer supports encryption, encrypted attachments, message editing, deletion and replies, and shows calls in the timeline.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend",
+        "helm",
+        "docker"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "highlight": true,
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.matrix_chat"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add the bot identity and outbox, recovery keys, crypto leases, member history backfill and history export data keys.",
+          "automatic": true
+        },
+        {
+          "type": "config",
+          "description": "Helm and Compose deploy the Matrix bot and allow WebAssembly in the homeport CSP for chat encryption.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "65795529c",
+        "029104df4",
+        "e345f3822",
+        "70aac5fb0",
+        "52dce69c9",
+        "62e95aa0f",
+        "7f8d55795",
+        "2e557243b",
+        "1341d65dc",
+        "2d9c2fd6c",
+        "ba83e96ae",
+        "0356f6b4cc",
+        "b6eaaac7da",
+        "5516bddc48",
+        "4c0579a2f4",
+        "955523891a",
+        "0d4eb6902c",
+        "6572d2d",
+        "dacf58a",
+        "da3a911",
+        "89050cc",
+        "b9176d2"
+      ],
+      "id": "8.1.3-28"
+    },
+    {
+      "type": "feature",
+      "category": "notifications",
+      "title": "Matrix single sign-on and short-lived web sessions",
+      "description": "Previously, Waldur handed Matrix tokens and derived passwords to users. Now the chat drawer runs on short-lived Matrix web sessions, and passwords are generated only when a user asks for one. Matrix clients can sign in through homeserver single sign-on with matching IDs. Waldur refuses to take over Matrix accounts it did not create. Every session and room membership ends when access ends, and device and token lifetimes are bounded. The external login setting is renamed.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend",
+        "helm",
+        "docker"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.matrix_chat"
+        ],
+        "feature_flags": [],
+        "settings": [
+          "MATRIX_EXTERNAL_LOGIN_METHOD"
+        ]
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations remove the stored Matrix access token and rename the external login setting.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "cbb31e797",
+        "223114192",
+        "cd8d3caa2",
+        "00955e741",
+        "bdd0c0d30",
+        "1e8f65d74",
+        "204b59856",
+        "5b471c144",
+        "c42d13173",
+        "2f437dbf4b",
+        "7b2d03440a",
+        "cc0dc9d631",
+        "e8c28df",
+        "37ecbd3",
+        "0b74a3d",
+        "0ac95ae",
+        "8047fb5"
+      ],
+      "id": "8.1.3-29"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Migration squash repairs and faster fresh migrate",
+      "description": "Previously, regenerated migration squashes dropped data operations, and a fresh migrate was slow. Now squashes are regenerated as state diffs, keep their data operations, and depend only on what their replaced range depends on. Databases that skipped those data operations are repaired by a migration.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "A migration re-runs data migrations that earlier squashes skipped.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "80437de2c",
+        "0676fed33",
+        "99f0a40fa",
+        "c37b18922",
+        "6f417603f"
+      ],
+      "id": "8.1.3-30"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Miscellaneous marketplace and resource fixes",
+      "description": "Assorted fixes. A restore that is refused returns the resource to the terminated state. Course-account API calls have a timeout and report the real error, and course accounts serialize a null user and prefer the offering backend_id. The marketplace runtime states endpoint requires a scope. Backend resource lists are scoped by role instead of crashing. Offering import normalises nulls and rejects invalid input. Expired projects are deleted asynchronously, and history requests with out-of-range timestamps return 400. A stored zero quota limit is reported as zero rather than unlimited. Member sync statuses are written only when they change, and FreeIPA no longer returns a 500 when a username is taken.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "24c3f1bee",
+        "165cc550c",
+        "c3accde92",
+        "5c50f57c9",
+        "e14873282",
+        "e5e1f2b7b",
+        "295693905",
+        "a60c0a011",
+        "d4628ffdc",
+        "03ac6aef5",
+        "5cbf5bc1e",
+        "6a10df0ea",
+        "0dce1d2cb",
+        "c2ab52cf9",
+        "847706d15",
+        "b9e8f767d",
+        "51458f732",
+        "72989ddd6",
+        "d4e652d91",
+        "2096efdf9",
+        "1e7b5a92e",
+        "0c2121b87"
+      ],
+      "id": "8.1.3-31"
+    },
+    {
+      "type": "feature",
+      "category": "marketplace",
+      "title": "Offering merge engine with a staff wizard",
+      "description": "Previously, duplicate offerings could not be merged. Now staff can merge offerings in a wizard. It previews the affected rows grouped by area, runs the merge in the background, applies an invoice snapshot policy, verifies the result and supports undo. Duplicate per-tenant OpenStack offerings are resolved with the same engine.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "highlight": true,
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add the offering merge records and their progress fields.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "3b53d026f",
+        "66d2b5c6e",
+        "05458cf40",
+        "051a47cd9",
+        "ef19a5362",
+        "eceab05f35",
+        "4d57dfb10e"
+      ],
+      "id": "8.1.3-32"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Offering pages and order form usability",
+      "description": "Previously, the offering page did not compare plans and the order form lost state in some cases. Now plans can be compared side by side and unpriced plans are flagged. The order form follows an offering switched inside it, keeps the offering's default limits across a reinitialisation, and recovers from a rejected order. Requested resource amounts show their measured units, and the Orders table shows the exchange between provider and customer. Pending orders can be previewed in the drawer, and bulk approve and reject are removed from it. Accounting components are shown for every offering type.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "55d10d1a60",
+        "a00bc3e5f0",
+        "fa68a2df7b",
+        "a959cd956f",
+        "e7e9aa6469",
+        "a56508f3cd",
+        "52c622193f",
+        "a53be99220",
+        "d598c3420c",
+        "f820411595",
+        "5cbabe0fa9",
+        "0dad39611a",
+        "91efe86813",
+        "03e0550439",
+        "7e29097018",
+        "ecaa76ead0"
+      ],
+      "id": "8.1.3-33"
+    },
+    {
+      "type": "improvement",
+      "category": "openstack",
+      "title": "OpenStack instance, port and floating IP fixes",
+      "description": "Several OpenStack operations misbehaved. Fixes in this release: Nova instance metadata is supported and imported when a resource is linked. Running instances can be terminated without force destroy, and backups and snapshots are cleaned up automatically. Instance delete polls retry on HTTP 429. Floating addresses are kept on attach and detach. Security groups are accepted by URL on port create, and the instances attached to a security group are shown. Neutron's allocation pool is kept, update_port_ip is refused where Neutron derives the address, and the system volume stays bootable during creation. Resources missing at the backend are no longer re-logged on every pull, and volumes without a type return a null type_name.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_openstack"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add instance metadata, the missing-at-backend timestamp and the subnet allocation pool default.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "5011e328e",
+        "d95115e9d",
+        "d8c25acaa",
+        "72f319ecfa",
+        "f2fbc8f82",
+        "761425df3",
+        "e57604cc6",
+        "a77a23f87",
+        "65258201f",
+        "7951a616ab",
+        "6944506fb",
+        "4dffd91d6",
+        "555616565",
+        "8a416f76b",
+        "e1bbc21c5",
+        "a2a324858",
+        "5b48a876a",
+        "6b456f60a",
+        "4cd463756",
+        "ee3e853f4",
+        "83af8f628",
+        "c6c20df2e",
+        "0bc814e86",
+        "a1f645d44",
+        "52f6a9c81"
+      ],
+      "id": "8.1.3-34"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Order notifications and order attribution",
+      "description": "Previously, new-order emails went to a fixed audience as soon as an order was placed. Now configured emails and provider roles are notified about new orders, the email spells the order out, and it is sent once the consumer has approved the order. Approvers and requesters are emailed about resource end date change requests. Automatic termination orders are attributed to the author of the creation order, and expired resources are terminated even if the person who requested the end date has lost access.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "ce351ca32",
+        "dfa355b78",
+        "9badcfd35",
+        "698e9db1f",
+        "7a0aa88f9",
+        "dd0fa9644",
+        "a33cfab233",
+        "1ad9635757"
+      ],
+      "id": "8.1.3-35"
+    },
+    {
+      "type": "feature",
+      "category": "reporting",
+      "title": "Organization reporting and dashboard improvements",
+      "description": "Previously, reporting views were staff-only and dashboards showed limited information. Now organization owners have reporting views behind the show_organisation_reporting feature flag, and a report shows projects, resources and cost by affiliated organization. Customer stats can include terminated resources, and for_current_month=false is read as false. Dashboard endpoints are added for users, call managers and reviewers, and the user-action queue is folded into the dashboard feed. Quota analytics can be filtered by organization, and the reporting overview tiles show growth for a period.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "fb0b89012",
+        "6030735cf",
+        "43867867b",
+        "b91ddd9d9",
+        "843462dec",
+        "dd58bddc9",
+        "6c9a2edf9",
+        "0f762abf1",
+        "ae900b3a95",
+        "af544f3e93",
+        "c7e7f1de6c",
+        "2a358e690d",
+        "0f8f2d2f84"
+      ],
+      "id": "8.1.3-36"
+    },
+    {
+      "type": "feature",
+      "category": "identity",
+      "title": "Organization roles from OIDC claims",
+      "description": "Previously, auto-provisioning rules could not assign organization roles from claims. Now rules can, with SCIM-style reconciliation. Rule projects are provisioned for existing accounts at login, and the project name template can be edited. Claims that no identity provider passes through are reported. Only staff can create rules. The UI shows where each grant came from.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_autoprovisioning"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add rule claims, the customer role, and UserRole.source.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "a78cc6a0e",
+        "258dbee46",
+        "482f4a514",
+        "35800bbdb",
+        "dce97bddf",
+        "ea03dc4b86",
+        "d22844939c"
+      ],
+      "id": "8.1.3-37"
+    },
+    {
+      "type": "feature",
+      "category": "auth",
+      "title": "Passkey login and enforcement for privileged accounts",
+      "description": "Previously, Waldur had no passkey support. Now users can register, rename and revoke passkeys and sign in with them. Privileged accounts can be required to enrol a passkey: they are held on an enrolment page and returned to the page they wanted afterwards. Paths that gave a privileged session without a passkey are closed, and the Django admin asks for a passkey step. Staff can revoke another user's passkeys if they give a reason, and a command reports privileged personal access tokens when enforcement is rolled out. Both Helm and Compose can switch passkeys and enforcement on.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend",
+        "helm",
+        "docker"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "highlight": true,
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add the passkey and passkey-verified session tables.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "00ca22b09",
+        "1ad9ee300",
+        "e11a5b633",
+        "675e6b1a9",
+        "1e98a515a",
+        "c09ecf640",
+        "fc6a2ed55",
+        "edc17a164",
+        "c3b9ac7594",
+        "f86f5d5221",
+        "aa8a2d862f",
+        "9d4e46507b",
+        "b60daa3",
+        "f08cd52",
+        "ee581c4",
+        "5031a75"
+      ],
+      "id": "8.1.3-38"
+    },
+    {
+      "type": "feature",
+      "category": "marketplace",
+      "title": "Per-key management of resource API keys",
+      "description": "Previously, resource API keys could not be managed individually. Now each key can be requested, assigned, capped, paused, resumed and deleted. The key's assignee stays visible when per-key management is off, and provider scopes are accepted when managing keys. The UI adds key assignees, per-key limits, usage and models.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add resource API key management and backfill existing keys.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "cb9ad8bd5",
+        "29db11487",
+        "ace1052f2",
+        "c91150b86",
+        "f4c2bd5060"
+      ],
+      "id": "8.1.3-39"
+    },
+    {
+      "type": "feature",
+      "category": "invoices",
+      "title": "Per-plan billing modes and a prepaid plan mode",
+      "description": "Previously, billing followed component settings, so one OpenStack offering could not offer both a limit-based plan and a usage-based plan. Now each plan has a billing mode, including a new prepaid mode, and billing follows the plan. The UI shows whether a plan's billing period affects invoicing, resolves component units for each billing mode, and explains what happens when a resource switches to a plan with a different mode.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "highlight": true,
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add the plan billing mode and set it on existing plans.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "6e1ea8b5d",
+        "e0257f015",
+        "68b6bee53",
+        "1ea8a9a08",
+        "4b3c65a61",
+        "b076c7dffe",
+        "01ed1024f9"
+      ],
+      "id": "8.1.3-40"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Plan and pricing behaviour fixes",
+      "description": "Several plan and pricing behaviours were wrong. Fixes in this release: One-time fees are invoiced at the quantity the plan names. Old limits are priced over the resource's real end date. Plans and pricing are refused on offerings that are not charged, and the plan guard is limited to child offerings. Built-in and child-offering components are protected. A plan component price of zero is allowed for the next month, and plan component price updates that changed nothing are no longer logged. A missing usage policy is added to component usage reporting.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add the one-time plan component amount, the order's old cost and the missing usage policy, and clean up no-op price logs.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "c782ad8c1",
+        "7e32d189b",
+        "75d94a6f6",
+        "9677ce59b",
+        "64281dca0",
+        "a3fdefd2b",
+        "605d38b19",
+        "fd3d5e024",
+        "0c2121b87",
+        "a926fa980",
+        "dd4cd07ee",
+        "c1b19e5ade",
+        "d4ac0f3c1c",
+        "71d427b9c3"
+      ],
+      "id": "8.1.3-41"
+    },
+    {
+      "type": "improvement",
+      "category": "proposal",
+      "title": "Proposal access for support and organization owners",
+      "description": "Previously, support users could not read call-management data and organization owners could not see their organization's protected calls. Now both can. Protected call writes are gated on UPDATE_CALL, and the call edit controls are disabled for users without it.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.proposal"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "fc57d613f",
+        "2d6cc4e9d",
+        "c7629b582",
+        "27199bd50d"
+      ],
+      "id": "8.1.3-42"
+    },
+    {
+      "type": "feature",
+      "category": "proposal",
+      "title": "Proposal administrator role and team rules after submission",
+      "description": "Previously, proposals had no administrator role and their team could change at any time. Now there is a proposal administrator role and every proposal must have a proposal manager. The team is frozen after submission, each change after submission is logged as one event, and proposal documents are locked once the proposal is submitted. Each workflow step can pick which roles it notifies.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.proposal"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "A migration adds the proposal administrator role and the notified roles per step.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "8f9e53067",
+        "89906bf62",
+        "94636a55c",
+        "32b4aadb82"
+      ],
+      "id": "8.1.3-43"
+    },
+    {
+      "type": "feature",
+      "category": "marketplace",
+      "title": "Provider-level user accounts, POSIX identities and project groups",
+      "description": "Previously, user accounts and POSIX IDs were managed per offering. Now a service provider can share one account and one POSIX identity per user across its offerings. Offerings can inherit account settings from the provider, and a preview shows what those settings produce. Anonymized usernames are derived from the POSIX uid, and a member who leaves and is granted access again gets the same account name back. Providers can allocate one POSIX group per project, and a STOMP event is published when such a group changes. The UI adds provider account management, a link from offering users to their provider accounts, and project POSIX group views.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "highlight": true,
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add POSIX identity principals, service provider accounts and provider project groups, and switch anonymized usernames to the uid scheme.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "73df8f4a1",
+        "16f88f577",
+        "3cd57c902",
+        "0e951c08b",
+        "823ba1183",
+        "64b6cf940",
+        "3b9b95aef",
+        "ce8f14dc9",
+        "6847485b2",
+        "91df3f457",
+        "721a4b892",
+        "9baed8935c",
+        "541290c020",
+        "c46b9581f4",
+        "0d2d5a3e57",
+        "c5145ccde8"
+      ],
+      "id": "8.1.3-44"
+    },
+    {
+      "type": "improvement",
+      "category": "notifications",
+      "title": "Pub/sub events and consumer visibility",
+      "description": "Previously, call and proposal state changes emitted no pub/sub events. Now they do, and order, resource and account STOMP events are deferred until the transaction commits. Event consumers record how and by what right they were registered, and only the event groups a deployment can emit are advertised. The admin UI shows event consumers, unified consumer queues and each site agent's queue and connection state, and marks the legacy event subscriptions page as deprecated.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add event consumer attribution and split the OpenStack resource event groups.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "fa63d6c3a",
+        "5b3437636",
+        "b8aaf5586",
+        "83c59f188",
+        "de929d89b",
+        "9fc5ac256",
+        "a438a0d484",
+        "d9687feeaf",
+        "98e310d7b3",
+        "1b8f2591c6",
+        "1be5b5df02",
+        "ffe6698f47"
+      ],
+      "id": "8.1.3-45"
+    },
+    {
+      "type": "breaking",
+      "category": "proposal",
+      "title": "Remove proposal duration fields",
+      "description": "Previously, applicants entered Proposal.duration_in_days, and proposals and reviews had project_duration fields. Now these fields are removed. The project's duration is derived instead, and prepaid subscriptions are capped by the call's fixed duration.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.proposal"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations remove Proposal.duration_in_days, Proposal.project_duration and Review.comment_project_duration.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "6e01cc793",
+        "b100d8f78",
+        "d3d84db72",
+        "e54b29fde",
+        "3a5eed19b9"
+      ],
+      "id": "8.1.3-46"
+    },
+    {
+      "type": "breaking",
+      "category": "marketplace",
+      "title": "Remove the Azure integration and hand Azure VMs to the site agent",
+      "description": "Previously, Waldur shipped an Azure plugin with VM and SQL Server offerings. Now the Azure integration and its UI are removed. Existing Azure VMs are handed over to the site agent, the Azure tables are dropped, and the retired Azure SQL Server offering is deleted.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "high"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_azure",
+          "waldur_mastermind.marketplace_azure"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations hand Azure VMs over to the site agent, drop the Azure tables and delete Azure SQL Server data.",
+          "automatic": true
+        },
+        {
+          "type": "review",
+          "description": "Deployments using Azure offerings need to manage those VMs through the site agent after upgrading.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "c86b33886",
+        "cdf4f703a",
+        "7a67431302",
+        "67f1659c57"
+      ],
+      "id": "8.1.3-47"
+    },
+    {
+      "type": "breaking",
+      "category": "slurm",
+      "title": "Remove the legacy SLURM module",
+      "description": "Previously, the old waldur_slurm and marketplace_slurm modules were still shipped. Now they are removed. Migrations clear SLURM resource scopes, drop the SLURM tables, archive SLURM offerings and terminate their resources. The Helm chart drops the related configuration.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "helm"
+      ],
+      "impact": {
+        "risk": "high"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_slurm",
+          "waldur_mastermind.marketplace_slurm"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations archive legacy SLURM offerings, terminate their resources and drop the SLURM tables.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "70e63e4fe",
+        "c91b428"
+      ],
+      "id": "8.1.3-48"
+    },
+    {
+      "type": "breaking",
+      "category": "marketplace",
+      "title": "Resource limit change requests become an opt-in offering feature",
+      "description": "Previously, limit change requests were available on every offering. Now an offering must enable them. A migration enables them on offerings that already use them, and the UI offers them only where they are enabled.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "A migration enables limit change requests on offerings that already use them.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "bc95ed1b6",
+        "c93e0b4427"
+      ],
+      "id": "8.1.3-49"
+    },
+    {
+      "type": "improvement",
+      "category": "proposal",
+      "title": "Reviewer anonymity, workload limits and invitation handling",
+      "description": "Previously, applicant identity could reach evaluators on some paths, and reviewer limits and invitations were not enforced consistently. Now applicant identity is concealed from evaluators on every path. Panel members are treated as evaluators, and live reviewers can read compliance answers. Reviewers' assignment limits are enforced from their open assignments, and what they see of unsent and conflicted assignments is limited. Reviewer pool invitations expire on every invitation path, every reviewer invitation gets a working link and email, and assignment batch emails, reminders and deadline extensions are fixed.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.proposal"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "fd042bd81",
+        "4ba6fb47d",
+        "dcc159be2",
+        "c9972c631",
+        "cf85ba0e9",
+        "05bdd0793",
+        "d2b49ba68",
+        "1b98db1ab",
+        "002d9a6946",
+        "9bf7d03c09"
+      ],
+      "id": "8.1.3-50"
+    },
+    {
+      "type": "feature",
+      "category": "marketplace",
+      "title": "Richer offering options and derived limits",
+      "description": "Previously, offering options were static. Now an option can be shown only when another option has a given value, and free-form options can be checked against a provider pattern. An option can require values to be unique across resources. Component limits can be derived from order-form formulas and sums, and the order form shows the derived limits and their price. Providers can set the Kubernetes cluster topology and make the Kubernetes load balancer optional.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "9398fb721",
+        "a8abd243d",
+        "deafc7494",
+        "cbddfcc3d",
+        "b31575d7a",
+        "7bb9dab2c",
+        "5c3a25802",
+        "8a53a587ec",
+        "4a79db0d6b",
+        "8697c378eb",
+        "06900052f9",
+        "64e01357b5",
+        "194a0980c4"
+      ],
+      "id": "8.1.3-51"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Robot accounts, offering users and SCIM offering options",
+      "description": "Previously, robot account user pickers offered users who could not be linked, and non-consenting users were visible to service providers. Now the pickers offer only users a robot account may link, and non-consenting users are hidden from providers. Robot account details expose the resource backend ID, and an offering flag marks robot-account identity. Provider list_users returns the user attributes the offering exposes. The service provider comment is cleared when an offering user becomes OK. Outbound SCIM entitlements are gated behind an offering plugin option, and SCIM login hosts are moved out of the access dropdown.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "A migration moves SCIM login nodes off the offering endpoints.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "ca27b5f1b",
+        "c785f7c98",
+        "484fb98fc",
+        "a945d4575",
+        "5562d38f1",
+        "64440c206",
+        "bbd58ba38",
+        "78df8cb11",
+        "6ee979b5a",
+        "18487f9f8",
+        "32b7f4499",
+        "d52b2a1e0",
+        "4879ae0f8b",
+        "d3aa6a717f",
+        "846e1ee00a",
+        "cbb791c58d"
+      ],
+      "id": "8.1.3-52"
+    },
+    {
+      "type": "improvement",
+      "category": "auth",
+      "title": "Role management: view-team permission, audit and hygiene",
+      "description": "Previously, team listing was granted to any role holder and changes to role definitions were not audited. Now team listing requires a view-team permission, which custom roles that exist at upgrade keep. Changes to role definitions are audited. Malformed and silently global roles are reported, and a staff panel and Adjust names wizard help fix them. List grants match on role permissions instead of role names, project and resource slug editing can be granted to chosen roles, and organization readers get read access to users, projects, resources, orders and invitations. Same-role grants are rejected whatever the existing role's expiry, INVITATION_DISABLE_MULTIPLE_ROLES applies to direct grants, and import_roles honours is_active: false.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add view-team permissions and keep team visibility for custom roles that exist at upgrade.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "6036e3dac",
+        "0e9f26932",
+        "37bdbd2a9",
+        "603529c68",
+        "39ee47f46",
+        "29486ac16",
+        "41a62337f",
+        "bc0a446cc",
+        "6c1fe13ff",
+        "b7bbca81e",
+        "7d16a193a",
+        "f7ee5f6b9",
+        "7d7f24083",
+        "2ed8e6815",
+        "09110dfa2",
+        "8c90be2928",
+        "c091d7d5cd",
+        "a702afd7f0",
+        "fcd8907aea"
+      ],
+      "id": "8.1.3-53"
+    },
+    {
+      "type": "feature",
+      "category": "proposal",
+      "title": "Round lifecycle, awarded resources and call export/import",
+      "description": "Previously, a round ended at its cut-off and the allocation could only match the request. Now a round has a lifecycle after the cut-off, and its results can be published at once. Open drafts can be carried into the next round, and evaluation can start at the cut-off. The allocation decision can award amounts and offerings that differ from the request, and the UI shows the award next to the request. A call's configuration can be exported and imported on another portal, and a call's proposals and reviews can be exported as CSV or PDF.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "highlight": true,
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.proposal"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add round lifecycle fields, the draft carry-over and evaluation start settings, awarded resources and proposal submission times.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "bfa341254",
+        "2eccc61ca",
+        "fe87a0108",
+        "a42885fbc",
+        "e18364fe3",
+        "5336fc44c",
+        "b3416fc9f",
+        "791b2bae7",
+        "5d0e57b1e",
+        "d38294822",
+        "9975241ffb",
+        "2b6b6c31e0",
+        "735dd66228",
+        "9cfa40ec5f",
+        "5a4fdc003f",
+        "0986927ef9"
+      ],
+      "id": "8.1.3-54"
+    },
+    {
+      "type": "improvement",
+      "category": "identity",
+      "title": "SCIM matching, proxy routing and token checks",
+      "description": "Previously, SCIM users were matched by a fixed attribute, /scim/v2/ was not routed behind the proxy, and expired SCIM tokens were accepted. Now SCIM users are matched to accounts by a configurable attribute pair, accounts are named after the match value as sent, and expired tokens are rejected. The shared grant validation applies to SCIM group sync. Helm and Compose route /scim to the API.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "helm",
+        "docker"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "ccb2199c8",
+        "aa1fe996e",
+        "f2e82b3c7",
+        "0b85b33a6",
+        "1b6ce38",
+        "dab372a"
+      ],
+      "id": "8.1.3-55"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Service provider managers can work with their own offerings",
+      "description": "Previously, service provider managers were denied some of their own provider's offerings, stats and revenue. Now they can list and review their provider's orders, report usage and see it, and read component stats and state counters. Offering managers can approve and reject provider orders and set resource end dates. Provider reports are gated by provider permissions instead of ownership, and ServiceProvider-scoped roles and custom provider roles are accepted by permission. The global support role can read provider stats and revenue.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "A permissions migration grants service provider managers access to orders.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "222ee64cf",
+        "a1c94545a",
+        "cfc27dd00",
+        "190154555",
+        "049c0534a",
+        "23175f928",
+        "fcd28e433",
+        "ab70de88d",
+        "aa7a30c5c",
+        "f5befcb30",
+        "c325ad921",
+        "4747f289a",
+        "7ff9dba1b",
+        "17355b8678",
+        "ef2749e580",
+        "dddf7cd8d6",
+        "83211f4413",
+        "a74408ce6e"
+      ],
+      "id": "8.1.3-56"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Software catalog improvements",
+      "description": "Previously, catalog cleanup deleted distinct EESSI versions, and an EESSI catalog could not be overridden through the import command. Both are fixed. Catalogs now support multi-version import and Spack refresh, and expose per-catalog CPU targets. Catalog link and partition lookups are scoped to the offering, and relinking to a catalog the offering already has is rejected.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "9995daf72",
+        "b66fcbc5c",
+        "b72564236",
+        "4b38ba44d",
+        "8d74a6bf7",
+        "bb22f8296",
+        "a2e864fc8f",
+        "3942cf9150"
+      ],
+      "id": "8.1.3-57"
+    },
+    {
+      "type": "feature",
+      "category": "identity",
+      "title": "SRAM SCIM integration",
+      "description": "Previously, Waldur could not accept SRAM SCIM pushes. Now it accepts them on /scim/v2/sram and advertises the SRAM SCIM profile on its own discovery endpoints. SRAM organisations are mapped to organizations, and each collaboration and group gets a placeholder role. Staff rules grant project roles to the holders of those placeholder roles. Grant sources are logged and their emails skipped. The frontend adds an SRAM administration page and a Team tab that respects permissions.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_sram"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations create the SRAM tables, the group customer and role links, and project rules.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "dde7026e8",
+        "4464bfea3",
+        "e25a98108",
+        "65659d8ca",
+        "4eabe1597",
+        "d349d03d7",
+        "6ac1931804",
+        "442b8a2d70"
+      ],
+      "id": "8.1.3-58"
+    },
+    {
+      "type": "feature",
+      "category": "infrastructure",
+      "title": "Staff email diagnostics and development web shell",
+      "description": "Previously, staff had no way to check email configuration from Waldur. Now a staff-only API and page check the email configuration and can send a test email, including from sender addresses with a display name. Development deployments can also enable an opt-in browser web shell for staff, through Helm or a Compose profile.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend",
+        "helm",
+        "docker"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "efd518710",
+        "1bc507541",
+        "3f55b62db6",
+        "537118b8d",
+        "c8ba27f5ad",
+        "c474ad7",
+        "d1d9d35"
+      ],
+      "id": "8.1.3-59"
+    },
+    {
+      "type": "security",
+      "category": "infrastructure",
+      "title": "Stop uploaded files and chat attachments from running as pages",
+      "description": "Uploaded files served from the media endpoint, and Matrix chat attachments, could run script in Waldur's origin. The media endpoint no longer serves uploads as active pages, and chat attachments are handled so they cannot run script in Waldur.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "Waldur releases before 8.1.3",
+        "exploitability": "Requires a user able to upload a file or chat attachment that another user then opens.",
+        "mitigation": "Upgrade to Waldur 8.1.3."
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "12d77ed27",
+        "2c1c9630e2"
+      ],
+      "id": "8.1.3-60"
+    },
+    {
+      "type": "feature",
+      "category": "openstack",
+      "title": "Subnet routing choices and RBAC-shared networks",
+      "description": "Previously, a new subnet was always attached to a router Waldur picked, and networks shared over RBAC by projects Waldur does not manage were not shown. Now the caller can choose the router or create the subnet without one, and a consumer can route a subnet shared with it over RBAC. Networks shared by unmanaged projects appear, subnets say whether their owner is managed, and owner-side actions on shared networks and subnets are disabled with the reason.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_openstack"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add the subnet router field and Tenant.is_managed.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "83d420ee8",
+        "9e0e9dd79",
+        "d1b1cc17b",
+        "ab30264af",
+        "586698eb1",
+        "4ae7392a3",
+        "449d70931",
+        "0db104ea6",
+        "54e6e7a7c",
+        "a1ed73f1bf",
+        "b15b2cc6a4",
+        "30015d91d4",
+        "fcf601f6b8"
+      ],
+      "id": "8.1.3-61"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Telemetry is opt-out and can be switched off at deploy time",
+      "description": "Previously, telemetry was opt-in and its feature gate did not work correctly. Now telemetry is on by default and the gate is fixed. Administrators can switch it off on the Telemetry admin page, through waldur.telemetry.enabled in Helm, or through WALDUR_TELEMETRY_ENABLED in Compose.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend",
+        "helm",
+        "docker"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "A migration switches telemetry to opt-out.",
+          "automatic": true
+        },
+        {
+          "type": "review",
+          "description": "Deployments that do not want to send telemetry should disable it after upgrading.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "7dc21fac7",
+        "a12f6bb",
+        "d4eb53c",
+        "3aeb14eba1"
+      ],
+      "id": "8.1.3-62"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "VMware backend rewritten on pyVmomi",
+      "description": "Previously, the VMware backend had gaps in its marketplace integration. Now it is rewritten on pyVmomi and validated against vcsim, and vCenter sessions are cached per process. Datastore sizes are stored in 64-bit columns, and an order's chosen networks and folder are forwarded to the VM. The vSphere order form, disk actions and network adapter creation are fixed.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_vmware",
+          "waldur_mastermind.marketplace_vmware"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations widen the datastore size columns and add the template NIC count.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "80ea11106",
+        "6af2c9ff7",
+        "3e5ab9b01",
+        "e77bcc5ed",
+        "0dea29562",
+        "3e20e44055",
+        "0de6f29d3f",
+        "4529788455",
+        "68597608c3",
+        "0c9e5a78eb",
+        "ad26c3ee15",
+        "ecf58debfe",
+        "1998324b98",
+        "6280ad7411"
+      ],
+      "id": "8.1.3-63"
+    },
+    {
+      "type": "feature",
+      "category": "notifications",
+      "title": "Waldur-issued call tokens and end-to-end encrypted calls",
+      "description": "Previously, Matrix calls used a separate lk-jwt-service for tokens. Now Waldur serves the call token API that Matrix clients use, and issues tokens only while the user is a member of the room. lk-jwt-service and its routes are removed from Helm and Compose, and LiveKit's admin API is no longer routed publicly. Calls join Element Call's call through the MatrixRTC session, call media is encrypted end to end, and the admin participants view shows track encryption.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend",
+        "helm",
+        "docker"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.matrix_chat"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "config",
+          "description": "lk-jwt-service is removed from Helm and Compose, and the .well-known RTC focus now points at Waldur's call token API.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "9bd6678b2",
+        "c5db30fd4",
+        "b5eb09a05",
+        "96da4c1f9",
+        "87ae4f6b7",
+        "22d25eb",
+        "81c1226",
+        "9b4da49",
+        "990539d376",
+        "eacc301c58",
+        "1d769924b6",
+        "27fdd08b08",
+        "d15d37c1d8",
+        "37b9e96b5a",
+        "ecb4332edc"
+      ],
+      "id": "8.1.3-64"
+    }
+  ],
+  "since_previous": [
+    {
+      "type": "feature",
+      "category": "ui",
+      "title": "About us page and additional languages",
+      "description": "Previously, there was no configurable About us page, and Croatian, Macedonian and Albanian were not offered. Now an About us page can be configured and is linked from the footer, and the three languages are available.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add translation fields for the new languages.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "5ab37139f",
+        "a9dd1c95f5",
+        "8916fd220",
+        "bc81ca52a",
+        "c3f66692c7",
+        "919d5960cd",
+        "ae53f6c01b"
+      ],
+      "id": "8.1.3-1"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Administration menu reorganised into tabbed pages",
+      "description": "Previously, the administration menu had many separate entries. Now the System management, Marketplace, and Organizations and compliance menus are grouped into tabbed pages, the three role routes are one tabbed page, and clicking a parent tab opens its first child page. Support can read administration settings, and staff can delete users from the Users table.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "e87a44276d",
+        "96490c631a",
+        "a1912ef09e",
+        "37623e6fc8",
+        "77a130b0cd",
+        "9508141704",
+        "0ae25e6d2f",
+        "5ae0b1d72f",
+        "85d94ed011"
+      ],
+      "id": "8.1.3-2"
+    },
+    {
+      "type": "feature",
+      "category": "ai_assistant",
+      "title": "AI assistant discovery, offering metadata and header placement",
+      "description": "Previously, the AI assistant tools did not see offering access routes, and the anonymous chat KPIs were limited. Now offering access-route metadata is exposed to the tools, anonymous discovery has guidance and a validation scenario pack, and anonymous chat reports a clarification rate and a sortable severity rank. test_evaluation scores the assistant rather than the harness. The assistant is placed in the header and labelled for visitors.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "d15116ba5",
+        "d84898731",
+        "5dde26d32",
+        "508a8a1f6",
+        "d73f59bc0",
+        "636295f2b8",
+        "0b027b4055",
+        "b72be76759",
+        "4a6cb16cc4"
+      ],
+      "id": "8.1.3-3"
+    },
+    {
+      "type": "improvement",
+      "category": "support",
+      "title": "Built-in service desk and support workflow improvements",
+      "description": "Previously, the built-in helpdesk could not change issue status, and some support notifications never fired. Now the helpdesk can change issue status, staff are notified when a ticket arrives, and the helpdesk is notified when the caller comments. Authors can edit and delete their own comments, and resolved and canceled tickets no longer accept comments. Staff can open a support request with an opening message addressed to a user. Notification emails are threaded, and no update notification is sent when a ticket is created. Provider tickets and stats can be scoped to one helpdesk. The Service Desk client's credentials are used for direct JSM REST calls, Atlassian setup is guided, and duplicate Zammad SupportUser rows are handled.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.support"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "1da7c8cdb",
+        "6051ec29c",
+        "be2128642",
+        "c53be3023",
+        "e90d345bd",
+        "e01c33bd0",
+        "d770254c8",
+        "ba849a949",
+        "da0c8cb6a",
+        "07fa2f111",
+        "39400cde2",
+        "31e855401",
+        "1d21eb0dd",
+        "e83ce5b17",
+        "f4729ecc8",
+        "63bdfd3aaa",
+        "9ecd01a651",
+        "9c90d29c68",
+        "4326999ff5",
+        "f1d7c9c744",
+        "3bd24b3da4"
+      ],
+      "id": "8.1.3-4"
+    },
+    {
+      "type": "breaking",
+      "category": "support",
+      "title": "Built-in service desk is the default support backend",
+      "description": "Previously, deployments had to choose a support backend explicitly. Now the built-in service desk is the default in the backend and the Helm chart. Its defaults are seeded on init, and its ticket key prefix can be configured.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "helm"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "review",
+          "description": "Deployments that rely on an external support backend without setting it explicitly should confirm their support backend configuration.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "6861de10d",
+        "f49cbb1",
+        "1a49df826",
+        "124068184",
+        "0de6836ca",
+        "ce78ff57a"
+      ],
+      "id": "8.1.3-5"
+    },
+    {
+      "type": "feature",
+      "category": "proposal",
+      "title": "Call configuration: field config, notification rules and order authors",
+      "description": "Previously, a call's Project details fields and notifications were fixed. Now each call configures its Project details fields and has notification rules for workflow steps. Call managers can see who evaluates each step and can flag a panel chair. Call-allocated orders and support tickets are attributed to a real, reachable person the call chooses, and proposals collect a science domain instead of an OECD code. The UI warns when a call has no role mappings and lets call managers set applicant eligibility.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.proposal"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add call field configuration, workflow notification rules, the order author setting, and the science domain field.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "6ef6925ed",
+        "05fa7a2fd",
+        "865f4e4ad",
+        "b93831d00",
+        "59f49d9be",
+        "27631db83",
+        "d486c540e",
+        "ec14a8e19",
+        "c54b89e958",
+        "905fd1d50d",
+        "b4d9f14255",
+        "61c9df4c10",
+        "0dd5473b69"
+      ],
+      "id": "8.1.3-7"
+    },
+    {
+      "type": "security",
+      "category": "auth",
+      "title": "Close several authorization gaps",
+      "description": "Several checks were missing. Users could change the state of their own offering users. Any caller could create support requests on someone else's behalf. Ticket access was not limited to the project or organization the ticket was raised in. Resources could use another organization's private service settings. Offering secret options could be read without the permission needed to write them. Each of these is now checked: on-behalf requests are limited to staff and support, tickets are scoped to where they were raised, private service settings of other organizations are rejected, and reading secret options requires the write permission.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "Waldur releases before 8.1.3",
+        "exploitability": "Requires an authenticated user.",
+        "mitigation": "Upgrade to Waldur 8.1.3."
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "138b9a9a4",
+        "472998295",
+        "9ad3976dc",
+        "315544b21",
+        "0f0de06e4"
+      ],
+      "id": "8.1.3-8"
+    },
+    {
+      "type": "feature",
+      "category": "invoices",
+      "title": "Credit ledger, live credit balance and cost policy ETA",
+      "description": "Previously, credit drawdown was inferred from other data. Now drawdown is recorded in a ledger per project and split by kind, and a backfill command fills in earlier periods. Credit-funded cost policies are gated on the live credit balance. A cost policy reports when it will fire (eta_days) and the cost it evaluates, and project credit reports show the cost the credit will actually cover. The dashboard reads these values from the server instead of estimating them, and credit reports are shown for every project that has a credit.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add ledger fields to credit transactions.",
+          "automatic": true
+        },
+        {
+          "type": "review",
+          "description": "Run backfill_credit_ledger to populate the ledger for earlier periods if needed.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "37733308c",
+        "fc6306b4f",
+        "70aad1ef1",
+        "8703041be",
+        "b66d892db",
+        "777da7de7",
+        "aed913ff4",
+        "d3ebb612f",
+        "d436db0b4",
+        "e8412c2bb",
+        "72afc9e9c4",
+        "6720358419",
+        "4bd2507e19",
+        "a6cfaad1c0",
+        "773f526d88",
+        "1afdeecf31"
+      ],
+      "id": "8.1.3-9"
+    },
+    {
+      "type": "feature",
+      "category": "notifications",
+      "title": "Dedicated invitation emails and invitation fixes",
+      "description": "Previously, calls and proposals used generic invitation emails, and duplicate-role checks gave no detail. Now calls and proposals have their own invitation emails. The invitation duplicate check reports the user's existing roles, and the add-user and invitation flows show duplicate-role feedback. The submitted-request email is skipped for invitations that approve automatically, a notification drop that silences an email is logged, and orphaned notification rows are reported and pruned.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "A migration seeds the call and proposal invitation notifications.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "593b34783",
+        "82e7ec46d",
+        "cc36892ae",
+        "8c010daef",
+        "1e9641855",
+        "6e077e9267",
+        "790631543a"
+      ],
+      "id": "8.1.3-11"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Dependency upgrades for scanner findings",
+      "description": "Several dependencies had known vulnerabilities flagged by scanners. Django is bumped to 6.0.8, djangorestframework to 3.18.0, sqlparse to 0.6.0, and urllib3, oauthlib, pyjwt, anyio and soupsieve to fixed versions. The frontend bumps vulnerable transitive dependencies flagged by OSV. pycountry is replaced with a vendored ISO 3166-1 table, django-dbtemplates is removed, and html2text is replaced with markdownify.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "08d04d09e",
+        "8a474ddcb",
+        "c2658f6b7",
+        "81928888c",
+        "b8c6cb0f4",
+        "d962ae73f",
+        "f51836e04",
+        "412106ec2",
+        "d5deaff84",
+        "f106ca771f",
+        "57776ee46e",
+        "257dc06019",
+        "d064b2f361",
+        "684814619c",
+        "29d870b901"
+      ],
+      "id": "8.1.3-12"
+    },
+    {
+      "type": "feature",
+      "category": "notifications",
+      "title": "Deploy-time Matrix setup in Helm and Compose",
+      "description": "Previously, the Matrix appservice was registered by hand. Now init_matrix_settings seeds the Constance settings from the environment, and register_matrix_appservice registers the appservice on Tuwunel from the command line. Helm and Compose run both at deploy time, and a redeploy can rotate the tokens. Owners can create Matrix rooms and existing projects can be backfilled. Diagnostics report failed exports and appservice errors, and support can read them. Helm adds opt-in alert rules and an exporter ServiceMonitor, and Tuwunel is bumped to v1.9.3.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend",
+        "helm",
+        "docker"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.matrix_chat"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "config",
+          "description": "Helm and Compose now register the Matrix appservice and seed its settings at deploy time.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "07e6863c9",
+        "6017a153c",
+        "809455380",
+        "9fc42df0d",
+        "526bb1c25",
+        "0baa4f52a",
+        "2ab36ba2a",
+        "66b6356bd",
+        "1bd4a98a2",
+        "f3bb75b66",
+        "206f423ad",
+        "8fc97966d",
+        "c773189f6",
+        "c303a7b5f",
+        "fef5b567e",
+        "943eb2d8c",
+        "d28d53d",
+        "4cd675b",
+        "2e481ba",
+        "dce3072",
+        "bfc0b96",
+        "cb4ba27",
+        "d51d2f1",
+        "bb1cacb",
+        "990c06a",
+        "8d020a7",
+        "2c37392",
+        "3c780053bc",
+        "be037d64b5"
+      ],
+      "id": "8.1.3-13"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Docker Compose configuration improvements",
+      "description": "Previously, Compose had no settings for outgoing email or Celery concurrency, and the language list was overridden on every boot. Now outgoing email is configurable, Celery worker concurrency can be set from the environment, and languages.yaml is mounted so operators can edit the list. The Celery healthcheck closes its AMQP connection, docker-logger is bumped to v1.4.1, and the database cache table is capped explicitly. The homeport nginx and gunicorn listen on IPv6 as well as IPv4.",
+      "scope": "infra",
+      "component": [
+        "docker"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "e6339f8",
+        "134d805",
+        "43a189c",
+        "8e291621a",
+        "a807071",
+        "966f6f4",
+        "41e91a7",
+        "dc96afeae",
+        "c522bb5a0d"
+      ],
+      "id": "8.1.3-14"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Encrypt secret Constance settings and offering secret options at rest",
+      "description": "Previously, secret Constance settings and offering secret options were stored in plain text. Now both are encrypted at rest. reencrypt_fields finds the columns it rotates from their field class, and support can read configuration settings with secret values redacted.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations encrypt existing secret Constance settings and offering secret options, and scrub secret options from reversion history.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "cc59e590b",
+        "11b3c937b",
+        "92b06f59a",
+        "40e417ce7",
+        "bcdc45219",
+        "0ae25e6d2f"
+      ],
+      "id": "8.1.3-15"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Faster resource and order lists",
+      "description": "Previously, resource and order list rows were loaded one at a time. Now they are loaded per page. Paginated resource querysets also get a total ordering, so pages are stable.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "1ae175bc5",
+        "b8243c552",
+        "222b4c6f3"
+      ],
+      "id": "8.1.3-16"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Fractional limits and component precision",
+      "description": "Previously, fractional limits could lose precision in billing and in the site agent. Now each component has a precision setting that gates fractional limits, and billing keeps fractional values. Total-period billing coerces them to Decimal, and set_limits values are clamped to the offering bounds. A warning is shown when a fractional limit will not survive the site agent, and the UI uses the component's precision for input.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "A migration adds OfferingComponent.limit_precision.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "c3d319fc9",
+        "6fb965653",
+        "595327dac",
+        "e666a47d9",
+        "51ca9384e",
+        "8c07cb285",
+        "03cd0247b2",
+        "183b6e4fa0"
+      ],
+      "id": "8.1.3-17"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Frontend migration to Tailwind and Radix",
+      "description": "Previously, the frontend used Bootstrap and Metronic components. Now dropdowns, menus, tabs, the sidebar, the drawer, accordions, tooltips, popovers, badges, buttons, toasts, selects, pagination, progress bars, checkboxes and the date picker (a react-day-picker calendar replacing flatpickr) use shared Tailwind/Radix components from the waldur-ui package. Design tokens and Storybook coverage are added. The release includes many follow-up fixes for menu positioning, focus rings, dark mode and dialog layout.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "95eb6cce7c",
+        "0feb9dbe47",
+        "a126a125d4",
+        "c4f55ab4fe",
+        "de2cd1bdc1",
+        "1406f020a0",
+        "d4db9f36c5",
+        "5bbb24101a",
+        "9178786d3a",
+        "bb6dbc07de",
+        "16dc534d15",
+        "98371faa8b",
+        "0359be0f80",
+        "1fe3c89e84",
+        "285dae8635",
+        "f4c14faa1c",
+        "f50f15bf2d",
+        "d5a99f005b",
+        "a55b556545",
+        "ad27282df2",
+        "e1136eeb9d",
+        "594325820d",
+        "4d77850356",
+        "1a8ee6aaf1",
+        "4ca280fea6"
+      ],
+      "id": "8.1.3-18"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Grace-period pausing and policy reconciliation",
+      "description": "Previously, grace-period resources were not paused from the first day, and could be resumed. Now they are paused on the first day and stay paused. Idempotent immediate actions are reconciled on policies that have already fired, and cost policy evaluation is skipped on saves that only change last_sync.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "A migration adds Resource.paused_by_grace_period.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "af9d33e80",
+        "5a7c83543",
+        "e9b26045f",
+        "625c47f6b",
+        "84f60663d"
+      ],
+      "id": "8.1.3-19"
+    },
+    {
+      "type": "breaking",
+      "category": "infrastructure",
+      "title": "Helm chart replaces Bitnami subcharts with CloudPirates charts",
+      "description": "Previously, the chart bundled Bitnami subcharts for PostgreSQL, RabbitMQ and MinIO. Now it uses CloudPirates charts built on official images, and the reference values and database docs are updated to match. The chart also drops the legacy networking.k8s.io/v1beta1 Ingress fallback and the unused ArgoCD sync job.",
+      "scope": "infra",
+      "component": [
+        "helm"
+      ],
+      "impact": {
+        "risk": "high"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration_plan",
+          "description": "Review the updated PostgreSQL, RabbitMQ and MinIO values and the migration docs before upgrading Helm deployments that use the bundled subcharts.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "a0a817c",
+        "ae8a7d9",
+        "04f77cd",
+        "da275ab"
+      ],
+      "id": "8.1.3-20"
+    },
+    {
+      "type": "feature",
+      "category": "infrastructure",
+      "title": "Helm Gateway API support and deployment hardening",
+      "description": "Previously, the chart supported only Ingress. Now it supports the Gateway API alongside Ingress. API and worker pods wait for migrations to finish, the whitelabeling job waits for the schema, and Celery worker probes close their AMQP connection. The chart also adds generic Constance and feature-flag overrides, waldur.customRoles, SMTP credential delivery, a DISABLE_SERVER_SIDE_CURSORS toggle, IPv4/IPv6/dual-stack services, RabbitMQ on IPv6-only clusters, three clustered RabbitMQ replicas, and an HTTPS redirect only when the deployment is served over HTTPS.",
+      "scope": "infra",
+      "component": [
+        "helm"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "ddc32df",
+        "a5e32bc",
+        "9e1b30d",
+        "30b3245",
+        "c0e8ea2",
+        "9b2d513",
+        "2d5100c",
+        "beeca16",
+        "6a2f566",
+        "acda004",
+        "33b6c5d",
+        "a56c6b1",
+        "de58082",
+        "70ceb26",
+        "d728971"
+      ],
+      "id": "8.1.3-21"
+    },
+    {
+      "type": "feature",
+      "category": "openstack",
+      "title": "IPv6 support across OpenStack networking",
+      "description": "Previously, OpenStack networking in Waldur mostly assumed IPv4. Now subnets can be created with SLAAC or DHCPv6 address modes, and IPv6 tenants get an IPv6 default subnet and IPv6 default security group rules. Routers are attached to IPv6 subnets by subnet, and every subnet of a dual-stack network is attached. IPv6 default routes are reported, and IPv6 load balancer VIPs and allowed address pairs are accepted. Floating IPs are refused on IPv6-only external networks, IPv6 brackets are kept in access and console URLs, and ExternalSubnet.cidr is wide enough for an IPv6 prefix.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "highlight": true,
+      "relevant_when": {
+        "plugins": [
+          "waldur_openstack"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add subnet IPv6 modes, widen ExternalSubnet.cidr, and allow any address family for load balancer VIPs.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "ccdbd6f08",
+        "dfbe961b7",
+        "2e30bc42b",
+        "d9ff80620",
+        "608146ea5",
+        "375b28ddd",
+        "52c3f56ef",
+        "d54c7a1e2",
+        "66ee86dd1",
+        "06d087105",
+        "0d43aab5e",
+        "536d1befa",
+        "fa60b8c8b",
+        "005d2617f",
+        "e2dbaad42b"
+      ],
+      "id": "8.1.3-24"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Keyboard and screen reader accessibility",
+      "description": "Previously, many controls could only be used with a mouse and some had no accessible name. Now header tab submenus, the global search, the Add filter menu, the invite role and project pickers, and the row menu's Show all can be used from the keyboard. Every focusable element has the brand focus ring. Icon tooltips are reachable with the keyboard, and quota bars, the footer health button and the sidebar logo have accessible names. axe-core WCAG 2.2 AA findings are fixed.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "136c8bea25",
+        "aebd3a184d",
+        "8057c7e44a",
+        "0de6595df5",
+        "e334e1086c",
+        "7e6be55441",
+        "e6573d9359",
+        "0c4a92c9fe",
+        "873a80fc33",
+        "aad64f9ef9",
+        "bcfcd3da29",
+        "cf1f5c3099",
+        "8d7a01136a",
+        "672f851af4"
+      ],
+      "id": "8.1.3-25"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Logging, Sentry and Celery robustness",
+      "description": "Previously, Sentry log scrubbing could break audit event inserts, background task locks were not released after completion, and the image config replaced LOGGING wholesale. Now scrubbing no longer affects event inserts, locks are released, and the image patches LOGGING. Credential query parameters are masked in request logs. Celery exception results are converted to strings before they are written to error_message. State transitions save only the fields they change. Celery is upgraded to 5.6.3 and kombu to 5.6.2, and control-plane queues are declared exclusive for RabbitMQ 4.3.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "docker"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "6e6116f1f",
+        "98f94c742",
+        "864a66781",
+        "4d92c2ec1",
+        "cbb366dac",
+        "5b44a2704",
+        "30d59f2fc",
+        "cfb9b1323",
+        "f97201381",
+        "a45f922",
+        "5f86f70"
+      ],
+      "id": "8.1.3-26"
+    },
+    {
+      "type": "improvement",
+      "category": "auth",
+      "title": "Login and OIDC fixes",
+      "description": "Several login paths misbehaved. Fixes in this release: The session is renewed when a login records its authentication method, and login is authenticated by credentials rather than by the session cookie. OIDC users are looked up by email ignoring case, and list-valued lookup claims are unwrapped instead of stored as their repr. Email patterns are matched against the whole address. registration_method is updated on OAuth login. OIDC bearer introspection no longer depends on a DRF token existing, and its registration method is configurable. api-auth/default/init/ starts login with the default IdP. SAML_ATTRIBUTE_MAPPING accepts list values.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "A migration unwraps OIDC lookup values that were stored as a list repr.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "bb0791491",
+        "3aeb4da03",
+        "5beed8ce7",
+        "b957fcbcc",
+        "7a8fd3cf7",
+        "881d25d8f",
+        "0d6fc6b1c",
+        "d19caca02",
+        "207bb930d",
+        "5af3817a5",
+        "aac503558",
+        "3fcc190a6",
+        "c8bb387fd",
+        "df9ee6e15",
+        "64975449ed",
+        "f43c3b4857",
+        "dc403a2e5e"
+      ],
+      "id": "8.1.3-27"
+    },
+    {
+      "type": "feature",
+      "category": "notifications",
+      "title": "Matrix chat with end-to-end encryption and a room bot",
+      "description": "Previously, Matrix rooms were unencrypted and Waldur posted into them directly. Now every room is created encrypted. A bot runs as an encrypted member of every room, posts Waldur's messages and exports encrypted room history. Its crypto store is kept in Postgres. Recovery keys are escrowed behind a per-user setup lease, a key the user already has can be escrowed, a room's earlier keys are written into new members' key backups, and an escrowed key that no longer decrypts is treated as no key. The chat drawer supports encryption, encrypted attachments, message editing, deletion and replies, and shows calls in the timeline.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend",
+        "helm",
+        "docker"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "highlight": true,
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.matrix_chat"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add the bot identity and outbox, recovery keys, crypto leases, member history backfill and history export data keys.",
+          "automatic": true
+        },
+        {
+          "type": "config",
+          "description": "Helm and Compose deploy the Matrix bot and allow WebAssembly in the homeport CSP for chat encryption.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "65795529c",
+        "029104df4",
+        "e345f3822",
+        "70aac5fb0",
+        "52dce69c9",
+        "62e95aa0f",
+        "7f8d55795",
+        "2e557243b",
+        "1341d65dc",
+        "2d9c2fd6c",
+        "ba83e96ae",
+        "0356f6b4cc",
+        "b6eaaac7da",
+        "5516bddc48",
+        "4c0579a2f4",
+        "955523891a",
+        "0d4eb6902c",
+        "6572d2d",
+        "dacf58a",
+        "da3a911",
+        "89050cc",
+        "b9176d2"
+      ],
+      "id": "8.1.3-28"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Migration squash repairs and faster fresh migrate",
+      "description": "Previously, regenerated migration squashes dropped data operations, and a fresh migrate was slow. Now squashes are regenerated as state diffs, keep their data operations, and depend only on what their replaced range depends on. Databases that skipped those data operations are repaired by a migration.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "A migration re-runs data migrations that earlier squashes skipped.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "80437de2c",
+        "0676fed33",
+        "99f0a40fa",
+        "c37b18922",
+        "6f417603f"
+      ],
+      "id": "8.1.3-30"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Miscellaneous marketplace and resource fixes",
+      "description": "Assorted fixes. A restore that is refused returns the resource to the terminated state. Course-account API calls have a timeout and report the real error, and course accounts serialize a null user and prefer the offering backend_id. The marketplace runtime states endpoint requires a scope. Backend resource lists are scoped by role instead of crashing. Offering import normalises nulls and rejects invalid input. Expired projects are deleted asynchronously, and history requests with out-of-range timestamps return 400. A stored zero quota limit is reported as zero rather than unlimited. Member sync statuses are written only when they change, and FreeIPA no longer returns a 500 when a username is taken.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "24c3f1bee",
+        "165cc550c",
+        "c3accde92",
+        "5c50f57c9",
+        "e14873282",
+        "e5e1f2b7b",
+        "295693905",
+        "a60c0a011",
+        "d4628ffdc",
+        "03ac6aef5",
+        "5cbf5bc1e",
+        "6a10df0ea",
+        "0dce1d2cb",
+        "c2ab52cf9",
+        "847706d15",
+        "b9e8f767d",
+        "51458f732",
+        "72989ddd6",
+        "d4e652d91",
+        "2096efdf9",
+        "1e7b5a92e",
+        "0c2121b87"
+      ],
+      "id": "8.1.3-31"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Offering pages and order form usability",
+      "description": "Previously, the offering page did not compare plans and the order form lost state in some cases. Now plans can be compared side by side and unpriced plans are flagged. The order form follows an offering switched inside it, keeps the offering's default limits across a reinitialisation, and recovers from a rejected order. Requested resource amounts show their measured units, and the Orders table shows the exchange between provider and customer. Pending orders can be previewed in the drawer, and bulk approve and reject are removed from it. Accounting components are shown for every offering type.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "55d10d1a60",
+        "a00bc3e5f0",
+        "fa68a2df7b",
+        "a959cd956f",
+        "e7e9aa6469",
+        "a56508f3cd",
+        "52c622193f",
+        "a53be99220",
+        "d598c3420c",
+        "f820411595",
+        "5cbabe0fa9",
+        "0dad39611a",
+        "91efe86813",
+        "03e0550439",
+        "7e29097018",
+        "ecaa76ead0"
+      ],
+      "id": "8.1.3-33"
+    },
+    {
+      "type": "improvement",
+      "category": "openstack",
+      "title": "OpenStack instance, port and floating IP fixes",
+      "description": "Several OpenStack operations misbehaved. Fixes in this release: Nova instance metadata is supported and imported when a resource is linked. Running instances can be terminated without force destroy, and backups and snapshots are cleaned up automatically. Instance delete polls retry on HTTP 429. Floating addresses are kept on attach and detach. Security groups are accepted by URL on port create, and the instances attached to a security group are shown. Neutron's allocation pool is kept, update_port_ip is refused where Neutron derives the address, and the system volume stays bootable during creation. Resources missing at the backend are no longer re-logged on every pull, and volumes without a type return a null type_name.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_openstack"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add instance metadata, the missing-at-backend timestamp and the subnet allocation pool default.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "5011e328e",
+        "d95115e9d",
+        "d8c25acaa",
+        "72f319ecfa",
+        "f2fbc8f82",
+        "761425df3",
+        "e57604cc6",
+        "a77a23f87",
+        "65258201f",
+        "7951a616ab",
+        "6944506fb",
+        "4dffd91d6",
+        "555616565",
+        "8a416f76b",
+        "e1bbc21c5",
+        "a2a324858",
+        "5b48a876a",
+        "6b456f60a",
+        "4cd463756",
+        "ee3e853f4",
+        "83af8f628",
+        "c6c20df2e",
+        "0bc814e86",
+        "a1f645d44",
+        "52f6a9c81"
+      ],
+      "id": "8.1.3-34"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Order notifications and order attribution",
+      "description": "Previously, new-order emails went to a fixed audience as soon as an order was placed. Now configured emails and provider roles are notified about new orders, the email spells the order out, and it is sent once the consumer has approved the order. Approvers and requesters are emailed about resource end date change requests. Automatic termination orders are attributed to the author of the creation order, and expired resources are terminated even if the person who requested the end date has lost access.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "ce351ca32",
+        "dfa355b78",
+        "9badcfd35",
+        "698e9db1f",
+        "7a0aa88f9",
+        "dd0fa9644",
+        "a33cfab233",
+        "1ad9635757"
+      ],
+      "id": "8.1.3-35"
+    },
+    {
+      "type": "feature",
+      "category": "reporting",
+      "title": "Organization reporting and dashboard improvements",
+      "description": "Previously, reporting views were staff-only and dashboards showed limited information. Now organization owners have reporting views behind the show_organisation_reporting feature flag, and a report shows projects, resources and cost by affiliated organization. Customer stats can include terminated resources, and for_current_month=false is read as false. Dashboard endpoints are added for users, call managers and reviewers, and the user-action queue is folded into the dashboard feed. Quota analytics can be filtered by organization, and the reporting overview tiles show growth for a period.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "fb0b89012",
+        "6030735cf",
+        "43867867b",
+        "b91ddd9d9",
+        "843462dec",
+        "dd58bddc9",
+        "6c9a2edf9",
+        "0f762abf1",
+        "ae900b3a95",
+        "af544f3e93",
+        "c7e7f1de6c",
+        "2a358e690d",
+        "0f8f2d2f84"
+      ],
+      "id": "8.1.3-36"
+    },
+    {
+      "type": "feature",
+      "category": "identity",
+      "title": "Organization roles from OIDC claims",
+      "description": "Previously, auto-provisioning rules could not assign organization roles from claims. Now rules can, with SCIM-style reconciliation. Rule projects are provisioned for existing accounts at login, and the project name template can be edited. Claims that no identity provider passes through are reported. Only staff can create rules. The UI shows where each grant came from.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_autoprovisioning"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add rule claims, the customer role, and UserRole.source.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "a78cc6a0e",
+        "258dbee46",
+        "482f4a514",
+        "35800bbdb",
+        "dce97bddf",
+        "ea03dc4b86",
+        "d22844939c"
+      ],
+      "id": "8.1.3-37"
+    },
+    {
+      "type": "feature",
+      "category": "auth",
+      "title": "Passkey login and enforcement for privileged accounts",
+      "description": "Previously, Waldur had no passkey support. Now users can register, rename and revoke passkeys and sign in with them. Privileged accounts can be required to enrol a passkey: they are held on an enrolment page and returned to the page they wanted afterwards. Paths that gave a privileged session without a passkey are closed, and the Django admin asks for a passkey step. Staff can revoke another user's passkeys if they give a reason, and a command reports privileged personal access tokens when enforcement is rolled out. Both Helm and Compose can switch passkeys and enforcement on.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend",
+        "helm",
+        "docker"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "highlight": true,
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add the passkey and passkey-verified session tables.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "00ca22b09",
+        "1ad9ee300",
+        "e11a5b633",
+        "675e6b1a9",
+        "1e98a515a",
+        "c09ecf640",
+        "fc6a2ed55",
+        "edc17a164",
+        "c3b9ac7594",
+        "f86f5d5221",
+        "aa8a2d862f",
+        "9d4e46507b",
+        "b60daa3",
+        "f08cd52",
+        "ee581c4",
+        "5031a75"
+      ],
+      "id": "8.1.3-38"
+    },
+    {
+      "type": "feature",
+      "category": "marketplace",
+      "title": "Per-key management of resource API keys",
+      "description": "Previously, resource API keys could not be managed individually. Now each key can be requested, assigned, capped, paused, resumed and deleted. The key's assignee stays visible when per-key management is off, and provider scopes are accepted when managing keys. The UI adds key assignees, per-key limits, usage and models.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add resource API key management and backfill existing keys.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "cb9ad8bd5",
+        "29db11487",
+        "ace1052f2",
+        "c91150b86",
+        "f4c2bd5060"
+      ],
+      "id": "8.1.3-39"
+    },
+    {
+      "type": "feature",
+      "category": "invoices",
+      "title": "Per-plan billing modes and a prepaid plan mode",
+      "description": "Previously, billing followed component settings, so one OpenStack offering could not offer both a limit-based plan and a usage-based plan. Now each plan has a billing mode, including a new prepaid mode, and billing follows the plan. The UI shows whether a plan's billing period affects invoicing, resolves component units for each billing mode, and explains what happens when a resource switches to a plan with a different mode.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "highlight": true,
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add the plan billing mode and set it on existing plans.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "6e1ea8b5d",
+        "e0257f015",
+        "68b6bee53",
+        "1ea8a9a08",
+        "4b3c65a61",
+        "b076c7dffe",
+        "01ed1024f9"
+      ],
+      "id": "8.1.3-40"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Plan and pricing behaviour fixes",
+      "description": "Several plan and pricing behaviours were wrong. Fixes in this release: One-time fees are invoiced at the quantity the plan names. Old limits are priced over the resource's real end date. Plans and pricing are refused on offerings that are not charged, and the plan guard is limited to child offerings. Built-in and child-offering components are protected. A plan component price of zero is allowed for the next month, and plan component price updates that changed nothing are no longer logged. A missing usage policy is added to component usage reporting.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add the one-time plan component amount, the order's old cost and the missing usage policy, and clean up no-op price logs.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "c782ad8c1",
+        "7e32d189b",
+        "75d94a6f6",
+        "9677ce59b",
+        "64281dca0",
+        "a3fdefd2b",
+        "605d38b19",
+        "fd3d5e024",
+        "0c2121b87",
+        "a926fa980",
+        "dd4cd07ee",
+        "c1b19e5ade",
+        "d4ac0f3c1c",
+        "71d427b9c3"
+      ],
+      "id": "8.1.3-41"
+    },
+    {
+      "type": "improvement",
+      "category": "proposal",
+      "title": "Proposal access for support and organization owners",
+      "description": "Previously, support users could not read call-management data and organization owners could not see their organization's protected calls. Now both can. Protected call writes are gated on UPDATE_CALL, and the call edit controls are disabled for users without it.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.proposal"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "fc57d613f",
+        "2d6cc4e9d",
+        "c7629b582",
+        "27199bd50d"
+      ],
+      "id": "8.1.3-42"
+    },
+    {
+      "type": "feature",
+      "category": "proposal",
+      "title": "Proposal administrator role and team rules after submission",
+      "description": "Previously, proposals had no administrator role and their team could change at any time. Now there is a proposal administrator role and every proposal must have a proposal manager. The team is frozen after submission, each change after submission is logged as one event, and proposal documents are locked once the proposal is submitted. Each workflow step can pick which roles it notifies.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.proposal"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "A migration adds the proposal administrator role and the notified roles per step.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "8f9e53067",
+        "89906bf62",
+        "94636a55c",
+        "32b4aadb82"
+      ],
+      "id": "8.1.3-43"
+    },
+    {
+      "type": "feature",
+      "category": "marketplace",
+      "title": "Provider-level user accounts, POSIX identities and project groups",
+      "description": "Previously, user accounts and POSIX IDs were managed per offering. Now a service provider can share one account and one POSIX identity per user across its offerings. Offerings can inherit account settings from the provider, and a preview shows what those settings produce. Anonymized usernames are derived from the POSIX uid, and a member who leaves and is granted access again gets the same account name back. Providers can allocate one POSIX group per project, and a STOMP event is published when such a group changes. The UI adds provider account management, a link from offering users to their provider accounts, and project POSIX group views.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "highlight": true,
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add POSIX identity principals, service provider accounts and provider project groups, and switch anonymized usernames to the uid scheme.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "73df8f4a1",
+        "16f88f577",
+        "3cd57c902",
+        "0e951c08b",
+        "823ba1183",
+        "64b6cf940",
+        "3b9b95aef",
+        "ce8f14dc9",
+        "6847485b2",
+        "91df3f457",
+        "721a4b892",
+        "9baed8935c",
+        "541290c020",
+        "c46b9581f4",
+        "0d2d5a3e57",
+        "c5145ccde8"
+      ],
+      "id": "8.1.3-44"
+    },
+    {
+      "type": "improvement",
+      "category": "notifications",
+      "title": "Pub/sub events and consumer visibility",
+      "description": "Previously, call and proposal state changes emitted no pub/sub events. Now they do, and order, resource and account STOMP events are deferred until the transaction commits. Event consumers record how and by what right they were registered, and only the event groups a deployment can emit are advertised. The admin UI shows event consumers, unified consumer queues and each site agent's queue and connection state, and marks the legacy event subscriptions page as deprecated.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add event consumer attribution and split the OpenStack resource event groups.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "fa63d6c3a",
+        "5b3437636",
+        "b8aaf5586",
+        "83c59f188",
+        "de929d89b",
+        "9fc5ac256",
+        "a438a0d484",
+        "d9687feeaf",
+        "98e310d7b3",
+        "1b8f2591c6",
+        "1be5b5df02",
+        "ffe6698f47"
+      ],
+      "id": "8.1.3-45"
+    },
+    {
+      "type": "breaking",
+      "category": "proposal",
+      "title": "Remove proposal duration fields",
+      "description": "Previously, applicants entered Proposal.duration_in_days, and proposals and reviews had project_duration fields. Now these fields are removed. The project's duration is derived instead, and prepaid subscriptions are capped by the call's fixed duration.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.proposal"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations remove Proposal.duration_in_days, Proposal.project_duration and Review.comment_project_duration.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "6e01cc793",
+        "b100d8f78",
+        "d3d84db72",
+        "e54b29fde",
+        "3a5eed19b9"
+      ],
+      "id": "8.1.3-46"
+    },
+    {
+      "type": "breaking",
+      "category": "marketplace",
+      "title": "Remove the Azure integration and hand Azure VMs to the site agent",
+      "description": "Previously, Waldur shipped an Azure plugin with VM and SQL Server offerings. Now the Azure integration and its UI are removed. Existing Azure VMs are handed over to the site agent, the Azure tables are dropped, and the retired Azure SQL Server offering is deleted.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "high"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_azure",
+          "waldur_mastermind.marketplace_azure"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations hand Azure VMs over to the site agent, drop the Azure tables and delete Azure SQL Server data.",
+          "automatic": true
+        },
+        {
+          "type": "review",
+          "description": "Deployments using Azure offerings need to manage those VMs through the site agent after upgrading.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "c86b33886",
+        "cdf4f703a",
+        "7a67431302",
+        "67f1659c57"
+      ],
+      "id": "8.1.3-47"
+    },
+    {
+      "type": "breaking",
+      "category": "slurm",
+      "title": "Remove the legacy SLURM module",
+      "description": "Previously, the old waldur_slurm and marketplace_slurm modules were still shipped. Now they are removed. Migrations clear SLURM resource scopes, drop the SLURM tables, archive SLURM offerings and terminate their resources. The Helm chart drops the related configuration.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "helm"
+      ],
+      "impact": {
+        "risk": "high"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_slurm",
+          "waldur_mastermind.marketplace_slurm"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations archive legacy SLURM offerings, terminate their resources and drop the SLURM tables.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "70e63e4fe",
+        "c91b428"
+      ],
+      "id": "8.1.3-48"
+    },
+    {
+      "type": "breaking",
+      "category": "marketplace",
+      "title": "Resource limit change requests become an opt-in offering feature",
+      "description": "Previously, limit change requests were available on every offering. Now an offering must enable them. A migration enables them on offerings that already use them, and the UI offers them only where they are enabled.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "A migration enables limit change requests on offerings that already use them.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "bc95ed1b6",
+        "c93e0b4427"
+      ],
+      "id": "8.1.3-49"
+    },
+    {
+      "type": "feature",
+      "category": "marketplace",
+      "title": "Richer offering options and derived limits",
+      "description": "Previously, offering options were static. Now an option can be shown only when another option has a given value, and free-form options can be checked against a provider pattern. An option can require values to be unique across resources. Component limits can be derived from order-form formulas and sums, and the order form shows the derived limits and their price. Providers can set the Kubernetes cluster topology and make the Kubernetes load balancer optional.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "9398fb721",
+        "a8abd243d",
+        "deafc7494",
+        "cbddfcc3d",
+        "b31575d7a",
+        "7bb9dab2c",
+        "5c3a25802",
+        "8a53a587ec",
+        "4a79db0d6b",
+        "8697c378eb",
+        "06900052f9",
+        "64e01357b5",
+        "194a0980c4"
+      ],
+      "id": "8.1.3-51"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Robot accounts, offering users and SCIM offering options",
+      "description": "Previously, robot account user pickers offered users who could not be linked, and non-consenting users were visible to service providers. Now the pickers offer only users a robot account may link, and non-consenting users are hidden from providers. Robot account details expose the resource backend ID, and an offering flag marks robot-account identity. Provider list_users returns the user attributes the offering exposes. The service provider comment is cleared when an offering user becomes OK. Outbound SCIM entitlements are gated behind an offering plugin option, and SCIM login hosts are moved out of the access dropdown.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "A migration moves SCIM login nodes off the offering endpoints.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "ca27b5f1b",
+        "c785f7c98",
+        "484fb98fc",
+        "a945d4575",
+        "5562d38f1",
+        "64440c206",
+        "bbd58ba38",
+        "78df8cb11",
+        "6ee979b5a",
+        "18487f9f8",
+        "32b7f4499",
+        "d52b2a1e0",
+        "4879ae0f8b",
+        "d3aa6a717f",
+        "846e1ee00a",
+        "cbb791c58d"
+      ],
+      "id": "8.1.3-52"
+    },
+    {
+      "type": "improvement",
+      "category": "auth",
+      "title": "Role management: view-team permission, audit and hygiene",
+      "description": "Previously, team listing was granted to any role holder and changes to role definitions were not audited. Now team listing requires a view-team permission, which custom roles that exist at upgrade keep. Changes to role definitions are audited. Malformed and silently global roles are reported, and a staff panel and Adjust names wizard help fix them. List grants match on role permissions instead of role names, project and resource slug editing can be granted to chosen roles, and organization readers get read access to users, projects, resources, orders and invitations. Same-role grants are rejected whatever the existing role's expiry, INVITATION_DISABLE_MULTIPLE_ROLES applies to direct grants, and import_roles honours is_active: false.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add view-team permissions and keep team visibility for custom roles that exist at upgrade.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "6036e3dac",
+        "0e9f26932",
+        "37bdbd2a9",
+        "603529c68",
+        "39ee47f46",
+        "29486ac16",
+        "41a62337f",
+        "bc0a446cc",
+        "6c1fe13ff",
+        "b7bbca81e",
+        "7d16a193a",
+        "f7ee5f6b9",
+        "7d7f24083",
+        "2ed8e6815",
+        "09110dfa2",
+        "8c90be2928",
+        "c091d7d5cd",
+        "a702afd7f0",
+        "fcd8907aea"
+      ],
+      "id": "8.1.3-53"
+    },
+    {
+      "type": "improvement",
+      "category": "identity",
+      "title": "SCIM matching, proxy routing and token checks",
+      "description": "Previously, SCIM users were matched by a fixed attribute, /scim/v2/ was not routed behind the proxy, and expired SCIM tokens were accepted. Now SCIM users are matched to accounts by a configurable attribute pair, accounts are named after the match value as sent, and expired tokens are rejected. The shared grant validation applies to SCIM group sync. Helm and Compose route /scim to the API.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "helm",
+        "docker"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "ccb2199c8",
+        "aa1fe996e",
+        "f2e82b3c7",
+        "0b85b33a6",
+        "1b6ce38",
+        "dab372a"
+      ],
+      "id": "8.1.3-55"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Service provider managers can work with their own offerings",
+      "description": "Previously, service provider managers were denied some of their own provider's offerings, stats and revenue. Now they can list and review their provider's orders, report usage and see it, and read component stats and state counters. Offering managers can approve and reject provider orders and set resource end dates. Provider reports are gated by provider permissions instead of ownership, and ServiceProvider-scoped roles and custom provider roles are accepted by permission. The global support role can read provider stats and revenue.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "A permissions migration grants service provider managers access to orders.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "222ee64cf",
+        "a1c94545a",
+        "cfc27dd00",
+        "190154555",
+        "049c0534a",
+        "23175f928",
+        "fcd28e433",
+        "ab70de88d",
+        "aa7a30c5c",
+        "f5befcb30",
+        "c325ad921",
+        "4747f289a",
+        "7ff9dba1b",
+        "17355b8678",
+        "ef2749e580",
+        "dddf7cd8d6",
+        "83211f4413",
+        "a74408ce6e"
+      ],
+      "id": "8.1.3-56"
+    },
+    {
+      "type": "feature",
+      "category": "identity",
+      "title": "SRAM SCIM integration",
+      "description": "Previously, Waldur could not accept SRAM SCIM pushes. Now it accepts them on /scim/v2/sram and advertises the SRAM SCIM profile on its own discovery endpoints. SRAM organisations are mapped to organizations, and each collaboration and group gets a placeholder role. Staff rules grant project roles to the holders of those placeholder roles. Grant sources are logged and their emails skipped. The frontend adds an SRAM administration page and a Team tab that respects permissions.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_sram"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations create the SRAM tables, the group customer and role links, and project rules.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "dde7026e8",
+        "4464bfea3",
+        "e25a98108",
+        "65659d8ca",
+        "4eabe1597",
+        "d349d03d7",
+        "6ac1931804",
+        "442b8a2d70"
+      ],
+      "id": "8.1.3-58"
+    },
+    {
+      "type": "feature",
+      "category": "infrastructure",
+      "title": "Staff email diagnostics and development web shell",
+      "description": "Previously, staff had no way to check email configuration from Waldur. Now a staff-only API and page check the email configuration and can send a test email, including from sender addresses with a display name. Development deployments can also enable an opt-in browser web shell for staff, through Helm or a Compose profile.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend",
+        "helm",
+        "docker"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "efd518710",
+        "1bc507541",
+        "3f55b62db6",
+        "537118b8d",
+        "c8ba27f5ad",
+        "c474ad7",
+        "d1d9d35"
+      ],
+      "id": "8.1.3-59"
+    },
+    {
+      "type": "security",
+      "category": "infrastructure",
+      "title": "Stop uploaded files and chat attachments from running as pages",
+      "description": "Uploaded files served from the media endpoint, and Matrix chat attachments, could run script in Waldur's origin. The media endpoint no longer serves uploads as active pages, and chat attachments are handled so they cannot run script in Waldur.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "Waldur releases before 8.1.3",
+        "exploitability": "Requires a user able to upload a file or chat attachment that another user then opens.",
+        "mitigation": "Upgrade to Waldur 8.1.3."
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "12d77ed27",
+        "2c1c9630e2"
+      ],
+      "id": "8.1.3-60"
+    },
+    {
+      "type": "feature",
+      "category": "openstack",
+      "title": "Subnet routing choices and RBAC-shared networks",
+      "description": "Previously, a new subnet was always attached to a router Waldur picked, and networks shared over RBAC by projects Waldur does not manage were not shown. Now the caller can choose the router or create the subnet without one, and a consumer can route a subnet shared with it over RBAC. Networks shared by unmanaged projects appear, subnets say whether their owner is managed, and owner-side actions on shared networks and subnets are disabled with the reason.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_openstack"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations add the subnet router field and Tenant.is_managed.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "83d420ee8",
+        "9e0e9dd79",
+        "d1b1cc17b",
+        "ab30264af",
+        "586698eb1",
+        "4ae7392a3",
+        "449d70931",
+        "0db104ea6",
+        "54e6e7a7c",
+        "a1ed73f1bf",
+        "b15b2cc6a4",
+        "30015d91d4",
+        "fcf601f6b8"
+      ],
+      "id": "8.1.3-61"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "VMware backend rewritten on pyVmomi",
+      "description": "Previously, the VMware backend had gaps in its marketplace integration. Now it is rewritten on pyVmomi and validated against vcsim, and vCenter sessions are cached per process. Datastore sizes are stored in 64-bit columns, and an order's chosen networks and folder are forwarded to the VM. The vSphere order form, disk actions and network adapter creation are fixed.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_vmware",
+          "waldur_mastermind.marketplace_vmware"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations widen the datastore size columns and add the template NIC count.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "80ea11106",
+        "6af2c9ff7",
+        "3e5ab9b01",
+        "e77bcc5ed",
+        "0dea29562",
+        "3e20e44055",
+        "0de6f29d3f",
+        "4529788455",
+        "68597608c3",
+        "0c9e5a78eb",
+        "ad26c3ee15",
+        "ecf58debfe",
+        "1998324b98",
+        "6280ad7411"
+      ],
+      "id": "8.1.3-63"
+    },
+    {
+      "type": "feature",
+      "category": "notifications",
+      "title": "Waldur-issued call tokens and end-to-end encrypted calls",
+      "description": "Previously, Matrix calls used a separate lk-jwt-service for tokens. Now Waldur serves the call token API that Matrix clients use, and issues tokens only while the user is a member of the room. lk-jwt-service and its routes are removed from Helm and Compose, and LiveKit's admin API is no longer routed publicly. Calls join Element Call's call through the MatrixRTC session, call media is encrypted end to end, and the admin participants view shows track encryption.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend",
+        "helm",
+        "docker"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.matrix_chat"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "config",
+          "description": "lk-jwt-service is removed from Helm and Compose, and the .well-known RTC focus now points at Waldur's call token API.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "9bd6678b2",
+        "c5db30fd4",
+        "b5eb09a05",
+        "96da4c1f9",
+        "87ae4f6b7",
+        "22d25eb",
+        "81c1226",
+        "9b4da49",
+        "990539d376",
+        "eacc301c58",
+        "1d769924b6",
+        "27fdd08b08",
+        "d15d37c1d8",
+        "37b9e96b5a",
+        "ecb4332edc"
+      ],
+      "id": "8.1.3-64"
+    }
+  ],
+  "base_stable_version": "8.1.2",
+  "previous_version": "8.1.3-rc.24"
+}
