@@ -62,6 +62,35 @@ When the template is left empty, Waldur keeps the default behaviour (slugified n
 !!! note
     The default pattern (if no template is configured) is the slugified resource name, limited to 10 characters.
 
+## Who may set a slug by hand
+
+A generated slug is not the only way to name a resource or a project: a caller can pass a `slug` when creating an order or a project, or change one afterwards. Two permissions govern that, and **neither is granted to any role out of the box** — by default only staff may set a slug.
+
+| Permission | Checked on | What it allows |
+|---|---|---|
+| `RESOURCE.SET_SLUG` | the resource's project or organization, its offering, and the offering's organization or service provider | `POST /api/marketplace-resources/{uuid}/set_slug/` (and the provider-resources twin); `slug` on order create |
+| `PROJECT.SET_SLUG` | the project or its organization | `POST /api/projects/{uuid}/set_slug/`; `slug` on project create |
+
+A deployment that wants others to name its allocations grants the permissions to the roles it chooses in `permissions-override.yaml`:
+
+```yaml
+- role: OFFERING.MANAGER
+  add_permissions:
+    - RESOURCE.SET_SLUG
+- role: CUSTOMER.OWNER
+  add_permissions:
+    - PROJECT.SET_SLUG
+```
+
+`initdb` re-applies the override on every deploy. Do **not** grant the permissions through the role editor in the UI instead: `import_roles` resets the system roles to `permissions.yaml` on the next deploy and the grant disappears.
+
+Without the permission, a `slug` sent on create is ignored — even a malformed one — and the slug template applies as usual. A holder cannot change a slug once a backend account may exist or is being created:
+
+- a **resource** locks once it has a backend identifier, or once its creation order is executing, done or erred. While the order still awaits approval or its start date, the slug can change.
+- a **project** locks once any of its non-terminated resources is locked.
+
+The check and the save run under a row lock, so an order cannot start executing in between. Slugs must be unique per model, and every change is recorded in the event log with the old and new slug and the caller.
+
 ## Important considerations
 
 - The template applies only to **newly created** resources. Existing resource slugs are never regenerated.

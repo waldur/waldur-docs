@@ -140,7 +140,11 @@ the call team can now see it.
 
 !!! warning
     Submit before the round **deadline**. Once the round closes you can no longer
-    submit, and a proposal left in **Draft** is not evaluated.
+    submit, and a proposal left in **Draft** is not evaluated by that round. On
+    most calls it is not lost either: it moves into the call's next round and
+    stays editable, and you are emailed the new deadline. A draft left at the
+    last round's cut-off, or on a call that has carry-over turned off, is
+    cancelled — see [Drafts at the cut-off](call_management.md#drafts-at-the-cut-off).
 
 !!! note "Waiting for the round cut-off"
     Some calls evaluate all proposals of a round together. On such a call your
@@ -182,7 +186,14 @@ proposal has cleared *Administrative check* and *Technical assessment* and is in
 ![Tracking a proposal through the workflow stepper](../img/applicant-tracking-status.png)
 
 The sections below the stepper are read-only once submitted, so you always see
-exactly what you sent. Which steps appear, and how much of each you can see,
+exactly what you sent. Editing a submitted proposal is refused outright, not
+just hidden: your requested resources, documents and checklist answers are fixed
+at the moment you submit, and only the call team can change them afterwards. A
+draft you leave open when the round closes is the one exception — it moves into
+the call's next round and stays editable, because it was never submitted (see
+[Drafts at the cut-off](call_management.md#drafts-at-the-cut-off)).
+
+Which steps appear, and how much of each you can see,
 depends on the call's configuration at the moment you submitted (see
 [The evaluation workflow](call-manager-workflow.md#the-evaluation-workflow)).
 Steps that were not part of your proposal's sequence are omitted from the

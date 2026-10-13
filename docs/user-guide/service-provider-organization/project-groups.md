@@ -125,6 +125,14 @@ being created, pending, active, or failed on creation) and has a username. A
 username is left out when every account carrying it at your provider is
 restricted. Robot and service accounts are not members.
 
+## Project groups in the API
+
+`GET /api/marketplace-service-provider-project-groups/` lists the same groups for an
+offering's provider. Besides the group name, GID, project and offerings, each entry carries the
+project's organization as `customer_uuid`, `customer_name` and `customer_slug` — the last being
+the organization's slug, which integrations use to match a group against an organization
+without resolving the UUID. A group whose project has been deleted returns all three as `null`.
+
 ## Adopting an existing group
 
 Adopt a group your directory already holds so that the project keeps its GID

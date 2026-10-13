@@ -67,6 +67,14 @@ When an order fails during processing, it enters the **Erred** state. If the fai
 
 The order's error message, error traceback, and completion timestamp are cleared. The order is then resubmitted for processing through the normal provisioning pipeline.
 
+### Being told about new orders
+
+An offering can nominate who is emailed when it receives an order. Two fields on the offering's **Edit** → **Integration** → **Resource lifecycle** tab carry the list: **Notify roles about new orders**, whose holders are resolved on the provider organization and on the offering itself, and **Notify addresses about new orders**, for provider-side mailboxes that do not belong to a Waldur user. Both are capped, and only users who can manage the offering's integration settings see them.
+
+The notification is sent once the **consumer side** has cleared the order: when the consumer approves an order that needed their approval, or straight away for an order that needs none. Provider approval is not awaited, so you hear about the order before you accept it. Orders nobody placed are never announced — the termination sweep of a cost policy, an order mirroring activity in a remote Waldur, and a proposal's provisioning among them.
+
+Users who turned notifications off in their own profile are skipped; an address on the second list is notified even when a Waldur user with the same address has them off.
+
 ### Cancelling an order
 
 An order that has been submitted but is still in flight can be cancelled before it completes. Cancellation aborts the order and, for **Terminate** orders, restores the affected resource to the **OK** state via the cancellation callback.

@@ -63,6 +63,26 @@ After the cut-off a round moves through its own lifecycle — evaluating,
 deciding, results published, closed — described under
 [Round lifecycle after the cut-off](#round-lifecycle-after-the-cut-off).
 
+### Drafts at the cut-off
+
+A proposal left in **Draft** when its round's cut-off passes has no submitted
+content to evaluate. By default it is **not** cancelled: it moves on to the
+call's next round, keeping its sections and answers, and its creator is emailed
+to say which round it now belongs to and when that round's deadline is. Nothing
+is submitted on the applicant's behalf — the proposal stays a draft until they
+submit it themselves.
+
+Two things end this:
+
+- **No later round.** If the round that closed is the call's last one, the draft
+  is cancelled; there is nowhere for it to move on to.
+- **The setting is off.** With **Carry unsubmitted drafts over to the next round**
+  turned off under **Configuration → General configuration**, every draft left at
+  the cut-off is cancelled, as Waldur did before the setting existed.
+
+Only drafts carry over. A submitted proposal stays with the round it was
+submitted to, whatever its outcome.
+
 ### When evaluation starts
 
 Each call decides when a submitted proposal's evaluation starts:
@@ -95,6 +115,7 @@ Under **Configuration → General configuration**, set the basic call parameters
 - **Evaluation starts**: **On submission** or **At the round cut-off** — when a submitted proposal's evaluation starts. It cannot be changed while the call has submitted or in-review proposals. See [When evaluation starts](#when-evaluation-starts).
 - **Applicants learn the decision**: **As each decision is made** (the default) or **Together for the whole round** — whether each allocation decision is announced as soon as it is made, or held until a call manager publishes the round's results. It cannot be changed while the call holds decisions that have not been published. See [Publishing a round's results](#publishing-a-rounds-results).
 - **Undecided proposals when a round is completed**: **Block completion until every proposal is decided** (the default) or **Reject them automatically** — what completing a round does with proposals that still have no decision. A round can override it. See [Completing a round](#completing-a-round).
+- **Carry unsubmitted drafts over to the next round**: on by default. A draft still open when its round's cut-off passes moves to the call's next round instead of being cancelled, and its creator is told which round it moved to and when the new deadline is. With it off the draft is cancelled at the cut-off, as are drafts left at the last round's cut-off either way. See [Drafts at the cut-off](#drafts-at-the-cut-off).
 - **Compliance checklist**: an optional checklist for proposal compliance evaluation. It can only be changed while the call has no proposals.
 - **Reviewer identity visible to applicants**: whether applicants can see who is reviewing their proposals (Yes/No)
 - **Reviews visible to applicants**: whether applicants can read the reviews and feedback (Yes/No)
@@ -598,7 +619,7 @@ A: No, Waldur supports multiple rounds within a single call, allowing for differ
 A: **Minimum reviewers** on a workflow step is a completion gate: the step cannot be completed with a positive outcome until that many reviews have been submitted, though declining the proposal is always possible. If the step has a duration and its deadline passes first, the step is marked **Overdue** and the workflow moves on to the next step, or rejects the proposal if it was the last one (see [Deadline handling](workflow-configuration.md#deadline-handling)). To avoid this, assign further reviewers in time, or leave the step's duration unset so it waits.
 
 **Q: Can applicants edit their proposals after submission?**
-A: By default, proposals cannot be edited after submission. However, if a reviewer or Call manager rejects a proposal with a request for revisions, the applicant can make the requested changes and resubmit.
+A: No. Once a proposal is submitted its requested resources and documents are fixed, and an applicant cannot change them any more: what was submitted is what gets evaluated. Call managers and staff can still adjust a proposal at any time. A draft left open at its round's cut-off is the exception only in that it survives into the next round (see [Drafts at the cut-off](#drafts-at-the-cut-off)); it is still a draft until the applicant submits it.
 
 **Q: Is it possible to transfer allocated resources between approved projects?**
 A: Resource transfer between projects requires administrative approval. Contact your Call manager to request a resource transfer.
