@@ -45,6 +45,16 @@ zcat waldur-20260819T101500.sql.gz | docker exec -i waldur-db psql -U waldur wal
 
 We suggest to make sure that backups are running regularly, e.g. using cron.
 
+## Keep the encryption key
+
+A dump does not hold the key Waldur encrypts credentials in the database with:
+`FIELD_ENCRYPTION_KEY`, or, while that is unset, `SECRET_KEY` (`GLOBAL_SECRET_KEY`
+with docker-compose, `waldur.secretKey` with Helm), which the key is then derived from.
+During a key rotation, `FIELD_ENCRYPTION_KEY_FALLBACKS` holds the old ones. Back
+them up as carefully as the dumps, but separately: restored without them, the
+encrypted columns cannot be read, and nothing recovers them. See
+[Field encryption at rest](../developer-guide/field-encryption.md#backups).
+
 ## Matrix chat
 
 With Matrix chat on, the homeserver is a third component to back up: it keeps
@@ -57,6 +67,15 @@ StatefulSet to zero). Also back up the tokens Waldur and the homeserver
 share: with docker-compose, the `waldur_matrix_secrets` volume; with Helm, the
 `matrix-appservice-secret` Secret, unless `setup.existingSecret` keeps it in
 your secret manager. Both also hold the bootstrap password.
+
+Chat depends on the encryption key above too. Users' escrowed recovery keys,
+the bot's encryption keys and access token, every history export's key and the
+appservice tokens in Waldur's settings are encrypted with it. Restored with
+another key, the bot refuses to start, the appservice stops working, and no
+recovery key or history export can be read. The
+[Helm](deployment/helm/docs/matrix-chat.md#backup-and-restore) and
+[docker-compose](deployment/docker-compose/matrix-chat-add-on.md#backup-and-restore)
+guides have the full backup and restore steps.
 
 After restoring an older Waldur dump, or resetting Waldur's database, against
 the same homeserver, the users provisioned since have a Matrix account that

@@ -24,6 +24,13 @@ Calls are end-to-end encrypted too: audio, video and screen sharing are
 encrypted in your browser. The call server still sees who takes part and when,
 the kinds and sizes of their audio and video, and who is speaking.
 
+To join a call, your browser has to be able to encrypt it. A browser that
+cannot says **This browser can't take part in encrypted calls.** Use a current
+version of Chrome, Edge, Firefox or Safari. Someone whose audio and video reach
+the call unencrypted, for example from an app that does not encrypt calls, is
+not shown or heard: the call names them under **Not shown, not end-to-end
+encrypted** instead.
+
 ## Who holds the keys
 
 Your encryption keys are stored on the chat server, locked by a **recovery
@@ -44,8 +51,8 @@ If your administrator allows external Matrix apps, you can read and write in
 your project rooms from Element or any other Matrix app as well.
 
 1. In the chat drawer, open the room menu and choose **Open in external Matrix
-   client**, or choose **Connect to Matrix…** in the room's actions on the
-   project's chat page.
+   client**, or choose **Connect to Matrix…** under **All actions** on the
+   project's **Settings → Chat** tab.
 2. Sign in to your Matrix app with the details the dialog shows.
 3. Click **Show recovery key** in the same dialog. The key is hidden until you
    click **Reveal**; the copy button copies it without showing it.
