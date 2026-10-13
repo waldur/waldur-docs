@@ -1612,6 +1612,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#scim-login-nodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SCIM login nodes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#granting-user-access-to-resource" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19364,6 +19375,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#scim-login-nodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SCIM login nodes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#granting-user-access-to-resource" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19435,16 +19457,22 @@ cluster's own accounts.</p>
 </ul>
 </li>
 <li>
-<p><strong>Initial UID number</strong>: refers to the lowest numerical user ID (UID) assigned to regular users;</p>
+<p><strong>Home directory prefix</strong>: Allows to define home directory prefix for the offering users.</p>
 </li>
-<li><strong>Initial primary group number</strong>: refers to Group ID (GID) assigned to a user when they are created;</li>
-<li><strong>Home directory prefix</strong>: Allows to define home directory prefix for the offering users.</li>
 </ul>
 </li>
 <li>
 <p>After this, the usernames are regenerated for all the linked offering users.</p>
 </li>
 </ol>
+<p>Starting numbers for user and group IDs are no longer set per offering. Waldur allocates them from the provider's <a href="../../user-guide/service-provider-organization/posix-id-pools/">POSIX ID pool</a>, which reserves the number blocks every offering of that provider draws on.</p>
+<h2 id="scim-login-nodes">SCIM login nodes</h2>
+<p>When <strong>Enable SCIM entitlements</strong> is on, a <strong>SCIM login nodes</strong> field appears in the same section. It lists the bare hostnames of the offering's login nodes (for example <code>login.example.org</code>), separated by commas, and these are what Waldur reports as entitlements to the remote SCIM service.</p>
+<p>The field accepts DNS hostnames only — no <code>ssh://</code> prefix, no <code>user@</code>, no port. Entries are stored lowercased, duplicates are dropped, and anything that is not a bare hostname is refused. These hosts are not access links, so they do not appear in a resource's access dropdown.</p>
+<div class="admonition note">
+<p class="admonition-title">Upgrading from SSH access endpoints</p>
+<p>Earlier releases read the offering's <code>ssh://</code> access endpoints instead. On upgrade, for every offering that already had <strong>Enable SCIM entitlements</strong> on, Waldur copies the hostnames out of those endpoints into <strong>SCIM login nodes</strong> and removes the endpoints, which frees the access dropdown of entries that were never access links. An offering that had SSH endpoints but had not opted in is left as it is. Changing the list afterwards schedules an entitlement sync for the offering's users.</p>
+</div>
 <h2 id="granting-user-access-to-resource">Granting user access to resource</h2>
 <p>An access to a resource can be granted by service provider for a particular user with specification of username. A result is represented by triplet [user, resource, username]. For this purpose, <code>create_remote_offering_user</code> should be invoked. This method requires the following arguments:</p>
 <ul>

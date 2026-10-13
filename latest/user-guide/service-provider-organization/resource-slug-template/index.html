@@ -18428,6 +18428,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#who-may-set-a-slug-by-hand" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Who may set a slug by hand
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#important-considerations" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19443,6 +19454,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#who-may-set-a-slug-by-hand" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Who may set a slug by hand
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#important-considerations" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19575,6 +19597,49 @@
 <p class="admonition-title">Note</p>
 <p>The default pattern (if no template is configured) is the slugified resource name, limited to 10 characters.</p>
 </div>
+<h2 id="who-may-set-a-slug-by-hand">Who may set a slug by hand</h2>
+<p>A generated slug is not the only way to name a resource or a project: a caller can pass a <code>slug</code> when creating an order or a project, or change one afterwards. Two permissions govern that, and <strong>neither is granted to any role out of the box</strong> — by default only staff may set a slug.</p>
+<table>
+<thead>
+<tr>
+<th>Permission</th>
+<th>Checked on</th>
+<th>What it allows</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RESOURCE.SET_SLUG</code></td>
+<td>the resource's project or organization, its offering, and the offering's organization or service provider</td>
+<td><code>POST /api/marketplace-resources/{uuid}/set_slug/</code> (and the provider-resources twin); <code>slug</code> on order create</td>
+</tr>
+<tr>
+<td><code>PROJECT.SET_SLUG</code></td>
+<td>the project or its organization</td>
+<td><code>POST /api/projects/{uuid}/set_slug/</code>; <code>slug</code> on project create</td>
+</tr>
+</tbody>
+</table>
+<p>A deployment that wants others to name its allocations grants the permissions to the roles it chooses in <code>permissions-override.yaml</code>:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">OFFERING.MANAGER</span>
+<span class="w">  </span><span class="nt">add_permissions</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">RESOURCE.SET_SLUG</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CUSTOMER.OWNER</span>
+<span class="w">  </span><span class="nt">add_permissions</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PROJECT.SET_SLUG</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p><code>initdb</code> re-applies the override on every deploy. Do <strong>not</strong> grant the permissions through the role editor in the UI instead: <code>import_roles</code> resets the system roles to <code>permissions.yaml</code> on the next deploy and the grant disappears.</p>
+<p>Without the permission, a <code>slug</code> sent on create is ignored — even a malformed one — and the slug template applies as usual. A holder cannot change a slug once a backend account may exist or is being created:</p>
+<ul>
+<li>a <strong>resource</strong> locks once it has a backend identifier, or once its creation order is executing, done or erred. While the order still awaits approval or its start date, the slug can change.</li>
+<li>a <strong>project</strong> locks once any of its non-terminated resources is locked.</li>
+</ul>
+<p>The check and the save run under a row lock, so an order cannot start executing in between. Slugs must be unique per model, and every change is recorded in the event log with the old and new slug and the caller.</p>
 <h2 id="important-considerations">Important considerations</h2>
 <ul>
 <li>The template applies only to <strong>newly created</strong> resources. Existing resource slugs are never regenerated.</li>

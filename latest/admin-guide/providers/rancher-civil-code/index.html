@@ -4114,6 +4114,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#pointing-the-agent-at-a-cluster-already-in-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pointing the agent at a cluster already in use
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#verify" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19698,6 +19709,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#pointing-the-agent-at-a-cluster-already-in-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pointing the agent at a cluster already in use
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#verify" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -20056,6 +20078,17 @@ resource projects and role grants, and to set each resource project's state from
 itself for cluster-wide roles. They can do this directly or by invitation; through the API it is
 <code>/api/marketplace-resource-projects/&lt;uuid&gt;/add_user/</code> or <code>/api/user-invitations/</code>. If the offering has terms of service
 and consent is enforced, users appear only after accepting them.</p>
+<h2 id="pointing-the-agent-at-a-cluster-already-in-use">Pointing the agent at a cluster already in use</h2>
+<p>The sync is one-way: Waldur is the source of truth, and the agent never reads the bindings a cluster
+already has. Pointed at a cluster that is in use, it adopts each Rancher project whose name matches a
+resource project and grants only what Waldur knows — so access that was granted in Rancher before the
+agent arrived keeps working but is invisible in Waldur, and Waldur can revoke it on the next sync.</p>
+<p>Import that access <strong>before the agent's first sync</strong> with the plugin's
+<code>waldur-rancher-kc-crd-import</code> command, which reads the clusters, their project and cluster role
+bindings and the Keycloak users behind them, and writes the matching Waldur resource projects, roles
+and grants. It needs a <strong>staff</strong> Waldur token, and the same Rancher and Keycloak credentials as the
+operator. See <a href="../site-agent/plugins/rancher-kc-crd/">importing access from existing clusters</a>
+for the two-step <code>inventory</code> / <code>apply</code> procedure, its filters, and what it skips.</p>
 <h2 id="verify">Verify</h2>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>

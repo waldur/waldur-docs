@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-13T06:50:02.927870Z
+Generated: 2026-10-13T09:03:15.520044Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -26892,6 +26892,17 @@ For configuration details, see [Configuring billing model per component](../user
 In addition to that, Waldur offers convenient way for exporting the usage information for visualization [with
 Grafana](grafana.md).
 
+## Invoice notifications
+
+When an invoice is issued, Waldur emails the organization's owners a notification that carries
+the invoice itself as a **PDF attachment** alongside the link to view it in the portal. The
+attachment is rendered by the deployment, so the email is still sent when rendering fails: the
+notification then drops the attachment and keeps the link, rather than going out without the
+invoice or not at all.
+
+The notification is `invoices.notification`, and like every other one it is off until an
+administrator enables it — see [Notification management](../user-guide/staff-users/notification-management.md).
+
 ---
 
 
@@ -29421,6 +29432,11 @@ pulls with tenant credentials or deletes it, and refuses every change to it, its
 their subnets through the API. Only the networks it shares with Waldur tenants are imported,
 together with their subnets.
 
+Each of those subnets carries a `tenant_is_managed` field saying which kind of owner it has.
+It is `false` for a subnet of a network shared into a tenant from a project Waldur does not
+manage, and `true` otherwise, so an API client can tell a subnet the tenant owns from one it
+merely reaches through a share.
+
 **What the tenant can do.** The shared network and its subnets are listed in the tenant's
 Networks and Subnets tabs and can be used like the tenant's own:
 
@@ -29720,6 +29736,20 @@ Customers create resource projects under the resource and give users roles on th
 itself for cluster-wide roles. They can do this directly or by invitation; through the API it is
 `/api/marketplace-resource-projects/<uuid>/add_user/` or `/api/user-invitations/`. If the offering has terms of service
 and consent is enforced, users appear only after accepting them.
+
+## Pointing the agent at a cluster already in use
+
+The sync is one-way: Waldur is the source of truth, and the agent never reads the bindings a cluster
+already has. Pointed at a cluster that is in use, it adopts each Rancher project whose name matches a
+resource project and grants only what Waldur knows — so access that was granted in Rancher before the
+agent arrived keeps working but is invisible in Waldur, and Waldur can revoke it on the next sync.
+
+Import that access **before the agent's first sync** with the plugin's
+`waldur-rancher-kc-crd-import` command, which reads the clusters, their project and cluster role
+bindings and the Keycloak users behind them, and writes the matching Waldur resource projects, roles
+and grants. It needs a **staff** Waldur token, and the same Rancher and Keycloak credentials as the
+operator. See [importing access from existing clusters](site-agent/plugins/rancher-kc-crd/README.md)
+for the two-step `inventory` / `apply` procedure, its filters, and what it skips.
 
 ## Verify
 
@@ -82693,7 +82723,11 @@ the call team can now see it.
 
 !!! warning
     Submit before the round **deadline**. Once the round closes you can no longer
-    submit, and a proposal left in **Draft** is not evaluated.
+    submit, and a proposal left in **Draft** is not evaluated by that round. On
+    most calls it is not lost either: it moves into the call's next round and
+    stays editable, and you are emailed the new deadline. A draft left at the
+    last round's cut-off, or on a call that has carry-over turned off, is
+    cancelled — see [Drafts at the cut-off](call_management.md#drafts-at-the-cut-off).
 
 !!! note "Waiting for the round cut-off"
     Some calls evaluate all proposals of a round together. On such a call your
@@ -82735,7 +82769,14 @@ proposal has cleared *Administrative check* and *Technical assessment* and is in
 [Image: Tracking a proposal through the workflow stepper]
 
 The sections below the stepper are read-only once submitted, so you always see
-exactly what you sent. Which steps appear, and how much of each you can see,
+exactly what you sent. Editing a submitted proposal is refused outright, not
+just hidden: your requested resources, documents and checklist answers are fixed
+at the moment you submit, and only the call team can change them afterwards. A
+draft you leave open when the round closes is the one exception — it moves into
+the call's next round and stays editable, because it was never submitted (see
+[Drafts at the cut-off](call_management.md#drafts-at-the-cut-off)).
+
+Which steps appear, and how much of each you can see,
 depends on the call's configuration at the moment you submitted (see
 [The evaluation workflow](call-manager-workflow.md#the-evaluation-workflow)).
 Steps that were not part of your proposal's sequence are omitted from the
@@ -83272,6 +83313,26 @@ After the cut-off a round moves through its own lifecycle — evaluating,
 deciding, results published, closed — described under
 [Round lifecycle after the cut-off](#round-lifecycle-after-the-cut-off).
 
+### Drafts at the cut-off
+
+A proposal left in **Draft** when its round's cut-off passes has no submitted
+content to evaluate. By default it is **not** cancelled: it moves on to the
+call's next round, keeping its sections and answers, and its creator is emailed
+to say which round it now belongs to and when that round's deadline is. Nothing
+is submitted on the applicant's behalf — the proposal stays a draft until they
+submit it themselves.
+
+Two things end this:
+
+- **No later round.** If the round that closed is the call's last one, the draft
+  is cancelled; there is nowhere for it to move on to.
+- **The setting is off.** With **Carry unsubmitted drafts over to the next round**
+  turned off under **Configuration → General configuration**, every draft left at
+  the cut-off is cancelled, as Waldur did before the setting existed.
+
+Only drafts carry over. A submitted proposal stays with the round it was
+submitted to, whatever its outcome.
+
 ### When evaluation starts
 
 Each call decides when a submitted proposal's evaluation starts:
@@ -83304,6 +83365,7 @@ Under **Configuration → General configuration**, set the basic call parameters
 - **Evaluation starts**: **On submission** or **At the round cut-off** — when a submitted proposal's evaluation starts. It cannot be changed while the call has submitted or in-review proposals. See [When evaluation starts](#when-evaluation-starts).
 - **Applicants learn the decision**: **As each decision is made** (the default) or **Together for the whole round** — whether each allocation decision is announced as soon as it is made, or held until a call manager publishes the round's results. It cannot be changed while the call holds decisions that have not been published. See [Publishing a round's results](#publishing-a-rounds-results).
 - **Undecided proposals when a round is completed**: **Block completion until every proposal is decided** (the default) or **Reject them automatically** — what completing a round does with proposals that still have no decision. A round can override it. See [Completing a round](#completing-a-round).
+- **Carry unsubmitted drafts over to the next round**: on by default. A draft still open when its round's cut-off passes moves to the call's next round instead of being cancelled, and its creator is told which round it moved to and when the new deadline is. With it off the draft is cancelled at the cut-off, as are drafts left at the last round's cut-off either way. See [Drafts at the cut-off](#drafts-at-the-cut-off).
 - **Compliance checklist**: an optional checklist for proposal compliance evaluation. It can only be changed while the call has no proposals.
 - **Reviewer identity visible to applicants**: whether applicants can see who is reviewing their proposals (Yes/No)
 - **Reviews visible to applicants**: whether applicants can read the reviews and feedback (Yes/No)
@@ -83807,7 +83869,7 @@ A: No, Waldur supports multiple rounds within a single call, allowing for differ
 A: **Minimum reviewers** on a workflow step is a completion gate: the step cannot be completed with a positive outcome until that many reviews have been submitted, though declining the proposal is always possible. If the step has a duration and its deadline passes first, the step is marked **Overdue** and the workflow moves on to the next step, or rejects the proposal if it was the last one (see [Deadline handling](workflow-configuration.md#deadline-handling)). To avoid this, assign further reviewers in time, or leave the step's duration unset so it waits.
 
 **Q: Can applicants edit their proposals after submission?**
-A: By default, proposals cannot be edited after submission. However, if a reviewer or Call manager rejects a proposal with a request for revisions, the applicant can make the requested changes and resubmit.
+A: No. Once a proposal is submitted its requested resources and documents are fixed, and an applicant cannot change them any more: what was submitted is what gets evaluated. Call managers and staff can still adjust a proposal at any time. A draft left open at its round's cut-off is the exception only in that it survives into the next round (see [Drafts at the cut-off](#drafts-at-the-cut-off)); it is still a draft until the applicant submits it.
 
 **Q: Is it possible to transfer allocated resources between approved projects?**
 A: Resource transfer between projects requires administrative approval. Contact your Call manager to request a resource transfer.
@@ -86757,6 +86819,17 @@ is the point of routing the change through a request rather than a silent edit.
 
 [Image: End date change requests in the audit log]
 
+## When the end date arrives
+
+A resource whose termination date has passed is terminated by Waldur, and it does
+not matter whether the person who asked for the date still has access to it. If
+they have since left the project or lost their role, Waldur looks for someone
+else who may terminate the resource — another project manager, the organization's
+owner, or the service provider — and places the order under that name. An end date
+therefore keeps its meaning after the requester moves on, and resources are not
+left running because the only person who asked for the termination can no longer
+do it.
+
 ## Enabling the flow (service provider)
 
 Requests are off by default; every offering keeps the permission-only behaviour
@@ -87490,6 +87563,21 @@ To check the current resource allocation limit:
 
 1. On the same window, the plan details for Allocation components (CPU, GPU, and storage) can be found on the top-right side.
    [Image: Resource limits]
+
+## Including terminated resources
+
+Usage charts normally count only resources that still exist, so terminating one removes
+its usage from the totals and from a project's own history. An administrator can enable
+the **Include terminated resources** feature flag, which adds a switch of the same name
+to the organization dashboard. Turning it on:
+
+- counts the usage that terminated resources reported in the current month, and
+- keeps a removed project's usage visible on the organization dashboard.
+
+Terminated usage is reported separately: the API returns it as `usage_terminated` and
+`limit_usage_terminated` alongside `usage` and `limit_usage`, and a component's limit
+never includes it. While the feature flag is off, the usage endpoints ignore the
+`include_terminated` parameter.
 
 ---
 
@@ -90925,6 +91013,14 @@ When an order fails during processing, it enters the **Erred** state. If the fai
 
 The order's error message, error traceback, and completion timestamp are cleared. The order is then resubmitted for processing through the normal provisioning pipeline.
 
+### Being told about new orders
+
+An offering can nominate who is emailed when it receives an order. Two fields on the offering's **Edit** → **Integration** → **Resource lifecycle** tab carry the list: **Notify roles about new orders**, whose holders are resolved on the provider organization and on the offering itself, and **Notify addresses about new orders**, for provider-side mailboxes that do not belong to a Waldur user. Both are capped, and only users who can manage the offering's integration settings see them.
+
+The notification is sent once the **consumer side** has cleared the order: when the consumer approves an order that needed their approval, or straight away for an order that needs none. Provider approval is not awaited, so you hear about the order before you accept it. Orders nobody placed are never announced — the termination sweep of a cost policy, an order mirroring activity in a remote Waldur, and a proposal's provisioning among them.
+
+Users who turned notifications off in their own profile are skipped; an address on the second list is notified even when a Waldur user with the same address has them off.
+
 ### Cancelling an order
 
 An order that has been submitted but is still in flight can be cancelled before it completes. Cancellation aborts the order and, for **Terminate** orders, restores the affected resource to the **OK** state via the cancellation callback.
@@ -91648,6 +91744,14 @@ being created, pending, active, or failed on creation) and has a username. A
 username is left out when every account carrying it at your provider is
 restricted. Robot and service accounts are not members.
 
+## Project groups in the API
+
+`GET /api/marketplace-service-provider-project-groups/` lists the same groups for an
+offering's provider. Besides the group name, GID, project and offerings, each entry carries the
+project's organization as `customer_uuid`, `customer_name` and `customer_slug` — the last being
+the organization's slug, which integrations use to match a group against an organization
+without resolving the UUID. A group whose project has been deleted returns all three as `null`.
+
 ## Adopting an existing group
 
 Adopt a group your directory already holds so that the project keeps its GID
@@ -91884,6 +91988,35 @@ When the template is left empty, Waldur keeps the default behaviour (slugified n
 !!! note
     The default pattern (if no template is configured) is the slugified resource name, limited to 10 characters.
 
+## Who may set a slug by hand
+
+A generated slug is not the only way to name a resource or a project: a caller can pass a `slug` when creating an order or a project, or change one afterwards. Two permissions govern that, and **neither is granted to any role out of the box** — by default only staff may set a slug.
+
+| Permission | Checked on | What it allows |
+|---|---|---|
+| `RESOURCE.SET_SLUG` | the resource's project or organization, its offering, and the offering's organization or service provider | `POST /api/marketplace-resources/{uuid}/set_slug/` (and the provider-resources twin); `slug` on order create |
+| `PROJECT.SET_SLUG` | the project or its organization | `POST /api/projects/{uuid}/set_slug/`; `slug` on project create |
+
+A deployment that wants others to name its allocations grants the permissions to the roles it chooses in `permissions-override.yaml`:
+
+```yaml
+- role: OFFERING.MANAGER
+  add_permissions:
+    - RESOURCE.SET_SLUG
+- role: CUSTOMER.OWNER
+  add_permissions:
+    - PROJECT.SET_SLUG
+```
+
+`initdb` re-applies the override on every deploy. Do **not** grant the permissions through the role editor in the UI instead: `import_roles` resets the system roles to `permissions.yaml` on the next deploy and the grant disappears.
+
+Without the permission, a `slug` sent on create is ignored — even a malformed one — and the slug template applies as usual. A holder cannot change a slug once a backend account may exist or is being created:
+
+- a **resource** locks once it has a backend identifier, or once its creation order is executing, done or erred. While the order still awaits approval or its start date, the slug can change.
+- a **project** locks once any of its non-terminated resources is locked.
+
+The check and the save run under a row lock, so an order cannot start executing in between. Slugs must be unique per model, and every change is recorded in the event log with the old and new slug and the caller.
+
 ## Important considerations
 
 - The template applies only to **newly created** resources. Existing resource slugs are never regenerated.
@@ -91979,6 +92112,22 @@ System administrators can import catalogs from the **Administration** > **Softwa
 2. Select a catalog and click **Import** to load it into the system.
 3. Imported catalogs can be updated by clicking **Update catalog** to sync with the
    upstream source.
+
+### Several versions of one catalog
+
+A catalog is identified by its name, type **and version**, so several versions can
+live side by side — EESSI releases such as `2023.06` and `2026.06`, or successive
+Spack snapshots — and an offering can link to more than one of them.
+
+**Import** takes the version from upstream and stores it as a new catalog when that
+exact version is not held yet. A different version already in the database does not
+block the import. **Update catalog** refreshes the version it belongs to and never
+rewrites its version string; import a newer upstream release to add another row.
+
+When scheduled cleanup is enabled it collapses only true duplicates — rows sharing
+the same name, type and version — and never merges distinct versions. A catalog
+that has not been successfully updated for longer than `SOFTWARE_CATALOG_RETENTION_DAYS`
+is deleted, so keep the automatic updates on for every version you still offer.
 
 ### Catalog types
 
@@ -92758,7 +92907,8 @@ The following notifications are available for call management:
 |---|---|---|
 | New proposal submitted | Call managers | Researcher submits a proposal |
 | New review submitted | Call managers | Reviewer submits evaluation |
-| Proposal cancelled | Proposal creator | Round cutoff passes (auto-cancel) |
+| Draft carried over | Proposal creator | A draft left open at the round cut-off moves to the call's next round |
+| Proposal cancelled | Proposal creator | Round cutoff passes (auto-cancel) — only when carry-over is off or there is no later round |
 | Proposal state changed | Proposal creator | Any state transition |
 | Submission deadline approaching | Draft proposers | 3 days before round cutoff |
 | Review assigned | Reviewer | Manager assigns a review |
@@ -93528,6 +93678,17 @@ cannot list the members.
 
 Staff and support users always see every team.
 
+## What the organization reader can read
+
+The built-in **Organization reader** role (`CUSTOMER.READER`) is a view-only role. Besides
+seeing the team, its holders can read the organization's **users**, **projects**,
+**resources**, **orders** and **invitations** — enough to audit what the organization holds
+without being able to change it. The role grants no create, update or delete permission, so
+an order raised by a reader is refused even though the order list is readable.
+
+A deployment can widen or narrow this in its own role definitions; the list above is what
+`permissions.yaml` grants out of the box.
+
 ---
 
 ### Organization onboarding
@@ -93794,6 +93955,22 @@ staff and support users from the "Reporting" sidebar menu.
   <figcaption>List of built-in reports in HomePort</figcaption>
 </figure>
 
+## Reports for organization owners
+
+An administrator can enable the `customer.show_organisation_reporting` feature flag, which gives
+**organization owners** their own Reporting menu scoped to the organizations they own. The menu lists
+only the reports that make sense for a single organization:
+
+- **Organization summary** — the organization's resources by project, with limits and usage.
+- **Quotas** — resource count, estimated cost and cloud quota usage.
+- **Usage** — component-level usage per resource over a period.
+- **Usage by user** — component usage attributed to individual team members.
+- **Project detail** — resource limit and usage history of one project.
+
+An owner picks the organization to report on from a selector on the reporting pages. Organization
+managers are not included: only owners see the menu. Staff and support users keep the full report list,
+and the flag does not change what they see.
+
 ## Grafana and Prometheus Metrics
 
 Waldur supports exporters to Prometheus of different statistical metrics that can be used for building
@@ -93991,8 +94168,10 @@ To set up the configuration, navigate to the Service Desk configuration page by 
 
 | Backend | Where tickets live | When to use it |
 |---------|--------------------|----------------|
-| **Basic** | In Waldur | You have no external service desk, or you want to keep support inside the portal. |
+| **Basic** (the default) | In Waldur | You have no external service desk, or you want to keep support inside the portal. |
 | **Atlassian**, **Zammad**, **Smax** | In that system | Your team already works in an external service desk and Waldur should mirror it. |
+
+**Basic** is the backend a deployment starts with. An installation that has always run an external service desk must therefore select it explicitly in **Waldur support active backend type**; until then tickets stay in Waldur.
 
 The difference matters for who owns a ticket's status. With **Basic**, Waldur owns the whole lifecycle and your agents change the status in Waldur. With the external backends the remote system is the source of truth: status flows *into* Waldur through synchronisation and webhooks, so it cannot be edited in the portal.
 
@@ -100386,11 +100565,20 @@ A service provider can define the policy via User Interface:
         - `FreeIPA`: uses the username field of a corresponding FreeIPA profile;
         - `Identity claim`: uses dedicated attribute released by the IdP as a username.
 
-    - **Initial UID number**: refers to the lowest numerical user ID (UID) assigned to regular users;
-    - **Initial primary group number**: refers to Group ID (GID) assigned to a user when they are created;
     - **Home directory prefix**: Allows to define home directory prefix for the offering users.
 
 4. After this, the usernames are regenerated for all the linked offering users.
+
+Starting numbers for user and group IDs are no longer set per offering. Waldur allocates them from the provider's [POSIX ID pool](../user-guide/service-provider-organization/posix-id-pools.md), which reserves the number blocks every offering of that provider draws on.
+
+## SCIM login nodes
+
+When **Enable SCIM entitlements** is on, a **SCIM login nodes** field appears in the same section. It lists the bare hostnames of the offering's login nodes (for example `login.example.org`), separated by commas, and these are what Waldur reports as entitlements to the remote SCIM service.
+
+The field accepts DNS hostnames only — no `ssh://` prefix, no `user@`, no port. Entries are stored lowercased, duplicates are dropped, and anything that is not a bare hostname is refused. These hosts are not access links, so they do not appear in a resource's access dropdown.
+
+!!! note "Upgrading from SSH access endpoints"
+    Earlier releases read the offering's `ssh://` access endpoints instead. On upgrade, for every offering that already had **Enable SCIM entitlements** on, Waldur copies the hostnames out of those endpoints into **SCIM login nodes** and removes the endpoints, which frees the access dropdown of entries that were never access links. An offering that had SSH endpoints but had not opted in is left as it is. Changing the list afterwards schedules an entitlement sync for the offering's users.
 
 ## Granting user access to resource
 
