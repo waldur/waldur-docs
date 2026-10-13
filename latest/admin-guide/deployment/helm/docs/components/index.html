@@ -20135,10 +20135,11 @@ and how they interact with each other.</p>
 </tr>
 <tr>
 <td><code>waldur-mastermind-beat</code></td>
-<td>Celery scheduler managing periodic tasks, cleanup operations, and recurring jobs</td>
+<td>Celery scheduler managing periodic tasks, cleanup operations, and recurring jobs. When <code>waldur.initdbEnabled</code> is true, its init container runs database migrations (<code>initdb</code>)</td>
 </tr>
 </tbody>
 </table>
+<p>When <code>waldur.initdbEnabled</code> is true, the API, worker, and web-shell Deployments start a <code>wait-for-migrations</code> init container before their main process. It polls <code>waldur migrate --check</code> and exits only after the beat pod has applied every migration in the new image. Until then the new pods are not Ready, so the Service keeps sending traffic to the previous API pods and new workers do not consume tasks. The wait is bounded by <code>waldur.initdbWaitTimeout</code> (default 45 minutes). After that check passes, the previous API pods still serve until the new ones are Ready, so a migration that drops or renames a column can still fail on those old pods. The cleanup and SAML metadata CronJobs are not gated. Set <code>waldur.initdbEnabled</code> to false only when migrations are applied out of band before the new pods start; the chart then does not wait.</p>
 <h2 id="optional-components">Optional Components</h2>
 <h3 id="5-metrics-exporter">5. Metrics Exporter</h3>
 <p><strong>Deployment:</strong> <code>waldur-metrics-exporter</code>
