@@ -36,6 +36,7 @@ for deployment-specific documentation.
 * [Change user passwords](staff-users/change-user-password.md)
 * [Creation of organizations](staff-users/organization-management.md)
 * [Credit management configuration](staff-users/credit-management-staff.md)
+* [Webhook event consumers](staff-users/event-consumer-webhooks.md)
 * [Impersonation](staff-users/impersonation.md)
 * [Offering merges](staff-users/offering-merges.md)
 * [Projects removal by admin](staff-users/projects-removal-admin.md)
