@@ -8954,6 +8954,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#accounting-visibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accounting visibility
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#slug-permissions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19738,6 +19749,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#accounting-visibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accounting visibility
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#slug-permissions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -20097,6 +20119,29 @@ project role it loads without the matching permission.</p>
 <code>conftest.py</code> adds the matching permission to every customer- and
 project-scoped system role that <code>get_system_role</code> creates. A test that needs
 the permission absent calls <code>role.delete_permission(...)</code>.</p>
+<h2 id="accounting-visibility">Accounting visibility</h2>
+<p><code>CUSTOMER.VIEW_ACCOUNTING</code> (<code>PermissionEnum.VIEW_CUSTOMER_ACCOUNTING</code>) decides
+whether HomePort shows an organization's Accounting pages: invoices, payments,
+payment profiles and credits. HomePort checks the permission, not the role
+name, so a clone of <code>CUSTOMER.OWNER</code> with <code>ORDER.*</code> removed still sees
+Accounting but cannot place orders. Staff always see it.</p>
+<p><code>permissions.yaml</code> grants it to <code>CUSTOMER.OWNER</code> only, the role that saw these
+pages before. <code>import_roles</code> adds it to the owner role on the next deployment;
+a stack that skips initdb (the local dev stack) needs <code>waldur import_roles</code>
+run by hand. A clone of the owner copies its template's permissions once, so
+clones made after the upgrade have it, but clones that already exist do not:
+grant it to them in the role editor. Until then such a clone sees every other
+owner screen but not Accounting, as before. Other roles get it only when
+someone grants it, in the role editor or in <code>custom-roles.yaml</code>.</p>
+<p>The API does not enforce the permission yet. Invoice, payment, payment profile
+and credit reads are filtered by <code>GenericRoleFilter</code>, so any role on the
+organization can still list them. Creating, editing and deleting a project
+credit stays with owners and their clones (<code>is_owner</code>), so a role that only
+views accounting sees credits read-only. The permission does widen one read:
+a project credit's organization-wide figures (<code>customer_credit</code>,
+<code>allocated_customer_credit</code>, <code>offerings</code>) are shown to owners and to roles
+that grant <code>CUSTOMER.VIEW_ACCOUNTING</code> on the organization, and hidden from
+everyone else.</p>
 <h2 id="slug-permissions">Slug permissions</h2>
 <p>Site agents name backend accounts after slugs: a SLURM account from the resource
 or project slug, a Kubernetes namespace from the resource slug. A wrong or late

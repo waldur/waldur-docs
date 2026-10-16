@@ -3580,6 +3580,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#naming-calls-in-marketplace-only-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Naming calls in marketplace-only mode
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#feature-flags-that-combine-with-it" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19383,6 +19394,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#naming-calls-in-marketplace-only-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Naming calls in marketplace-only mode
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#feature-flags-that-combine-with-it" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19467,7 +19489,7 @@ it in <code>waldur.settingsOverrides</code> — see <a href="../../deployment/he
 <td><code>calls</code></td>
 <td>No</td>
 <td>Yes</td>
-<td>No</td>
+<td>Yes, from a call's offerings</td>
 <td>Calls, rounds, proposals</td>
 </tr>
 <tr>
@@ -19481,14 +19503,40 @@ it in <code>waldur.settingsOverrides</code> — see <a href="../../deployment/he
 </table>
 <ul>
 <li><strong>Apply through an offering</strong> — an offering that is open for proposals shows <strong>Apply for access</strong> next to
-  <strong>Order now</strong>. In <code>calls</code> mode there is no offering page to apply from.</li>
+  <strong>Order now</strong>. In <code>calls</code> mode the offering page is reached from <strong>Calls for proposals → Available
+  offerings</strong>, offers applying only, and leads back to the calls section; the marketplace shop itself
+  (<strong>Add resource</strong>, the catalogue, categories, orders) is for staff only.</li>
 <li>In <code>marketplace</code> mode applicants never meet a call: their proposals are listed as access requests in their
   profile, and the proposal notifications are sent with the <code>access_request_*</code> templates instead — see
   <a href="../notifications/">Notifications</a>. Reviewers, call managers and service providers keep the call vocabulary
-  and, if call management is on, a sidebar section to work from.</li>
+  and, if call management is on, a sidebar section to work from. The call catalogue (<code>/calls-for-proposals/</code>,
+  <code>/calls/</code>) is refused to everyone else, and an offering's team that assesses requests without holding a
+  call role reaches its tasks under <strong>Access management → My reviews</strong>.</li>
+<li>In every mode an applicant can withdraw a submitted proposal while it is still being evaluated. Its
+  unfinished steps are skipped, open reviews and assignments lapse, and the call managers are notified
+  (<code>proposal.proposal_withdrawn</code>). Once an award awaits the applicant's answer, they decline it instead.</li>
 </ul>
 <p>The setting changes navigation and wording only. The API serves the same data in every mode, and a proposal
 submitted in one mode keeps working after the mode changes.</p>
+<h2 id="naming-calls-in-marketplace-only-mode">Naming calls in marketplace-only mode</h2>
+<p>In <code>marketplace</code> mode the applicant never sees a call, but two things they do see are derived from it:</p>
+<ul>
+<li><strong>The project created on approval</strong> is named <code>&lt;prefix&gt; - &lt;round start date&gt; - &lt;request name&gt;</code>, where the
+  prefix is the call's <strong>backend ID</strong> if set, and its slug otherwise. The slug is built from the call's name.</li>
+<li><strong>The request ID</strong> shown on the request page follows the call's <strong>proposal slug template</strong> (default
+  <code>{round_slug}-{counter_padded}</code>), and the round slug is built from the managing organization and the
+  call's name.</li>
+</ul>
+<p>A call named after an internal programme ("2026 Extreme Scale Access Call") therefore leaks into project
+names and request IDs. For calls that run behind offerings:</p>
+<ul>
+<li>name the call after the service it grants access to, as the applicant would call it;</li>
+<li>set its <strong>backend ID</strong> to a short, neutral prefix (for example the offering's short name), since it becomes
+  the start of every project name;</li>
+<li>set the <strong>proposal slug template</strong> to something that does not name the call, for example
+  <code>REQ-{year}{month}-{counter_padded}</code>.</li>
+</ul>
+<p>Change these before the call takes its first request: existing projects and request IDs are not renamed.</p>
 <h2 id="feature-flags-that-combine-with-it">Feature flags that combine with it</h2>
 <p>These are toggled under <strong>Administration → User interface → Features</strong>, and are independent of the mode.</p>
 <table>

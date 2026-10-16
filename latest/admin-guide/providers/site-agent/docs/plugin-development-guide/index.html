@@ -20429,6 +20429,9 @@ once more — most plugin review comments trace back to one of those six.</p>
 <li><strong>Purpose</strong>: Set up prerequisites before resource creation (e.g., parent accounts).</li>
 <li><strong><code>user_context</code></strong> contains pre-resolved data: <code>ssh_keys</code> (UUID → public key),
   <code>plan_quotas</code> (component → value), <code>team</code>, <code>offering_users</code>.</li>
+<li>Runs once for every candidate backend ID the uniqueness retry tries, including
+  the ones the backend then rejects. Do not create anything named after the
+  resource's own backend ID here; use <code>_on_backend_resource_created</code>.</li>
 <li><strong>No-op</strong>: Use <code>pass</code>.</li>
 </ul>
 <h4 id="downscale_resourceresource_backend_id-str-bool"><code>downscale_resource(resource_backend_id: str) -&gt; bool</code></h4>
@@ -20467,6 +20470,11 @@ backend needs custom behavior.</p>
 </tr>
 </thead>
 <tbody>
+<tr>
+<td><code>_on_backend_resource_created</code></td>
+<td>No-op</td>
+<td>Create what is addressed by the backend ID later (group, directory, QoS)</td>
+</tr>
 <tr>
 <td><code>post_create_resource</code></td>
 <td>No-op</td>
@@ -21775,6 +21783,7 @@ endpoints), set <code>resource.backend_metadata</code> in <code>post_create_reso
     B-&gt;&gt;B: Read ssh_keys, plan_quotas from user_context
     B-&gt;&gt;E: Create resource with resolved data
     E--&gt;&gt;B: Resource created
+    B-&gt;&gt;B: _on_backend_resource_created(backend_id, resource)
 
     P-&gt;&gt;B: post_create_resource(resource, waldur_resource, user_context)
     B-&gt;&gt;B: Set resource.backend_metadata

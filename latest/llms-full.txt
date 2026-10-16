@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-16T02:04:05.516399Z
+Generated: 2026-10-16T09:56:39.851890Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -21059,18 +21059,46 @@ it in `waldur.settingsOverrides` — see [Configuration overrides](../deployment
 | Value | Marketplace in navigation | Calls section in navigation | Apply through an offering | Applicant wording |
 |---|---|---|---|---|
 | `both` (default) | Yes | Yes | Yes | Calls, rounds, proposals |
-| `calls` | No | Yes | No | Calls, rounds, proposals |
+| `calls` | No | Yes | Yes, from a call's offerings | Calls, rounds, proposals |
 | `marketplace` | Yes | Operators only | Yes | Access requests, submission deadlines |
 
 - **Apply through an offering** — an offering that is open for proposals shows **Apply for access** next to
-  **Order now**. In `calls` mode there is no offering page to apply from.
+  **Order now**. In `calls` mode the offering page is reached from **Calls for proposals → Available
+  offerings**, offers applying only, and leads back to the calls section; the marketplace shop itself
+  (**Add resource**, the catalogue, categories, orders) is for staff only.
 - In `marketplace` mode applicants never meet a call: their proposals are listed as access requests in their
   profile, and the proposal notifications are sent with the `access_request_*` templates instead — see
   [Notifications](notifications.md). Reviewers, call managers and service providers keep the call vocabulary
-  and, if call management is on, a sidebar section to work from.
+  and, if call management is on, a sidebar section to work from. The call catalogue (`/calls-for-proposals/`,
+  `/calls/`) is refused to everyone else, and an offering's team that assesses requests without holding a
+  call role reaches its tasks under **Access management → My reviews**.
+- In every mode an applicant can withdraw a submitted proposal while it is still being evaluated. Its
+  unfinished steps are skipped, open reviews and assignments lapse, and the call managers are notified
+  (`proposal.proposal_withdrawn`). Once an award awaits the applicant's answer, they decline it instead.
 
 The setting changes navigation and wording only. The API serves the same data in every mode, and a proposal
 submitted in one mode keeps working after the mode changes.
+
+## Naming calls in marketplace-only mode
+
+In `marketplace` mode the applicant never sees a call, but two things they do see are derived from it:
+
+- **The project created on approval** is named `<prefix> - <round start date> - <request name>`, where the
+  prefix is the call's **backend ID** if set, and its slug otherwise. The slug is built from the call's name.
+- **The request ID** shown on the request page follows the call's **proposal slug template** (default
+  `{round_slug}-{counter_padded}`), and the round slug is built from the managing organization and the
+  call's name.
+
+A call named after an internal programme ("2026 Extreme Scale Access Call") therefore leaks into project
+names and request IDs. For calls that run behind offerings:
+
+- name the call after the service it grants access to, as the applicant would call it;
+- set its **backend ID** to a short, neutral prefix (for example the offering's short name), since it becomes
+  the start of every project name;
+- set the **proposal slug template** to something that does not name the call, for example
+  `REQ-{year}{month}-{counter_padded}`.
+
+Change these before the call takes its first request: existing projects and request IDs are not renamed.
 
 ## Feature flags that combine with it
 
@@ -33915,6 +33943,9 @@ once more — most plugin review comments trace back to one of those six.
 - **Purpose**: Set up prerequisites before resource creation (e.g., parent accounts).
 - **`user_context`** contains pre-resolved data: `ssh_keys` (UUID → public key),
   `plan_quotas` (component → value), `team`, `offering_users`.
+- Runs once for every candidate backend ID the uniqueness retry tries, including
+  the ones the backend then rejects. Do not create anything named after the
+  resource's own backend ID here; use `_on_backend_resource_created`.
 - **No-op**: Use `pass`.
 
 #### `downscale_resource(resource_backend_id: str) -> bool`
@@ -33948,6 +33979,7 @@ backend needs custom behavior.
 
 | Method | Default | When to override |
 |---|---|---|
+| `_on_backend_resource_created` | No-op | Create what is addressed by the backend ID later (group, directory, QoS) |
 | `post_create_resource` | No-op | Post-creation setup; set `resource.backend_metadata` to push data to Waldur |
 | `_pre_delete_resource` | No-op | Pre-deletion cleanup (cancel jobs) |
 | `post_delete_resource` | No-op | Post-deletion cleanup (e.g., remove child offerings linked to the resource) |
@@ -34749,6 +34781,7 @@ sequenceDiagram
     B->>B: Read ssh_keys, plan_quotas from user_context
     B->>E: Create resource with resolved data
     E-->>B: Resource created
+    B->>B: _on_backend_resource_created(backend_id, resource)
 
     P->>B: post_create_resource(resource, waldur_resource, user_context)
     B->>B: Set resource.backend_metadata
@@ -66472,11 +66505,64 @@ of type `component_formula` with the same internal name as the order option:
   the offering (`billing_type: limit`; prepaid one-time components are not
   accepted).
 - While an option refers to a component, the component cannot be removed,
-  renamed or switched to another billing type. If a plan's billing mode stops
+  renamed or switched to another billing type, including by importing the
+  offering with `import_offering`. If a plan's billing mode stops
   billing it as a limit, orders on that plan are refused with an error naming
   the option.
 - A component may be derived by only one option.
 - A sum may not include its own target, and sums may not form a cycle.
+
+## Showing a Resource Option as a Usage Limit
+
+A provider's backend may enforce a quota for a component that Waldur only
+meters, such as a file count. The quota is held in a resource option, and
+`display_limit_config` on that option names the usage-based component it
+belongs to. The resource then shows the component's usage against that value.
+
+```json
+{
+  "resource_options": {
+    "order": ["inode_quota"],
+    "options": {
+      "inode_quota": {
+        "type": "integer",
+        "label": "Inode quota",
+        "display_limit_config": {"component_type": "inodes"}
+      }
+    }
+  }
+}
+```
+
+- **Shown, not stored**: the resource API returns the option's value in the
+  resource's `display_limits` under the component's type, for example
+  `"display_limits": {"inodes": 2000000}`. It is computed when the resource is
+  read, so the value always follows the option and is not affected by limit
+  change orders.
+- **`limits` is unchanged**: the resource's `limits` keep holding only the
+  stored limits of limit-based components. Clients that send a resource's
+  limits back in an order, or compare them with a backend's limits, never see
+  the displayed value there.
+- **Display only**: the value is not billed, validated as a limit or enforced.
+  The component stays usage-based, and usage reports are accepted above it.
+- **A stored limit wins**: if the resource holds a limit for the component, or
+  its plan bills the component by limit, that limit is reported in `limits`
+  and the option's value is not returned in `display_limits`.
+- **No value, no limit**: a resource without the option, or with a value that
+  is not a non-negative number, shows usage only.
+- **Units**: the value is shown as entered, so the option must be in the same
+  unit as the usage reported for the component.
+
+### Validation when the offering is saved
+
+- The setting is accepted on resource options of type `integer` only, not on
+  order options.
+- The component must be a usage-based component of the offering
+  (`billing_type: usage`).
+- A component takes its displayed limit from one option only.
+- While an option refers to a component, the component cannot be removed,
+  renamed or switched to another billing type, including by importing the
+  offering with `import_offering`.
 
 ---
 
@@ -70544,6 +70630,33 @@ The test suite mirrors the YAML grant: an autouse fixture in the root
 `conftest.py` adds the matching permission to every customer- and
 project-scoped system role that `get_system_role` creates. A test that needs
 the permission absent calls `role.delete_permission(...)`.
+
+## Accounting visibility
+
+`CUSTOMER.VIEW_ACCOUNTING` (`PermissionEnum.VIEW_CUSTOMER_ACCOUNTING`) decides
+whether HomePort shows an organization's Accounting pages: invoices, payments,
+payment profiles and credits. HomePort checks the permission, not the role
+name, so a clone of `CUSTOMER.OWNER` with `ORDER.*` removed still sees
+Accounting but cannot place orders. Staff always see it.
+
+`permissions.yaml` grants it to `CUSTOMER.OWNER` only, the role that saw these
+pages before. `import_roles` adds it to the owner role on the next deployment;
+a stack that skips initdb (the local dev stack) needs `waldur import_roles`
+run by hand. A clone of the owner copies its template's permissions once, so
+clones made after the upgrade have it, but clones that already exist do not:
+grant it to them in the role editor. Until then such a clone sees every other
+owner screen but not Accounting, as before. Other roles get it only when
+someone grants it, in the role editor or in `custom-roles.yaml`.
+
+The API does not enforce the permission yet. Invoice, payment, payment profile
+and credit reads are filtered by `GenericRoleFilter`, so any role on the
+organization can still list them. Creating, editing and deleting a project
+credit stays with owners and their clones (`is_owner`), so a role that only
+views accounting sees credits read-only. The permission does widen one read:
+a project credit's organization-wide figures (`customer_credit`,
+`allocated_customer_credit`, `offerings`) are shown to owners and to roles
+that grant `CUSTOMER.VIEW_ACCOUNTING` on the organization, and hidden from
+everyone else.
 
 ## Slug permissions
 
@@ -80465,24 +80578,25 @@ Implemented in `packages/eslint-plugin-waldur` and enabled as `waldur-custom/*` 
 
 #### Visual patterns
 
-| Rule Name                                 | Severity | Enforced Pattern                                                                                                                                                                              |
-| :---------------------------------------- | :------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `enforce-badge-icon-patterns`             | `error`  | Enforces 12px icon sizing inside `Badge` components.                                                                                                                                          |
-| `enforce-badge-props-consistency`         | `error`  | Validates `variant`, `tone` and `shape` prop combinations on `Badge`.                                                                                                                         |
-| `no-manual-icon-colors-in-badges`         | `error`  | Prevents manual colour classes on icons rendered inside `Badge`.                                                                                                                              |
-| `enforce-badge-right-icon-pattern`        | `error`  | Standardizes right-side action icon styling in badges.                                                                                                                                        |
-| `enforce-featured-icon`                   | `error`  | Requires `FeaturedIcon` (with `tone`/`size`) for highlighted icon emblems.                                                                                                                    |
-| `enforce-phosphor-icon-weight`            | `error`  | Consistent `weight` prop on Phosphor icons.                                                                                                                                                   |
-| `enforce-border-radius-tokens`            | `error`  | Design-token radius classes instead of hard-coded values.                                                                                                                                     |
-| `no-bootstrap-tabs`                       | `error`  | `Tabs` / `TabNav` from `waldur-ui`; no react-bootstrap `Tab`/`Tabs`/`Nav` or `nav-*` classes.                                                                                                 |
-| `enforce-breadcrumb-colors`               | `error`  | Breadcrumb links use the `$text-brand-secondary` token.                                                                                                                                       |
-| `no-bootstrap-form-check`                 | `error`  | `Checkbox` / `Radio` / `Switch` from `waldur-ui`; no `FormCheck`, `Form.Check` or `form-check*` / `form-switch*` classes.                                                                     |
-| `no-bootstrap-progress`                   | `error`  | `Progress` from `waldur-ui`; no react-bootstrap `ProgressBar` or `progress` / `progress-bar*` classes.                                                                                        |
-| `no-bootstrap-border-with-tailwind-color` | `error`  | No Bootstrap `border` / `border-top` / … next to a Tailwind border colour (Bootstrap's `!important` colour wins). Autofixes to `border-[1px]` when the same string sets a base colour.        |
-| `no-raw-status-ramp`                      | `error`  | State colours come from `--status-*`, not raw `success-N` / `warning-N` / `error-N` utilities. Deliberate exceptions carry an `eslint-disable` with the reason.                               |
-| `require-weight-scale`                    | `error`  | Font weight is `font-light` … `font-bold`. Reports Bootstrap `fw-*` (autofixed to the same weight: `fw-bold` was 500, so `font-medium`), off-scale steps, `font-[N]` and inline `fontWeight`. |
-| `require-dark-pair`                       | `error`  | A physical colour (ramp step, white/black, hex, raw `var(--brand-N)`) needs a `dark:` counterpart in its class list, or a semantic utility. Solid fills and white text on them pass.          |
-| `no-bootstrap-css-vars`                   | `error`  | No `--bs-*` reads in TS/TSX; use the design token (table in [design-tokens.md](design-tokens.md)).                                                                                            |
+| Rule Name                                 | Severity | Enforced Pattern                                                                                                                                                                                                                                                                                |
+| :---------------------------------------- | :------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enforce-badge-icon-patterns`             | `error`  | Enforces 12px icon sizing inside `Badge` components.                                                                                                                                                                                                                                            |
+| `enforce-badge-props-consistency`         | `error`  | Validates `variant`, `tone` and `shape` prop combinations on `Badge`.                                                                                                                                                                                                                           |
+| `no-manual-icon-colors-in-badges`         | `error`  | Prevents manual colour classes on icons rendered inside `Badge`.                                                                                                                                                                                                                                |
+| `enforce-badge-right-icon-pattern`        | `error`  | Standardizes right-side action icon styling in badges.                                                                                                                                                                                                                                          |
+| `enforce-featured-icon`                   | `error`  | Requires `FeaturedIcon` (with `tone`/`size`) for highlighted icon emblems.                                                                                                                                                                                                                      |
+| `enforce-phosphor-icon-weight`            | `error`  | Consistent `weight` prop on Phosphor icons.                                                                                                                                                                                                                                                     |
+| `enforce-border-radius-tokens`            | `error`  | Design-token radius classes instead of hard-coded values.                                                                                                                                                                                                                                       |
+| `no-bootstrap-tabs`                       | `error`  | `Tabs` / `TabNav` from `waldur-ui`; no react-bootstrap `Tab`/`Tabs`/`Nav` or `nav-*` classes.                                                                                                                                                                                                   |
+| `enforce-breadcrumb-colors`               | `error`  | Breadcrumb links use the `$text-brand-secondary` token.                                                                                                                                                                                                                                         |
+| `no-bootstrap-form-check`                 | `error`  | `Checkbox` / `Radio` / `Switch` from `waldur-ui`; no `FormCheck`, `Form.Check` or `form-check*` / `form-switch*` classes.                                                                                                                                                                       |
+| `no-bootstrap-progress`                   | `error`  | `Progress` from `waldur-ui`; no react-bootstrap `ProgressBar` or `progress` / `progress-bar*` classes.                                                                                                                                                                                          |
+| `no-bootstrap-border-with-tailwind-color` | `error`  | No Bootstrap `border` / `border-top` / … next to a Tailwind border colour (Bootstrap's `!important` colour wins). Autofixes to `border-[1px]` when the same string sets a base colour.                                                                                                          |
+| `no-raw-status-ramp`                      | `error`  | State colours come from `--status-*`, not raw `success-N` / `warning-N` / `error-N` utilities. Deliberate exceptions carry an `eslint-disable` with the reason.                                                                                                                                 |
+| `no-retired-bootstrap-utility`            | `error`  | Bootstrap utilities the Metronic build no longer generates (never used: `vh-100`, `align-content-*`, `mx-n*`, `ls-*`; or used only at the base size, so their breakpoint variants `px-lg-3`, `min-h-md-100px`, `svg-icon-lg-3` are dropped) compile to nothing; names the Tailwind replacement. |
+| `require-weight-scale`                    | `error`  | Font weight is `font-light` … `font-bold`. Reports Bootstrap `fw-*` (autofixed to the same weight: `fw-bold` was 500, so `font-medium`), off-scale steps, `font-[N]` and inline `fontWeight`.                                                                                                   |
+| `require-dark-pair`                       | `error`  | A physical colour (ramp step, white/black, hex, raw `var(--brand-N)`) needs a `dark:` counterpart in its class list, or a semantic utility. Solid fills and white text on them pass.                                                                                                            |
+| `no-bootstrap-css-vars`                   | `error`  | No `--bs-*` reads in TS/TSX; use the design token (table in [design-tokens.md](design-tokens.md)).                                                                                                                                                                                              |
 
 #### Code hygiene
 
