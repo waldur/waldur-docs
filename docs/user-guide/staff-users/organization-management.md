@@ -52,8 +52,39 @@ The organization edit interface consists of six main tabs, each containing speci
 - **Phone number** - Contact telephone
 - **Contact details** - Additional contact information
 - **Homepage** - Organization's website
+- **Notification emails** - Additional addresses for organization notifications, separated by commas
+- **Invoice emails** - Addresses that receive the organization's invoices, separated by commas
 
 ![type:image](../img/create_organization_contact.png)
+
+#### Invoice recipients
+
+Monthly invoice emails, with the invoice attached as a PDF, go to the organization owners by default.
+When **Invoice emails** is set, they go to those addresses instead, and the owners no longer receive them.
+The same addresses receive the notice that a fixed-price contract is about to end. Clear the field to send
+invoices to the owners again.
+
+Whenever the list changes, the owners are emailed the old and new recipients and the name of the person who
+made the change, so invoices cannot be redirected unnoticed.
+
+!!! note
+    Like every Waldur notification, both emails are disabled until an operator enables them. With the Helm
+    chart, list them under `waldur.notifications`:
+
+    ```yaml
+    waldur:
+      notifications:
+        invoices.notification: true
+        invoices.invoice_emails_changed: true
+    ```
+
+    Enable `invoices.invoice_emails_changed` whenever `invoices.notification` is enabled; otherwise invoice
+    recipients can be changed without the owners being told.
+
+The field is shown where the deployment emails invoices automatically, which operators enable with the
+`send_customer_invoices` feature of the Helm chart. Staff always see it, because they can send an invoice
+by hand from the invoice page. A list that is already set stays visible to everyone who can edit the
+contact information, so it can always be reviewed and cleared.
 
 ### Access control
 
