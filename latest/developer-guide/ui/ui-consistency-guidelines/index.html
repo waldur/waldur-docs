@@ -10102,6 +10102,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#73-status-colours-outside-a-component" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.3 Status Colours Outside a Component
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -20720,6 +20731,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#73-status-colours-outside-a-component" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.3 Status Colours Outside a Component
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -21842,7 +21864,7 @@ Cells read against the ones beside them before they read against the app.</p>
 </code></pre></div></td></tr></tbody></table></div>
 <p><strong>Visual requirements</strong>:</p>
 <ul>
-<li>Disabled buttons use design token colors (e.g., <code>text-muted</code>, <code>btn-disabled</code>) - NOT opacity</li>
+<li>Disabled buttons use design token colors (e.g., <code>--text-disabled</code>, the <code>--btn-*-disabled</code> tokens) - NOT opacity</li>
 <li>Opacity is reserved for overlays only; components use solid colors for predictability, accessibility, and theming</li>
 <li>Keep the same width to prevent layout shift</li>
 <li>Use <code>aria-disabled</code> for accessibility</li>
@@ -21949,7 +21971,7 @@ Cells read against the ones beside them before they read against the app.</p>
 <span class="p">{</span>
 <span class="w">  </span><span class="nx">loading</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">data</span><span class="p">.</span><span class="nx">length</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">0</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="p">(</span>
 <span class="w">    </span><span class="p">&lt;</span><span class="nt">div</span><span class="w"> </span><span class="na">className</span><span class="o">=</span><span class="s">"text-center py-2"</span><span class="p">&gt;</span>
-<span class="w">      </span><span class="p">&lt;</span><span class="nt">LoadingSpinnerIcon</span><span class="w"> </span><span class="na">className</span><span class="o">=</span><span class="s">"text-muted"</span><span class="w"> </span><span class="p">/&gt;</span>
+<span class="w">      </span><span class="p">&lt;</span><span class="nt">LoadingSpinnerIcon</span><span class="w"> </span><span class="na">className</span><span class="o">=</span><span class="s">"text-quaternary"</span><span class="w"> </span><span class="p">/&gt;</span>
 <span class="w">    </span><span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
 <span class="w">  </span><span class="p">);</span>
 <span class="p">}</span>
@@ -22513,18 +22535,56 @@ like a custom <code>onClick</code> before closing:</p>
 </table>
 <p><strong>Custom variants</strong> (for differentiation within same category):
 <code>pink</code>, <code>blue</code>, <code>teal</code>, <code>indigo</code>, <code>purple</code>, <code>rose</code>, <code>orange</code>, <code>moss</code></p>
+<h3 id="73-status-colours-outside-a-component">7.3 Status Colours Outside a Component</h3>
+<p>Prefer <code>StateIndicator</code>, <code>Badge</code>, <code>AlertItem</code> or <code>FeaturedIcon</code> with a <code>variant</code>: they already
+read the status matrix. When a custom element has to carry a state colour (a banner, a
+highlighted row, a validation message), use the matrix tokens, never a raw ramp step:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1">// Good - adapts to dark mode, contrast-checked on every surface</span>
+<span class="p">&lt;</span><span class="nt">div</span><span class="w"> </span><span class="na">className</span><span class="o">=</span><span class="s">"bg-warning-subtle text-warning"</span><span class="p">&gt;</span><span class="err">…</span><span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">span</span><span class="w"> </span><span class="na">className</span><span class="o">=</span><span class="s">"text-danger"</span><span class="p">&gt;{</span><span class="nx">error</span><span class="p">}&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">div</span><span class="w"> </span><span class="na">className</span><span class="o">=</span><span class="s">"border-[1px] border-danger-subtle"</span><span class="p">&gt;</span><span class="err">…</span><span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+
+<span class="c1">// Bad - needs a dark: twin, unchecked contrast, drifts from Badge/AlertItem</span>
+<span class="p">&lt;</span><span class="nt">div</span><span class="w"> </span><span class="na">className</span><span class="o">=</span><span class="s">"bg-warning-50 text-warning-700 dark:bg-warning-900"</span><span class="p">&gt;</span><span class="err">…</span><span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+</code></pre></div></td></tr></tbody></table></div>
+<table>
+<thead>
+<tr>
+<th>Slot</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--status-{intent}-bg</code></td>
+<td>Tinted surface</td>
+</tr>
+<tr>
+<td><code>--status-{intent}-border</code></td>
+<td>Subtle border</td>
+</tr>
+<tr>
+<td><code>--status-{intent}-solid</code></td>
+<td>Saturated fill or focus ring</td>
+</tr>
+<tr>
+<td><code>--status-{intent}-fg</code></td>
+<td>Text, icons and dots, on a neutral surface or on -bg</td>
+</tr>
+</tbody>
+</table>
+<p><code>{intent}</code> is <code>success</code>, <code>warning</code> or <code>danger</code> (<code>neutral</code> has <code>-bg</code> and <code>-fg</code>). The
+<code>waldur-custom/no-raw-status-ramp</code> lint rule reports raw <code>success-N</code> / <code>warning-N</code> / <code>error-N</code>
+utilities. Details and values:
+<a href="../design-tokens/">design-tokens.md § State colours</a>.</p>
 <hr>
 <h2 id="8-tooltips">8. Tooltips</h2>
-<blockquote>
-<p><strong>Stale examples below</strong>: <code>@/core/Tooltip</code> and its <code>Tip</code> export no longer
-exist — the current component is <code>Tooltip</code> from <code>waldur-ui</code>, and its
-actual prop API (<code>label</code>, <code>side</code>, <code>alwaysMount</code>, <code>trigger</code>, wrapping the
-triggering element as <code>children</code>) differs from the <code>id</code>/<code>body</code>/<code>theme</code>
-props shown in 8.1 and 8.2 below. For a disabled button specifically,
-prefer <code>BaseButton</code>'s own <code>disabledReason</code> prop (see 2.2) over wrapping it
-in a separate <code>Tooltip</code> — it already handles the disabled-only visibility
-and keeps the DOM structure stable across enabled/disabled toggles.</p>
-</blockquote>
 <h3 id="80-icons-that-carry-a-tooltip">8.0 Icons that carry a tooltip</h3>
 <p>Never wrap a bare icon in <code>Tooltip</code>: an icon is an <code>&lt;svg&gt;</code>, so the tooltip is
 hover-only and screen readers get nothing. Use <code>HelpIcon</code> (a "?" button) or
@@ -22555,6 +22615,9 @@ check control, a select option). The lint rule
 <li><strong>Icons without labels</strong>: Describe the element's purpose</li>
 <li><strong>Complex terms</strong>: Provide definitions</li>
 </ul>
+<p>When the tooltip explains a control or an icon, its trigger must be focusable,
+so it opens on keyboard focus too and screen readers can reach it. Prefer a
+component that already does this over wrapping something yourself:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
 <span class="normal"> 3</span>
@@ -22574,29 +22637,45 @@ check control, a select option). The lint rule
 <span class="normal">17</span>
 <span class="normal">18</span>
 <span class="normal">19</span>
-<span class="normal">20</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">Tip</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'@/core/Tooltip'</span><span class="p">;</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">CopyIcon</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'@phosphor-icons/react'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">BaseButton</span><span class="p">,</span><span class="w"> </span><span class="nx">HelpIcon</span><span class="p">,</span><span class="w"> </span><span class="nx">Tooltip</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'waldur-ui'</span><span class="p">;</span>
 
-<span class="c1">// Basic tooltip</span>
-<span class="p">&lt;</span><span class="nt">Tip</span><span class="w"> </span><span class="na">label</span><span class="o">=</span><span class="p">{</span><span class="nx">translate</span><span class="p">(</span><span class="s1">'Copy to clipboard'</span><span class="p">)}</span><span class="w"> </span><span class="na">id</span><span class="o">=</span><span class="s">"copy-btn"</span><span class="p">&gt;</span>
-<span class="w">  </span><span class="p">&lt;</span><span class="nt">CopyIcon</span><span class="w"> </span><span class="p">/&gt;</span>
-<span class="p">&lt;/</span><span class="nt">Tip</span><span class="p">&gt;</span>
+<span class="c1">// Icon-only button: BaseButton's own `tooltip`. With no visible label it is</span>
+<span class="c1">// also the button's accessible name.</span>
+<span class="p">&lt;</span><span class="nt">BaseButton</span>
+<span class="w">  </span><span class="na">variant</span><span class="o">=</span><span class="s">"tertiary"</span>
+<span class="w">  </span><span class="na">iconNode</span><span class="o">=</span><span class="p">{&lt;</span><span class="nt">CopyIcon</span><span class="w"> </span><span class="na">weight</span><span class="o">=</span><span class="s">"bold"</span><span class="w"> </span><span class="p">/&gt;}</span>
+<span class="w">  </span><span class="na">tooltip</span><span class="o">=</span><span class="p">{</span><span class="nx">translate</span><span class="p">(</span><span class="s1">'Copy to clipboard'</span><span class="p">)}</span>
+<span class="w">  </span><span class="na">onClick</span><span class="o">=</span><span class="p">{</span><span class="nx">copy</span><span class="p">}</span>
+<span class="p">/&gt;</span>
 
-<span class="c1">// Tooltip with body (title + description)</span>
-<span class="p">&lt;</span><span class="nt">Tip</span>
+<span class="c1">// Explaining a field or term: HelpIcon, a focusable "?" button.</span>
+<span class="c1">// Extra Tooltip props (title + description) go in tooltipProps.</span>
+<span class="p">&lt;</span><span class="nt">HelpIcon</span>
 <span class="w">  </span><span class="na">label</span><span class="o">=</span><span class="p">{</span><span class="nx">translate</span><span class="p">(</span><span class="s1">'Resource limits'</span><span class="p">)}</span>
-<span class="w">  </span><span class="na">body</span><span class="o">=</span><span class="p">{</span><span class="nx">translate</span><span class="p">(</span><span class="s1">'Maximum amount of resources that can be allocated.'</span><span class="p">)}</span>
-<span class="w">  </span><span class="na">id</span><span class="o">=</span><span class="s">"limits-info"</span>
-<span class="p">&gt;</span>
-<span class="w">  </span><span class="p">&lt;</span><span class="nt">InfoIcon</span><span class="w"> </span><span class="p">/&gt;</span>
-<span class="p">&lt;/</span><span class="nt">Tip</span><span class="p">&gt;</span>
+<span class="w">  </span><span class="na">tooltipProps</span><span class="o">=</span><span class="p">{{</span>
+<span class="w">    </span><span class="nx">body</span><span class="o">:</span><span class="w"> </span><span class="kt">translate</span><span class="p">(</span><span class="s1">'Maximum amount of resources that can be allocated.'</span><span class="p">),</span>
+<span class="w">  </span><span class="p">}}</span>
+<span class="p">/&gt;</span>
 
-<span class="c1">// Light theme tooltip</span>
-<span class="p">&lt;</span><span class="nt">Tip</span><span class="w"> </span><span class="na">label</span><span class="o">=</span><span class="p">{</span><span class="nx">fullText</span><span class="p">}</span><span class="w"> </span><span class="na">id</span><span class="o">=</span><span class="s">"text-tooltip"</span><span class="w"> </span><span class="na">theme</span><span class="o">=</span><span class="s">"light"</span><span class="p">&gt;</span>
+<span class="c1">// Truncated text: wrap the text itself; the full value is in the tooltip.</span>
+<span class="p">&lt;</span><span class="nt">Tooltip</span><span class="w"> </span><span class="na">label</span><span class="o">=</span><span class="p">{</span><span class="nx">fullText</span><span class="p">}&gt;</span>
 <span class="w">  </span><span class="p">&lt;</span><span class="nt">span</span><span class="w"> </span><span class="na">className</span><span class="o">=</span><span class="s">"ellipsis"</span><span class="p">&gt;{</span><span class="nx">truncatedText</span><span class="p">}&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>
-<span class="p">&lt;/</span><span class="nt">Tip</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">Tooltip</span><span class="p">&gt;</span>
 </code></pre></div></td></tr></tbody></table></div>
+<p>Wrap something in <code>Tooltip</code> directly only when it is already focusable (a
+link, a button) or is text, as above. Never wrap a bare icon: see 8.0.
+<code>Tooltip</code> also takes <code>side</code>, <code>theme</code> (<code>'dark'</code>, the default, inverts against
+the page; <code>'light'</code> stays a dark bubble in both themes), <code>autoWidth</code>,
+<code>trigger="click"</code> and <code>alwaysMount</code>.</p>
 <h3 id="82-disabled-element-tooltip-pattern">8.2 Disabled Element Tooltip Pattern</h3>
-<p>From <code>ActionItem</code> - use question icon for disabled action explanation:</p>
+<p>A disabled control takes no pointer events, so a tooltip wrapped around it
+never opens. Use the component's own prop instead:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
 <span class="normal"> 3</span>
@@ -22606,17 +22685,43 @@ check control, a select option). The lint rule
 <span class="normal"> 7</span>
 <span class="normal"> 8</span>
 <span class="normal"> 9</span>
-<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">QuestionIcon</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'@phosphor-icons/react'</span><span class="p">;</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1">// Disabled button: BaseButton shows disabledReason as its tooltip while</span>
+<span class="c1">// disabled, and keeps the same DOM structure across enabled/disabled</span>
+<span class="c1">// toggles (no remount, no lost focus).</span>
+<span class="p">&lt;</span><span class="nt">BaseButton</span>
+<span class="w">  </span><span class="na">variant</span><span class="o">=</span><span class="s">"primary"</span>
+<span class="w">  </span><span class="na">label</span><span class="o">=</span><span class="p">{</span><span class="nx">translate</span><span class="p">(</span><span class="s1">'Submit'</span><span class="p">)}</span>
+<span class="w">  </span><span class="na">disabled</span><span class="o">=</span><span class="p">{</span><span class="o">!</span><span class="nx">canSubmit</span><span class="p">}</span>
+<span class="w">  </span><span class="na">disabledReason</span><span class="o">=</span><span class="p">{</span><span class="nx">translate</span><span class="p">(</span><span class="s1">'Fill in all required fields first'</span><span class="p">)}</span>
+<span class="w">  </span><span class="na">onClick</span><span class="o">=</span><span class="p">{</span><span class="nx">submit</span><span class="p">}</span>
+<span class="p">/&gt;</span>
 
-<span class="c1">// When action is disabled, show question icon with tooltip</span>
-<span class="p">{</span>
-<span class="w">  </span><span class="nx">props</span><span class="p">.</span><span class="nx">disabled</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">props</span><span class="p">.</span><span class="nx">tooltip</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="p">(</span>
-<span class="w">    </span><span class="p">&lt;</span><span class="nt">Tip</span><span class="w"> </span><span class="na">label</span><span class="o">=</span><span class="p">{</span><span class="nx">props</span><span class="p">.</span><span class="nx">tooltip</span><span class="p">}</span><span class="w"> </span><span class="na">id</span><span class="o">=</span><span class="p">{</span><span class="sb">`disabled-reason-</span><span class="si">${</span><span class="nx">id</span><span class="si">}</span><span class="sb">`</span><span class="p">}&gt;</span>
-<span class="w">      </span><span class="p">&lt;</span><span class="nt">QuestionIcon</span><span class="w"> </span><span class="na">size</span><span class="o">=</span><span class="p">{</span><span class="mf">20</span><span class="p">}</span><span class="w"> </span><span class="na">weight</span><span class="o">=</span><span class="s">"bold"</span><span class="w"> </span><span class="na">className</span><span class="o">=</span><span class="s">"text-muted ms-1"</span><span class="w"> </span><span class="p">/&gt;</span>
-<span class="w">    </span><span class="p">&lt;/</span><span class="nt">Tip</span><span class="p">&gt;</span>
-<span class="w">  </span><span class="p">);</span>
-<span class="p">}</span>
+<span class="c1">// Disabled menu action: ActionItem takes `disabled` and `tooltip`, and</span>
+<span class="c1">// shows the reason as an icon beside the row. The icon is aria-hidden: the</span>
+<span class="c1">// row itself carries the reason through aria-describedby, because a menu row</span>
+<span class="c1">// cannot contain a second focusable control.</span>
+<span class="p">&lt;</span><span class="nt">ActionItem</span>
+<span class="w">  </span><span class="na">title</span><span class="o">=</span><span class="p">{</span><span class="nx">translate</span><span class="p">(</span><span class="s1">'Delete'</span><span class="p">)}</span>
+<span class="w">  </span><span class="na">action</span><span class="o">=</span><span class="p">{</span><span class="nx">remove</span><span class="p">}</span>
+<span class="w">  </span><span class="na">disabled</span><span class="o">=</span><span class="p">{</span><span class="o">!</span><span class="nx">canDelete</span><span class="p">}</span>
+<span class="w">  </span><span class="na">tooltip</span><span class="o">=</span><span class="p">{</span><span class="nx">translate</span><span class="p">(</span><span class="s1">'Only an organization owner can delete it'</span><span class="p">)}</span>
+<span class="p">/&gt;</span>
 </code></pre></div></td></tr></tbody></table></div>
+<p>Do not hand-roll the <code>ActionItem</code> icon elsewhere: outside a menu row, use
+<code>HelpIcon</code> beside the control (8.0), which is focusable and named. The
+<code>enforce-disabled-button-tooltip</code> lint rule requires a reason on a disabled
+<code>BaseButton</code>.</p>
 <hr>
 <h2 id="9-typography-and-content">9. Typography and Content</h2>
 <h3 id="91-text-truncation">9.1 Text Truncation</h3>
@@ -22691,7 +22796,7 @@ check control, a select option). The lint rule
 <span class="p">&lt;</span><span class="nt">button</span>
 <span class="w">  </span><span class="na">aria-disabled</span><span class="o">=</span><span class="p">{</span><span class="nx">isDisabled</span><span class="p">}</span>
 <span class="w">  </span><span class="na">onClick</span><span class="o">=</span><span class="p">{</span><span class="o">!</span><span class="nx">isDisabled</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="nx">handleClick</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="kt">undefined</span><span class="p">}</span>
-<span class="w">  </span><span class="na">className</span><span class="o">=</span><span class="p">{</span><span class="nx">isDisabled</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="s1">'text-muted'</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s1">''</span><span class="p">}</span>
+<span class="w">  </span><span class="na">className</span><span class="o">=</span><span class="p">{</span><span class="nx">isDisabled</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="s1">'text-[var(--text-disabled)]'</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s1">''</span><span class="p">}</span>
 <span class="p">&gt;</span>
 <span class="w">  </span><span class="p">{</span><span class="nx">label</span><span class="p">}</span>
 <span class="p">&lt;/</span><span class="nt">button</span><span class="p">&gt;</span>

@@ -20470,7 +20470,7 @@
 <td style="text-align: left;"><strong>Alert / Banner</strong></td>
 <td style="text-align: left;"><code>AlertItem</code></td>
 <td style="text-align: left;"><code>waldur-ui</code></td>
-<td style="text-align: left;">Pure Tailwind, <code>--surface-card-border</code>, 5 variants</td>
+<td style="text-align: left;">Pure Tailwind, <code>--border-secondary</code>, 5 variants</td>
 <td style="text-align: left;"><code>react-bootstrap</code> <code>Alert</code></td>
 </tr>
 <tr>
@@ -20491,7 +20491,7 @@
 <td style="text-align: left;"><strong>Popover</strong></td>
 <td style="text-align: left;"><code>Popover</code>, <code>PopoverContent</code></td>
 <td style="text-align: left;"><code>waldur-ui</code></td>
-<td style="text-align: left;">Radix Popover with <code>--surface-card-*</code> tokens</td>
+<td style="text-align: left;">Radix Popover with <code>--card-bg</code> / <code>--border-secondary</code> tokens</td>
 <td style="text-align: left;"><code>react-bootstrap</code> <code>Popover</code></td>
 </tr>
 <tr>
@@ -20625,18 +20625,6 @@ Consequently, any selector in a component SCSS file will override styles inside 
 </thead>
 <tbody>
 <tr>
-<td style="text-align: left;"><code>.text-white</code></td>
-<td style="text-align: left;"><code>color: #fff !important;</code></td>
-<td style="text-align: left;"><code>color: var(--color-white);</code></td>
-<td style="text-align: left;"><strong>Bootstrap</strong> (breaks <code>dark:text-...</code>)</td>
-</tr>
-<tr>
-<td style="text-align: left;"><code>.bg-transparent</code></td>
-<td style="text-align: left;"><code>background-color: transparent !important;</code></td>
-<td style="text-align: left;"><code>background-color: transparent;</code></td>
-<td style="text-align: left;"><strong>Bootstrap</strong></td>
-</tr>
-<tr>
 <td style="text-align: left;"><code>.border</code></td>
 <td style="text-align: left;"><code>border: 1px solid var(--bs-border-color) !important;</code></td>
 <td style="text-align: left;"><code>border-width: 1px;</code></td>
@@ -20656,6 +20644,12 @@ Consequently, any selector in a component SCSS file will override styles inside 
 </tr>
 </tbody>
 </table>
+<p>No colour class collides any more: Bootstrap emits no <code>text-</code>/<code>bg-</code>/<code>border-</code> colour utility at
+all (nor <code>.border-top</code>/<code>-bottom</code>/<code>-start</code>/<code>-end</code>, which set a colour), so every colour class is
+Tailwind's, follows the design tokens and takes <code>dark:</code>/<code>hover:</code> variants. Bootstrap's old names
+(<code>text-danger</code>, <code>bg-light</code>, …) paint nothing; <code>src/tailwindBootstrapColors.test.ts</code> keeps it that
+way. See
+<a href="../design-tokens/">design-tokens.md § Bootstrap colour utilities</a>.</p>
 <h4 id="spacing-anomaly">Spacing Anomaly</h4>
 <p>Bootstrap defines <code>$spacers: (0: 0, 1: $spacer * .25, 2: $spacer * .5, 3: $spacer * .75, 4: $spacer * 0.154 * 6, 5: $spacer * 1.25)</code>.
 At Metronic's forced root font size of <code>13px</code> (and <code>12px</code> on mobile):</p>
@@ -20667,8 +20661,11 @@ At Metronic's forced root font size of <code>13px</code> (and <code>12px</code> 
 <h4 id="practical-workaround-rules">Practical Workaround Rules</h4>
 <ol>
 <li><strong>Exact Pixel Sizing</strong>: For spacing or padding that must match design tokens precisely, use Tailwind arbitrary values: <code>p-[12px]</code>, <code>gap-[8px]</code>, <code>px-[16px]</code>.</li>
-<li><strong>Structural Borders</strong>: Use <code>border-[1px]</code> instead of the bare <code>.border</code> utility.</li>
-<li><strong>White Text in Inverting Themes</strong>: Use <code>text-[#fff]</code> instead of <code>text-white</code>. <code>text-[#fff]</code> compiles to a unique class name (<code>text-_fff_</code>) that avoids Bootstrap's <code>.text-white { color: #fff !important; }</code>, allowing dark-mode overrides (<code>dark:text-brand-300</code>) to apply correctly.</li>
+<li><strong>Structural Borders</strong>: Use <code>border-[1px]</code> instead of the bare <code>.border</code> utility. Bootstrap's
+   <code>.border</code> also sets the colour with <code>!important</code>, so any Tailwind border colour next to it
+   (<code>border border-brand</code>, <code>border border-transparent hover:border-secondary</code>) never paints.
+   Give every state an explicit colour: <code>border-[1px] border-secondary</code>, then <code>border-brand</code>
+   when selected. Enforced (with autofix) by <code>no-bootstrap-border-with-tailwind-color</code>.</li>
 </ol>
 <hr>
 <h3 id="root-font-size-fractional-rem-scaling">Root Font-Size &amp; Fractional Rem Scaling</h3>
@@ -20748,37 +20745,64 @@ At Metronic's forced root font size of <code>13px</code> (and <code>12px</code> 
 <ol>
 <li><strong>Single Source of Truth</strong>: All color ramps originate in <code>packages/design-tokens/tokens/colors.json</code>. Running <code>yarn tokens:generate</code> outputs:</li>
 <li><code>src/metronic/sass/_color-ramps.scss</code> (consumed by Bootstrap &amp; Metronic SCSS)</li>
-<li><code>packages/design-tokens/src/colorRamps.css</code> (consumed by Tailwind)</li>
+<li><code>packages/design-tokens/src/css/primitives/colorRamps.css</code> (consumed by Tailwind)</li>
 <li><strong>Theme Color Semantics</strong>:</li>
 <li>In Tailwind CSS: <code>--color-gray-N</code> maintains physical lightness across themes (e.g., <code>gray-900</code> is always dark). Dark UI uses a dedicated inverted ramp: <code>--color-gray-dark-N</code>.</li>
 <li>In Metronic SCSS: <code>$gray-N</code> variables invert automatically in dark mode (<code>$gray-900</code> becomes light in dark mode).</li>
-<li><strong>Surface &amp; Component Tokens</strong>:</li>
-<li><code>surfaceColors.css</code>: <code>--surface-card-bg</code>, <code>--surface-card-border</code>, <code>--surface-text-primary</code>, <code>--surface-text-secondary</code>, <code>--dropdown-shadow</code>.</li>
-<li><code>buttonColors.css</code>: Per-variant button backgrounds, borders, hover states, and focus rings.</li>
-<li><code>zIndex.css</code>: Coordinated stack order across Bootstrap and Radix layers.</li>
+<li><strong>Semantic &amp; Component Tokens</strong> (reference: <a href="../design-tokens/">design-tokens.md § Semantic roles</a>):</li>
+<li>Neutral text and icons: one scale, <code>--text-primary</code> … <code>--text-senary</code> (gray-900 … 300),
+     plus <code>--text-disabled</code>. The former <code>--fg-*</code> neutrals, <code>--text-body</code>, <code>--text-subdued</code> and
+     <code>--text-muted</code> were merged into it.</li>
+<li>Surfaces <code>--bg-primary</code> … <code>--bg-quaternary</code>, borders <code>--border-primary</code> …
+     <code>--border-tertiary</code>, <code>--border-divider*</code>, plus <code>--card-bg</code>, <code>--dropdown-shadow</code>.</li>
+<li>States: the status matrix <code>--status-{success,warning,danger}-{bg,border,solid,fg}</code> and
+     <code>--status-neutral-{bg,fg}</code>, each <code>-fg</code> AA-checked against every surface.</li>
+<li>Component tokens (<code>components/button.css</code>): Per-variant button backgrounds, borders, hover states, and focus rings.</li>
+<li><code>primitives/zIndex.css</code>: Coordinated stack order across Bootstrap and Radix layers.</li>
+<li><strong>Semantic utilities</strong>: <code>packages/design-tokens/src/css/tailwind/theme.css</code> (imported by the
+   package's <code>index.css</code>, so every consumer gets it) exposes the roles through property-scoped theme
+   keys (<code>--text-color-*</code>, <code>--background-color-*</code>, <code>--border-color-*</code>), so <code>text-tertiary</code> is
+   <code>var(--text-tertiary)</code>, <code>bg-secondary</code> is <code>var(--bg-secondary)</code>, <code>border-primary</code> is
+   <code>var(--border-primary)</code>, with no exceptions. Brand is <code>text-brand</code> / <code>border-brand</code> / <code>outline-brand</code>.</li>
 </ol>
 <hr>
 <h3 id="brand-color-token-bridge">Brand Color Token Bridge</h3>
-<p><code>src/tailwind.css</code> bridges runtime brand variables into Tailwind:</p>
+<p><code>packages/design-tokens/src/css/tailwind/theme.css</code> bridges the runtime brand variables into
+Tailwind, next to the semantic roles:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
 <span class="normal">4</span>
 <span class="normal">5</span>
-<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">@</span><span class="k">theme</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">--color-brand-50</span><span class="o">:</span><span class="w"> </span><span class="nt">var</span><span class="o">(</span><span class="nt">--waldur-brand-50</span><span class="o">);</span>
-<span class="w">  </span><span class="nt">--color-brand-500</span><span class="o">:</span><span class="w"> </span><span class="nt">var</span><span class="o">(</span><span class="nt">--waldur-brand-500</span><span class="o">);</span>
-<span class="w">  </span><span class="nt">--color-brand-600</span><span class="o">:</span><span class="w"> </span><span class="nt">var</span><span class="o">(</span><span class="nt">--waldur-brand-600</span><span class="o">);</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span>
+<span class="normal">9</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">@</span><span class="k">theme</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">--text-color-brand</span><span class="o">:</span><span class="w"> </span><span class="nt">var</span><span class="o">(</span><span class="nt">--text-brand</span><span class="o">);</span>
+<span class="w">  </span><span class="nt">--border-color-brand</span><span class="o">:</span><span class="w"> </span><span class="nt">var</span><span class="o">(</span><span class="nt">--text-brand</span><span class="o">);</span>
+<span class="w">  </span><span class="nt">--outline-color-brand</span><span class="o">:</span><span class="w"> </span><span class="nt">var</span><span class="o">(</span><span class="nt">--text-brand</span><span class="o">);</span>
+
+<span class="w">  </span><span class="nt">--color-brand-50</span><span class="o">:</span><span class="w"> </span><span class="nt">var</span><span class="o">(</span><span class="nt">--brand-50</span><span class="o">);</span>
+<span class="w">  </span><span class="nt">--color-brand-600</span><span class="o">:</span><span class="w"> </span><span class="nt">var</span><span class="o">(</span><span class="nt">--brand-600</span><span class="o">);</span>
 <span class="w">  </span><span class="c">/* ... */</span>
 <span class="p">}</span>
 </code></pre></div></td></tr></tbody></table></div>
-<p>These CSS variables are initialized at runtime by <code>afterBootstrap.tsx</code> (<code>initCssVariables()</code>). Storybook decorators and test harnesses must seed <code>--waldur-brand-*</code> variables so brand-dependent components render valid colors.</p>
+<p><code>text-brand</code>, <code>border-brand</code> and <code>outline-brand</code> read <code>--text-brand</code> (<code>semantic/brand.css</code>), the
+brand border for a selected card or option: the tenant colour in light, <code>--brand-300</code> in dark,
+where the tenant colour is too dark to read on the dark surfaces. These three are for text and
+lines; a solid brand fill is <code>bg-[var(--bg-brand-solid)]</code>, which stays the tenant colour in both
+themes. A brand-tinted surface is <code>bg-brand-subtle</code>, not a raw <code>bg-brand-50</code>, which stays pale in
+dark mode. In SCSS, never paint brand with <code>$primary</code>: it compiles to a static
+default green. Use the runtime tokens instead (see
+<a href="../design-tokens/">design-tokens.md § The brand colour in SCSS</a>).</p>
+<p>These CSS variables are initialized at runtime by <code>afterBootstrap.tsx</code> (<code>initCssVariables()</code>). Storybook decorators and test harnesses must seed <code>--brand-*</code> variables so brand-dependent components render valid colors.</p>
 <hr>
 <h3 id="dark-mode-mechanics">Dark Mode Mechanics</h3>
 <p>Waldur does <strong>not</strong> toggle dark mode via a <code>.dark</code> HTML class. Instead:</p>
 <ol>
-<li><code>loadTheme()</code> in <code>src/theme/utils.ts</code> swaps the stylesheet <code>&lt;link&gt;</code> between <code>style.css</code> and <code>style.dark.css</code>.</li>
-<li>Simultaneously, <code>loadTheme()</code> sets the <code>data-theme="dark"</code> attribute on <code>&lt;html&gt;</code>.</li>
+<li><code>loadTheme()</code> in <code>src/theme/utils.ts</code> sets the <code>data-theme="dark"</code> attribute on <code>&lt;html&gt;</code>.</li>
+<li>The Metronic stylesheet is one file for both themes: its colours read the design tokens, and
+   its dark-only rules use the same attribute (the <code>dark-theme</code> mixin).</li>
 <li>Tailwind dark mode is configured via an explicit variant:</li>
 </ol>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">@</span><span class="k">custom-variant</span><span class="w"> </span><span class="nt">dark</span><span class="w"> </span><span class="o">(&amp;</span><span class="p">:</span><span class="nd">where</span><span class="o">([</span><span class="nt">data-theme</span><span class="o">=</span><span class="s1">'dark'</span><span class="o">],</span><span class="w"> </span><span class="o">[</span><span class="nt">data-theme</span><span class="o">=</span><span class="s1">'dark'</span><span class="o">]</span><span class="w"> </span><span class="o">*))</span><span class="p">;</span>
@@ -20788,10 +20812,10 @@ At Metronic's forced root font size of <code>13px</code> (and <code>12px</code> 
 <h3 id="alertitem">AlertItem</h3>
 <p><code>packages/ui/src/AlertItem/</code> (exported from <code>waldur-ui</code>).</p>
 <ul>
-<li><strong>Architecture</strong>: Pure Tailwind utilities and CSS design tokens (<code>--surface-card-border</code>).</li>
+<li><strong>Architecture</strong>: Pure Tailwind utilities and CSS design tokens (<code>--border-secondary</code>).</li>
 <li><strong>Typography &amp; Proportions</strong>:</li>
 <li>Title: <code>text-[1.077rem] font-medium leading-[1.43]</code> to match Metronic typography across desktop and mobile root font sizes.</li>
-<li>Border: <code>var(--surface-card-border)</code> (<code>#E4E7EC</code> light, <code>#1F242F</code> dark).</li>
+<li>Border: <code>var(--border-secondary)</code> (<code>#E4E7EC</code> light, <code>#1F242F</code> dark).</li>
 <li>Slot spacing: <code>gap-[0.924rem]</code>.</li>
 <li><strong>Enforcement</strong>: <code>react-bootstrap</code> <code>Alert</code> is prohibited in <code>RESTRICTED_IMPORTS</code> (<code>eslint.config.js</code>), blocking direct imports and guiding call sites to <code>AlertItem</code> from <code>waldur-ui</code>.</li>
 </ul>
@@ -20801,6 +20825,10 @@ At Metronic's forced root font size of <code>13px</code> (and <code>12px</code> 
 <ul>
 <li><strong>Variants &amp; Tones</strong>: 15 semantic variants (<code>primary</code>, <code>secondary</code>, <code>success</code>, <code>warning</code>, <code>danger</code>, <code>info</code>, <code>neutral</code>, <code>purple</code>, <code>blue</code>, <code>indigo</code>, <code>moss</code>, <code>pink</code>, <code>teal</code>, <code>orange</code>, <code>rose</code>) × 3 tones (<code>solid</code>, <code>light</code>, <code>outline</code>) × 4 shapes (<code>rounded</code>, <code>pill</code>, <code>circle</code>, <code>roundless</code>).</li>
 <li><strong>Structural 1px Border</strong>: Uses <code>border-[1px]</code> paired with <code>border-transparent</code> on solid/light tones to maintain uniform dimensions without subpixel shift across tones.</li>
+<li><strong>Status tones</strong>: <code>success</code>/<code>warning</code>/<code>danger</code> <code>solid</code> and <code>light</code> read the status matrix
+  (<code>--status-*-solid</code>, <code>--status-*-bg</code> + <code>--status-*-fg</code>), so they match alerts and Progress
+  fills. The <code>outline</code> tone keeps its own ramp steps (an <code>eslint-disable</code> for
+  <code>no-raw-status-ramp</code> records why).</li>
 <li><strong>Enforcement</strong>:</li>
 <li><code>react-bootstrap</code> <code>Badge</code> is prohibited in <code>RESTRICTED_IMPORTS</code>.</li>
 <li><code>enforce-badge-icon-patterns</code>: Enforces 12px icons inside badges.</li>
@@ -20817,7 +20845,7 @@ At Metronic's forced root font size of <code>13px</code> (and <code>12px</code> 
 <li><code>trigger="click"</code>: Uses <code>@radix-ui/react-popover</code> for click-to-open tooltips (Radix Tooltip lacks click-trigger support). Styled identically as a bubble surface.</li>
 <li><strong>Seam-Free Arrow Construction</strong>: Standard Radix SVG arrows leave an anti-aliasing hairline seam between the SVG path and the HTML popup. <code>Tooltip.tsx</code> uses a custom polygon that extends 1 viewBox unit (~0.5px) past its box with <code>overflow: visible</code> to prevent rasterization seams.</li>
 <li><strong>Adaptive Color Inversion</strong>:</li>
-<li><code>theme="dark"</code> (default): Dark bubble with <code>text-[#fff]</code> in light mode; light bubble with dark text in dark mode.</li>
+<li><code>theme="dark"</code> (default): Dark bubble with <code>text-white</code> in light mode; light bubble with dark text in dark mode.</li>
 <li><code>theme="light"</code>: Fixed dark bubble regardless of active mode.</li>
 <li><strong>Enforcement</strong>: <code>Tooltip</code> and <code>OverlayTrigger</code> from <code>react-bootstrap</code> are prohibited in <code>RESTRICTED_IMPORTS</code>.</li>
 </ul>
@@ -20829,7 +20857,7 @@ At Metronic's forced root font size of <code>13px</code> (and <code>12px</code> 
 </ul>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nx">className</span><span class="w"> </span><span class="o">=</span>
-<span class="w">  </span><span class="s1">'rounded-lg border border-[var(--surface-card-border)] bg-[var(--surface-card-bg)] shadow-[var(--dropdown-shadow)] text-[var(--surface-text-primary)] outline-hidden'</span><span class="p">;</span>
+<span class="w">  </span><span class="s1">'rounded-lg border border-[var(--border-secondary)] bg-[var(--card-bg)] shadow-[var(--dropdown-shadow)] text-[var(--text-primary)] outline-hidden'</span><span class="p">;</span>
 </code></pre></div></td></tr></tbody></table></div>
 <ul>
 <li><strong>Menu vs. Popover</strong>:<blockquote>
@@ -20855,16 +20883,16 @@ At Metronic's forced root font size of <code>13px</code> (and <code>12px</code> 
 Radix renders <code>isOpen &amp;&amp; children</code> inside its Content, so a closed panel's children are <strong>unmounted even with <code>forceMount</code></strong>. react-final-form fields inside it unregister and lose their values and validation. For panels holding form fields, use <code>&lt;Collapsible keepMounted&gt;</code>: children stay mounted and are only <code>hidden</code> while closed. <code>Accordion</code> has no such option — none of its intended users hold form fields.</p>
 </blockquote>
 </li>
-<li><strong>Call sites</strong>: the table filters sidebar (<code>Accordion type="multiple"</code>), <code>AccordionCard</code> (now in <code>waldur-ui</code>; <code>Collapsible keepMounted</code>, same props as before; pure Tailwind with rem spacing ported from Metronic's card, and <code>--card-header-text</code> / <code>--card-title-text</code> / <code>--card-title-secondary-text</code> / <code>--card-header-solid-bg</code> tokens in <code>surfaceColors.css</code> — measured identical to the Metronic card in light and dark), <code>CategoriesPanel</code> (<code>Collapsible</code>) and a handful of standalone accordions, which add an outer border via <code>className</code> (<code>rounded-md border-[1px] border-solid border-[var(--surface-card-border)]</code>) — the component itself draws only separators between items.</li>
+<li><strong>Call sites</strong>: the table filters sidebar (<code>Accordion type="multiple"</code>), <code>AccordionCard</code> (now in <code>waldur-ui</code>; <code>Collapsible keepMounted</code>, same props as before; pure Tailwind with rem spacing ported from Metronic's card, and <code>--card-header-text</code> / <code>--card-title-text</code> / <code>--card-title-secondary-text</code> / <code>--card-header-solid-bg</code> tokens in <code>card.css</code> — measured identical to the Metronic card in light and dark), <code>CategoriesPanel</code> (<code>Collapsible</code>) and a handful of standalone accordions, which add an outer border via <code>className</code> (<code>rounded-md border-[1px] border-solid border-[var(--border-secondary)]</code>) — the component itself draws only separators between items.</li>
 <li><strong>Enforcement</strong>: <code>Accordion</code>, <code>AccordionContext</code> and <code>useAccordionButton</code> from <code>react-bootstrap</code> (and <code>react-bootstrap/Accordion</code>) are prohibited in <code>RESTRICTED_IMPORTS</code>.</li>
 </ul>
 <hr>
 <h3 id="progress">Progress</h3>
-<p><code>packages/ui/src/Progress/</code> (exported from <code>waldur-ui</code>); tokens in <code>packages/design-tokens/src/progressColors.css</code>.</p>
+<p><code>packages/ui/src/Progress/</code> (exported from <code>waldur-ui</code>); tokens in <code>packages/design-tokens/src/css/components/progress.css</code>.</p>
 <ul>
 <li><strong>Three modes</strong>: <code>&lt;Progress value max variant /&gt;</code>, <code>&lt;Progress segments={[{ value, variant, label? }]} max /&gt;</code> for stacked bars, and <code>&lt;Progress indeterminate /&gt;</code> for an unknown amount (a sweeping bar; a static half-opaque bar under <code>prefers-reduced-motion</code>).</li>
 <li><strong>No height override</strong>: <code>size</code> is <code>xs</code> (4px), <code>sm</code> (6px), <code>md</code> (8px, default) or <code>lg</code> (24px, the only size meant for text inside a segment). There is no <code>style</code>/<code>h-*</code> escape hatch; pick a size.</li>
-<li><strong>Neutral track</strong>: the track never takes the variant's colour (a tinted track made an empty meter look full). <code>variant</code> is a <code>BadgeVariant</code> minus <code>secondary</code>, and the fills are Badge's <code>solid</code> colours in both themes. <code>primary</code> reads <code>--waldur-brand-600</code>, so tenant re-branding applies.</li>
+<li><strong>Neutral track</strong>: the track never takes the variant's colour (a tinted track made an empty meter look full). <code>variant</code> is a <code>BadgeVariant</code> minus <code>secondary</code>, and the fills are Badge's <code>solid</code> colours in both themes. <code>primary</code> reads <code>--brand-600</code>, so tenant re-branding applies.</li>
 <li><strong>Accessibility</strong>: the track carries <code>role="progressbar"</code> with <code>aria-valuenow/min/max</code>; <code>label</code> is its accessible name. A non-finite <code>value</code> or a <code>max &lt;= 0</code> (a 0/0 quota) reads as 0, never <code>NaN</code>. Segments are clamped so they never exceed the track.</li>
 <li><strong><code>PercentProgress</code></strong> (<code>src/core/PercentProgress.tsx</code>) is the bar plus its share of <code>max</code> printed under it (<code>unit</code>, <code>compact</code>). Use plain <code>Progress</code> when the surrounding markup already prints the figure.</li>
 <li><strong>Inner labels</strong>: each variant has its own <code>--progress-label-{variant}</code> (white or gray-900, whichever reads better on the fill); a token test keeps every pair at or above 4.4:1.</li>
@@ -20872,7 +20900,7 @@ Radix renders <code>isOpen &amp;&amp; children</code> inside its Content, so a c
 </ul>
 <hr>
 <h3 id="checkbox-radio-switch">Checkbox, Radio &amp; Switch</h3>
-<p><code>packages/ui/src/Check/</code>: <code>Checkbox.tsx</code>, <code>Radio.tsx</code>, <code>RadioGroup.tsx</code> and <code>Switch.tsx</code> (exported from <code>waldur-ui</code> through <code>Check/index.ts</code>), plus the internal <code>CheckLabel.tsx</code> (label row), <code>CheckMark.tsx</code> (the check path, also drawn by the select) and <code>checkStyles.ts</code> (class recipes); colours in <code>waldur-design-tokens/checkColors.css</code>.</p>
+<p><code>packages/ui/src/Check/</code>: <code>Checkbox.tsx</code>, <code>Radio.tsx</code>, <code>RadioGroup.tsx</code> and <code>Switch.tsx</code> (exported from <code>waldur-ui</code> through <code>Check/index.ts</code>), plus the internal <code>CheckLabel.tsx</code> (label row), <code>CheckMark.tsx</code> (the check path, also drawn by the select) and <code>checkStyles.ts</code> (class recipes); colours in <code>waldur-design-tokens/check.css</code>.</p>
 <ul>
 <li><strong>Hidden input + <code>peer</code></strong>: each control is a box holding a native <code>&lt;input&gt;</code> that is invisible (<code>opacity-0</code>, not <code>sr-only</code>) and on top, so it still takes clicks, focus, keyboard and form state, followed by elements that draw the control and read the input's state with <code>peer-*</code>: the box and the check/dash SVGs (<code>Checkbox</code>), the circle and dot (<code>Radio</code>), the track and knob (<code>Switch</code>). No background images or data URIs; marks are <code>currentColor</code> (<code>--check-mark</code> / <code>--check-mark-disabled</code>). Compound states use arbitrary peer variants (<code>peer-[:checked:disabled]:</code>, <code>peer-[:hover:enabled:not(:checked)]:</code>). <code>className</code> and <code>hidden</code> go on the box (layout); every other prop, and the <code>ref</code>, reach the input. Indeterminate styling is checkbox-only: <code>:indeterminate</code> also matches every radio in a group with nothing selected.</li>
 <li><strong>Motion</strong> matches the legacy <code>$form-check-transition</code>: colours and border fade and the switch knob slides over 0.15s <code>ease-in-out</code> (written <code>ease-[ease-in-out]</code>; Tailwind's <code>ease-in-out</code> is a different curve), and <code>motion-reduce:transition-none</code> turns it off, as Bootstrap's <code>transition</code> mixin did. The marks appear instantly, as the background images did.</li>
@@ -20993,11 +21021,11 @@ Instead, the Sheet uses Tailwind v4's <code>starting:</code> variant (<code>@sta
 <h3 id="nav-menus">Nav menus</h3>
 <p>The header user menu, the language submenu, page-tab submenus, the footer menus and the filter popovers.</p>
 <ul>
-<li><strong>Nav look</strong>: Metronic's <code>.menu-sub-dropdown</code> panel and <code>.menu-link</code> row, measured against the live app. Colours come from the <code>--menu-*</code> tokens in <code>surfaceColors.css</code>; the shadow is <code>--dropdown-shadow</code>.</li>
+<li><strong>Nav look</strong>: Metronic's <code>.menu-sub-dropdown</code> panel and <code>.menu-link</code> row, measured against the live app. Colours come from the <code>--menu-*</code> tokens in <code>menu.css</code>; the shadow is <code>--dropdown-shadow</code>.</li>
 <li><strong>Row options instead of theme classes</strong>: <code>density</code> (<code>default</code> 10×16px, <code>compact</code> 8×9.75px, <code>base</code> 8×12px) and <code>tone</code> (gray-600 or gray-700). Every highlighted row is gray-700 on gray-50. A panel sets them for its rows with <code>density</code> / <code>tone</code> props, as <code>data-*</code> attributes the rows' group variants read (the footer uses <code>compact</code>; <code>MenuPopover.Content</code> defaults to <code>base</code>/gray-700 for the filter rows).</li>
 <li><strong>Highlighted rows</strong>: hover, Radix <code>[data-highlighted]</code>, an open submenu (<code>data-[state=open]</code>), a checked radio row (<code>data-[state=checked]</code>, e.g. the current language) and <code>.active</code> (what <code>UISrefActive</code> adds) share one style (the <code>menu-row-active:</code> variant); disabled rows (<code>data-disabled</code>) are skipped.</li>
 <li><strong><code>NavMenuLink</code></strong>: a row that is a ui-router <code>Link</code>. It wraps its label in a span so <code>Link</code> doesn't add <code>text-anchor</code>.</li>
-<li><strong>Page tabs and footer bar</strong> (<code>TabsList.tsx</code>, <code>footer/MenuItem.tsx</code>) are plain <code>&lt;nav&gt;&lt;ul&gt;</code> link lists with their own Tailwind classes and <code>--page-tab-*</code> / <code>--footer-link-text</code> tokens. The current tab is marked with <code>aria-current</code>.</li>
+<li><strong>Page tabs and footer bar</strong> (<code>TabsList.tsx</code>, <code>footer/MenuItem.tsx</code>) are plain <code>&lt;nav&gt;&lt;ul&gt;</code> link lists with their own Tailwind classes and <code>--page-tab-*</code> tokens (the footer links use <code>text-brand-600 dark:text-brand-300</code> directly). The current tab is marked with <code>aria-current</code>.</li>
 </ul>
 <hr>
 <h2 id="linting-guardrails">Linting &amp; Guardrails</h2>
@@ -21190,6 +21218,31 @@ Instead, the Sheet uses Tailwind v4's <code>starting:</code> variant (<code>@sta
 <td style="text-align: left;"><code>no-bootstrap-progress</code></td>
 <td style="text-align: left;"><code>error</code></td>
 <td style="text-align: left;"><code>Progress</code> from <code>waldur-ui</code>; no react-bootstrap <code>ProgressBar</code> or <code>progress</code> / <code>progress-bar*</code> classes.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>no-bootstrap-border-with-tailwind-color</code></td>
+<td style="text-align: left;"><code>error</code></td>
+<td style="text-align: left;">No Bootstrap <code>border</code> / <code>border-top</code> / … next to a Tailwind border colour (Bootstrap's <code>!important</code> colour wins). Autofixes to <code>border-[1px]</code> when the same string sets a base colour.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>no-raw-status-ramp</code></td>
+<td style="text-align: left;"><code>error</code></td>
+<td style="text-align: left;">State colours come from <code>--status-*</code>, not raw <code>success-N</code> / <code>warning-N</code> / <code>error-N</code> utilities. Deliberate exceptions carry an <code>eslint-disable</code> with the reason.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>require-weight-scale</code></td>
+<td style="text-align: left;"><code>error</code></td>
+<td style="text-align: left;">Font weight is <code>font-light</code> … <code>font-bold</code>. Reports Bootstrap <code>fw-*</code> (autofixed to the same weight: <code>fw-bold</code> was 500, so <code>font-medium</code>), off-scale steps, <code>font-[N]</code> and inline <code>fontWeight</code>.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>require-dark-pair</code></td>
+<td style="text-align: left;"><code>error</code></td>
+<td style="text-align: left;">A physical colour (ramp step, white/black, hex, raw <code>var(--brand-N)</code>) needs a <code>dark:</code> counterpart in its class list, or a semantic utility. Solid fills and white text on them pass.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>no-bootstrap-css-vars</code></td>
+<td style="text-align: left;"><code>error</code></td>
+<td style="text-align: left;">No <code>--bs-*</code> reads in TS/TSX; use the design token (table in <a href="../design-tokens/">design-tokens.md</a>).</td>
 </tr>
 </tbody>
 </table>

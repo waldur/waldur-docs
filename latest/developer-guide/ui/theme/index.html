@@ -9775,10 +9775,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#pattern-1-bootstrap-utility-classes-recommended" class="md-nav__link">
+  <a href="#pattern-1-semantic-tailwind-utilities-recommended" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pattern 1: Bootstrap Utility Classes (Recommended)
+        Pattern 1: Semantic Tailwind Utilities (Recommended)
       
     </span>
   </a>
@@ -9797,10 +9797,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#pattern-3-scss-design-tokens" class="md-nav__link">
+  <a href="#pattern-3-css-custom-properties-in-scss-css" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pattern 3: SCSS Design Tokens
+        Pattern 3: CSS Custom Properties in SCSS &amp; CSS
       
     </span>
   </a>
@@ -9836,10 +9836,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#bootstrap-alert-components" class="md-nav__link">
+  <a href="#static-brand-colour-in-scss" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Bootstrap Alert Components
+        Static Brand Colour in SCSS
       
     </span>
   </a>
@@ -19522,10 +19522,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#pattern-1-bootstrap-utility-classes-recommended" class="md-nav__link">
+  <a href="#pattern-1-semantic-tailwind-utilities-recommended" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pattern 1: Bootstrap Utility Classes (Recommended)
+        Pattern 1: Semantic Tailwind Utilities (Recommended)
       
     </span>
   </a>
@@ -19544,10 +19544,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#pattern-3-scss-design-tokens" class="md-nav__link">
+  <a href="#pattern-3-css-custom-properties-in-scss-css" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pattern 3: SCSS Design Tokens
+        Pattern 3: CSS Custom Properties in SCSS &amp; CSS
       
     </span>
   </a>
@@ -19583,10 +19583,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#bootstrap-alert-components" class="md-nav__link">
+  <a href="#static-brand-colour-in-scss" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Bootstrap Alert Components
+        Static Brand Colour in SCSS
       
     </span>
   </a>
@@ -19649,20 +19649,35 @@
 <h1 id="theme-system">Theme System</h1>
 <p>This guide documents how dark/light theme switching is implemented in Waldur HomePort.</p>
 <h2 id="architecture-overview">Architecture Overview</h2>
-<p>The app uses <strong>two separate compiled stylesheets</strong> that are dynamically loaded based on the selected theme:</p>
+<p>The theme is one attribute: <code>data-theme="light|dark"</code> on <code>&lt;html&gt;</code>. Everything follows it:</p>
 <ul>
-<li><code>src/metronic/sass/style.scss</code> - Light theme (<code>$mode: default</code>)</li>
-<li><code>src/metronic/sass/style.dark.scss</code> - Dark theme (<code>$mode: dark</code>)</li>
+<li><strong>Design tokens.</strong> Every semantic token file has a <code>:root[data-theme='dark']</code> block, so
+  <code>var(--bg-primary)</code> and friends switch.</li>
+<li><strong>Tailwind.</strong> The <code>dark:</code> variant keys off the same attribute.</li>
+<li><strong>Bootstrap / Metronic.</strong> <code>src/metronic/sass/style.scss</code> is <strong>one stylesheet for both themes</strong>:
+  its colours read the tokens, and the few pairings no token has use the <code>dark-theme</code> mixin
+  (<code>core/base/mixins/_theme.scss</code>), which emits <code>:where([data-theme='dark']) &amp;</code> — the same
+  specificity as the rule it overrides:</li>
 </ul>
-<p>SCSS variables use the <code>isDarkMode()</code> function to return different values at compile time:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
-<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1">// Generated into _color-ramps.scss from packages/design-tokens/tokens/colors.json</span>
-<span class="nv">$gray-50</span><span class="o">:</span><span class="w"> </span><span class="nf">if</span><span class="p">(</span><span class="nf">isDarkMode</span><span class="p">()</span><span class="o">,</span><span class="w"> </span><span class="mh">#161b26</span><span class="o">,</span><span class="w"> </span><span class="mh">#f9fafb</span><span class="p">);</span>
-<span class="nv">$gray-100</span><span class="o">:</span><span class="w"> </span><span class="nf">if</span><span class="p">(</span><span class="nf">isDarkMode</span><span class="p">()</span><span class="o">,</span><span class="w"> </span><span class="mh">#1f242f</span><span class="o">,</span><span class="w"> </span><span class="mh">#f2f4f7</span><span class="p">);</span>
-<span class="nv">$gray-900</span><span class="o">:</span><span class="w"> </span><span class="nf">if</span><span class="p">(</span><span class="nf">isDarkMode</span><span class="p">()</span><span class="o">,</span><span class="w"> </span><span class="mh">#f5f5f6</span><span class="o">,</span><span class="w"> </span><span class="mh">#101828</span><span class="p">);</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nc">.list-group-item</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">background-color</span><span class="nd">:</span><span class="w"> </span><span class="nt">var</span><span class="o">(</span><span class="nt">--bg-primary</span><span class="o">);</span>
+
+<span class="w">  </span><span class="o">@</span><span class="nt">include</span><span class="w"> </span><span class="nt">dark-theme</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">background-color</span><span class="nd">:</span><span class="w"> </span><span class="nt">var</span><span class="o">(</span><span class="nt">--bg-tertiary</span><span class="o">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
 </code></pre></div></td></tr></tbody></table></div>
+<p>There used to be a second, dark compile (<code>style.dark.scss</code>, <code>$mode: dark</code>, with the SCSS ramps
+inverted by <code>isDarkMode()</code>), swapped in when the theme changed. It is gone; don't reintroduce a
+theme-specific SCSS value. A colour inside an SVG data URI, which a <code>var()</code> cannot reach, is a
+function of its colour (<code>_svg-icons.scss</code>) with a dark override in <code>_dark-icons.scss</code>;
+<code>css-color(gray-dark, 500)</code> gives the CSS ramp value as Sass.</p>
 <h2 id="key-files">Key Files</h2>
 <table>
 <thead>
@@ -19686,7 +19701,7 @@
 </tr>
 <tr>
 <td><code>src/theme/utils.ts</code></td>
-<td>Dynamic CSS loading, initial theme detection</td>
+<td>Injects the Metronic stylesheet once, sets <code>data-theme</code>, initial theme detection</td>
 </tr>
 <tr>
 <td><code>src/theme/ThemeSwitcher.tsx</code></td>
@@ -19694,7 +19709,7 @@
 </tr>
 <tr>
 <td><code>src/metronic/sass/_tokens.scss</code></td>
-<td>Semantic design tokens</td>
+<td>Ring and focus-ring variables</td>
 </tr>
 <tr>
 <td><code>src/metronic/sass/_colors.scss</code></td>
@@ -19705,8 +19720,8 @@
 <td>Theme-aware color ramps — <strong>generated</strong>, edit <code>packages/design-tokens/tokens/colors.json</code> (see <a href="../design-tokens/">design-tokens.md</a>)</td>
 </tr>
 <tr>
-<td><code>src/metronic/sass/core/base/functions/_mode.scss</code></td>
-<td><code>isDarkMode()</code> SCSS function</td>
+<td><code>src/metronic/sass/core/base/mixins/_theme.scss</code></td>
+<td><code>dark-theme</code> / <code>light-theme</code> mixins, <code>mirrored-ramp-color()</code></td>
 </tr>
 </tbody>
 </table>
@@ -19717,12 +19732,15 @@
 <li>localStorage for saved preference</li>
 <li>OS <code>prefers-color-scheme</code> setting</li>
 <li>Falls back to 'light'</li>
-<li><code>loadTheme()</code> dynamically imports the appropriate stylesheet</li>
-<li>User toggles update localStorage and reload the CSS</li>
+<li><code>loadTheme()</code> injects the Metronic stylesheet (once) and sets <code>data-theme</code> on <code>&lt;html&gt;</code>,
+   which switches the CSS custom properties, Tailwind's <code>dark:</code> variant and the Metronic
+   <code>dark-theme</code> rules</li>
+<li>User toggles update localStorage and <code>data-theme</code>; nothing is reloaded</li>
 </ol>
 <h2 id="usage-patterns">Usage Patterns</h2>
-<h3 id="pattern-1-bootstrap-utility-classes-recommended">Pattern 1: Bootstrap Utility Classes (Recommended)</h3>
-<p>For simple styling, use Bootstrap utility classes that automatically adapt to the theme:</p>
+<h3 id="pattern-1-semantic-tailwind-utilities-recommended">Pattern 1: Semantic Tailwind Utilities (Recommended)</h3>
+<p>Use the semantic utilities. Each one is exactly the design token of the same name, so it
+follows the theme without a <code>dark:</code> twin:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
@@ -19730,57 +19748,70 @@
 <span class="normal">5</span>
 <span class="normal">6</span>
 <span class="normal">7</span>
-<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1">// Good - theme-aware classes</span>
-<span class="p">&lt;</span><span class="nt">div</span><span class="w"> </span><span class="na">className</span><span class="o">=</span><span class="s">"bg-secondary p-4"</span><span class="p">&gt;</span>
+<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1">// Good - semantic utilities, theme-aware</span>
+<span class="p">&lt;</span><span class="nt">div</span><span class="w"> </span><span class="na">className</span><span class="o">=</span><span class="s">"bg-secondary rounded-md border-[1px] border-secondary p-4"</span><span class="p">&gt;</span>
 <span class="w">  </span><span class="p">&lt;</span><span class="nt">h6</span><span class="w"> </span><span class="na">className</span><span class="o">=</span><span class="s">"text-primary"</span><span class="p">&gt;</span><span class="nx">Title</span><span class="p">&lt;/</span><span class="nt">h6</span><span class="p">&gt;</span>
-<span class="w">  </span><span class="p">&lt;</span><span class="nt">p</span><span class="w"> </span><span class="na">className</span><span class="o">=</span><span class="s">"text-muted"</span><span class="p">&gt;</span><span class="nx">Description</span><span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+<span class="w">  </span><span class="p">&lt;</span><span class="nt">p</span><span class="w"> </span><span class="na">className</span><span class="o">=</span><span class="s">"text-quaternary"</span><span class="p">&gt;</span><span class="nx">Description</span><span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
 <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
 
 <span class="c1">// Avoid - Bootstrap Alert components don't always adapt text colors properly</span>
 <span class="p">&lt;</span><span class="nt">Alert</span><span class="w"> </span><span class="na">variant</span><span class="o">=</span><span class="s">"info"</span><span class="p">&gt;</span><span class="nx">This</span><span class="w"> </span><span class="nx">may</span><span class="w"> </span><span class="nx">have</span><span class="w"> </span><span class="nx">contrast</span><span class="w"> </span><span class="nx">issues</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="nx">dark</span><span class="w"> </span><span class="nx">mode</span><span class="p">&lt;/</span><span class="nt">Alert</span><span class="p">&gt;</span>
 </code></pre></div></td></tr></tbody></table></div>
-<p><strong>Common theme-aware classes:</strong></p>
+<p><strong>Theme-aware utilities</strong> (full reference in
+<a href="../design-tokens/">design-tokens.md</a>):</p>
 <table>
 <thead>
 <tr>
-<th>Class</th>
-<th>Light Mode</th>
-<th>Dark Mode</th>
+<th>Utility</th>
+<th>Token</th>
+<th>Light → Dark</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>bg-primary</code></td>
-<td>White</td>
-<td>Dark gray</td>
+<td><code>--bg-primary</code></td>
+<td>White → near-black</td>
 </tr>
 <tr>
 <td><code>bg-secondary</code></td>
-<td>Light gray (#f9fafb)</td>
-<td>Dark gray (#161b26)</td>
+<td><code>--bg-secondary</code></td>
+<td>gray-50 → dark gray</td>
 </tr>
 <tr>
-<td><code>text-primary</code></td>
-<td>Dark text</td>
-<td>Light text</td>
+<td><code>bg-tertiary</code> / <code>bg-quaternary</code></td>
+<td><code>--bg-tertiary</code> / <code>--bg-quaternary</code></td>
+<td>gray-100 / 200 → darker grays</td>
 </tr>
 <tr>
-<td><code>text-secondary</code></td>
-<td>Gray text</td>
-<td>Lighter gray text</td>
-</tr>
-<tr>
-<td><code>text-muted</code></td>
-<td>Muted gray</td>
-<td>Muted light gray</td>
+<td><code>text-primary</code> … <code>text-senary</code></td>
+<td><code>--text-primary</code> … <code>--text-senary</code></td>
+<td>gray-900 … 300 → light grays</td>
 </tr>
 <tr>
 <td><code>border-primary</code></td>
-<td>Light border</td>
-<td>Dark border</td>
+<td><code>--border-primary</code></td>
+<td>Control border</td>
+</tr>
+<tr>
+<td><code>border-secondary</code></td>
+<td><code>--border-secondary</code></td>
+<td>Card border</td>
+</tr>
+<tr>
+<td><code>text-brand</code></td>
+<td><code>--brand-color</code></td>
+<td>Brand (tenant colour)</td>
 </tr>
 </tbody>
 </table>
+<p>For the brand colour use <code>text-brand</code> (and <code>border-brand</code>, <code>outline-brand</code>). State colours (success, warning, danger) use the
+status matrix: <code>bg-warning-subtle text-warning</code>.</p>
+<p><strong>Bootstrap emits no colour utilities</strong>: its old class names (<code>text-muted</code>, <code>text-success</code>,
+<code>bg-light</code>, …) paint nothing, and every colour class is Tailwind's (<code>text-muted</code> →
+<code>text-quaternary</code>). Never pair Bootstrap's <code>border</code> class with a Tailwind border colour: the
+colour never paints (use <code>border-[1px]</code>). See
+<a href="../design-tokens/">design-tokens.md § Bootstrap colour utilities</a>.</p>
 <h3 id="pattern-2-usetheme-hook">Pattern 2: useTheme() Hook</h3>
 <p>For third-party libraries that need explicit theme values:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
@@ -19809,19 +19840,20 @@
 <span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">&lt;</span><span class="nt">MonacoEditor</span><span class="w"> </span><span class="na">theme</span><span class="o">=</span><span class="p">{</span><span class="nx">editorTheme</span><span class="p">}</span><span class="w"> </span><span class="p">/&gt;;</span>
 <span class="p">};</span>
 </code></pre></div></td></tr></tbody></table></div>
-<h3 id="pattern-3-scss-design-tokens">Pattern 3: SCSS Design Tokens</h3>
-<p>When writing custom SCSS, use the semantic design tokens:</p>
+<h3 id="pattern-3-css-custom-properties-in-scss-css">Pattern 3: CSS Custom Properties in SCSS &amp; CSS</h3>
+<p>When writing custom SCSS or CSS, use semantic CSS custom properties directly:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
 <span class="normal">4</span>
 <span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nc">.my-component</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">background-color</span><span class="nd">:</span><span class="w"> </span><span class="err">$</span><span class="nt">bg-primary</span><span class="o">;</span><span class="w">      </span><span class="o">//</span><span class="w"> </span><span class="nt">Adapts</span><span class="w"> </span><span class="nt">automatically</span>
-<span class="w">  </span><span class="nt">color</span><span class="nd">:</span><span class="w"> </span><span class="err">$</span><span class="nt">text-primary</span><span class="o">;</span><span class="w">               </span><span class="o">//</span><span class="w"> </span><span class="nt">Adapts</span><span class="w"> </span><span class="nt">automatically</span>
-<span class="w">  </span><span class="nt">border</span><span class="nd">:</span><span class="w"> </span><span class="nt">1px</span><span class="w"> </span><span class="nt">solid</span><span class="w"> </span><span class="err">$</span><span class="nt">border-primary</span><span class="o">;</span><span class="w">  </span><span class="o">//</span><span class="w"> </span><span class="nt">Adapts</span><span class="w"> </span><span class="nt">automatically</span>
+<span class="w">  </span><span class="nt">background-color</span><span class="nd">:</span><span class="w"> </span><span class="nt">var</span><span class="o">(</span><span class="nt">--bg-primary</span><span class="o">);</span><span class="w"> </span><span class="o">//</span><span class="w"> </span><span class="nt">Adapts</span><span class="w"> </span><span class="nt">automatically</span>
+<span class="w">  </span><span class="nt">color</span><span class="nd">:</span><span class="w"> </span><span class="nt">var</span><span class="o">(</span><span class="nt">--text-primary</span><span class="o">);</span><span class="w"> </span><span class="o">//</span><span class="w"> </span><span class="nt">Adapts</span><span class="w"> </span><span class="nt">automatically</span>
+<span class="w">  </span><span class="nt">border</span><span class="nd">:</span><span class="w"> </span><span class="nt">1px</span><span class="w"> </span><span class="nt">solid</span><span class="w"> </span><span class="nt">var</span><span class="o">(</span><span class="nt">--border-primary</span><span class="o">);</span><span class="w"> </span><span class="o">//</span><span class="w"> </span><span class="nt">Adapts</span><span class="w"> </span><span class="nt">automatically</span>
 <span class="p">}</span>
 </code></pre></div></td></tr></tbody></table></div>
-<p><strong>Available tokens</strong> (from <code>_tokens.scss</code>):</p>
+<p><strong>Common semantic tokens</strong> (defined in <code>packages/design-tokens/src/css/semantic/</code>; the full
+list with values is in <a href="../design-tokens/">design-tokens.md § Semantic roles</a>):</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
 <span class="normal"> 3</span>
@@ -19835,68 +19867,77 @@
 <span class="normal">11</span>
 <span class="normal">12</span>
 <span class="normal">13</span>
-<span class="normal">14</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1">// Backgrounds</span>
-<span class="err">$</span><span class="nt">bg-primary</span><span class="w">        </span><span class="o">//</span><span class="w"> </span><span class="nt">Main</span><span class="w"> </span><span class="nt">background</span>
-<span class="err">$</span><span class="nt">bg-primary_hover</span><span class="w">  </span><span class="o">//</span><span class="w"> </span><span class="nt">Hover</span><span class="w"> </span><span class="nt">state</span>
-<span class="err">$</span><span class="nt">bg-secondary</span><span class="w">      </span><span class="o">//</span><span class="w"> </span><span class="nt">Secondary</span><span class="o">/</span><span class="nt">card</span><span class="w"> </span><span class="nt">background</span>
-<span class="err">$</span><span class="nt">bg-tertiary</span><span class="w">       </span><span class="o">//</span><span class="w"> </span><span class="nt">Tertiary</span><span class="w"> </span><span class="nt">background</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1">// Backgrounds</span>
+<span class="nt">var</span><span class="o">(</span><span class="nt">--bg-primary</span><span class="o">)</span><span class="w">        </span><span class="o">//</span><span class="w"> </span><span class="nt">Base</span><span class="w"> </span><span class="nt">surface</span>
+<span class="nt">var</span><span class="o">(</span><span class="nt">--bg-primary-hover</span><span class="o">)</span><span class="w">  </span><span class="o">//</span><span class="w"> </span><span class="nt">Hover</span><span class="o">/</span><span class="nt">highlight</span><span class="w"> </span><span class="nt">on</span><span class="w"> </span><span class="nt">that</span><span class="w"> </span><span class="nt">surface</span>
+<span class="nt">var</span><span class="o">(</span><span class="nt">--bg-secondary</span><span class="o">)</span><span class="w">      </span><span class="o">//</span><span class="w"> </span><span class="nt">Faint</span><span class="w"> </span><span class="nt">panel</span>
+<span class="nt">var</span><span class="o">(</span><span class="nt">--bg-tertiary</span><span class="o">)</span><span class="w">       </span><span class="o">//</span><span class="w"> </span><span class="nt">Tiles</span><span class="o">,</span><span class="w"> </span><span class="nt">chips</span>
+<span class="nt">var</span><span class="o">(</span><span class="nt">--bg-quaternary</span><span class="o">)</span><span class="w">     </span><span class="o">//</span><span class="w"> </span><span class="nt">Stronger</span><span class="w"> </span><span class="nt">fill</span>
 
-<span class="o">//</span><span class="w"> </span><span class="nt">Text</span>
-<span class="err">$</span><span class="nt">text-primary</span><span class="w">      </span><span class="o">//</span><span class="w"> </span><span class="nt">Primary</span><span class="w"> </span><span class="nt">text</span>
-<span class="err">$</span><span class="nt">text-secondary</span><span class="w">    </span><span class="o">//</span><span class="w"> </span><span class="nt">Secondary</span><span class="w"> </span><span class="nt">text</span>
-<span class="err">$</span><span class="nt">text-tertiary</span><span class="w">     </span><span class="o">//</span><span class="w"> </span><span class="nt">Tertiary</span><span class="o">/</span><span class="nt">disabled</span><span class="w"> </span><span class="nt">text</span>
+<span class="o">//</span><span class="w"> </span><span class="nt">Text</span><span class="w"> </span><span class="nt">and</span><span class="w"> </span><span class="nt">icons</span><span class="nd">:</span><span class="w"> </span><span class="nt">one</span><span class="w"> </span><span class="nt">neutral</span><span class="w"> </span><span class="nt">scale</span><span class="o">,</span><span class="w"> </span><span class="nt">strongest</span><span class="w"> </span><span class="nt">first</span>
+<span class="nt">var</span><span class="o">(</span><span class="nt">--text-primary</span><span class="o">)</span><span class="w">      </span><span class="o">//</span><span class="w"> </span><span class="nt">Headings</span><span class="o">,</span><span class="w"> </span><span class="nt">primary</span><span class="w"> </span><span class="nt">content</span>
+<span class="nt">var</span><span class="o">(</span><span class="nt">--text-secondary</span><span class="o">)</span><span class="w">    </span><span class="o">//</span><span class="w"> </span><span class="nt">Body</span><span class="w"> </span><span class="nt">copy</span>
+<span class="nt">var</span><span class="o">(</span><span class="nt">--text-tertiary</span><span class="o">)</span><span class="w">     </span><span class="o">//</span><span class="w"> </span><span class="nt">Supporting</span><span class="w"> </span><span class="nt">text</span>
+<span class="nt">var</span><span class="o">(</span><span class="nt">--text-quaternary</span><span class="o">)</span><span class="w">   </span><span class="o">//</span><span class="w"> </span><span class="nt">Muted</span><span class="w"> </span><span class="nt">text</span><span class="o">,</span><span class="w"> </span><span class="nt">placeholders</span>
+<span class="nt">var</span><span class="o">(</span><span class="nt">--text-quinary</span><span class="o">)</span><span class="w">      </span><span class="o">//</span><span class="w"> </span><span class="nt">Faint</span><span class="w"> </span><span class="nt">text</span><span class="o">,</span><span class="w"> </span><span class="nt">decorative</span><span class="w"> </span><span class="nt">icons</span>
+<span class="nt">var</span><span class="o">(</span><span class="nt">--text-senary</span><span class="o">)</span><span class="w">       </span><span class="o">//</span><span class="w"> </span><span class="nt">Disabled</span><span class="w"> </span><span class="nt">marks</span>
+<span class="nt">var</span><span class="o">(</span><span class="nt">--text-disabled</span><span class="o">)</span><span class="w">     </span><span class="o">//</span><span class="w"> </span><span class="nt">Disabled</span><span class="w"> </span><span class="nt">input</span><span class="w"> </span><span class="nt">text</span>
 
 <span class="o">//</span><span class="w"> </span><span class="nt">Borders</span>
-<span class="err">$</span><span class="nt">border-primary</span><span class="w">    </span><span class="o">//</span><span class="w"> </span><span class="nt">Primary</span><span class="w"> </span><span class="nt">borders</span>
-<span class="err">$</span><span class="nt">border-secondary</span><span class="w">  </span><span class="o">//</span><span class="w"> </span><span class="nt">Subtle</span><span class="w"> </span><span class="nt">borders</span>
+<span class="nt">var</span><span class="o">(</span><span class="nt">--border-primary</span><span class="o">)</span><span class="w">    </span><span class="o">//</span><span class="w"> </span><span class="nt">Control</span><span class="w"> </span><span class="nt">borders</span>
+<span class="nt">var</span><span class="o">(</span><span class="nt">--border-secondary</span><span class="o">)</span><span class="w">  </span><span class="o">//</span><span class="w"> </span><span class="nt">Card</span><span class="w"> </span><span class="nt">borders</span>
+<span class="nt">var</span><span class="o">(</span><span class="nt">--border-divider</span><span class="o">)</span><span class="w">    </span><span class="o">//</span><span class="w"> </span><span class="nt">A</span><span class="w"> </span><span class="nt">drawn</span><span class="w"> </span><span class="nt">line</span>
+
+<span class="o">//</span><span class="w"> </span><span class="nt">States</span><span class="nd">:</span><span class="w"> </span><span class="nt">--status-</span><span class="p">{</span><span class="nt">success</span><span class="o">,</span><span class="nt">warning</span><span class="o">,</span><span class="nt">danger</span><span class="p">}</span><span class="nt">-</span><span class="p">{</span><span class="nt">bg</span><span class="o">,</span><span class="nt">border</span><span class="o">,</span><span class="nt">solid</span><span class="o">,</span><span class="nt">fg</span><span class="p">}</span>
+<span class="nt">var</span><span class="o">(</span><span class="nt">--status-danger-fg</span><span class="o">)</span><span class="w">  </span><span class="o">//</span><span class="w"> </span><span class="nt">Error</span><span class="w"> </span><span class="nt">text</span><span class="o">/</span><span class="nt">icon</span><span class="o">,</span><span class="w"> </span><span class="nt">AA</span><span class="w"> </span><span class="nt">on</span><span class="w"> </span><span class="nt">any</span><span class="w"> </span><span class="nt">surface</span>
+<span class="nt">var</span><span class="o">(</span><span class="nt">--status-warning-bg</span><span class="o">)</span><span class="w"> </span><span class="o">//</span><span class="w"> </span><span class="nt">Warning</span><span class="w"> </span><span class="nt">tint</span>
+
+<span class="o">//</span><span class="w"> </span><span class="nt">Brand</span><span class="w"> </span><span class="o">(</span><span class="nt">runtime</span><span class="o">,</span><span class="w"> </span><span class="nt">per</span><span class="w"> </span><span class="nt">tenant</span><span class="o">)</span><span class="nd">:</span><span class="w"> </span><span class="nt">never</span><span class="w"> </span><span class="err">$</span><span class="nt">primary</span><span class="w"> </span><span class="nt">in</span><span class="w"> </span><span class="nt">SCSS</span>
+<span class="nt">var</span><span class="o">(</span><span class="nt">--bg-brand-solid</span><span class="o">)</span>
+<span class="nt">var</span><span class="o">(</span><span class="nt">--border-brand-solid</span><span class="o">)</span>
+<span class="nt">var</span><span class="o">(</span><span class="nt">--fg-brand-primary</span><span class="o">)</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h3 id="pattern-4-css-custom-properties">Pattern 4: CSS Custom Properties</h3>
 <p>For runtime theming needs, use CSS custom properties:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
-<span class="normal"> 2</span>
-<span class="normal"> 3</span>
-<span class="normal"> 4</span>
-<span class="normal"> 5</span>
-<span class="normal"> 6</span>
-<span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1">// Defined in _root.scss</span>
-<span class="nd">:root</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">--waldur-bg-primary</span><span class="nd">:</span><span class="w"> </span><span class="nn">#</span><span class="p">{</span><span class="err">$</span><span class="nt">bg-primary</span><span class="p">}</span><span class="o">;</span>
-<span class="w">  </span><span class="nt">--waldur-border-secondary</span><span class="nd">:</span><span class="w"> </span><span class="nn">#</span><span class="p">{</span><span class="err">$</span><span class="nt">border-secondary</span><span class="p">}</span><span class="o">;</span>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span>
+<span class="normal">9</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c">/* Defined in packages/design-tokens/src/css/semantic/background.css */</span>
+<span class="p">:</span><span class="nd">root</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nv">--bg-primary</span><span class="p">:</span><span class="w"> </span><span class="mh">#ffffff</span><span class="p">;</span>
 <span class="p">}</span>
 
-<span class="c1">// Usage</span>
-<span class="nc">.component</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">background</span><span class="nd">:</span><span class="w"> </span><span class="nt">var</span><span class="o">(</span><span class="nt">--waldur-bg-primary</span><span class="o">);</span>
+<span class="c">/* Usage */</span>
+<span class="p">.</span><span class="nc">component</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">background</span><span class="p">:</span><span class="w"> </span><span class="nf">var</span><span class="p">(</span><span class="nv">--bg-primary</span><span class="p">);</span>
 <span class="p">}</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h2 id="common-pitfalls">Common Pitfalls</h2>
-<h3 id="bootstrap-alert-components">Bootstrap Alert Components</h3>
-<p>Bootstrap Alert components (<code>&lt;Alert variant="info"&gt;</code>) may not properly adapt text colors in dark mode. Instead, use custom styled divs:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
-<span class="normal"> 2</span>
-<span class="normal"> 3</span>
-<span class="normal"> 4</span>
-<span class="normal"> 5</span>
-<span class="normal"> 6</span>
-<span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span>
-<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1">// Instead of this:</span>
-<span class="p">&lt;</span><span class="nt">Alert</span><span class="w"> </span><span class="na">variant</span><span class="o">=</span><span class="s">"info"</span><span class="p">&gt;</span>
-<span class="w">  </span><span class="p">&lt;</span><span class="nt">Alert</span><span class="p">.</span><span class="na">Heading</span><span class="p">&gt;</span><span class="nx">Title</span><span class="p">&lt;/</span><span class="nt">Alert</span><span class="p">.</span><span class="na">Heading</span><span class="p">&gt;</span>
-<span class="w">  </span><span class="nx">Content</span><span class="w"> </span><span class="nx">here</span>
-<span class="p">&lt;/</span><span class="nt">Alert</span><span class="p">&gt;</span>
-
-<span class="c1">// Use this:</span>
-<span class="p">&lt;</span><span class="nt">div</span><span class="w"> </span><span class="na">className</span><span class="o">=</span><span class="s">"rounded border border-primary bg-secondary p-4"</span><span class="p">&gt;</span>
-<span class="w">  </span><span class="p">&lt;</span><span class="nt">h6</span><span class="w"> </span><span class="na">className</span><span class="o">=</span><span class="s">"text-primary mb-2"</span><span class="p">&gt;</span><span class="nx">Title</span><span class="p">&lt;/</span><span class="nt">h6</span><span class="p">&gt;</span>
-<span class="w">  </span><span class="p">&lt;</span><span class="nt">p</span><span class="w"> </span><span class="na">className</span><span class="o">=</span><span class="s">"text-muted mb-0"</span><span class="p">&gt;</span><span class="nx">Content</span><span class="w"> </span><span class="nx">here</span><span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
-<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
-</code></pre></div></td></tr></tbody></table></div>
+<h3 id="static-brand-colour-in-scss">Static Brand Colour in SCSS</h3>
+<p><code>$primary</code> and <code>$primary-N</code> compile to a static default green; the tenant's brand is the runtime
+<code>--brand-*</code> ramp. Paint brand in SCSS with <code>var(--bg-brand-solid)</code>, <code>var(--fg-brand-primary)</code>,
+<code>var(--brand-600)</code> and so on, never <code>$primary</code>. See
+<a href="../design-tokens/">design-tokens.md § The brand colour in SCSS</a>.</p>
 <h3 id="hardcoded-colors">Hardcoded Colors</h3>
 <p>Avoid hardcoding colors that won't adapt:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -19906,8 +19947,8 @@
 <span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1">// Bad - won't adapt to dark mode</span>
 <span class="p">&lt;</span><span class="nt">div</span><span class="w"> </span><span class="na">style</span><span class="o">=</span><span class="p">{{</span><span class="w"> </span><span class="nx">backgroundColor</span><span class="o">:</span><span class="w"> </span><span class="s1">'#f5f5f5'</span><span class="p">,</span><span class="w"> </span><span class="nx">color</span><span class="o">:</span><span class="w"> </span><span class="s1">'#333'</span><span class="w"> </span><span class="p">}}&gt;</span>
 
-<span class="c1">// Good - uses theme-aware classes</span>
-<span class="p">&lt;</span><span class="nt">div</span><span class="w"> </span><span class="na">className</span><span class="o">=</span><span class="s">"bg-secondary text-primary"</span><span class="p">&gt;</span>
+<span class="c1">// Good - semantic utilities follow the theme</span>
+<span class="p">&lt;</span><span class="nt">div</span><span class="w"> </span><span class="na">className</span><span class="o">=</span><span class="s">"bg-secondary text-secondary"</span><span class="p">&gt;</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h3 id="third-party-components">Third-Party Components</h3>
 <p>Components like react-select, Monaco Editor, and ECharts need explicit theme configuration via the <code>useTheme()</code> hook. Check existing implementations for examples:</p>
@@ -19919,8 +19960,12 @@
 <h2 id="testing-dark-mode">Testing Dark Mode</h2>
 <ol>
 <li>Toggle theme using the switcher in the user dropdown menu</li>
-<li>Check that:</li>
-<li>Text is readable against backgrounds</li>
+<li>
+<p>Check that:</p>
+</li>
+<li>
+<p>Text is readable against backgrounds</p>
+</li>
 <li>Borders are visible but not harsh</li>
 <li>Interactive elements have visible hover states</li>
 <li>Third-party components match the overall theme</li>

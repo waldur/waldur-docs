@@ -8329,6 +8329,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#call-dashboard-statistics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Call Dashboard Statistics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#integration-with-waldur-marketplace" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -20656,6 +20667,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#call-dashboard-statistics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Call Dashboard Statistics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#integration-with-waldur-marketplace" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -21942,6 +21964,60 @@ proposal detail page (Homeport's <code>DownloadProposalPdfAction</code>). Render
 client-side keeps a PDF toolchain and its system packages out of the image for
 the sake of one document, and the attachment files themselves stay behind the
 media endpoint, which applies its own access rules.</p>
+<h2 id="call-dashboard-statistics">Call Dashboard Statistics</h2>
+<p><code>GET /api/proposal-protected-calls/&lt;uuid&gt;/stats/</code> answers "where is each round?"
+for one call. It returns a <code>call</code> block and a <code>rounds</code> list (one block per
+round, with <code>uuid</code>, <code>slug</code>, <code>start_time</code> and <code>cutoff_time</code>). The round blocks
+add up to the call block; a call with a single continuously open round has one
+round block equal to the call block.</p>
+<p>Each block holds:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Counts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>proposals</code></td>
+<td>Proposals by state: <code>draft</code>, <code>submitted</code>, <code>in_review</code>, <code>accepted</code> (awarded), <code>rejected</code> and <code>canceled</code> (not awarded), plus <code>total</code></td>
+</tr>
+<tr>
+<td><code>admin_approved</code></td>
+<td>Proposals whose administrative check completed as <code>eligible</code></td>
+</tr>
+<tr>
+<td><code>missing_admin_checks</code></td>
+<td>Proposals whose administrative check is active or expired</td>
+</tr>
+<tr>
+<td><code>reviews</code></td>
+<td>Reviews by state (<code>in_review</code>, <code>submitted</code>, <code>rejected</code>), plus <code>total</code></td>
+</tr>
+<tr>
+<td><code>missing_reviews</code></td>
+<td>Proposals in expert review with fewer submitted reviews than the step's <code>min_reviewers</code>; 0 when the step sets no minimum</td>
+</tr>
+<tr>
+<td><code>overdue_reviews</code></td>
+<td>Reviews still in review past their deadline</td>
+</tr>
+<tr>
+<td><code>steps</code></td>
+<td>A list of <code>{step, label, count}</code>: proposals per current workflow step, over the call's enabled steps in catalogue order</td>
+</tr>
+</tbody>
+</table>
+<p>Steps disabled on the call do not appear in <code>steps</code>. Draft proposals have no
+current step, so the step counts add up to the submitted proposals only.</p>
+<p>The state and step counts can be opened in the proposal list: <code>round_uuid</code>,
+<code>state</code> and <code>workflow_step</code> filter <code>GET /api/proposal-proposals/</code> to the same
+set.</p>
+<p>The endpoint takes the same permission as the call's exports — staff, support
+(read-only), call managers and call organisers. Reviewers, panel members and
+managers of other calls get a 403 or 404. All counts are grouped aggregates, so
+the number of queries does not grow with the number of rounds or proposals.</p>
 <h2 id="integration-with-waldur-marketplace">Integration with Waldur Marketplace</h2>
 <h3 id="resource-provisioning-flow">Resource Provisioning Flow</h3>
 <p>Accepted proposals automatically trigger marketplace resource creation. What is
