@@ -350,9 +350,10 @@ Features**, turn off the side the portal does not play:
 | `marketplace.show_managed_projects` | Receiving | Managed projects and Project templates in the service provider workspace |
 
 A portal that only receives turns off `customer.show_openportal_remote_projects`;
-one that only sends turns off `marketplace.show_managed_projects`. Usage report
-and Allocation summary serve both sides, so they show whenever the plugin is
-enabled.
+one that only sends turns off `marketplace.show_managed_projects`. Usage report,
+Allocation summary and Check user access serve both sides, so they show while
+either feature is on; with both off, the portal plays neither side and they are
+hidden too.
 
 ### Membership sync mode
 
