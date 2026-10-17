@@ -1,5 +1,6 @@
 # Academic publications
 
+- 2026 - [Transitioning User and Identity Management for Alps](https://dl.acm.org/doi/10.1145/3837730.3837747), A. Ceriani et al., Proceedings of the Cray User Group (CUG 2026), Nice, France, 2026, pp. 190-198, doi: 10.1145/3837730.3837747.
 - 2024 - [Federated Single Sign-On and Zero Trust Co-design for AI and HPC Digital Research Infrastructures](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10820785), S. R. Alam et al., SC24-W: Workshops of the International Conference for High Performance Computing, Networking, Storage and Analysis, Atlanta, GA, USA, 2024, pp. 1756-1764, doi: 10.1109/SCW63240.2024.00220.
 - 2024 - [Isambard-AI: a leadership class supercomputer optimised specifically for Artificial Intelligence](https://arxiv.org/abs/2410.11199), Simon McIntosh-Smith, Sadaf R Alam and Christopher Woods, <https://doi.org/10.48550/arXiv.2410.11199>
 - 2024 - [Developing Prototype Digital Twins for biodiversity conservation and management: achievements, challenges and perspectives](https://riojournal.com/article/133474/download/pdf/), Lecarpentier, Damien, et al. "Developing Prototype Digital Twins for biodiversity conservation and management: achievements, challenges and perspectives." Research Ideas and Outcomes 10 (2024): e133474.
