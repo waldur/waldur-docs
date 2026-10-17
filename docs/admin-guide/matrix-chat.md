@@ -436,7 +436,7 @@ To give every new project a room, turn on `MATRIX_AUTO_CREATE_PROJECT_ROOMS`;
 Once created, the room synchronises its members (see
 [Who is in a project room](#who-is-in-a-project-room)):
 
-![Admin Rooms tab with the Demo Project room](img/matrix-chat/10-admin-rooms-tab.png)
+![Admin Rooms tab with the Demo Project room's action menu open](img/matrix-chat/10-admin-rooms-tab.png)
 
 Each row's action menu has **Open in team chat**, **Connect to Matrix…**
 (when external clients are allowed), **Join room** or **Leave room**,
@@ -480,7 +480,7 @@ chat** tab holds the user's rooms; a **Helpdesk** tab sits next to it when
 support is enabled. A project with an active room also gets a
 **Communication** page with the same chat:
 
-![Team-chat drawer open](img/matrix-chat/05-chat-drawer-open.png)
+![The drawer's Team chat tab with the user's rooms](img/matrix-chat/05-chat-drawer-open.png)
 
 Project members can send messages, attach files, react with emoji, and start
 voice or video calls (when LiveKit is configured). All UI strings flow
@@ -512,19 +512,17 @@ the **Waldur display name**, not the raw Matrix ID — so an `@manager:
 localhost` message is shown as **Project Manager** to every viewer.
 
 The two screenshots below were captured from two browser sessions
-logged in as different users simultaneously. The Project Manager
-session shows the Organization Owner's earlier messages plus its own
-reply; the Organization Owner session shows the manager's reply
-landing without a refresh.
+logged in as different users simultaneously. The project member's
+session shows the organization owner's earlier messages and the bot's
+answers, plus the member's own reply; the owner's session shows that
+reply landing without a refresh.
 
-| Project Manager view | Organization Owner view |
+| Project member view | Organization owner view |
 | --- | --- |
-| ![Manager view of the shared room](img/matrix-chat/15-manager-view.png) | ![Owner view after manager's reply](img/matrix-chat/17-owner-view-after-reply.png) |
+| ![Member view of the shared room](img/matrix-chat/15-member-view.png) | ![Owner view after the member's reply](img/matrix-chat/17-owner-view-after-reply.png) |
 
-Unread badges are computed per-user from Matrix read receipts. When
-the manager opened the room they saw a `5` unread indicator covering
-the owner's earlier messages and the bot's `!status`/`!members`
-replies; opening the room cleared it.
+Unread badges are computed per user from Matrix read receipts; opening
+the room clears them.
 
 ### Full-screen view
 
@@ -535,7 +533,7 @@ moves to a left rail and the conversation takes the remainder. The
 **Collapse to panel** button on the same corner returns to the docked
 drawer.
 
-![Manager session in full-screen mode](img/matrix-chat/22-fullscreen-manager.png)
+![Member session in full-screen mode](img/matrix-chat/22-fullscreen-member.png)
 
 This mode is meant for screen-share / projector use and for users who
 want the chat to be the primary surface for an extended period. The
@@ -550,7 +548,7 @@ authenticated media API (`/_matrix/media/v3/upload` →
 `/_matrix/client/v1/media/download`)
 and rendered inline for image and video MIME types.
 
-![Cat picture uploaded — full-screen view of the sender](img/matrix-chat/23-fullscreen-cat-upload.png)
+![Chart uploaded — full-screen view of the sender](img/matrix-chat/23-fullscreen-file-upload.png)
 
 Every recipient's homeport client makes its own authenticated fetch
 against `/_matrix/client/v1/media/download/...` carrying the user's
@@ -561,7 +559,7 @@ the user lost access), the message renders an *Attachment unavailable*
 placeholder instead of leaking the media via the legacy unauthenticated
 endpoint.
 
-![Cat picture as it lands on the recipient side](img/matrix-chat/24-owner-receives-cat.png)
+![Chart as it lands on the recipient side](img/matrix-chat/24-owner-receives-file.png)
 
 ## Voice and video calls
 
@@ -613,7 +611,7 @@ events: each participant publishes a per-device call-membership state
 event, and the homeport tracks the room's set of live members through
 the matrix-js-sdk timeline.
 
-![Manager sees an in-progress call banner](img/matrix-chat/19-manager-sees-call-banner.png)
+![Member sees an in-progress call banner](img/matrix-chat/19-member-sees-call-banner.png)
 
 Joining produces a multi-participant view with a tile per LiveKit
 publisher. The local tile is labelled with the user's Waldur display
