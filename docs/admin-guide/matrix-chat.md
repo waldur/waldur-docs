@@ -4,7 +4,8 @@ Waldur integrates with the [Matrix](https://matrix.org/) open communication
 protocol as an Application Service (appservice). When the integration is on,
 each Waldur project gets a Matrix room, project members are invited
 automatically based on their roles, and operational queries (`!status`,
-`!orders`, `!members`) are answered by a Waldur bot from inside the chat.
+`!orders`, `!members`) are answered by a Waldur bot from inside the chat,
+which also drafts support tickets from a conversation (`!ticket`).
 Conversations are rendered in the homeport drawer next to the Waldur UI, so
 team members do not need a separate Matrix client.
 
@@ -699,6 +700,9 @@ The Waldur bot answers operational queries from inside the chat:
 - `!status` — errored resources, pending approvals, in-flight operations.
 - `!orders` — last five marketplace orders for the project.
 - `!members` — Waldur-aware membership list with roles.
+- `!ticket [description]` — draft a support ticket from the conversation; see
+  [Support tickets from the chat](#support-tickets-from-the-chat).
+- `!ticket send`, `!ticket cancel` — send or drop your open draft.
 
 Senders are gated server-side. The bot resolves the sender's Matrix ID to
 their Waldur user via `MatrixUserProfile`, and replies only when that user
@@ -709,6 +713,46 @@ homeservers cannot join at all: Waldur creates rooms unfederated (see
 [Creating a room](../developer-guide/admin-guide/matrix-appservice-setup.md#creating-a-room)).
 
 ![!status and !members replies from the bot](img/matrix-chat/07-bot-replies.png)
+
+### Commands in the composer
+
+Typing `!` or `/` at the start of a message opens a menu of the commands you
+can use in the room; one you cannot use there now is left out. `!` lists the
+bot's commands, `/` Waldur's own as well, such as `/call`. The arrow keys move
+through the menu, Enter or Tab puts the command in the message, and Escape
+closes it. A command that takes nothing more, typed out in full, is sent on the
+first Enter.
+
+A `/` command is checked before it is sent: `/status` goes out as `!status`,
+`/call` starts a call without sending anything, and a command that does not
+exist or cannot be used in the room stays in the composer with the reason.
+Start a message with `//` to send it with a leading slash. **Chat commands**
+in the room's menu lists every command with what it does, and why one is not
+available.
+
+### Support tickets from the chat
+
+`!ticket` drafts a support ticket from the conversation it is sent in: its
+thread, the message it replies to and the ones before it, or the messages
+before it. A short description can follow
+(`!ticket VM does not boot since the update`). The bot posts the draft in a
+thread as a card. When the AI assistant is enabled for the member, the model
+writes the title and description; otherwise the bot puts a plain draft together
+from the quoted messages and the project's facts.
+
+Only the member who asked can act on the draft: **Create ticket** sends it to
+the helpdesk as them, **Edit** opens the support request form with the draft
+filled in, and **Cancel draft** drops it. `!ticket send` and `!ticket cancel`
+do the same from the keyboard. The other members see the card without
+actions. A draft expires after `MATRIX_TICKET_DRAFT_TTL_MINUTES` (15 by
+default). Once the ticket is created, the card links to it and shows it as it
+was sent, edits included.
+
+The helpdesk must be enabled, and the member needs an email address and a full
+name in Waldur and a role that may report issues for the project. What the bot
+reads, what reaches the model and the helpdesk, and how drafts are stored are
+under "Drafting support tickets" in the
+[Matrix appservice setup](../developer-guide/admin-guide/matrix-appservice-setup.md).
 
 ---
 
