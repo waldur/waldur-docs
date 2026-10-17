@@ -337,6 +337,23 @@ mounted at `/etc/waldur/openportal` in the API, worker and web-shell pods, and
 | `WALDUR_OPENPORTAL["ENABLED"]` | `False` | Enables the OpenPortal plugin |
 | `WALDUR_OPENPORTAL["DEFAULT_LIMITS"]` | `{"NODE": 1000}` | Default node-hour limit for a newly provisioned allocation |
 
+### Sending and receiving portals
+
+A portal usually plays one side: it either sends awards to other portals or
+receives them. `ENABLED` switches the plugin on for both, so each side's pages
+also have their own feature. Both are on by default. In **Administration →
+Features**, turn off the side the portal does not play:
+
+| Feature | Side | Pages it shows |
+|---|---|---|
+| `customer.show_openportal_remote_projects` | Sending | Remote Projects and Remote Projects Audit Log on each organization |
+| `marketplace.show_managed_projects` | Receiving | Managed projects and Project templates in the service provider workspace |
+
+A portal that only receives turns off `customer.show_openportal_remote_projects`;
+one that only sends turns off `marketplace.show_managed_projects`. Usage report
+and Allocation summary serve both sides, so they show whenever the plugin is
+enabled.
+
 ### Membership sync mode
 
 When an incoming award lists someone as a member, Waldur can either invite them
