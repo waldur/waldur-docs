@@ -20638,7 +20638,7 @@ Consequently, any selector in a component SCSS file will override styles inside 
 <strong>Scoping Rule</strong>: Component SCSS must be strictly scoped under its own unique component class (e.g. <code>.my-component .title</code>), <strong>never</strong> directly under a layout root (<code>.aside</code>, <code>.header</code>, <code>.toolbar</code>, <code>.card</code>). Nesting a layout class inside your own root is safe; styling an ancestor layout root directly in component SCSS breaks layout rules app-wide. Global layout overrides belong exclusively in <code>src/metronic/sass/custom/</code> inside the bootstrap layer.</p>
 </blockquote>
 <h4 id="production-layer-optimization">Production Layer Optimization</h4>
-<p>In production bundles, Vite's CSS minifier removes the explicit <code>@layer theme, base, bootstrap, utilities;</code> statement because <code>dist/assets/index-*.css</code> already emits the layers in that physical order. Because Metronic's theme stylesheet is injected at runtime as an external <code>&lt;link&gt;</code> tag <em>after</em> initial document parse, the layer order established by <code>index-*.css</code> remains authoritative.</p>
+<p>In production bundles, Vite's CSS minifier removes the explicit <code>@layer theme, base, bootstrap, utilities;</code> statement because <code>dist/assets/index-*.css</code> already emits the layers in that physical order. Metronic's stylesheet is imported right after <code>tailwind.css</code> in <code>src/index.tsx</code>, so it lands later in the same bundle and the layer order established by Tailwind's blocks remains authoritative.</p>
 <hr>
 <h3 id="the-important-class-name-collision-rules">The <code>!important</code> &amp; Class-Name Collision Rules</h3>
 <p>CSS Cascade Layers do <strong>not</strong> outrank <code>!important</code>. Bootstrap 5's utility API emits utilities with <code>!important</code> by default. Because Tailwind and Bootstrap share identical utility names, collisions occur on shared class strings:</p>
@@ -20694,6 +20694,11 @@ At Metronic's forced root font size of <code>13px</code> (and <code>12px</code> 
    (<code>border border-brand</code>, <code>border border-transparent hover:border-secondary</code>) never paints.
    Give every state an explicit colour: <code>border-[1px] border-secondary</code>, then <code>border-brand</code>
    when selected. Enforced (with autofix) by <code>no-bootstrap-border-with-tailwind-color</code>.</li>
+<li><strong>Layout &amp; Display Utilities</strong>: Legacy Bootstrap layout classes are retired in favor of native Tailwind equivalents:</li>
+<li>Display: <code>d-flex</code> → <code>flex</code>, <code>d-block</code> → <code>block</code>, <code>d-none</code> → <code>hidden</code>, <code>d-inline</code> → <code>inline</code>, <code>d-inline-block</code> → <code>inline-block</code>, <code>d-inline-flex</code> → <code>inline-flex</code>, <code>d-grid</code> → <code>grid</code>, and responsive breakpoints (<code>d-md-none</code> → <code>md:hidden</code>, <code>d-lg-block</code> → <code>lg:block</code>, <code>d-sm-flex</code> → <code>sm:flex</code>).</li>
+<li>Flexbox: <code>flex-column</code> → <code>flex-col</code>, <code>align-items-*</code> → <code>items-*</code>, <code>align-self-*</code> → <code>self-*</code>, <code>justify-content-*</code> → <code>justify-*</code>, <code>flex-grow-1</code> → <code>grow</code>, <code>flex-shrink-0</code> → <code>shrink-0</code>.</li>
+<li>Sizing &amp; Text: <code>w-100</code> → <code>w-full</code>, <code>h-100</code> → <code>h-full</code>, <code>mw-100</code> → <code>max-w-full</code>, <code>mh-100</code> → <code>max-h-full</code>, <code>text-truncate</code> → <code>truncate</code>.</li>
+<li>Enforced (with automated autofix) by <code>waldur-custom/no-bootstrap-layout-utility</code>.</li>
 </ol>
 <hr>
 <h3 id="root-font-size-fractional-rem-scaling">Root Font-Size &amp; Fractional Rem Scaling</h3>
@@ -20828,7 +20833,7 @@ default green. Use the runtime tokens instead (see
 <h3 id="dark-mode-mechanics">Dark Mode Mechanics</h3>
 <p>Waldur does <strong>not</strong> toggle dark mode via a <code>.dark</code> HTML class. Instead:</p>
 <ol>
-<li><code>loadTheme()</code> in <code>src/theme/utils.ts</code> sets the <code>data-theme="dark"</code> attribute on <code>&lt;html&gt;</code>.</li>
+<li><code>applyTheme()</code> in <code>src/theme/utils.ts</code> sets the <code>data-theme="dark"</code> attribute on <code>&lt;html&gt;</code>.</li>
 <li>The Metronic stylesheet is one file for both themes: its colours read the design tokens, and
    its dark-only rules use the same attribute (the <code>dark-theme</code> mixin).</li>
 <li>Tailwind dark mode is configured via an explicit variant:</li>
@@ -21225,7 +21230,7 @@ Instead, the Sheet uses Tailwind v4's <code>starting:</code> variant (<code>@sta
 <tr>
 <td style="text-align: left;"><code>enforce-border-radius-tokens</code></td>
 <td style="text-align: left;"><code>error</code></td>
-<td style="text-align: left;">Design-token radius classes instead of hard-coded values.</td>
+<td style="text-align: left;">Enforces pinned Tailwind border radius tokens (<code>rounded-none</code> … <code>rounded-modal</code>, <code>rounded-full</code>). Autofixes retired Bootstrap <code>rounded-0</code>, <code>rounded-pill</code>, <code>rounded-circle</code>, arbitrary matching pixel classes (<code>rounded-[6px]</code> -&gt; <code>rounded-md</code>), and flags inline <code>style={{ borderRadius }}</code>.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>no-bootstrap-tabs</code></td>
@@ -21253,6 +21258,11 @@ Instead, the Sheet uses Tailwind v4's <code>starting:</code> variant (<code>@sta
 <td style="text-align: left;">No Bootstrap <code>border</code> / <code>border-top</code> / … next to a Tailwind border colour (Bootstrap's <code>!important</code> colour wins). Autofixes to <code>border-[1px]</code> when the same string sets a base colour.</td>
 </tr>
 <tr>
+<td style="text-align: left;"><code>no-bootstrap-layout-utility</code></td>
+<td style="text-align: left;"><code>error</code></td>
+<td style="text-align: left;">Retires Bootstrap layout, display, flexbox, sizing and text-truncate utilities (<code>d-block</code>, <code>d-flex</code>, <code>d-none</code>, <code>flex-column</code>, <code>w-100</code>, <code>mw-100</code>, <code>text-truncate</code>, responsive variants) in favor of Tailwind standard classes (<code>block</code>, <code>flex</code>, <code>hidden</code>, <code>flex-col</code>, <code>w-full</code>, <code>max-w-full</code>, <code>truncate</code>). Autofixes across the codebase.</td>
+</tr>
+<tr>
 <td style="text-align: left;"><code>no-raw-status-ramp</code></td>
 <td style="text-align: left;"><code>error</code></td>
 <td style="text-align: left;">State colours come from <code>--status-*</code>, not raw <code>success-N</code> / <code>warning-N</code> / <code>error-N</code> utilities. Deliberate exceptions carry an <code>eslint-disable</code> with the reason.</td>
@@ -21261,6 +21271,11 @@ Instead, the Sheet uses Tailwind v4's <code>starting:</code> variant (<code>@sta
 <td style="text-align: left;"><code>no-retired-bootstrap-utility</code></td>
 <td style="text-align: left;"><code>error</code></td>
 <td style="text-align: left;">Bootstrap utilities the Metronic build no longer generates (never used: <code>vh-100</code>, <code>align-content-*</code>, <code>mx-n*</code>, <code>ls-*</code>; or used only at the base size, so their breakpoint variants <code>px-lg-3</code>, <code>min-h-md-100px</code>, <code>svg-icon-lg-3</code> are dropped) compile to nothing; names the Tailwind replacement.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>require-font-size-scale</code></td>
+<td style="text-align: left;"><code>error</code></td>
+<td style="text-align: left;">Font size follows the pinned scale (<code>text-xs</code> … <code>text-4xl</code>). Autofixes retired Bootstrap <code>fs-*</code> classes (<code>fs-6</code> -&gt; <code>text-sm</code>, <code>fs-7</code>/<code>8</code> -&gt; <code>text-xs</code>, etc.) and arbitrary <code>text-[14px]</code>. Flags inline <code>style={{ fontSize }}</code>.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>require-weight-scale</code></td>

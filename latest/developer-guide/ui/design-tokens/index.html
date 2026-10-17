@@ -9336,10 +9336,32 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#font-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Font size
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#font-weight" class="md-nav__link">
     <span class="md-ellipsis">
       
         Font weight
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#corner-radius" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Corner radius
       
     </span>
   </a>
@@ -19725,10 +19747,32 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#font-size" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Font size
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#font-weight" class="md-nav__link">
     <span class="md-ellipsis">
       
         Font weight
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#corner-radius" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Corner radius
       
     </span>
   </a>
@@ -20394,6 +20438,89 @@ green, whatever the tenant configured. So:</p>
   selects, <code>.btn-close</code>), the active list-group row and the range thumb. <code>.svg-icon-primary</code>
   is <code>var(--brand-color)</code>, so it follows the brand too.</li>
 </ul>
+<h2 id="font-size">Font size</h2>
+<p>One scale, pinned in physical pixels in <code>primitives/typography.css</code> (<code>@theme static</code>) to
+prevent distortion under Waldur's forced 13px root font size (<code>html, body { font-size: 13px !important; }</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Size</th>
+<th>Line Height</th>
+<th>Tailwind Class</th>
+<th>Former Bootstrap Utility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--text-xs</code></td>
+<td>12px</td>
+<td>18px</td>
+<td><code>text-xs</code></td>
+<td><code>fs-7</code>, <code>fs-8</code></td>
+</tr>
+<tr>
+<td><code>--text-sm</code></td>
+<td>14px</td>
+<td>20px</td>
+<td><code>text-sm</code></td>
+<td><code>fs-6</code></td>
+</tr>
+<tr>
+<td><code>--text-base</code></td>
+<td>16px</td>
+<td>24px</td>
+<td><code>text-base</code></td>
+<td><code>fs-4</code>, <code>fs-5</code></td>
+</tr>
+<tr>
+<td><code>--text-lg</code></td>
+<td>18px</td>
+<td>28px</td>
+<td><code>text-lg</code></td>
+<td><code>fs-3</code></td>
+</tr>
+<tr>
+<td><code>--text-xl</code></td>
+<td>20px</td>
+<td>28px</td>
+<td><code>text-xl</code></td>
+<td><code>fs-2</code></td>
+</tr>
+<tr>
+<td><code>--text-2xl</code></td>
+<td>24px</td>
+<td>32px</td>
+<td><code>text-2xl</code></td>
+<td><code>fs-1</code>, <code>fs-1x</code></td>
+</tr>
+<tr>
+<td><code>--text-3xl</code></td>
+<td>30px</td>
+<td>36px</td>
+<td><code>text-3xl</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>--text-4xl</code></td>
+<td>36px</td>
+<td>44px</td>
+<td><code>text-4xl</code></td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>No Bootstrap <code>fs-*</code>.</strong> Bootstrap's <code>fs-1</code> through <code>fs-8</code> classes are retired and replaced
+  by standard Tailwind <code>text-*</code> classes via the <code>waldur-custom/require-font-size-scale</code> ESLint rule.</li>
+<li><strong>Why pinned in pixels?</strong> Default Tailwind uses relative <code>rem</code> units (e.g. <code>text-lg</code> is 1.125rem).
+  With an unpinned root, 1.125rem at 13px resolves to 14.625px instead of the intended 18px. Pinned
+  declarations ensure consistent typography across both desktop (13px root) and mobile (12px root).</li>
+<li><strong>No arbitrary <code>text-[14px]</code>.</strong> Named scale tokens (<code>text-sm</code>) must be used instead.</li>
+<li><strong>No inline <code>fontSize</code></strong> on JSX elements: static font sizes must use standard utility classes. Dynamic
+  scaling (such as proportional avatar placeholder text or country flag emojis) requires an explicit
+  <code>eslint-disable</code> with rationale.</li>
+</ul>
 <h2 id="font-weight">Font weight</h2>
 <p>One scale, the five weights <code>fonts.css</code> loads (Inter 300–700), declared in
 <code>primitives/typography.css</code>:</p>
@@ -20459,6 +20586,100 @@ green, whatever the tenant configured. So:</p>
   element, drop the weight from the rule, or, if the rule is right for everything else it
   matches, use the important modifier on that element (<code>font-normal!</code>) with a comment.</li>
 </ul>
+<h2 id="corner-radius">Corner radius</h2>
+<p>All corner radius steps are pinned to physical pixels in <code>primitives/radius.css</code> (<code>@theme static</code>)
+to prevent fractional <code>rem</code> compression under Waldur's forced 13px root font size
+(<code>html, body { font-size: 13px !important; }</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Size</th>
+<th>Tailwind Class</th>
+<th>Former Class / SCSS Variable</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--radius-none</code></td>
+<td>0px</td>
+<td><code>rounded-none</code></td>
+<td><code>rounded-0</code></td>
+<td>Square corners, flush card attachments</td>
+</tr>
+<tr>
+<td><code>--radius-xs</code></td>
+<td>2px</td>
+<td><code>rounded-xs</code></td>
+<td>—</td>
+<td>Subtle inner corners, tiny tags</td>
+</tr>
+<tr>
+<td><code>--radius-sm</code></td>
+<td>4px</td>
+<td><code>rounded-sm</code></td>
+<td><code>$border-radius-xs</code> (4px)</td>
+<td>Compact inputs, checkboxes, small indicators</td>
+</tr>
+<tr>
+<td><code>--radius-md</code></td>
+<td>6px</td>
+<td><code>rounded-md</code></td>
+<td><code>$border-radius-sm</code> (6px)</td>
+<td>Standard buttons, form controls, dropdown items</td>
+</tr>
+<tr>
+<td><code>--radius-lg</code></td>
+<td>8px</td>
+<td><code>rounded-lg</code></td>
+<td><code>$border-radius</code> / <code>-lg</code> (8px)</td>
+<td>Cards, panels, dialog headers, table containers</td>
+</tr>
+<tr>
+<td><code>--radius-xl</code></td>
+<td>12px</td>
+<td><code>rounded-xl</code></td>
+<td><code>$border-radius-xl</code> (12px)</td>
+<td>Prominent cards, thread bubbles, chat panels</td>
+</tr>
+<tr>
+<td><code>--radius-2xl</code></td>
+<td>16px</td>
+<td><code>rounded-2xl</code></td>
+<td><code>$border-radius-2xl</code> (16px)</td>
+<td>Large feature cards, hero containers</td>
+</tr>
+<tr>
+<td><code>--radius-modal</code></td>
+<td>20px</td>
+<td><code>rounded-modal</code></td>
+<td>—</td>
+<td>Dialog content and Sidebar mode-switcher card</td>
+</tr>
+<tr>
+<td><code>--radius-full</code></td>
+<td>9999px</td>
+<td><code>rounded-full</code></td>
+<td><code>rounded-pill</code>, <code>rounded-circle</code></td>
+<td>Avatars, pills, circular badges, status dots</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>No Bootstrap <code>rounded-0</code>, <code>rounded-pill</code>, <code>rounded-circle</code>.</strong> Bootstrap radius utilities are
+  retired and replaced by Tailwind <code>rounded-none</code> and <code>rounded-full</code> via <code>waldur-custom/enforce-border-radius-tokens</code>.</li>
+<li><strong>Why pinned in pixels?</strong> Default Tailwind radii use relative <code>rem</code> units (e.g. <code>rounded-sm</code> is 0.25rem,
+  <code>rounded-xl</code> is 0.75rem). Under Waldur's forced 13px root font size, unpinned <code>rem</code> tokens shrink
+  unintentionally (<code>rounded-sm</code> becomes 3.25px, <code>rounded-xl</code> becomes 9.75px). Pinning the scale preserves
+  crisp, consistent corner geometry.</li>
+<li><strong>SCSS variables</strong> (<code>src/metronic/sass/_variables.custom.scss</code>) mirror the design tokens:
+  <code>$border-radius-xs</code> is 4px (<code>--radius-sm</code>), <code>$border-radius-sm</code> is 6px (<code>--radius-md</code>),
+  <code>$border-radius</code> and <code>$border-radius-lg</code> are 8px (<code>--radius-lg</code>), <code>$border-radius-xl</code> is 12px (<code>--radius-xl</code>),
+  and <code>$border-radius-2xl</code> is 16px (<code>--radius-2xl</code>).</li>
+<li><strong>No inline <code>borderRadius</code></strong> in JSX elements. Use standard utility classes (<code>rounded-sm</code>, <code>rounded-md</code>,
+  <code>rounded-lg</code>, etc.).</li>
+</ul>
 <h2 id="guards">Guards</h2>
 <table>
 <thead>
@@ -20509,8 +20730,16 @@ green, whatever the tenant configured. So:</p>
 <td><code>waldur-custom/no-raw-status-ramp</code></td>
 </tr>
 <tr>
+<td>Font size on the scale; no <code>fs-*</code> or inline size</td>
+<td><code>waldur-custom/require-font-size-scale</code> (autofixes <code>fs-*</code>), stylelint</td>
+</tr>
+<tr>
 <td>Font weight on the scale; no <code>fw-*</code> or inline weight</td>
 <td><code>waldur-custom/require-weight-scale</code> (autofixes <code>fw-*</code>), stylelint</td>
+</tr>
+<tr>
+<td>Corner radius on the scale; no retired or inline radius</td>
+<td><code>waldur-custom/enforce-border-radius-tokens</code> (autofix), stylelint</td>
 </tr>
 <tr>
 <td>Bootstrap emits no <code>fw-*</code>; Tailwind exactly the scale</td>

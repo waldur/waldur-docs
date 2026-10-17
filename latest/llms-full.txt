@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-17T02:04:05.470707Z
+Generated: 2026-10-17T14:27:26.895705Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -15470,7 +15470,7 @@ Tells organization owners that the addresses receiving the organization's invoic
 
     Hello,
 
-    the addresses that receive invoices for {{ organization_name }} have changed{% if changed_by %} by {{ changed_by }}{% endif %}.
+    the addresses that receive invoices for {{ organization_name }} have been changed{% if changed_by %} by {{ changed_by }}{% endif %}.
 
     Before: {% if old_recipients %}{{ old_recipients|join:", " }}{% else %}organization owners{% endif %}
     Now: {% if new_recipients %}{{ new_recipients|join:", " }}{% else %}organization owners{% endif %}
@@ -15493,7 +15493,7 @@ Tells organization owners that the addresses receiving the organization's invoic
     <p>
         Hello,
         <br/>
-        the addresses that receive invoices for {{ organization_name }} have changed{% if changed_by %} by {{ changed_by }}{% endif %}.
+        the addresses that receive invoices for {{ organization_name }} have been changed{% if changed_by %} by {{ changed_by }}{% endif %}.
     </p>
     <p>
         Before: {% if old_recipients %}{{ old_recipients|join:", " }}{% else %}organization owners{% endif %}
@@ -22694,6 +22694,22 @@ this is a reminder that {{ organization_name }}'s fixed price contract {{ contra
 
 ```
 
+### invoice_emails_changed_message.txt (waldur_mastermind.invoices)
+
+```txt
+
+Hello,
+
+the addresses that receive invoices for {{ organization_name }} have been changed{% if changed_by %} by {{ changed_by }}{% endif %}.
+
+Before: {% if old_recipients %}{{ old_recipients|join:", " }}{% else %}organization owners{% endif %}
+Now: {% if new_recipients %}{{ new_recipients|join:", " }}{% else %}organization owners{% endif %}
+
+If you did not expect this change, review the organization's contact settings:
+{{ link }}
+
+```
+
 ### upcoming_ends_notification_message.html (waldur_mastermind.invoices)
 
 ```html
@@ -22839,6 +22855,14 @@ Invoice for {{ customer }}, {{ month }}/{{ year }}
 
 ```
 
+### invoice_emails_changed_subject.txt (waldur_mastermind.invoices)
+
+```txt
+
+Invoice recipients changed for {{ organization_name }}
+
+```
+
 ### notification_message.html (waldur_mastermind.invoices)
 
 ```html
@@ -22855,6 +22879,34 @@ Invoice for {{ customer }}, {{ month }}/{{ year }}
 <p>
     Here is the {{ month }}/{{ year }} invoice for {{ customer }}.
     {% if attached %}It is attached as a PDF, and you can also <a href="{{ link }}">view it online</a>.{% else %}You can <a href="{{ link }}">view it online</a>.{% endif %}
+</p>
+</body>
+</html>
+
+```
+
+### invoice_emails_changed_message.html (waldur_mastermind.invoices)
+
+```html
+
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Invoice recipients changed for {{ organization_name }}</title>
+</head>
+<body>
+<p>
+    Hello,
+    <br/>
+    the addresses that receive invoices for {{ organization_name }} have been changed{% if changed_by %} by {{ changed_by }}{% endif %}.
+</p>
+<p>
+    Before: {% if old_recipients %}{{ old_recipients|join:", " }}{% else %}organization owners{% endif %}
+    <br/>
+    Now: {% if new_recipients %}{{ new_recipients|join:", " }}{% else %}organization owners{% endif %}
+</p>
+<p>
+    If you did not expect this change, <a href="{{ link }}">review the organization's contact settings</a>.
 </p>
 </body>
 </html>
@@ -74553,6 +74605,32 @@ green, whatever the tenant configured. So:
   selects, `.btn-close`), the active list-group row and the range thumb. `.svg-icon-primary`
   is `var(--brand-color)`, so it follows the brand too.
 
+## Font size
+
+One scale, pinned in physical pixels in `primitives/typography.css` (`@theme static`) to
+prevent distortion under Waldur's forced 13px root font size (`html, body { font-size: 13px !important; }`):
+
+| Token        | Size | Line Height | Tailwind Class | Former Bootstrap Utility |
+| ------------ | ---- | ----------- | -------------- | ------------------------ |
+| `--text-xs`  | 12px | 18px        | `text-xs`      | `fs-7`, `fs-8`           |
+| `--text-sm`  | 14px | 20px        | `text-sm`      | `fs-6`                   |
+| `--text-base`| 16px | 24px        | `text-base`    | `fs-4`, `fs-5`           |
+| `--text-lg`  | 18px | 28px        | `text-lg`      | `fs-3`                   |
+| `--text-xl`  | 20px | 28px        | `text-xl`      | `fs-2`                   |
+| `--text-2xl` | 24px | 32px        | `text-2xl`     | `fs-1`, `fs-1x`          |
+| `--text-3xl` | 30px | 36px        | `text-3xl`     | —                        |
+| `--text-4xl` | 36px | 44px        | `text-4xl`     | —                        |
+
+- **No Bootstrap `fs-*`.** Bootstrap's `fs-1` through `fs-8` classes are retired and replaced
+  by standard Tailwind `text-*` classes via the `waldur-custom/require-font-size-scale` ESLint rule.
+- **Why pinned in pixels?** Default Tailwind uses relative `rem` units (e.g. `text-lg` is 1.125rem).
+  With an unpinned root, 1.125rem at 13px resolves to 14.625px instead of the intended 18px. Pinned
+  declarations ensure consistent typography across both desktop (13px root) and mobile (12px root).
+- **No arbitrary `text-[14px]`.** Named scale tokens (`text-sm`) must be used instead.
+- **No inline `fontSize`** on JSX elements: static font sizes must use standard utility classes. Dynamic
+  scaling (such as proportional avatar placeholder text or country flag emojis) requires an explicit
+  `eslint-disable` with rationale.
+
 ## Font weight
 
 One scale, the five weights `fonts.css` loads (Inter 300–700), declared in
@@ -74585,6 +74663,37 @@ One scale, the five weights `fonts.css` loads (Inter 300–700), declared in
   element, drop the weight from the rule, or, if the rule is right for everything else it
   matches, use the important modifier on that element (`font-normal!`) with a comment.
 
+## Corner radius
+
+All corner radius steps are pinned to physical pixels in `primitives/radius.css` (`@theme static`)
+to prevent fractional `rem` compression under Waldur's forced 13px root font size
+(`html, body { font-size: 13px !important; }`):
+
+| Token            | Size | Tailwind Class   | Former Class / SCSS Variable | Use                                                 |
+| ---------------- | ---- | ---------------- | ---------------------------- | --------------------------------------------------- |
+| `--radius-none`  | 0px  | `rounded-none`   | `rounded-0`                  | Square corners, flush card attachments              |
+| `--radius-xs`    | 2px  | `rounded-xs`     | —                            | Subtle inner corners, tiny tags                     |
+| `--radius-sm`    | 4px  | `rounded-sm`     | `$border-radius-xs` (4px)    | Compact inputs, checkboxes, small indicators        |
+| `--radius-md`    | 6px  | `rounded-md`     | `$border-radius-sm` (6px)    | Standard buttons, form controls, dropdown items     |
+| `--radius-lg`    | 8px  | `rounded-lg`     | `$border-radius` / `-lg` (8px)| Cards, panels, dialog headers, table containers     |
+| `--radius-xl`    | 12px | `rounded-xl`     | `$border-radius-xl` (12px)   | Prominent cards, thread bubbles, chat panels        |
+| `--radius-2xl`   | 16px | `rounded-2xl`    | `$border-radius-2xl` (16px)  | Large feature cards, hero containers                |
+| `--radius-modal` | 20px | `rounded-modal`  | —                            | Dialog content and Sidebar mode-switcher card       |
+| `--radius-full`  | 9999px| `rounded-full`  | `rounded-pill`, `rounded-circle` | Avatars, pills, circular badges, status dots    |
+
+- **No Bootstrap `rounded-0`, `rounded-pill`, `rounded-circle`.** Bootstrap radius utilities are
+  retired and replaced by Tailwind `rounded-none` and `rounded-full` via `waldur-custom/enforce-border-radius-tokens`.
+- **Why pinned in pixels?** Default Tailwind radii use relative `rem` units (e.g. `rounded-sm` is 0.25rem,
+  `rounded-xl` is 0.75rem). Under Waldur's forced 13px root font size, unpinned `rem` tokens shrink
+  unintentionally (`rounded-sm` becomes 3.25px, `rounded-xl` becomes 9.75px). Pinning the scale preserves
+  crisp, consistent corner geometry.
+- **SCSS variables** (`src/metronic/sass/_variables.custom.scss`) mirror the design tokens:
+  `$border-radius-xs` is 4px (`--radius-sm`), `$border-radius-sm` is 6px (`--radius-md`),
+  `$border-radius` and `$border-radius-lg` are 8px (`--radius-lg`), `$border-radius-xl` is 12px (`--radius-xl`),
+  and `$border-radius-2xl` is 16px (`--radius-2xl`).
+- **No inline `borderRadius`** in JSX elements. Use standard utility classes (`rounded-sm`, `rounded-md`,
+  `rounded-lg`, etc.).
+
 ## Guards
 
 | What                                                    | Enforced by                                                          |
@@ -74599,7 +74708,9 @@ One scale, the five weights `fonts.css` loads (Inter 300–700), declared in
 | Every semantic utility waldur-ui/shell use is declared  | `tailwindTheme.test.ts`                                              |
 | No Tailwind border colour next to Bootstrap's `.border` | `waldur-custom/no-bootstrap-border-with-tailwind-color` (autofix)    |
 | State colours from the status matrix, not raw ramps     | `waldur-custom/no-raw-status-ramp`                                   |
+| Font size on the scale; no `fs-*` or inline size        | `waldur-custom/require-font-size-scale` (autofixes `fs-*`), stylelint|
 | Font weight on the scale; no `fw-*` or inline weight    | `waldur-custom/require-weight-scale` (autofixes `fw-*`), stylelint   |
+| Corner radius on the scale; no retired or inline radius | `waldur-custom/enforce-border-radius-tokens` (autofix), stylelint    |
 | Bootstrap emits no `fw-*`; Tailwind exactly the scale   | `src/tailwindBootstrapColors.test.ts`                                |
 | Every physical colour has a `dark:` counterpart         | `waldur-custom/require-dark-pair`                                    |
 | No `--bs-*` reads                                       | `waldur-custom/no-bootstrap-css-vars`, stylelint                     |
@@ -80191,7 +80302,7 @@ Consequently, any selector in a component SCSS file will override styles inside 
 
 #### Production Layer Optimization
 
-In production bundles, Vite's CSS minifier removes the explicit `@layer theme, base, bootstrap, utilities;` statement because `dist/assets/index-*.css` already emits the layers in that physical order. Because Metronic's theme stylesheet is injected at runtime as an external `<link>` tag _after_ initial document parse, the layer order established by `index-*.css` remains authoritative.
+In production bundles, Vite's CSS minifier removes the explicit `@layer theme, base, bootstrap, utilities;` statement because `dist/assets/index-*.css` already emits the layers in that physical order. Metronic's stylesheet is imported right after `tailwind.css` in `src/index.tsx`, so it lands later in the same bundle and the layer order established by Tailwind's blocks remains authoritative.
 
 ---
 
@@ -80229,6 +80340,11 @@ At Metronic's forced root font size of `13px` (and `12px` on mobile):
    (`border border-brand`, `border border-transparent hover:border-secondary`) never paints.
    Give every state an explicit colour: `border-[1px] border-secondary`, then `border-brand`
    when selected. Enforced (with autofix) by `no-bootstrap-border-with-tailwind-color`.
+3. **Layout & Display Utilities**: Legacy Bootstrap layout classes are retired in favor of native Tailwind equivalents:
+   - Display: `d-flex` → `flex`, `d-block` → `block`, `d-none` → `hidden`, `d-inline` → `inline`, `d-inline-block` → `inline-block`, `d-inline-flex` → `inline-flex`, `d-grid` → `grid`, and responsive breakpoints (`d-md-none` → `md:hidden`, `d-lg-block` → `lg:block`, `d-sm-flex` → `sm:flex`).
+   - Flexbox: `flex-column` → `flex-col`, `align-items-*` → `items-*`, `align-self-*` → `self-*`, `justify-content-*` → `justify-*`, `flex-grow-1` → `grow`, `flex-shrink-0` → `shrink-0`.
+   - Sizing & Text: `w-100` → `w-full`, `h-100` → `h-full`, `mw-100` → `max-w-full`, `mh-100` → `max-h-full`, `text-truncate` → `truncate`.
+   - Enforced (with automated autofix) by `waldur-custom/no-bootstrap-layout-utility`.
 
 ---
 
@@ -80357,7 +80473,7 @@ These CSS variables are initialized at runtime by `afterBootstrap.tsx` (`initCss
 
 Waldur does **not** toggle dark mode via a `.dark` HTML class. Instead:
 
-1. `loadTheme()` in `src/theme/utils.ts` sets the `data-theme="dark"` attribute on `<html>`.
+1. `applyTheme()` in `src/theme/utils.ts` sets the `data-theme="dark"` attribute on `<html>`.
 2. The Metronic stylesheet is one file for both themes: its colours read the design tokens, and
    its dark-only rules use the same attribute (the `dark-theme` mixin).
 3. Tailwind dark mode is configured via an explicit variant:
@@ -80644,14 +80760,16 @@ Implemented in `packages/eslint-plugin-waldur` and enabled as `waldur-custom/*` 
 | `enforce-badge-right-icon-pattern`        | `error`  | Standardizes right-side action icon styling in badges.                                                                                                                                                                                                                                          |
 | `enforce-featured-icon`                   | `error`  | Requires `FeaturedIcon` (with `tone`/`size`) for highlighted icon emblems.                                                                                                                                                                                                                      |
 | `enforce-phosphor-icon-weight`            | `error`  | Consistent `weight` prop on Phosphor icons.                                                                                                                                                                                                                                                     |
-| `enforce-border-radius-tokens`            | `error`  | Design-token radius classes instead of hard-coded values.                                                                                                                                                                                                                                       |
+| `enforce-border-radius-tokens`            | `error`  | Enforces pinned Tailwind border radius tokens (`rounded-none` … `rounded-modal`, `rounded-full`). Autofixes retired Bootstrap `rounded-0`, `rounded-pill`, `rounded-circle`, arbitrary matching pixel classes (`rounded-[6px]` -> `rounded-md`), and flags inline `style={{ borderRadius }}`. |
 | `no-bootstrap-tabs`                       | `error`  | `Tabs` / `TabNav` from `waldur-ui`; no react-bootstrap `Tab`/`Tabs`/`Nav` or `nav-*` classes.                                                                                                                                                                                                   |
 | `enforce-breadcrumb-colors`               | `error`  | Breadcrumb links use the `$text-brand-secondary` token.                                                                                                                                                                                                                                         |
 | `no-bootstrap-form-check`                 | `error`  | `Checkbox` / `Radio` / `Switch` from `waldur-ui`; no `FormCheck`, `Form.Check` or `form-check*` / `form-switch*` classes.                                                                                                                                                                       |
 | `no-bootstrap-progress`                   | `error`  | `Progress` from `waldur-ui`; no react-bootstrap `ProgressBar` or `progress` / `progress-bar*` classes.                                                                                                                                                                                          |
 | `no-bootstrap-border-with-tailwind-color` | `error`  | No Bootstrap `border` / `border-top` / … next to a Tailwind border colour (Bootstrap's `!important` colour wins). Autofixes to `border-[1px]` when the same string sets a base colour.                                                                                                          |
+| `no-bootstrap-layout-utility`             | `error`  | Retires Bootstrap layout, display, flexbox, sizing and text-truncate utilities (`d-block`, `d-flex`, `d-none`, `flex-column`, `w-100`, `mw-100`, `text-truncate`, responsive variants) in favor of Tailwind standard classes (`block`, `flex`, `hidden`, `flex-col`, `w-full`, `max-w-full`, `truncate`). Autofixes across the codebase. |
 | `no-raw-status-ramp`                      | `error`  | State colours come from `--status-*`, not raw `success-N` / `warning-N` / `error-N` utilities. Deliberate exceptions carry an `eslint-disable` with the reason.                                                                                                                                 |
 | `no-retired-bootstrap-utility`            | `error`  | Bootstrap utilities the Metronic build no longer generates (never used: `vh-100`, `align-content-*`, `mx-n*`, `ls-*`; or used only at the base size, so their breakpoint variants `px-lg-3`, `min-h-md-100px`, `svg-icon-lg-3` are dropped) compile to nothing; names the Tailwind replacement. |
+| `require-font-size-scale`                 | `error`  | Font size follows the pinned scale (`text-xs` … `text-4xl`). Autofixes retired Bootstrap `fs-*` classes (`fs-6` -> `text-sm`, `fs-7`/`8` -> `text-xs`, etc.) and arbitrary `text-[14px]`. Flags inline `style={{ fontSize }}`.                                                                 |
 | `require-weight-scale`                    | `error`  | Font weight is `font-light` … `font-bold`. Reports Bootstrap `fw-*` (autofixed to the same weight: `fw-bold` was 500, so `font-medium`), off-scale steps, `font-[N]` and inline `fontWeight`.                                                                                                   |
 | `require-dark-pair`                       | `error`  | A physical colour (ramp step, white/black, hex, raw `var(--brand-N)`) needs a `dark:` counterpart in its class list, or a semantic utility. Solid fills and white text on them pass.                                                                                                            |
 | `no-bootstrap-css-vars`                   | `error`  | No `--bs-*` reads in TS/TSX; use the design token (table in [design-tokens.md](design-tokens.md)).                                                                                                                                                                                              |
@@ -81291,7 +81409,8 @@ function of its colour (`_svg-icons.scss`) with a dark override in `_dark-icons.
    - localStorage for saved preference
    - OS `prefers-color-scheme` setting
    - Falls back to 'light'
-3. `loadTheme()` injects the Metronic stylesheet (once) and sets `data-theme` on `<html>`,
+3. `applyTheme()` sets `data-theme` on `<html>` (the Metronic stylesheet is a static import
+   in `src/index.tsx`),
    which switches the CSS custom properties, Tailwind's `dark:` variant and the Metronic
    `dark-theme` rules
 4. User toggles update localStorage and `data-theme`; nothing is reloaded
@@ -98332,6 +98451,7 @@ Token counts vary based on documentation updates. The llms-full.txt file is larg
 
 # Academic publications
 
+- 2026 - [Transitioning User and Identity Management for Alps](https://dl.acm.org/doi/10.1145/3837730.3837747), A. Ceriani et al., Proceedings of the Cray User Group (CUG 2026), Nice, France, 2026, pp. 190-198, doi: 10.1145/3837730.3837747.
 - 2024 - [Federated Single Sign-On and Zero Trust Co-design for AI and HPC Digital Research Infrastructures](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10820785), S. R. Alam et al., SC24-W: Workshops of the International Conference for High Performance Computing, Networking, Storage and Analysis, Atlanta, GA, USA, 2024, pp. 1756-1764, doi: 10.1109/SCW63240.2024.00220.
 - 2024 - [Isambard-AI: a leadership class supercomputer optimised specifically for Artificial Intelligence](https://arxiv.org/abs/2410.11199), Simon McIntosh-Smith, Sadaf R Alam and Christopher Woods, <https://doi.org/10.48550/arXiv.2410.11199>
 - 2024 - [Developing Prototype Digital Twins for biodiversity conservation and management: achievements, challenges and perspectives](https://riojournal.com/article/133474/download/pdf/), Lecarpentier, Damien, et al. "Developing Prototype Digital Twins for biodiversity conservation and management: achievements, challenges and perspectives." Research Ideas and Outcomes 10 (2024): e133474.
@@ -110382,6 +110502,7 @@ td:nth-child(4) {
 | `invalidate_cache_on_commit` | `Django Signal (post_delete)` | `marketplace.Offering` | Signal receiver that defers the drop until the transaction commits. |
 | `log_access_subnet_deletion_succeeded` | `Django Signal (post_delete)` | `structure.AccessSubnet` | Log successful access subnet deletion. |
 | `log_access_subnet_save` | `Django Signal (post_save)` | `structure.AccessSubnet` | Log access subnet creation and updates. |
+| `log_admin_action` | `Django Signal (post_save)` | `admin.LogEntry` | No description |
 | `log_customer_delete` | `Django Signal (post_delete)` | `structure.Customer` | Log customer deletion. |
 | `log_customer_save` | `Django Signal (post_save)` | `structure.Customer` | Log customer creation and updates. |
 | `log_project_delete` | `Django Signal (post_delete)` | `structure.Project` | Log project deletion. |
@@ -110825,6 +110946,7 @@ td:nth-child(4) {
 | `notify_about_resource_end_date_change_request` | `Django Signal (post_save)` | `marketplace.ResourceEndDateChangeRequest` | Email approvers about a new request, and the requester about the verdict. |
 | `notify_approvers_when_order_is_created` | `Django Signal (post_save)` | `marketplace.Order` | Notify approvers when an order is created. |
 | `notify_offering_user_about_tos_requirement` | `Django Signal (post_save)` | `marketplace.OfferingUser` | Notify user about ToS requirement when OfferingUser is created. |
+| `notify_owners_about_invoice_emails_change` | `Django Signal (post_save)` | `structure.Customer` | Owners stop getting invoices once invoice emails are set, so tell them. |
 | `notify_recipients_when_order_needs_no_consumer_approval` | `Django Signal (post_save)` | `marketplace.Order` | Notify the offering's configured recipients about an order needing no consumer review. |
 | `notify_user_about_rejected_order` | `Django Signal (post_save)` | `marketplace.Order` | Notify user about rejected order. |
 | `notify_users_about_tos_update_signal` | `Django Signal (post_save)` | `marketplace.OfferingTermsOfService` | Notify users when ToS is updated and requires re-consent. |
@@ -111065,14 +111187,14 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 758
+Total unique handlers found: 760
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 2 handlers
-- **waldur_core**: 348 handlers
+- **waldur_core**: 349 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 349 handlers
+- **waldur_mastermind**: 350 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 14 handlers
 - **waldur_openstack_replication**: 1 handlers
@@ -112926,6 +113048,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`LoggableMixin`](#loggablemixin) | `waldur_core.logging.mixins` | Mixin to serialize model in logs |
 | [`EventTypesMixin`](#eventtypesmixin) | `waldur_core.logging.models` | Mixin to add a event_types and event_groups fields |
 | [`UuidMixin`](#uuidmixin) | `waldur_core.logging.models` | Make subclasses preserve the alters_data attribute on overridden methods |
+| [`WebhookConsumerFieldsMixin`](#webhookconsumerfieldsmixin) | `waldur_core.logging.serializers` | Webhook destination and payload filters, shared by create and update |
 | [`ImageModelMixin`](#imagemodelmixin) | `waldur_core.media.mixins` | Make subclasses preserve the alters_data attribute on overridden methods |
 | [`PermissionMixin`](#permissionmixin) | `waldur_core.permissions.mixins` | Base permission management mixin for customer and project |
 | [`UserRoleMixin`](#userrolemixin) | `waldur_core.permissions.views` | Mixin to provide user role management functionality for viewsets |
@@ -112977,6 +113100,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`MatrixEnabledWriteGuardMixin`](#matrixenabledwriteguardmixin) | `waldur_mastermind.matrix_chat.views` | Reject mutating requests while the Matrix integration is disabled |
 | [`EstimatedCostPolicyMixin`](#estimatedcostpolicymixin) | `waldur_mastermind.policy.models` | Make subclasses preserve the alters_data attribute on overridden methods |
 | [`OfferingPolicySerializerMixin`](#offeringpolicyserializermixin) | `waldur_mastermind.policy.serializers` | This mixin provides several extensions to stock Serializer class:  1 |
+| [`PolicyEventsMixin`](#policyeventsmixin) | `waldur_mastermind.policy.views` | Log policy changes made through the API |
 | [`CallNotArchivedCreateMixin`](#callnotarchivedcreatemixin) | `waldur_mastermind.proposal.serializers` | Provide the ``validate_call_not_archived`` hook used by ``ActionMethodMixin |
 | [`ApplicantIdentityTestMixin`](#applicantidentitytestmixin) | `waldur_mastermind.proposal.tests.test_applicant_identity_paths` | No description available |
 | [`AssignmentBatchTestMixin`](#assignmentbatchtestmixin) | `waldur_mastermind.proposal.tests.test_assignment_batch_notifications` | No description available |
@@ -113846,6 +113970,16 @@ Make subclasses preserve the alters_data attribute on overridden methods.
 
 **Base classes:** `Model`
 
+### WebhookConsumerFieldsMixin
+
+**Module:** `waldur_core.logging.serializers`
+
+**Description:**
+
+Webhook destination and payload filters, shared by create and update.
+
+**Base classes:** `Serializer`
+
 ### ImageModelMixin
 
 **Module:** `waldur_core.media.mixins`
@@ -114527,6 +114661,17 @@ Example:
 or uses URL name specified in a model of serialized object.
 
 **Base classes:** `AugmentedSerializerMixin`
+
+### PolicyEventsMixin
+
+**Module:** `waldur_mastermind.policy.views`
+
+**Description:**
+
+Log policy changes made through the API.
+
+Policies are saved by the background tasks too (has_fired, fired_datetime),
+so the events are emitted here rather than from post_save.
 
 ### CallNotArchivedCreateMixin
 
