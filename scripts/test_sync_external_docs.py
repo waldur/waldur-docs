@@ -1,11 +1,13 @@
-"""Tests for relative-link handling in sync-external-docs.py.
+"""Tests for sync-external-docs.py.
 
-Links are the one thing the sync rewrites rather than copies, and every rule
-here exists because a link that made sense in the source repository did not
-survive the move into this one.
+Links and the external marker are the two things the sync writes rather than
+copies. Every link rule here exists because a link that made sense in the
+source repository did not survive the move into this one.
 """
 
+import contextlib
 import importlib.util
+import io
 import os
 import tempfile
 import unittest
@@ -107,6 +109,141 @@ class RewriteLinksTest(unittest.TestCase):
             self.syncer.rewrite_links(content, source, self.docs_mapping, "guide.md"),
             "See `apps/poc` for a concrete example.",
         )
+
+
+class ExternalMarkerTest(unittest.TestCase):
+    """Exercises where add_external_marker puts the marker and reading it back.
+
+    MkDocs titles a page by its H1 only when the H1 is the page's first
+    element; anything above it, this comment included, makes MkDocs fall back
+    to a title made from the filename.
+    """
+
+    def setUp(self):
+        self.syncer = sync_external_docs.ExternalDocSyncer.__new__(
+            sync_external_docs.ExternalDocSyncer
+        )
+        self.syncer.external_marker = "<!-- EXTERNAL DOCUMENT\nSource: {repository}\nLast Sync: {sync_time}\n-->\n"
+        self.mapping = {"remote": "docs/", "local": "docs/developer-guide"}
+        self.source = {"repository": "https://example.com/repo.git", "branch": "main"}
+        self.temp_dir = Path("/checkout")
+
+    def add_marker(self, content):
+        return self.syncer.add_external_marker(
+            content,
+            self.source,
+            self.mapping,
+            self.temp_dir / "docs" / "guide.md",
+            self.temp_dir,
+            "2026-10-17T00:00:00",
+        )
+
+    def test_marker_goes_below_a_leading_title(self):
+        content = self.add_marker("# Matrix chat with Helm\n\nBody.\n")
+        self.assertTrue(
+            content.startswith("# Matrix chat with Helm\n\n<!-- EXTERNAL DOCUMENT")
+        )
+
+    def test_marker_stays_on_top_of_a_page_without_a_leading_title(self):
+        content = self.add_marker("Intro.\n\n# Later title\n")
+        self.assertTrue(content.startswith("<!-- EXTERNAL DOCUMENT"))
+
+    def test_reading_the_marker_back_gives_the_source_unchanged(self):
+        # A page that reads back different from its source counts as changed,
+        # so it would be restamped and committed on every sync. How the
+        # template ends is up to its YAML block style (`|-`, `|` or `|+`).
+        template = self.syncer.external_marker.rstrip("\n")
+        for ending in ("", "\n", "\n\n"):
+            self.syncer.external_marker = template + ending
+            for source in (
+                "# Title\n\nBody.\n",
+                "# Title\nBody right below.\n",
+                "# Title\n\n\nTwo blank lines.\n",
+                "Intro without a title.\n",
+            ):
+                with self.subTest(ending=ending, source=source):
+                    marked = self.add_marker(source)
+                    self.assertEqual(
+                        self.syncer.extract_content_without_marker(marked), source
+                    )
+
+    def test_a_page_synced_with_the_marker_on_top_is_still_read(self):
+        old = self.syncer.external_marker + "\n\n# Title\n\nBody.\n"
+        self.assertEqual(
+            self.syncer.extract_content_without_marker(old), "# Title\n\nBody.\n"
+        )
+
+    def test_sync_timestamp_is_read_below_the_title(self):
+        marked = self.add_marker("# Title\n\nBody.\n")
+        self.assertEqual(
+            self.syncer.extract_existing_marker_timestamp(marked), "2026-10-17T00:00:00"
+        )
+
+
+class SyncMappingTest(unittest.TestCase):
+    """Runs sync_mapping from a scratch checkout into a scratch docs tree."""
+
+    def setUp(self):
+        self.syncer = sync_external_docs.ExternalDocSyncer.__new__(
+            sync_external_docs.ExternalDocSyncer
+        )
+        self.syncer.dry_run = False
+        self.syncer.preserve_local = []
+        self.syncer.external_marker = (
+            "<!-- EXTERNAL DOCUMENT\nLast Sync: {sync_time}\n-->\n"
+        )
+        # The single-file path serves the README.md -> index.md mappings and the
+        # directory path the rest; each decides on its own when to write
+        self.mappings = (
+            {"remote": "docs/", "local": "docs/developer-guide"},
+            {"remote": "docs/guide.md", "local": "docs/developer-guide/guide.md"},
+        )
+
+        self._cwd = os.getcwd()
+        self._tmp = tempfile.TemporaryDirectory()
+        os.chdir(self._tmp.name)
+        self.checkout = Path("checkout")
+        (self.checkout / "docs").mkdir(parents=True)
+        (self.checkout / "docs" / "guide.md").write_text("# Title\n\nBody.\n")
+        self.page = Path("docs/developer-guide/guide.md")
+
+    def tearDown(self):
+        os.chdir(self._cwd)
+        self._tmp.cleanup()
+
+    def sync(self, mapping):
+        source = {
+            "repository": "https://example.com/repo.git",
+            "branch": "main",
+            "mappings": [mapping],
+        }
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.syncer.sync_mapping(source, mapping, self.checkout)
+
+    def test_a_page_synced_with_the_marker_on_top_moves_it_below_the_title(self):
+        # The source did not change, so only the layout tells the sync to write
+        old_marker = self.syncer.external_marker.format(sync_time="2026-01-01")
+        for mapping in self.mappings:
+            with self.subTest(mapping=mapping["remote"]):
+                self.page.parent.mkdir(parents=True, exist_ok=True)
+                self.page.write_text(old_marker + "\n\n# Title\n\nBody.\n")
+
+                self.sync(mapping)
+
+                self.assertEqual(
+                    self.page.read_text(), "# Title\n\n" + old_marker + "\n\nBody.\n"
+                )
+
+    def test_a_second_sync_of_an_unchanged_source_leaves_the_page_alone(self):
+        for mapping in self.mappings:
+            with self.subTest(mapping=mapping["remote"]):
+                self.page.unlink(missing_ok=True)
+                self.sync(mapping)
+                first = self.page.read_text()
+
+                self.sync(mapping)
+
+                self.assertEqual(self.page.read_text(), first)
 
 
 if __name__ == "__main__":
