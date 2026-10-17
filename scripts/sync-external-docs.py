@@ -283,9 +283,16 @@ class ExternalDocSyncer:
         if "<!-- EXTERNAL DOCUMENT" not in content:
             return content
 
-        # Find the end of the marker
-        pattern = r"<!-- EXTERNAL DOCUMENT.*?-->\s*"
-        return re.sub(pattern, "", content, flags=re.DOTALL)
+        # Pages without a leading title carry the marker on top, as every page
+        # did before it moved below the title
+        if content.startswith("<!-- EXTERNAL DOCUMENT"):
+            pattern = r"<!-- EXTERNAL DOCUMENT.*?-->\s*"
+            return re.sub(pattern, "", content, count=1, flags=re.DOTALL)
+
+        # Exact inverse of add_external_marker: anything more or less would
+        # differ from the source and restamp the page on every sync
+        pattern = r"\n<!-- EXTERNAL DOCUMENT.*?-->\n\n"
+        return re.sub(pattern, "", content, count=1, flags=re.DOTALL)
 
     def extract_existing_marker_timestamp(self, content):
         """Extract the existing timestamp from an external marker."""
@@ -320,12 +327,21 @@ class ExternalDocSyncer:
             remote_path=clean_remote_path,
             local_path=mapping["local"],
             sync_time=sync_time,
-        )
+        ).rstrip("\n")
+        # Reading the marker back expects exactly this one newline after it,
+        # whichever YAML block style the template in external-sources.yml uses
+        marker += "\n"
 
         # Remove existing marker if present
         if "<!-- EXTERNAL DOCUMENT" in content:
             pattern = r"<!-- EXTERNAL DOCUMENT.*?-->\s*"
             content = re.sub(pattern, "", content, flags=re.DOTALL)
+
+        # MkDocs takes the page title from an H1 only when it is the first
+        # element; above it, the marker would leave the page titled by filename
+        title = re.match(r"# [^\n]*\n", content)
+        if title:
+            return title.group(0) + "\n" + marker + "\n" + content[title.end() :]
 
         return marker + "\n\n" + content
 
@@ -466,7 +482,7 @@ class ExternalDocSyncer:
                         except (IOError, UnicodeDecodeError):
                             content_changed = True  # If we can't read, assume changed
 
-                    # Only add marker and timestamp if content changed or file doesn't exist
+                    # A new Last Sync timestamp only when the source changed
                     if remote_path.suffix.lower() == ".md":
                         if content_changed:
                             content = self.add_external_marker(
@@ -485,17 +501,21 @@ class ExternalDocSyncer:
                     else:
                         content = remote_content
 
+                    # Also true for an unchanged source whose page has the marker
+                    # somewhere add_external_marker no longer puts it
+                    needs_write = content != existing_content
+
                     # Write to local file (or simulate in dry-run mode)
                     if self.dry_run:
                         if local_path.exists():
-                            if content_changed:
+                            if needs_write:
                                 print(f"    [DRY RUN] Would update: {local_path.name}")
                             else:
                                 print(f"    [DRY RUN] No change: {local_path.name}")
                         else:
                             print(f"    [DRY RUN] Would create: {local_path.name}")
                     else:
-                        if content_changed or not local_path.exists():
+                        if needs_write:
                             with open(local_path, "w", encoding="utf-8") as f:
                                 f.write(content)
                             print(f"    Synced: {local_path.name}")
@@ -614,7 +634,7 @@ class ExternalDocSyncer:
                                     True  # If we can't read, assume changed
                                 )
 
-                        # Only add marker and timestamp if content changed or file doesn't exist
+                        # A new Last Sync timestamp only when the source changed
                         if remote_file.suffix.lower() == ".md":
                             if content_changed:
                                 content = self.add_external_marker(
@@ -637,17 +657,21 @@ class ExternalDocSyncer:
                         else:
                             content = remote_content
 
+                        # Also true for an unchanged source whose page has the
+                        # marker somewhere add_external_marker no longer puts it
+                        needs_write = content != existing_content
+
                         # Write to local file (or simulate in dry-run mode)
                         if self.dry_run:
                             if local_file.exists():
-                                if content_changed:
+                                if needs_write:
                                     print(f"    [DRY RUN] Would update: {rel_path}")
                                 else:
                                     print(f"    [DRY RUN] No change: {rel_path}")
                             else:
                                 print(f"    [DRY RUN] Would create: {rel_path}")
                         else:
-                            if content_changed or not local_file.exists():
+                            if needs_write:
                                 with open(local_file, "w", encoding="utf-8") as f:
                                     f.write(content)
                                 print(f"    Synced: {rel_path}")
