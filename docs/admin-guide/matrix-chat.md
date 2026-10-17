@@ -1,4 +1,4 @@
-# Matrix chat integration
+# Matrix chat overview
 
 Waldur integrates with the [Matrix](https://matrix.org/) open communication
 protocol as an Application Service (appservice). When the integration is on,
