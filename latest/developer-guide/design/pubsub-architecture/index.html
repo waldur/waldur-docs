@@ -11583,6 +11583,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#webhook-delivery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Webhook delivery
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Webhook delivery">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#resync" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resync
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-legacy-path" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19616,6 +19644,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#webhook-delivery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Webhook delivery
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Webhook delivery">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#resync" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resync
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-legacy-path" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19743,6 +19799,22 @@ on the envelope's <code>object_type</code>.</p>
 <tr>
 <td><code>object_types</code></td>
 <td>Allow-list of event types (empty = all)</td>
+</tr>
+<tr>
+<td><code>payload_filters</code></td>
+<td>Allow-list over envelope fields, <code>{field: [values]}</code> (empty = none)</td>
+</tr>
+<tr>
+<td><code>delivery</code></td>
+<td>Transport: <code>rmq</code> (queue, the default) or <code>webhook</code></td>
+</tr>
+<tr>
+<td><code>webhook_url</code></td>
+<td>Destination of a webhook consumer; a credential, never returned</td>
+</tr>
+<tr>
+<td><code>last_delivered_at</code>, <code>last_error</code>, <code>last_error_at</code></td>
+<td>Webhook delivery health</td>
 </tr>
 <tr>
 <td><code>scopes</code></td>
@@ -19976,6 +20048,67 @@ a DLQ — and registration is idempotent, reconciling stale RMQ state.</p>
   consumer; an empty <code>scopes</code> list requires staff/support. Idempotent per
   binding set.</li>
 </ul>
+<h2 id="webhook-delivery">Webhook delivery</h2>
+<p>Some receivers — ITSM, CRM and IdM tools — can only accept HTTP calls: they
+expose a listener URL, often with the credential in its query string, and expect
+flat JSON. For them a consumer is created with <code>delivery=webhook</code> and a
+<code>webhook_url</code> instead of a queue. Matching, delivery authorization, filters and
+payloads are exactly those of a queue consumer; only the last hop differs.</p>
+<ul>
+<li><strong>Creation</strong> — <code>POST /api/event-consumers/register_webhook/</code> takes
+  <code>webhook_url</code>, <code>object_types</code>, <code>payload_filters</code> and <code>scopes</code> (empty = global).
+  Staff only. The URL must be <code>https</code>, must not carry <code>user:password@</code> (put a
+  credential in the query string instead), and may not resolve to a private or
+  loopback address. It is never returned: the API shows <code>webhook_destination</code>
+  (scheme, host and port) instead.</li>
+<li><strong>Changes</strong> — <code>POST /api/event-consumers/{uuid}/update_webhook/</code> changes the
+  URL, object types or filters. Staff only. The editor becomes the owner, because
+  delivery is authorized by the owner's privileges, and every change emits an
+  <code>event_consumer_webhook_updated</code> audit event naming the host, never the URL.
+  Deregistering a webhook consumer is staff only too; support can list them.</li>
+<li><strong>Routing</strong> — <code>build_messages</code> emits <code>{"webhook_consumer": uuid, "payload": …}</code>
+  for a webhook consumer. Every producer already hands its messages to
+  <code>publish_messages</code>, which sends <code>vhost</code>/<code>topic</code> messages to STOMP and gives
+  each webhook consumer its own <code>deliver_webhook_messages</code> task on the
+  background queue. A webhook does not count as delivery to its owner, so the
+  owner's legacy subscription queues keep receiving their events.</li>
+<li><strong>Delivery</strong> — each payload is POSTed as the JSON body. The URL is re-validated
+  at send time (DNS rebinding), redirects are refused, the connect timeout is
+  3 s, and the response body is never read. The owner is re-checked first: once
+  they are no longer active staff or support, queued messages are dropped.
+  A non-2xx answer or connection error records <code>last_error</code> and retries the
+  undelivered remainder with exponential backoff (10 s doubling, capped at
+  10 min, 8 retries), after which the remainder is dropped and logged. Error
+  text never contains the URL, since requests' exception messages embed it.</li>
+<li><strong>Guarantees</strong> — delivery is <strong>at-least-once with no ordering across events</strong>:
+  every event is its own task and retries independently, so a revoke can arrive
+  before the grant it follows. Every message carries <code>emitted_at</code>, and every
+  request an <code>X-Waldur-Message-Id</code> header that stays the same across retries, so
+  a receiver can drop duplicates and ignore an update older than one it already
+  applied.</li>
+<li><strong>Filters</strong> — <code>payload_filters</code> narrow delivery by envelope field, for both
+  transports (only the webhook endpoints set them so far):
+  <code>{"role_name": ["CUSTOMER.OWNER"], "scope_type": ["customer"]}</code> delivers
+  organization-owner changes only. Comparison is type-strict, so <code>1</code> does not
+  match <code>true</code>. A filter on a field a message lacks drops that message: a
+  <code>role_name</code> filter also drops profile and SSH-key events.</li>
+</ul>
+<h3 id="resync">Resync</h3>
+<p>Events describe changes, so a receiver that starts late has no way to learn the
+existing state. <code>POST /api/event-consumers/{uuid}/resync/</code> (staff/support,
+global consumers only) replays it asynchronously through the consumer's own
+transport and filters: every active role grant of an active user, as a
+<code>user_role</code> message with <code>event_type: "role_snapshot"</code> and <code>granted: true</code>, in
+batches of 200. It is throttled to once per 15 minutes per consumer and emits an
+<code>event_consumer_resync_requested</code> audit event. Re-run it whenever a receiver
+loses its state. Snapshot batches can interleave with live events, so a receiver
+should compare <code>emitted_at</code>. Bound consumers are refused because a snapshot of
+every grant would bypass the per-binding authorization applied to each live
+event, and so are consumers whose filters would exclude every snapshot.</p>
+<p><code>user_role</code> messages carry the organization the scope belongs to —
+<code>customer_uuid</code>, <code>customer_name</code> and <code>customer_registration_code</code> — the scope
+itself for an organization role, its parent for a project or offering role.
+That is the key an external system matches its own records on.</p>
 <h2 id="the-legacy-path">The legacy path</h2>
 <p><code>EventSubscription</code> plus <code>EventSubscriptionQueue</code> — one queue per
 <em>(subscription × offering × object_type)</em> — still runs, unchanged, so existing
@@ -20022,6 +20155,11 @@ introducing <code>SUBSCRIBE_*</code> permissions that would have to be kept in s
   to its next round; a move changes no state, so it publishes nothing (it is
   logged as a <code>proposal_draft_carried_over</code> event instead), and only drafts
   without a next round are cancelled.</li>
+<li><strong>Webhooks</strong> — delivery relies on the credential the receiver embeds in its
+  URL; there is no HMAC signature header yet. Ordering is per event, not per
+  consumer. Core role events are published from the signal, not on commit, so a
+  grant rolled back after the signal still reaches consumers. Resync covers
+  <code>user_role</code> only.</li>
 <li><strong><code>AgentIdentity</code> retirement</strong> — the site-agent model still exists alongside
   its consumer; collapsing it is only worthwhile once the legacy path is gone.</li>
 </ul>
