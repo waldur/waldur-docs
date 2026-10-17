@@ -1628,24 +1628,41 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#running-the-setup-wizard" class="md-nav__link">
+  <a href="#setting-up-the-appservice" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Running the Setup wizard
+        Setting up the appservice
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Setting up the appservice">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#with-the-management-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        With the management commands
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#registering-the-appservice-on-the-homeserver" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#by-hand" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Registering the appservice on the homeserver
+        By hand
       
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -19691,24 +19708,41 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#running-the-setup-wizard" class="md-nav__link">
+  <a href="#setting-up-the-appservice" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Running the Setup wizard
+        Setting up the appservice
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Setting up the appservice">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#with-the-management-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        With the management commands
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#registering-the-appservice-on-the-homeserver" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#by-hand" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Registering the appservice on the homeserver
+        By hand
       
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -20046,10 +20080,12 @@ themselves:</p>
   yourself.</li>
 <li>Helm refuses to run Matrix chat without its bundled homeserver.</li>
 </ul>
-<p>On a packaged deployment, skip the sections from
-<a href="#configuring-waldur">Configuring Waldur</a> to
-<a href="#registering-the-appservice-on-the-homeserver">Registering the appservice on the homeserver</a>:
-they are for the <code>docker/matrix-dev</code> stack and homeservers you run yourself.</p>
+<p>On a packaged deployment, skip
+<a href="#configuring-waldur">Configuring Waldur</a> and
+<a href="#setting-up-the-appservice">Setting up the appservice</a>: the deployment runs
+the <a href="#with-the-management-commands">management commands</a> for you. Those
+sections are for the <code>docker/matrix-dev</code> stack and homeservers you run
+yourself.</p>
 <hr>
 <h2 id="prerequisites">Prerequisites</h2>
 <p>You need:</p>
@@ -20122,8 +20158,8 @@ the name Tuwunel reaches Waldur by, to <code>ALLOWED_HOSTS</code>, and defaults 
 LiveKit Constance keys to the stack's key, secret and URLs. If you run a
 Celery worker instead, add <code>host.docker.internal</code> to <code>ALLOWED_HOSTS</code> yourself.
 The bot waits until the homeserver and the appservice token are configured,
-so it can start before Setup. Without it, commands go unanswered and <strong>Matrix
-bot running</strong> fails in <strong>Diagnostics</strong>.</p>
+so it can start before the appservice is set up. Without it, commands go
+unanswered and <strong>Matrix bot running</strong> fails in <strong>Diagnostics</strong>.</p>
 <p>Health check:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
@@ -20145,38 +20181,76 @@ replaces the focus the homeserver advertises, which is useful for pointing the
 browser at a call token API on another port.</p>
 <hr>
 <h2 id="configuring-waldur">Configuring Waldur</h2>
-<p>Set the prerequisite Constance keys before running the Setup wizard. From a
-Django shell:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
-<span class="normal"> 2</span>
-<span class="normal"> 3</span>
-<span class="normal"> 4</span>
-<span class="normal"> 5</span>
-<span class="normal"> 6</span>
-<span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span>
-<span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">constance</span><span class="w"> </span><span class="kn">import</span> <span class="n">config</span>
-<span class="n">config</span><span class="o">.</span><span class="n">MATRIX_ENABLED</span> <span class="o">=</span> <span class="kc">True</span>
-<span class="n">config</span><span class="o">.</span><span class="n">MATRIX_HOMESERVER_URL</span> <span class="o">=</span> <span class="s2">"http://localhost:6167"</span>
-<span class="n">config</span><span class="o">.</span><span class="n">MATRIX_HOMESERVER_DOMAIN</span> <span class="o">=</span> <span class="s2">"localhost"</span>
-<span class="n">config</span><span class="o">.</span><span class="n">MATRIX_USER_REGISTRATION_SECRET</span> <span class="o">=</span> <span class="s2">"devregistrationsecret"</span>  <span class="c1"># match tuwunel.toml</span>
-<span class="n">config</span><span class="o">.</span><span class="n">MATRIX_EXTERNAL_LOGIN_METHOD</span> <span class="o">=</span> <span class="s2">"none"</span>  <span class="c1"># "password" allows Element; "oidc" needs the SSO steps below</span>
-<span class="n">config</span><span class="o">.</span><span class="n">MATRIX_APPSERVICE_SENDER_LOCALPART</span> <span class="o">=</span> <span class="s2">"waldur-bot"</span>
-<span class="n">config</span><span class="o">.</span><span class="n">MATRIX_HISTORY_EXPORT_ENABLED</span> <span class="o">=</span> <span class="kc">True</span>
-<span class="c1"># Calls (optional): the LiveKit key pair Waldur signs call tokens with</span>
-<span class="n">config</span><span class="o">.</span><span class="n">MATRIX_LIVEKIT_KEY</span> <span class="o">=</span> <span class="s2">"devkey"</span>
-<span class="n">config</span><span class="o">.</span><span class="n">MATRIX_LIVEKIT_SECRET</span> <span class="o">=</span> <span class="s2">"devsecret"</span>
-<span class="n">config</span><span class="o">.</span><span class="n">MATRIX_LIVEKIT_URL</span> <span class="o">=</span> <span class="s2">"http://localhost:7880"</span>  <span class="c1"># internal, for room management</span>
-<span class="n">config</span><span class="o">.</span><span class="n">MATRIX_LIVEKIT_PUBLIC_URL</span> <span class="o">=</span> <span class="s2">"ws://localhost:7880"</span>  <span class="c1"># what browsers connect to</span>
-</code></pre></div></td></tr></tbody></table></div>
-<p>You can do the same in the Django admin (<code>/admin/constance/config/</code>) — all
-of these values are also editable in the <strong>Settings</strong> tab under
-<strong>Administration → Configuration → Matrix chat</strong>. On a packaged deployment
-the values the deployment seeds are read-only there.</p>
+<p>Waldur's side of the integration is a handful of Constance settings. Both ways
+of <a href="#setting-up-the-appservice">setting up the appservice</a> take the same
+settings; they only differ in how the values get into Constance. On the dev
+stack:</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Dev stack value</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MATRIX_ENABLED</code></td>
+<td><code>true</code></td>
+<td>The commands switch it on at the first run; by hand you switch it on</td>
+</tr>
+<tr>
+<td><code>MATRIX_HOMESERVER_URL</code></td>
+<td><code>http://localhost:6167</code></td>
+<td>Required. Where Waldur reaches the homeserver</td>
+</tr>
+<tr>
+<td><code>MATRIX_HOMESERVER_DOMAIN</code></td>
+<td><code>localhost</code></td>
+<td>Required. The homeserver's <code>server_name</code></td>
+</tr>
+<tr>
+<td><code>MATRIX_USER_REGISTRATION_SECRET</code></td>
+<td><code>devregistrationsecret</code></td>
+<td>Required. Must match <code>registration_token</code> and <code>registration_shared_secret</code> in <code>tuwunel.toml</code></td>
+</tr>
+<tr>
+<td><code>MATRIX_APPSERVICE_SENDER_LOCALPART</code></td>
+<td><code>waldur-bot</code></td>
+<td>The bot's localpart</td>
+</tr>
+<tr>
+<td><code>MATRIX_EXTERNAL_LOGIN_METHOD</code></td>
+<td><code>none</code></td>
+<td><code>password</code> allows Element; <code>oidc</code> needs the <a href="#single-sign-on-for-external-clients">SSO steps</a></td>
+</tr>
+<tr>
+<td><code>MATRIX_HISTORY_EXPORT_ENABLED</code></td>
+<td><code>true</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>MATRIX_LIVEKIT_KEY</code>, <code>MATRIX_LIVEKIT_SECRET</code></td>
+<td><code>devkey</code>, <code>devsecret</code></td>
+<td>Calls only. The key pair Waldur signs call tokens with</td>
+</tr>
+<tr>
+<td><code>MATRIX_LIVEKIT_URL</code></td>
+<td><code>http://localhost:7880</code></td>
+<td>Calls only. Internal, for room management</td>
+</tr>
+<tr>
+<td><code>MATRIX_LIVEKIT_PUBLIC_URL</code></td>
+<td><code>ws://localhost:7880</code></td>
+<td>Calls only. What browsers connect to</td>
+</tr>
+</tbody>
+</table>
+<p><code>dev_matrix_settings</code> already defaults the four LiveKit settings to these
+values. The appservice tokens, <code>MATRIX_APPSERVICE_AS_TOKEN</code> and
+<code>MATRIX_APPSERVICE_HS_TOKEN</code>, are not in the table: with the management
+commands you generate them yourself, and by hand the Setup wizard generates
+them.</p>
 <p>Turn on the <code>project.show_matrix_chat</code> feature flag too, under
 <strong>Administration → User interface → Features</strong> or with <code>waldur load_features</code>.
 It shows the chat in homeport and also the <strong>Matrix chat</strong> admin page, so the
@@ -20185,39 +20259,63 @@ access on <code>MATRIX_ENABLED</code> regardless — the feature flag only toggl
 <p>After changing Constance values, the homeport reads them on its next full
 page load (the <code>/api/configuration/</code> response is cached in the SPA bootstrap).</p>
 <hr>
-<h2 id="running-the-setup-wizard">Running the Setup wizard</h2>
-<p>In the homeport, open <strong>Administration → Configuration → Matrix chat</strong> and click
-<strong>Setup appservice</strong>. The wizard generates fresh AS/HS tokens, persists
-them via Constance, and returns the registration YAML to copy into the
-homeserver. Re-running Setup rotates both tokens — you will need to update
-the homeserver's copy of the registration if you do.</p>
-<p>You can also call the API directly:</p>
+<h2 id="setting-up-the-appservice">Setting up the appservice</h2>
+<p>Setting up the appservice means two things: Waldur stores a pair of
+appservice tokens, and the homeserver registers Waldur's appservice with the
+same pair. There are two ways to do it:</p>
+<ul>
+<li><a href="#with-the-management-commands">With the management commands</a>, which is what
+  the Helm chart and docker-compose run on every deploy. Use this on Tuwunel.</li>
+<li><a href="#by-hand">By hand</a>, with the Setup wizard and the registration YAML. Use
+  this on Synapse, or when you want to register the YAML yourself.</li>
+</ul>
+<p>Pick one. The Setup wizard and <code>init_matrix_settings</code> don't mix:
+<code>init_matrix_settings</code> marks the tokens as managed by the deployment
+(<code>MATRIX_TOKENS_MANAGED_BY</code>), which hides the wizard and makes its API answer
+<code>409</code>. To move from one way to the other later, see "Seeding from the
+environment" in the
+<a href="../../developer-guide/admin-guide/matrix-appservice-setup/">setup guide</a>.
+Either way, finish with <a href="#verifying-the-integration">Verifying the integration</a>:
+<strong>Bot authentication (whoami)</strong> and <strong>Bot is a homeserver admin</strong> should pass.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The Waldur URL you pass in either way is where the homeserver calls Waldur
+back, so it must be reachable from inside the homeserver process, not just
+from the operator's browser. For Tuwunel running in Docker that reaches the
+host, use <code>http://host.docker.internal:10780</code> (Linux/macOS Docker Desktop).
+For Kubernetes deployments you usually want the in-cluster service DNS.</p>
+</div>
+<h3 id="with-the-management-commands">With the management commands</h3>
+<p>Run both commands in a terminal with the same <code>DJANGO_SETTINGS_MODULE</code> as the
+API.</p>
+<ol>
+<li>
+<p>Seed the settings from the environment. <code>waldur init_matrix_settings</code> reads
+   each setting from the environment variable of the same name:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
-<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:10780/api/admin/matrix-appservice/setup/<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: Token YOUR_STAFF_TOKEN"</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"url": "http://host.docker.internal:10780"}'</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">MATRIX_HOMESERVER_URL</span><span class="o">=</span>http://localhost:6167
+<span class="nb">export</span><span class="w"> </span><span class="nv">MATRIX_HOMESERVER_DOMAIN</span><span class="o">=</span>localhost
+<span class="nb">export</span><span class="w"> </span><span class="nv">MATRIX_USER_REGISTRATION_SECRET</span><span class="o">=</span>devregistrationsecret
+<span class="nb">export</span><span class="w"> </span><span class="nv">MATRIX_EXTERNAL_LOGIN_METHOD</span><span class="o">=</span>none
+<span class="nb">export</span><span class="w"> </span><span class="nv">MATRIX_HISTORY_EXPORT_ENABLED</span><span class="o">=</span><span class="nb">true</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">MATRIX_APPSERVICE_AS_TOKEN</span><span class="o">=</span>&lt;random<span class="w"> </span>token&gt;<span class="w">  </span><span class="c1"># e.g. openssl rand -hex 32</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">MATRIX_APPSERVICE_HS_TOKEN</span><span class="o">=</span>&lt;another<span class="w"> </span>random<span class="w"> </span>token&gt;
+waldur<span class="w"> </span>init_matrix_settings
 </code></pre></div></td></tr></tbody></table></div>
-<p>The response includes a <code>bot_provision_status</code> field. It is <code>"ok"</code> when the
-bot user was registered on the homeserver, <code>"failed: …"</code> otherwise. The
-common failure mode is <code>M_UNKNOWN_TOKEN</code>, which means the homeserver does
-not yet have the appservice registered (see below).</p>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>The Waldur URL you supply must be reachable from inside the homeserver
-process, not just from the operator's browser. For Tuwunel running in
-Docker that reaches the host, use <code>http://host.docker.internal:10780</code>
-(Linux/macOS Docker Desktop). For Kubernetes deployments you usually
-want the in-cluster service DNS.</p>
-</div>
-<hr>
-<h2 id="registering-the-appservice-on-the-homeserver">Registering the appservice on the homeserver</h2>
-<p>Waldur registers its appservice on Tuwunel through an admin-room command;
-Tuwunel can also read registrations from its config file, which Waldur does
-not use. On Tuwunel, one command does it
-once Setup has generated the tokens:</p>
+<p>Generate the two tokens once and keep them, for example in an env file:
+running the command with other tokens rotates them. The homeserver URL,
+domain, registration secret and both tokens are required; without one of
+them the command fails and writes nothing. It switches <code>MATRIX_ENABLED</code> on
+at the first run.</p>
+</li>
+<li>
+<p>Register the appservice on the homeserver:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nv">MATRIX_BOOTSTRAP_PASSWORD</span><span class="o">=</span>&lt;a<span class="w"> </span>password<span class="w"> </span>you<span class="w"> </span>keep&gt;<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>waldur<span class="w"> </span>register_matrix_appservice<span class="w"> </span>--url<span class="w"> </span>http://host.docker.internal:10780
@@ -20227,29 +20325,67 @@ shared-secret registration API, which needs the homeserver's
 <code>registration_shared_secret</code> to equal <code>MATRIX_USER_REGISTRATION_SECRET</code> (on
 the dev stack both are <code>devregistrationsecret</code>). It then sends the
 registration to the admin room, makes the bot a homeserver admin and checks
-the result. Run it again with the same password after rotating the tokens.
-"Registering on Tuwunel from the command line" in the
-<a href="../../developer-guide/admin-guide/matrix-appservice-setup/">setup guide</a> has
-the details.</p>
-<p>To register by hand instead, act as a homeserver admin in the admin room,
-<code>#admins:&lt;homeserver domain&gt;</code>:</p>
+the result. Later runs sign in as the bootstrap admin, so keep the
+password. "Registering on Tuwunel from the command line" in the
+<a href="../../developer-guide/admin-guide/matrix-appservice-setup/">setup guide</a>
+has the details.</p>
+</li>
+</ol>
+<p>From then on the <strong>Settings</strong> tab shows the settings a deployment seeds as
+read-only (see <a href="#packaged-deployments">Packaged deployments</a>). Change them in
+the environment and run <code>init_matrix_settings</code> again.</p>
+<p>To rotate the tokens, put new ones in the environment, run
+<code>init_matrix_settings</code>, then run <code>register_matrix_appservice</code> with the same
+<code>MATRIX_BOOTSTRAP_PASSWORD</code>. It replaces the old registration. The bot process
+(<code>waldur matrix_bot</code>) notices the new appservice token within 30 seconds and
+starts over with it, so it needs no restart.</p>
+<h3 id="by-hand">By hand</h3>
 <ol>
-<li>Print the registration once Setup has stored the tokens, with
-   <code>waldur generate_appservice_registration --url &lt;URL the homeserver uses to reach Waldur&gt;</code>
-   (<code>http://host.docker.internal:10780</code> on the dev stack). Setup's result step
-   shows the same YAML.</li>
-<li>Create an admin through the homeserver's shared-secret registration API,
-   with <code>"admin": true</code>. Don't rely on the first account registered becoming
-   an admin: the Helm chart and docker-compose turn Tuwunel's
-   <code>grant_admin_to_first_user</code> off, because Waldur registers an account for
-   whoever opens the chat first. The setup guide's
+<li>Put the settings from <a href="#configuring-waldur">Configuring Waldur</a> into
+   Constance, <code>MATRIX_ENABLED</code> included, since the wizard is disabled while it
+   is off: in the <strong>Settings</strong> tab under <strong>Administration → Configuration →
+   Matrix chat</strong>, in the Django admin (<code>/admin/constance/config/</code>), or from a
+   Django shell (<code>config.MATRIX_HOMESERVER_URL = "http://localhost:6167"</code> and
+   so on). The wizard asks for the homeserver URL, domain and registration
+   secret itself if they are still empty.</li>
+<li>
+<p>Generate the tokens: on the same page, click <strong>Setup appservice</strong>. The
+   wizard generates fresh AS/HS tokens, stores them in Constance, and shows the
+   registration YAML. You can also call the API directly:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:10780/api/admin/matrix-appservice/setup/<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: Token YOUR_STAFF_TOKEN"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"url": "http://host.docker.internal:10780"}'</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>The response includes a <code>bot_provision_status</code> field. It is <code>"ok"</code> when the
+bot user was registered on the homeserver, <code>"failed: …"</code> otherwise. On a
+first Setup it is <code>M_UNKNOWN_TOKEN</code>, because the homeserver does not have
+the registration yet; the next step fixes that.</p>
+<p>To print the YAML again later without rotating the tokens, run
+<code>waldur generate_appservice_registration --url &lt;URL the homeserver uses to reach Waldur&gt;</code>
+(<code>http://host.docker.internal:10780</code> on the dev stack).</p>
+</li>
+<li>
+<p>Register the YAML on the homeserver.</p>
+<p>On Tuwunel and other Conduit-derived homeservers, act as a homeserver
+admin in the admin room, <code>#admins:&lt;homeserver domain&gt;</code>:</p>
+<ol>
+<li>Create an admin through the homeserver's shared-secret registration
+   API, with <code>"admin": true</code>. Don't rely on the first account registered
+   becoming an admin: the Helm chart and docker-compose turn Tuwunel's
+   <code>grant_admin_to_first_user</code> off, because Waldur registers an account
+   for whoever opens the chat first. The setup guide's
    <a href="../../developer-guide/admin-guide/matrix-appservice-setup/#token-rotation">Token rotation</a>
-   has a script that creates such an admin, and one that deactivates it when
-   you are done. On the dev stack the secret is <code>devregistrationsecret</code>.</li>
-<li>As that admin, send <code>!admin appservices register</code> in the admin room, with
-   the YAML in a <code>yaml</code> code block below it. Send it from a Matrix client, or
-   with the admin's access token through the client API; the docker-compose
-   guide's
+   has a script that creates such an admin, and one that deactivates it
+   when you are done. On the dev stack the secret is
+   <code>devregistrationsecret</code>.</li>
+<li>As that admin, send <code>!admin appservices register</code> in the admin room,
+   with the YAML in a <code>yaml</code> code block below it. Send it from a Matrix
+   client, or with the admin's access token through the client API; the
+   docker-compose guide's
    <a href="../deployment/docker-compose/matrix-chat-add-on/#registering-by-hand">Registering by hand</a>
    script shows the calls. Tuwunel replies
    <code>Appservice registered with ID: waldur</code> and creates the bot's account.</li>
@@ -20257,24 +20393,19 @@ the details.</p>
    (see
    <a href="../../developer-guide/admin-guide/matrix-appservice-setup/#making-the-bot-a-homeserver-admin">Making the bot a homeserver admin</a>).</li>
 </ol>
-<p>Under <strong>Administration → Configuration → Matrix chat</strong>, <strong>Diagnostics</strong> should
-then show <strong>Bot authentication (whoami)</strong> and <strong>Bot is a homeserver admin</strong>
-passing. Don't run Setup again to provision the bot. Setup generates new
-tokens, and the registration you just made would stop working.</p>
-<p>For Synapse, the equivalent is to drop the registration YAML into a path
-listed in <code>app_service_config_files</code> and restart the homeserver. Other
-Conduit-derived homeservers follow the same admin-room workflow as
-Tuwunel.</p>
-<p>If you rotate the AS/HS tokens (by running the Setup wizard again), run
-<code>waldur register_matrix_appservice</code> again, which replaces the old
-registration. By hand, remove the old registration with
-<code>!admin appservices unregister waldur</code> and then register the new YAML:
+<p>On Synapse, drop the YAML into a path listed in
+<code>app_service_config_files</code>, restart the homeserver, and make the bot a
+homeserver admin.</p>
+</li>
+</ol>
+<p>Don't run Setup again to provision the bot. Setup generates new tokens, and
+the registration you just made would stop working.</p>
+<p>To rotate the tokens, run Setup again and register the new YAML. On Tuwunel,
+remove the old registration first with <code>!admin appservices unregister waldur</code>:
 Tuwunel refuses to register an ID that is already registered, and rejects
 Waldur's requests under the new tokens until it has them. The bot process
 (<code>waldur matrix_bot</code>) notices the new appservice token within 30 seconds and
-starts over with it, so it needs no restart. On Helm and docker-compose,
-Setup is refused while the deployment manages the tokens; rotate them as
-<a href="#packaged-deployments">Packaged deployments</a> describes.</p>
+starts over with it, so it needs no restart.</p>
 <hr>
 <h2 id="verifying-the-integration">Verifying the integration</h2>
 <p>Open <strong>Diagnostics</strong> from the same page:</p>
@@ -21006,7 +21137,7 @@ together, then restart the homeserver (see
 <tr>
 <td><code>bot_provision_status: "failed: M_UNKNOWN_TOKEN"</code> after Setup</td>
 <td>The homeserver has no registration with the tokens this Setup generated, which is expected on a first Setup</td>
-<td>Register the YAML Setup returned via the admin-room command (see above). Tuwunel then creates the bot itself. Don't run Setup again: it generates new tokens.</td>
+<td>Register the YAML Setup returned (see <a href="#by-hand">By hand</a>). Tuwunel then creates the bot itself. Don't run Setup again: it generates new tokens.</td>
 </tr>
 <tr>
 <td>Webhook reaches Waldur but returns <code>400 DisallowedHost</code></td>
@@ -21016,7 +21147,7 @@ together, then restart the homeserver (see
 <tr>
 <td>Diagnostics shows <code>Bot authentication: 401 Unauthorized — AS token rejected</code> or <code>403 Forbidden — AS token not recognized by homeserver</code></td>
 <td>The homeserver holds a registration with other tokens than Waldur's, for example after Setup was run again</td>
-<td>On Helm or docker-compose, deploy again: the register step replaces a registration that differs from Waldur's. With password login off, pass an admin token (see <a href="#external-clients">External clients</a>). On a homeserver you run yourself, register the tokens Waldur has: <code>waldur generate_appservice_registration --url &lt;URL the homeserver uses to reach Waldur&gt;</code> prints their YAML. Send <code>!admin appservices unregister waldur</code>, then register it.</td>
+<td>On Helm or docker-compose, deploy again: the register step replaces a registration that differs from Waldur's. With password login off, pass an admin token (see <a href="#external-clients">External clients</a>). On a homeserver you run yourself, run <code>waldur register_matrix_appservice</code> again, which does the same. By hand, <code>waldur generate_appservice_registration --url &lt;URL the homeserver uses to reach Waldur&gt;</code> prints the YAML of the tokens Waldur has. Send <code>!admin appservices unregister waldur</code>, then register it.</td>
 </tr>
 <tr>
 <td>Voice/video call fails to connect</td>
