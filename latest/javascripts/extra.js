@@ -42,6 +42,9 @@ function mermaidClickHandler(event) {
 }
 
 function openDiagramModal(mermaidElement) {
+    // Taken before the modal adds its own .mermaid to the page
+    const diagramIndex = Array.prototype.indexOf.call(document.querySelectorAll('.mermaid'), mermaidElement);
+
     // Create modal
     const modal = document.createElement('div');
     modal.className = 'diagram-modal';
@@ -50,8 +53,13 @@ function openDiagramModal(mermaidElement) {
     const modalContent = document.createElement('div');
     modalContent.className = 'diagram-modal-content';
 
-    // Clone the mermaid diagram
-    const clonedDiagram = mermaidElement.cloneNode(true);
+    // Material renders each diagram into a closed shadow root, which cloneNode
+    // does not copy, and drops the source, so render it again from the page HTML
+    const diagram = document.createElement('div');
+    diagram.className = 'mermaid';
+    renderDiagram(diagramIndex).then(function(svg) {
+        diagram.innerHTML = svg;
+    });
 
     // Create close button
     const closeBtn = document.createElement('div');
@@ -61,7 +69,7 @@ function openDiagramModal(mermaidElement) {
 
     // Assemble modal
     modalContent.appendChild(closeBtn);
-    modalContent.appendChild(clonedDiagram);
+    modalContent.appendChild(diagram);
     modal.appendChild(modalContent);
 
     // Add to page
@@ -93,6 +101,23 @@ function openDiagramModal(mermaidElement) {
             closeDiagramModal();
         }
     }
+}
+
+function renderDiagram(index) {
+    // The cached copy is the one this page was rendered from, so the index
+    // still points at the clicked diagram even after a redeploy
+    return fetch(location.href, { cache: 'force-cache' })
+        .then(function(response) {
+            return response.text();
+        })
+        .then(function(html) {
+            const page = new DOMParser().parseFromString(html, 'text/html');
+            const source = page.querySelectorAll('.mermaid')[index].textContent;
+            return mermaid.render('diagram-modal-svg', source);
+        })
+        .then(function(result) {
+            return result.svg;
+        });
 }
 
 /* ── Search section filters ─────────────────────────────────────────── */
