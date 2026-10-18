@@ -9,6 +9,18 @@ which also drafts support tickets from a conversation (`!ticket`).
 Conversations are rendered in the homeport drawer next to the Waldur UI, so
 team members do not need a separate Matrix client.
 
+The video below follows a project team through it:
+
+- the project, its team and resources, and the project's room in the drawer;
+- a video call;
+- a reply from Element Web on a phone;
+- `/status`, and a support ticket that `!ticket` drafts from the conversation;
+- the ticket in the helpdesk;
+- a member losing access to the room when their project role is removed;
+- the integration's diagnostics.
+
+![type:video](img/matrix-chat/matrix-chat-demo.mp4)
+
 Rooms and the chat drawer need a homeserver that supports the Application
 Service API, and short-lived web sessions need it to issue refresh tokens.
 Locking the Matrix account of a deactivated user, resetting a user's chat
