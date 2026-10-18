@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-18T02:04:03.529953Z
+Generated: 2026-10-18T08:13:43.383512Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -13606,6 +13606,22 @@ Include media files when exporting Matrix room history.
 
 Days to keep Matrix room history exports, files included, before they are deleted. Each room's newest completed export is kept regardless of age. Set to 0 or less to keep them forever.
 
+#### MATRIX_TICKET_CONTEXT_MESSAGES
+
+**Type:** <class 'int'>
+
+**Default value:** 20
+
+How many messages the !ticket bot command reads as its context: the latest of its thread, or the replied-to message and those before it.
+
+#### MATRIX_TICKET_DRAFT_TTL_MINUTES
+
+**Type:** <class 'int'>
+
+**Default value:** 15
+
+Minutes a support ticket draft made by the !ticket bot command can be sent before it expires; its content is then erased.
+
 #### MATRIX_USER_REGISTRATION_SECRET
 
 **Type:** secret_field
@@ -20219,6 +20235,7 @@ td:nth-child(4) {
 | `waldur-mastermind-reject-past-bookings` | `waldur_mastermind.booking.reject_past_bookings` | Cron: `0 10 * * * (m/h/dM/MY/d)` | Reject booking resources that have start times in the past. |
 | `waldur-mastermind-send-notifications-about-upcoming-bookings` | `waldur_mastermind.booking.send_notifications_about_upcoming_bookings` | Cron: `0 9 * * * (m/h/dM/MY/d)` | Send email notifications to users about their upcoming bookings. |
 | `waldur-matrix-chat-cleanup-appservice-transactions` | `waldur_mastermind.matrix_chat.cleanup_old_appservice_transactions` | Cron: `15 3 * * * (m/h/dM/MY/d)` | Prune MatrixAppserviceTransaction rows older than the retention window. |
+| `waldur-matrix-chat-cleanup-expired-ticket-drafts` | `waldur_mastermind.matrix_chat.cleanup_expired_ticket_drafts` | Cron: `*/5 * * * * (m/h/dM/MY/d)` | Close support ticket drafts nobody sent or cancelled in time. |
 | `waldur-matrix-chat-cleanup-old-history-exports` | `waldur_mastermind.matrix_chat.cleanup_old_history_exports` | Cron: `30 3 * * * (m/h/dM/MY/d)` | Delete history exports, files included, past the retention period.<br><br>Exports are full copies of the history, made daily, and keep messages<br>that were redacted in the room afterwards. |
 | `waldur-matrix-chat-cleanup-outbox-messages` | `waldur_mastermind.matrix_chat.cleanup_old_outbox_messages` | Cron: `20 3 * * * (m/h/dM/MY/d)` | Prune sent and failed outbox messages older than the retention window. |
 | `waldur-matrix-chat-periodic-history-export` | `waldur_mastermind.matrix_chat.periodic_history_export` | Cron: `0 2 * * * (m/h/dM/MY/d)` | Periodically export history for all active rooms. |
@@ -100561,6 +100578,18 @@ automatically based on their roles, and operational queries (`!status`,
 which also drafts support tickets from a conversation (`!ticket`).
 Conversations are rendered in the homeport drawer next to the Waldur UI, so
 team members do not need a separate Matrix client.
+
+The video below follows a project team through it:
+
+- the project, its team and resources, and the project's room in the drawer;
+- a video call;
+- a reply from Element Web on a phone;
+- `/status`, and a support ticket that `!ticket` drafts from the conversation;
+- the ticket in the helpdesk;
+- a member losing access to the room when their project role is removed;
+- the integration's diagnostics.
+
+[Image: type:video]
 
 Rooms and the chat drawer need a homeserver that supports the Application
 Service API, and short-lived web sessions need it to issue refresh tokens.
