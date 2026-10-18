@@ -1,5 +1,64 @@
 # Changelog
 
+## 8.1.4-rc.1 - 2026-10-18
+
+### Highlights
+
+This release lets teams draft support tickets directly from Matrix chat threads and adds EU VAT calculation to invoices. Operators can now send platform events to their own HTTP webhooks and send invoice notifications to dedicated billing addresses. Login security is stronger: OIDC ID tokens are now validated, and security-relevant actions are recorded as audit events. British English is now available as an interface language.
+
+### What's New
+
+- **Support tickets from Matrix chat**: You can now draft a support ticket from a Matrix chat thread, then review and edit the draft in the chat before submitting it. The chat composer also offers commands with an in-chat help dialog.
+- **EU VAT on invoices**: Invoices now calculate EU VAT. Organizations have new VAT fields, including a "private person" flag. New admin settings control VAT, and invoice PDFs show the VAT amounts. A new management command refreshes VAT rates.
+- **Webhook delivery for event consumers**: Event consumers can now deliver events to an HTTP webhook. You can create and manage these consumers from the pub/sub admin page.
+- **Organization invoice emails**: Organizations can set dedicated invoice email addresses, which receive invoice notifications. You can edit them in the organization contact panel, and a notification is sent when they change.
+- **British English**: The interface is now offered in British English (en-GB), generated from the US English source strings. Translatable fields such as category and role descriptions can also have en-GB versions.
+- **Security audit events**: Audit events are now emitted for security-relevant actions, including SAML2, OIDC and Valimo logins, offering deletion and policy changes.
+- **Offering option transforms**: Service providers can configure how offering option values are transformed before they are stored, and preview the result in the option editor.
+- **Option as usage limit**: An integer resource option can now be displayed as the limit of a usage-based component on resource and project views.
+- **Editable access endpoints**: Offering access endpoints can now be edited after they are created.
+- **Call statistics**: Calls now report the number of proposals, reviews and workflow steps per call and per round.
+- **Accept invitations on behalf of users**: Staff can accept a user invitation on behalf of a named user.
+
+### Improvements
+
+- **OIDC login validation**: OIDC ID tokens are now validated against the identity provider's JWKS at login. New issuer and JWKS URL settings are available on identity providers.
+- **Accounting permission**: A new permission, CUSTOMER.VIEW_ACCOUNTING, controls access to the Accounting section. It is granted to organization owners and to roles cloned from the owner role.
+- **OpenPortal feature toggles**: OpenPortal now has separate feature toggles for the sending and receiving portal. Shared OpenPortal pages are hidden when the portal plays neither role.
+- **Date entry**: Date pickers now accept dates typed into a masked input field. The project creation dialog prevents choosing an end date before the start date.
+- **Resource end dates**: The API now validates resource end dates, and the termination date pickers follow the same rules.
+- **Resource actions**: The "Show all" actions dialog is organized into tabs by action group, and duplicate resource actions were removed.
+- **Accessibility**: Shared components now have accessible names, keyboard access and sufficient colour contrast. WCAG target-size and link-in-text-block violations were also fixed.
+- **Organization onboarding**: Missing Dun & Bradstreet identity fields are now requested inline during onboarding.
+- **OpenStack floating IPs**: Floating IPs are disabled on subnets without a router, and the release option is hidden when there are no floating IPs to release.
+- **Pending orders**: Orders waiting for the project start date now show provider approval as pending.
+- **Interface refresh**: Form inputs, selects and labels now use the Waldur UI component library. Design tokens are standardized, and unused Bootstrap CSS was removed (32% smaller gzipped). Support buttons and tab count badges have a refreshed look.
+
+### Bug Fixes
+
+- OpenStack synchronization now recovers from stale cached Keystone tokens.
+- Backend URL validation for OpenStack, Rancher, VMware and marketplace settings now actually runs.
+- Links built from HOMEPORT_URL no longer contain double or missing slashes.
+- Plain-text issue descriptions and comments now keep their line breaks.
+- The organization dashboard shows the organization profile only once, and managed and remote project detail pages no longer appear as provider tabs.
+- The Reviews tab in proposal rows stays visible when reviews fail to load.
+- Several visual issues were fixed:
+  - Brand colour is restored on search and breadcrumb links.
+  - Non-scrollable tab strips now wrap.
+  - The date picker caption no longer covers the month arrows.
+  - The local login link has the right colour in the dark Neumorphism layout.
+  - Unintended font weights were removed.
+  - Chart target lines stay inside the plot area.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [28 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.3...8.1.4-rc.1) - Matrix ticket drafts, EU VAT, webhook event consumers, invoice emails, OIDC token validation, audit events, option transforms and en-GB support.
+- **Waldur Homeport**: [60 commits](https://github.com/waldur/waldur-homeport/compare/8.1.3...8.1.4-rc.1) - UI for chat tickets and commands, VAT and invoice emails, webhook consumers and option transforms, plus British English, typed date entry, accessibility work and a form/design-token migration.
+- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.1.3...8.1.4-rc.1) - Clearer titles for the Helm install and Matrix documentation pages.
+- **Waldur Docker Compose**: [1 commit](https://github.com/waldur/waldur-docker-compose/compare/8.1.3...8.1.4-rc.1) - Matrix chat add-on page retitled to name Docker Compose.
+
+---
+
 ## 8.1.3 - 2026-10-13
 
 ### Highlights
