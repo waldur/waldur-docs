@@ -24,7 +24,8 @@ Each row is one key:
   the project.
 - **Limits & usage** — how much of its monthly limit the key has used, for the
   component closest to its limit.
-- **Models** — the models the key may call, or **All models**.
+- **Models** — the models the key may call, **All models**, or **No models**
+  for a key that cannot call any (see [Models](#models)).
 - **State** — **OK**, **Paused**, **Paused at limit**, **Erred**, or a
   transitional state while a change is in progress.
 - **Issued** — when the current key value was created or last rotated.
@@ -62,11 +63,13 @@ Project managers and organization owners can request additional keys with
    it empty for a key shared by the project.
 2. Optionally set **limits** per component. Each field shows the resource's
    limit; leave a field empty to let the key use up to the resource limit.
-3. Optionally tick the **Models** the key may call. Leave all unticked to allow
-   every model.
+3. Choose the **Models** the key may call. **All models** is ticked to begin
+   with. Untick it to choose models one by one (see [Models](#models)).
 4. Click **Submit**.
 
 ![Requesting an API key](../img/resource-api-keys-request.png)
+
+![The models of a requested key, on All models by default](../img/resource-api-keys-request-models.png)
 
 The new key appears as **Creating** and turns **OK** once the provider has
 created it. Its key ID is assigned at that point.
@@ -80,12 +83,90 @@ something.
 
 ![Editing a key's settings](../img/resource-api-keys-edit.png)
 
-- The **assignee** can be changed at any time, except while the key is being
-  deleted.
+- Changing the **assignee** of a key that has been created **rotates** it: its
+  current value stops working, and the new assignee reveals the new value.
+  Clearing the assignee rotates it too. The dialog warns about this before you
+  save. The assignee can be changed only while the key is **OK**, or **Erred**
+  after a failed rotation: resume a paused key, wait for a change in progress,
+  or retry a failed change first. A requested key that has not been created
+  yet takes the new assignee without a rotation.
+- A person can be the assignee of only one key of a resource. Choosing someone
+  who already holds a key is refused.
 - **Limits** and **models** can be changed while the key is **OK** or
   **Paused**. On an active key the change is sent to the provider and the key
   shows **Updating** until it is applied. On a paused key the change is stored
   and applied when the key is resumed.
+
+![Changing the assignee rotates the key](../img/resource-api-keys-edit-assignee.png)
+
+The assignee of a key can rotate it themselves, unless it has reached one of
+its monthly [limits](#limits). Every other change stays with whoever can
+request keys.
+
+## Models
+
+A key's model selection is one of three:
+
+| Selection | The key may call | Shown as |
+| --- | --- | --- |
+| **All models** ticked | every model the resource allows | **All models** |
+| Some models ticked | those models only | the list of models |
+| Nothing ticked | no model | **No models** |
+
+![A key with no models in the keys table](../img/resource-api-keys-no-models.png)
+
+The dialogs list only the models the resource allows (see
+[The resource's models](#the-resources-models)), so a key can narrow its
+resource but never widen it.
+
+**Request key** starts on **All models**. Ticking **All models** locks the
+individual ticks. Untick it to choose models one by one again.
+
+While nothing is selected, the dialog warns that the key will not be able to
+call any model. The warning does not stop you from submitting.
+
+![A key's settings with no model selected](../img/resource-api-keys-edit-no-models.png)
+
+A model the provider retires, or the resource stops allowing, disappears from
+the list, and the key is updated at the provider so it can no longer call it.
+The key keeps it, and gets it back if the model returns. A key that
+was limited to such models only can call none of them: it shows **No models**,
+and its settings dialog opens with nothing ticked. Saving the dialog never
+opens such a key to every model. Tick **All models**, or the models it should
+call, to make it usable again.
+
+!!! note
+    Not every backend can restrict a key's models. On one that cannot, such as
+    the Envoy AI Gateway, a request or an edit that leaves a key with anything
+    but **All models** fails, and the key shows **Erred**. After a failed edit,
+    set the key to **All models** with **Edit key settings**. After a failed
+    request, delete the key and request it again with **All models** ticked.
+    The resource has to stay on **All models** too, or every key's change
+    fails.
+
+## The resource's models
+
+The resource's own **Models** option, in the resource's **Options**, decides
+which models its keys can call at all, on an offering that manages keys one by
+one. It takes the same three forms as a key:
+
+| Selection | The resource's keys may call |
+| --- | --- |
+| **All models** ticked | every model of the offering, including ones the provider adds later |
+| Some models ticked | those models only |
+| Nothing ticked | no model |
+
+A new resource starts on **All models**: the order form offers **All models**,
+ticked to begin with, and refuses an order with no model selected. Change the
+selection later with **Update option** on the **Models** row. There, nothing
+ticked is allowed, and the dialog warns that the resource's keys will not be
+able to call any model.
+
+A key set to **All models** follows the resource: it can call whatever the
+resource allows. A key set to some models can call those of them the resource
+still allows. When the resource's selection changes, every key whose models
+change with it is updated at the provider, and shows **Updating** until that is
+applied. A paused key gets its new models when it is resumed.
 
 ## Limits
 
@@ -138,8 +219,24 @@ control the tab:
 - **Hide API keys tab** removes the tab from the offering's resources.
 
 The models offered in the key dialogs are the choices of the offering's
-`models` resource option, narrowed to the resource's own selection when it has
-one. Without that option, the key dialogs show no model list.
+`models` resource option, narrowed to the resource's own selection. Without
+that option, the key dialogs show no model list and every requested key may
+call every model. **All models** on a resource is a setting of its own, not a
+choice: an offering that lists an "All models" entry among its model choices
+should drop it, and resources that had it selected should be switched to
+**All models** by hand.
+
+A `models` option that allows several choices offers **All models** on any
+offering, and new resources start on it, so turning on **Manage API keys one by
+one** later finds them on every model. A single-choice `models` option has no
+**All models** and does not narrow the keys.
+
+Removing a model from the option's choices retires it: every key restricted
+to named models that included it is updated at the backend without it. A key
+on **All models**, on a resource on **All models**, is not restricted by name,
+so it can still call a retired model as long as the backend serves it — and on
+a backend that cannot restrict keys at all, such as the Envoy AI Gateway, every
+key can. Remove a retired model from the backend as well.
 
 !!! warning
     Without **Manage API keys one by one**, consumers can only reveal and rotate
