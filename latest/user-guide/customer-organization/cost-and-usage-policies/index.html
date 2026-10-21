@@ -17156,6 +17156,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Cost policies for projects">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-a-cost-policy-fired-or-reset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why a cost policy fired or reset
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-started-an-evaluation-and-who" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What started an evaluation, and who
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changes-to-a-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes to a policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -19469,6 +19508,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Cost policies for projects">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-a-cost-policy-fired-or-reset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why a cost policy fired or reset
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-started-an-evaluation-and-who" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What started an evaluation, and who
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changes-to-a-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changes to a policy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -19525,6 +19603,201 @@ model, see <a href="../../../about/concepts/policies/">Policies</a>.</p>
 <p>When exactly one project is selected, the policy can optionally be limited to a single resource. Use the "Limit to resource" field to pick a resource: only that resource's cost is then measured against the limit, and the policy's actions (for example pausing, downscaling or scheduled termination) apply only to that resource. Leaving the field empty keeps the policy scoped to the whole project. Blocking the creation of new resources is not available for resource-scoped policies, since that action is project-wide.</p>
 <p>By default, the policy accounts for any available project or organization credit — credit is subtracted before the limit is enforced, so a project with sufficient credit does not trigger the policy. Disable "Account for available credit" to enforce the limit against the raw invoice cost, regardless of credit balance.</p>
 <p>The credit that counts is what is left after this month's usage so far, so the policy acts as soon as usage has spent the credit down to the limit — it does not wait for the month-end billing run. With the period set to <strong>Total</strong>, cost from earlier months stays in the total; once that alone exceeds the limit, the limit effectively means "act when less than this much credit remains". To cap a single month's spend instead, use a monthly period.</p>
+<h3 id="why-a-cost-policy-fired-or-reset">Why a cost policy fired or reset</h3>
+<p>When a project or organization cost policy fires or resets, the event of each action it runs (for example "request downscaling" or "reset downscaling") records why. These events are listed under <strong>Audit logs</strong> for the project and the organization. The audit log does not show the figures yet; they are in the event's <code>context</code>, which the API returns (<code>GET /api/events/?event_type=request_downscaling</code>).</p>
+<p>The policy compares two things:</p>
+<ol>
+<li><strong>Cost after credit:</strong> the cost in the policy's period, minus what credit pays. If this is at or below the limit, the policy does not fire.</li>
+<li><strong>Credit left:</strong> if the cost is over the limit and the policy accounts for credit, the policy fires only once the credit left is at or below the limit.</li>
+</ol>
+<p><strong>Example.</strong> A project with:</p>
+<ul>
+<li>a project credit allocation of 2 900 CHF, funded by a 100 000 CHF organization credit;</li>
+<li>7 701.67 CHF of cost last month that no credit covered;</li>
+<li>3 000 CHF of usage this month;</li>
+<li>a policy with limit 100, period <strong>Total</strong>, and "Account for available credit" on.</li>
+</ul>
+<p>The credit pays 2 900 of this month's 3 000, so the cost after credit is 7 701.67 + 3 000 − 2 900 = 7 801.67, which is over 100. The allocation is spent, so the credit left is 0, at or below 100. The policy fires. Its event contains:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it means</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>triggered</code></td>
+<td>Whether the policy fired: <code>true</code> means its actions ran, <code>false</code> means it did not fire or was reset</td>
+<td><code>true</code></td>
+</tr>
+<tr>
+<td><code>gate</code></td>
+<td>Which check decided; see the next table</td>
+<td><code>credit_exhausted</code></td>
+</tr>
+<tr>
+<td><code>evaluated_cost</code></td>
+<td>The cost after credit that was compared with the limit: the invoices of the policy's period, with the credit already applied to them, minus <code>credit_deduction</code></td>
+<td><code>7801.67</code></td>
+</tr>
+<tr>
+<td><code>credit_deduction</code></td>
+<td>Credit that this month's usage will use but that is not on the invoice yet. Credit is applied to an invoice when the month is billed; until then the policy subtracts it here. Credit already applied, for example in earlier months, is part of the invoices' totals and is not counted again</td>
+<td><code>2900.00</code></td>
+</tr>
+<tr>
+<td><code>credit_value_compared</code></td>
+<td>The credit left, as it stands now: the balance after this month's usage so far. For a project with its own credit allocation, it is the lower of the allocation and the organization credit that funds it. Empty when the cost was not over the limit, because the credit was not checked</td>
+<td><code>0.00</code></td>
+</tr>
+<tr>
+<td><code>limit_cost</code></td>
+<td>The policy's limit</td>
+<td><code>100</code></td>
+</tr>
+<tr>
+<td><code>period</code></td>
+<td>The policy's period: <code>1</code> Total (all months), <code>2</code> one month, <code>3</code> three months, <code>4</code> twelve months</td>
+<td><code>1</code></td>
+</tr>
+<tr>
+<td><code>use_credit</code></td>
+<td>Whether "Account for available credit" is on</td>
+<td><code>true</code></td>
+</tr>
+<tr>
+<td><code>credit_balance</code></td>
+<td>The organization credit as stored. It only goes down at the month-end billing run, so during the month it can be higher than what is really left</td>
+<td><code>100000</code></td>
+</tr>
+<tr>
+<td><code>project_credit_balance</code></td>
+<td>The project credit allocation as stored, with the same month-end lag</td>
+<td><code>2900</code></td>
+</tr>
+</tbody>
+</table>
+<p>To see why a policy fired, read <code>credit_value_compared</code>, not <code>credit_balance</code> or <code>project_credit_balance</code>. In the example, the stored allocation still reads 2 900, but this month's usage has already spent it, so the credit left is 0.</p>
+<p><code>gate</code> is one of:</p>
+<table>
+<thead>
+<tr>
+<th><code>gate</code></th>
+<th>Fires</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cost_below_limit</code></td>
+<td>No</td>
+<td>The cost after credit is at or below the limit</td>
+</tr>
+<tr>
+<td><code>held_by_project_credit</code></td>
+<td>No</td>
+<td>The cost is over the limit, but the project's credit allocation still has more than the limit left</td>
+</tr>
+<tr>
+<td><code>held_by_customer_credit</code></td>
+<td>No</td>
+<td>The cost is over the limit, but the organization credit still has more than the limit left</td>
+</tr>
+<tr>
+<td><code>credit_exhausted</code></td>
+<td>Yes</td>
+<td>The cost is over the limit and the credit left is at or below it. A project allocation counts as 0 when the organization credit that funds it does not exist</td>
+</tr>
+<tr>
+<td><code>no_credit</code></td>
+<td>Yes</td>
+<td>The cost is over the limit and there is no credit</td>
+</tr>
+<tr>
+<td><code>credit_ignored</code></td>
+<td>Yes</td>
+<td>The cost is over the limit and "Account for available credit" is off</td>
+</tr>
+</tbody>
+</table>
+<p>A reset event, such as "reset downscaling" after a credit top-up, carries the same fields: <code>triggered</code> is <code>false</code> and <code>gate</code> says what is holding the policy back, for example <code>held_by_project_credit</code>.</p>
+<p>Events of actions that run without a new evaluation do not have these fields. Examples are refusing an order because the policy has already fired, and undoing actions when a policy is deleted.</p>
+<h3 id="what-started-an-evaluation-and-who">What started an evaluation, and who</h3>
+<p>The same events also record what made Waldur check the policy, and whose action that was. The actions themselves are carried out by the platform: such an event names the <code>system_robot</code> account as its user, not the person whose change caused it.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it means</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>trigger</code></td>
+<td>What started the check; see the next table</td>
+</tr>
+<tr>
+<td><code>trigger_object_uuid</code></td>
+<td>The object behind it: the invoice item, credit, usage report, policy or resource. Empty for the periodic check</td>
+</tr>
+<tr>
+<td><code>initiated_by_username</code>, <code>initiated_by_uuid</code></td>
+<td>The person whose action started it. Empty when nobody did: the periodic check, usage reported by a site agent, or background jobs such as monthly invoicing</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th><code>trigger</code></th>
+<th>What happened</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>policy_saved</code></td>
+<td>The policy was created or changed</td>
+</tr>
+<tr>
+<td><code>invoice_item_saved</code></td>
+<td>An invoice line was added or changed, for example by usage billing</td>
+</tr>
+<tr>
+<td><code>credit_changed</code></td>
+<td>An organization or project credit changed, or the offerings it covers</td>
+</tr>
+<tr>
+<td><code>usage_reported</code></td>
+<td>Usage was reported for a resource</td>
+</tr>
+<tr>
+<td><code>periodic_sweep</code></td>
+<td>Waldur's regular check of all policies</td>
+</tr>
+<tr>
+<td><code>reconcile</code></td>
+<td>That regular check re-applying the actions of a policy that had already fired, to resources that became eligible since</td>
+</tr>
+<tr>
+<td><code>resource_saved</code></td>
+<td>A resource was created or changed while the policy had already fired, for example an order refused. Here the person who made the change is the event's user</td>
+</tr>
+<tr>
+<td><code>policy_deleted</code></td>
+<td>The policy was deleted, and its actions were undone</td>
+</tr>
+</tbody>
+</table>
+<p>In the example above, the "reset downscaling" event after the top-up has <code>trigger</code> <code>credit_changed</code>, <code>trigger_object_uuid</code> the project credit, and <code>initiated_by_username</code> the person who topped it up.</p>
+<p>When several changes come within a couple of minutes of each other, Waldur checks the policy once for all of them. The event then names the first change and the person who made it.</p>
+<h3 id="changes-to-a-policy">Changes to a policy</h3>
+<p>Creating, changing and deleting a cost policy produce the events <code>policy_created</code>, <code>policy_updated</code> and <code>policy_deleted</code>, with the user who did it. <code>policy_updated</code> lists each changed setting with its old and new value. Staff and support users can also see every earlier version of a policy, and who saved it. In the cost policy list, open the policy's actions menu and select "Version history".
+    <a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/Cost_policy_version_history_action.png" data-desc-position="bottom"><img alt="Version history in the cost policy actions" src="../../img/Cost_policy_version_history_action.png"></a></p>
+<p>The dialog lists the versions, newest first, with the user who saved each one. Select a version to compare it with the one before it; the changed settings are listed first. To see the policy as it was at a given time, pick a date under "State at". A version saved by a change that also made the policy fire or reset shows that too, under "Action triggered".
+    <a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/Cost_policy_version_history.png" data-desc-position="bottom"><img alt="Version history of a cost policy" src="../../img/Cost_policy_version_history.png"></a></p>
+<p>The same history is available through the API: <code>GET /api/marketplace-project-estimated-cost-policies/&lt;uuid&gt;/history/</code>, and likewise for organization and offering policies.</p>
 <h2 id="cost-policies-for-offerings">Cost policies for offerings</h2>
 <p>Offering managers can set cost policies for specific organization groups. This allows to trigger some actions, when cost is reached. To add new policy, offering manager should open offering management page (Organization from the left menu, then Service provider -&gt; Marketplace -&gt; Offering) and then Policy -&gt; Cost policy from the top. This view provides an overview about already defined policies. To create a new one, select "Add" from the right.
     <a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/Cost_policies_offerings.png" data-desc-position="bottom"><img alt="Cost policy for offering" src="../../img/Cost_policies_offerings.png"></a></p>
