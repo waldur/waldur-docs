@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-21T17:50:52.935294Z
+Generated: 2026-10-21T19:30:45.368241Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -32917,13 +32917,15 @@ Config: the `WALDUR_E2E_*_CONFIG` variable the file reads (`CONFIG` =
 | `test_e2e_rest_api.py` | — ² | REST | `SlurmRestClient` against the emulator's REST API |
 | `test_e2e_restore.py` | CONFIG | REST | Restoring a resource from TERMINATED |
 | `test_e2e_stomp.py` | STOMP | REST | STOMP connections, event delivery, orders with STOMP |
+| `test_e2e_usage_parity.py` | — ² | REST | CLI and REST mode report the same usage (truncation, suspend, requeue) |
 | `test_e2e_ldap.py` | LDAP ³ | policy | LDAP-integrated SLURM backend |
 | `test_e2e_policy.py` | POLICY | policy | Periodic usage policy evaluation |
 | `test_e2e_qos_polling.py` | POLICY | policy | QoS application via the polling path |
 | `test_e2e_qos_stomp.py` | STOMP | policy | QoS application via STOMP RESOURCE events |
 | `test_e2e_qos_matrix.py` | POLICY | matrix | QoS sweep across all 11 policy configurations |
 
-² Runs against the emulator's slurmrestd; no agent config.
+² Runs against the emulator's slurmrestd (and, for `test_e2e_usage_parity.py`, its
+`sacct` on the same state); no agent config.
 ³ `WALDUR_E2E_LDAP_CONFIG`, `WALDUR_E2E_LDAP_INVERTED_CONFIG` and
 `WALDUR_E2E_LDAP_PROJECT_GROUPS_CONFIG`.
 
@@ -34183,6 +34185,7 @@ backend needs custom behavior.
 | `sync_resource_limits` | Pulls backend limits into Waldur | Change the limits source of truth |
 | `sync_resource_effective_id` | No-op | Reflect downstream `backend_id` as `effective_id` on the source resource |
 | `sync_resource_project` | No-op | Push project metadata to backends that manage their own projects |
+| `sync_resource_key_assignees` | No-op | Act on API key assignees (see `requires_resource_key_assignees`) |
 | `update_user_attributes` | No-op | Forward `OFFERING_USER` attribute updates to the backend |
 | `sync_offering_user_usernames` | Returns `False` | Pull backend-assigned usernames into Waldur (federation) |
 | `create_user_homedirs` | Provided | Customise homedir quota or path logic (see `supports_user_homedirs`) |
@@ -34634,6 +34637,22 @@ command left pending for 30 minutes, in case the message was lost.
   cannot apply, such as a model allowlist on a gateway with no per-key model
   rule, it must raise. Accepting the setting silently would show the key in
   Waldur as restricted when it is not.
+- **Three model lists.** `allowed_models` is `["*"]` for every model, `[]` for
+  no model, or a list of names; `None`, which a Waldur older than `["*"]`
+  sends, also means every model. An empty list is a restriction like any
+  other: a backend without per-key model rules refuses it too, or Waldur
+  would show "No models" for a key that can call all of them. The list is the
+  key's effective one: Waldur narrows the key's own list by its resource's
+  model selection, in commands and in the listing's `effective_models`, which
+  is what the reconciliation sweep replays.
+
+Before `mint_resource_key`, `rotate_resource_key`, `resume_resource_key` and
+`update_resource_key`, the core reads the resource from Waldur and calls
+`pause_resource`, `downscale_resource` or `restore_resource` on the same
+backend instance, so a backend that cannot tell its resource's pause from its
+keys alone (all of them paused on their own, or none left) still knows it.
+Those three methods therefore run once per such command, and must be cheap
+and safe to repeat.
 
 A backend without `supports_resource_api_key_lifecycle` keeps generation and
 rotation only. The core answers any other command for its keys with
@@ -34646,6 +34665,15 @@ option `enable_api_key_provisioning`. The report maps each resource to
 resource total. Map a resource to `None` when its usage cannot be attributed
 to keys; the core then skips per-key reporting for that resource. Waldur
 pauses a key once its reported usage reaches the key's limit.
+
+At provisioning, the core asks `generate_resource_keys` for two keys, so one
+keeps working while the other is rotated. It asks for none when the offering
+sets `enable_api_key_provisioning` and the backend declares
+`supports_resource_api_key_lifecycle`: users then request keys one at a time
+through `mint_resource_key`. `generate_resource_keys` must therefore accept
+`count=0`. `prune_unknown_resource_keys` runs before it either way. A restored
+resource follows the same rule, and existing resources are never topped up or
+trimmed when the option changes.
 
 ### `supports_user_homedirs: bool = False`
 
@@ -34745,6 +34773,21 @@ Set to `True` for backends that mirror project metadata. Membership sync
 then pre-fetches the source project from Waldur and passes it to
 `sync_resource_project` and `sync_project_end_date`, so the plugin never
 calls Waldur for it.
+
+### `requires_resource_key_assignees: bool = False`
+
+Set to `True` for backends that need to know who each of a resource's API
+keys is assigned to, such as a chat surface that follows the person's key.
+On an offering with `enable_api_key_provisioning`, the core then calls
+`sync_resource_key_assignees(waldur_resource, assignments)` on every
+membership sync of the resource (except one restricted for its members) and
+right after a key is created. Keys not yet minted are left out.
+`assignments` maps the client_id of every key not deleted to its assignee's
+offering username (the name membership sync adds them under), or to `None`
+when the key is assigned to nobody, or to someone with no actionable offering
+user or no username yet. Waldur
+sends no command when a key is reassigned, so the membership sync is what
+carries a reassignment to the backend.
 
 ### `shared_project_membership: bool = False`
 
@@ -36114,13 +36157,23 @@ aggregation downstream is shared with CLI mode:
 
 - **Elapsed** is clipped to the reporting window, as `sacct --truncate`
   does: a job spanning a month boundary is billed to each month only for
-  its part inside it; a running job counts until the window closes.
-- **TRES** come from the job's `tres.allocated`, falling back to
-  `tres.requested` for jobs that never started. The CLI path bills
-  `ReqTRES`. The two modes therefore differ for jobs whose allocation
-  differs from the request (for example whole-node allocation), which is
-  worth checking against `sacct` for a period before switching a billed
-  offering to REST mode.
+  its part inside it; a running job counts until the window closes or
+  until now, whichever is earlier.
+- **TRES** come from `tres.requested` (sacct `ReqTRES`), or with
+  `usage_tres_source: allocated` from `tres.allocated` (sacct `AllocTRES`),
+  falling back to `tres.requested` for jobs that never started. Both
+  clients pick through the same function (`parser.pick_usage_tres`).
+- **Truncation and duplicates** are slurmdbd's: the query carries
+  `skip_steps=true` (sacct's `--allocations`), and setting any job-condition
+  flag stops slurmrestd from defaulting to `show_duplicates` and
+  `disable_truncate_usage_time`. slurmdbd then caps the window at now,
+  takes suspended time off and keeps one record per job ID, as for
+  `sacct --truncate` without `--duplicates`. The window is sent as epochs,
+  read in the agent host's local time as sacct reads the CLI's naive
+  window (the offering timezone only picks the dates), so slurmdbd and
+  the client use the same edges.
+  The client repeats the clip and the duplicate removal for a server that
+  ignores the flag.
 
 ### 5. Authentication
 
@@ -36177,9 +36230,12 @@ reference is in the [SLURM plugin README](../plugins/slurm/README.md#rest-api-ex
   REST endpoint and stay on the CLI client. Without `sacctmgr` on the
   host they fail with an explicit `BackendError` instead of a
   "command not found".
-- Usage figures are aggregated client-side from job records and bill
-  allocated TRES, so they can differ from CLI-mode (`sacct ReqTRES`)
-  figures (section 4).
+- Usage figures are aggregated client-side from job records but follow
+  the same rules as CLI mode, so both modes report the same usage
+  (section 4; `tests/test_usage_parity.py` holds them to it). One
+  case still depends on the server: if a slurmrestd ignored
+  `skip_steps`, suspended time of a job clipped at the window edge
+  would not be subtracted.
 - Beyond the delegated resets, there is no
   automatic REST→CLI fallback on errors: silent divergence between
   modes is worse than a loud failure. The mode is an explicit
@@ -36998,6 +37054,9 @@ sacct --noconvert --truncate --allocations --allusers \
       --endtime=2024-01-31T23:59:59 \
       --format=Account,ReqTRES,Elapsed,User
 ```
+
+With `usage_tres_source: allocated` the agent asks for
+`--format=Account,AllocTRES,ReqTRES,Elapsed,User` and bills `AllocTRES`.
 
 ### Integration Notes
 
@@ -39655,8 +39714,13 @@ entries move between them:
 
 - **create (order)**: register the resource under the backend id the order processor generates
   (`{allocation_prefix}{resource slug}`) and surface the gateway endpoint on it. The agent then
-  generates the resource's keys, adds each as a `<backend_id>-<n>: key` entry to the **active**
-  Secret, and reports it to Waldur.
+  generates two keys, adds each as a `<backend_id>-<n>: key` entry to the **active** Secret, and
+  reports it to Waldur. Two, so one key keeps serving while the other is rotated. On an offering
+  with the `enable_api_key_provisioning` plugin option the resource starts with **no keys**
+  instead: users request their own, one at a time (see the per-key lifecycle below), and a
+  replacement can be requested before the old key is deleted. A restored resource follows the
+  same rule. Turning the option on or off later changes nothing for an existing resource: it keeps
+  the keys it has.
 - **pause**: move every key of the resource **active → blocked** — authentication now fails
   with 401.
 - **restore**: move the resource's keys **blocked → active**, except keys paused on their own.
@@ -39723,9 +39787,14 @@ pause when the pause was applied but its acknowledgement failed.
 
 **Limits and models.** A key's limits work like the resource's limits. The plugin stores and enforces
 nothing: the reporting backend reports each key's usage, and Waldur pauses the key once its usage
-reaches a limit. The gateway has no per-key model rule, so a command that would restrict a key to
-some models fails with an error rather than leaving an unrestricted key that Waldur shows as
-restricted. Leave a key's model list empty on this backend.
+reaches a limit. The gateway has no per-key model rule, so a command that would restrict a key's
+models fails with an error rather than leaving an unrestricted key that Waldur shows as restricted.
+That includes a key with no models selected, which Waldur would show as "No models". Set every key
+to **All models** on this backend: the plugin carries out a command whose model list is `["*"]`, or
+that has none at all (a Waldur older than the All models setting), and errs one with any other list.
+Waldur narrows a key's list by its resource's model selection before sending it, so each resource
+has to stay on **All models** too: a resource limited to some models gives every key a narrower list,
+and its commands err.
 
 **Kubernetes objects touched:** Secrets (`get`/`patch`) in the configured namespace.
 
@@ -42321,8 +42390,9 @@ warehouse to deploy.
 | Terminate resource | Deletes every key of the resource (`soft_delete` does not apply) |
 | Update limits | `POST /key/update` with the backstop fields on every key |
 | Add / remove members | LiteLLM users (and Open WebUI accounts when configured) |
-| Pause / downscale / restore | Blocks / unblocks every key |
-| Usage reporting | `litellm`: **No-op**. `litellm-usage`: token and spend usage from the spend API |
+| Pause / downscale / restore | Blocks / unblocks every key; a key paused on its own stays blocked |
+| Per-key commands | Create, pause, resume, update and delete one key; see [Per-key API keys](#per-key-api-keys) |
+| Usage reporting | `litellm`: **No-op**. `litellm-usage`: tokens and spend, per resource and per key |
 
 ## Features
 
@@ -42334,10 +42404,15 @@ warehouse to deploy.
   daily spend table — no sidecar collector
 - **Enforcement backstop**: mirror Waldur's limits onto each key (`max_budget`, `tpm_limit`,
   `rpm_limit`) so a burst between reporting cycles cannot outrun metering
-- **Model allowlist**: restrict every key of an offering to a set of models
+- **Model allowlist**: restrict every key of an offering to a set of models, and one key to a
+  subset of them
+- **Per-key API keys**: with `enable_api_key_provisioning` on the Waldur offering, each key is
+  created, limited, paused, resumed and deleted on its own, and its usage is reported on its own
 - **Chat surface (optional)**: provision people into [Open WebUI](https://openwebui.com)
   alongside their LiteLLM user, bill their chat usage back to the resource, and revoke
-  both together — see [The chat surface](#the-chat-surface-open-webui)
+  both together — see [The chat surface](#the-chat-surface-open-webui). With per-key API keys,
+  a person's chat follows the key assigned to them — see
+  [Chat that follows the key](#chat-that-follows-the-key)
 
 ## Overview
 
@@ -42447,6 +42522,128 @@ per-resource under any configuration; it is an offering-wide setting and only ap
 > on the 20th under `budget_duration: "30d"` resets on the 20th. This only affects the backstop —
 > Waldur's own metering and its report → pause path stay month-aligned — but it means a rotated or
 > late-minted key can carry a reset date its siblings do not share.
+
+## Per-key API keys
+
+Turn on `plugin_options.enable_api_key_provisioning` on the Waldur offering and Waldur governs
+a resource's keys one by one: a manager requests a key (for a person, if they like), gives it
+its own limits and model list, pauses, resumes and deletes it, and Waldur reads each key's
+usage. The plugin carries out each command on the proxy, then acknowledges it to Waldur. An
+offering without the option behaves as before: two keys per resource, reveal and rotate.
+
+| Command | What happens on the proxy |
+|---|---|
+| create | `POST /key/generate` as the next free `<backend_id>-<n>`; blocked on a paused resource |
+| pause | `POST /key/update` with `blocked: true` and the key's own-pause record, in one write |
+| resume / update | `POST /key/update` with the key's backstop, `models`, `blocked` and records, in one write |
+| delete | `POST /key/delete`; a key already gone counts as deleted |
+| rotate | `/key/regenerate` (or delete + mint), applying Waldur's limits and model list for the key when given |
+
+A new key skips every slot Waldur still holds, deleted keys included: Waldur attributes usage
+by alias and refuses a reused one. Every command can run twice: the agent's sweep replays one
+whose acknowledgement was lost.
+
+Rotation lifts a key's own pause instead of keeping it: Waldur rotates only a key it shows as
+serving and settles it OK, so a key still paused on its own at that point is the residue of a
+pause whose acknowledgement was lost.
+
+A rotation applies the key's limits and model list as Waldur holds them -- carried on the
+command, or read from Waldur -- whichever way the key is rotated, exactly as an update would,
+own-limit stamp and tighter-of backstop included. Only when Waldur cannot be read does the key
+keep the settings it has on the proxy.
+
+**A key changes hands by rotation.** Waldur rotates a key whose assignee is set, changed or
+cleared (waldur/waldur-mastermind#772), carrying any limits and models the same edit set. The
+previous holder -- or any project member, while the key was unassigned -- may have revealed the
+old secret; since API usage on the key counts against its limit and its chat follows the new
+holder, the old secret has to stop working. After the rotation the agent hands the resource's
+assignees to the proxy at once, as after a create, so chat moves to the new holder without
+waiting for the next membership pass. A Waldur older than that keeps the secret on
+reassignment: there, rotate a key after reassigning it.
+
+On an open-source proxy a rotation is a delete and a mint under the same alias, so the new key
+starts with no proxy spend: its `max_budget` backstop counts from zero again. Waldur's own
+metering is not affected, since usage is attributed by alias. A key the proxy lost is minted
+back with its own model list and limits from Waldur; if those cannot be read, it is minted
+paused with no models until an update or a resume from Waldur applies them, rather than with
+the offering's.
+
+Under key management the agent mints no keys when a resource is created: every key comes from
+a request in Waldur (waldur/waldur-site-agent#71, waldur/waldur-site-agent!619). A resource's
+first key takes the resource's limits from Waldur, since it has no sibling to read them from,
+and so does a key the proxy lost when a rotation mints it back: it may have been the resource's
+only one.
+
+### What is recorded on the key
+
+The proxy has one `blocked` flag per key and one set of limit fields, so the reasons behind
+them are kept in the key's `metadata`:
+
+| Metadata | Meaning |
+|---|---|
+| `waldur_key_paused` | Paused on its own, not with its resource: a resource restore leaves it blocked |
+| `waldur_key_limits` | The key's own limits, by Waldur component name |
+| `waldur_resource_limits` | The resource's limits as last reconciled, for a key created before the next |
+| `waldur_key_models` | The key's model list as Waldur sent it: `["*"]`, names, or `[]` |
+
+A key's `models` on the proxy is Waldur's list resolved against the offering's `models`
+setting when the key was written, and Waldur sends nothing when that setting changes. So the
+membership sync resolves every key's list again from `waldur_key_models`: a key with every
+model gets the offering's current list, and a named list keeps only the models the offering
+still serves (`no-default-models` when none is left). A model dropped from the offering
+therefore stops answering on the API at the next pass, as it closes in chat. A key written
+before the record existed only loses the models the offering no longer serves; nothing is
+added to it.
+
+A key paused on its own is no evidence that its resource is paused, so a resource's pause is
+read from its other keys: every key not paused on its own is blocked. That
+cannot record the pause of a resource with **no** keys, so the backend also remembers the
+pauses it applied. Before it creates, rotates, resumes or updates a key, the agent applies Waldur's
+own flag first, so a key created on a paused keyless resource lands blocked, and a key
+resumed on a paused resource whose keys are all paused on their own stays blocked.
+
+### Limits
+
+A key's own limit on a component the proxy has a field for (`token_cost`, `tpm`, `rpm`, see
+[Which limits reach the key](#which-limits-reach-the-key)) is written on that key only. Where
+the resource limits the same component, the tighter of the two applies, field by field; a 0
+in the key's limits means it has none of its own. The membership-sync reconciliation keeps it
+that way, and removing the key's limit returns the key to the resource's.
+
+Limits on `input_tokens` and `output_tokens` have no proxy field. Waldur enforces them, and
+every key limit, from the per-key usage report: a key whose usage reaches its limit is paused,
+and resumed when it is under the limit again in a new month.
+
+### Models
+
+A key's model list narrows within the offering's `models`:
+
+| Waldur sends | The key gets |
+|---|---|
+| `["*"]`, or no list (a Waldur older than `["*"]`) | the offering's `models` (every model when that is empty) |
+| a list of names | those names; a name the offering does not serve fails the command, naming it |
+| `[]` (no models) | `["no-default-models"]`: every call to a real model answers 403 |
+
+The proxy reads an empty `models` on a key as every model, so `[]` cannot be written as it is.
+Waldur sends `[]` when every model a key allows is switched off on its resource or retired
+from the offering; the key is written with the proxy's reserved `no-default-models` name as
+its only model instead, which no deployment carries. Its holder's chat stays open with no
+model in it.
+
+### Per-key usage
+
+`litellm-usage` reports each key's figure for the month. API usage lands on the key it was
+served on, whatever address the request carried. On an offering with a chat surface, a
+person's chat usage lands on the key assigned to them (see below). Chat usage from someone with
+no key assigned now -- their key was deleted or reassigned this month, say -- lands on
+`<backend_id>-unassigned`, which is no key: Waldur holds none by that name, so it counts
+against no key's limit and the agent leaves it out of the per-key report.
+Either way the keys of a resource sum to its total.
+
+A person's chat for the whole month counts against the key stamped on them **now**, so
+reassigning or deleting a key mid-month moves that month's chat with it: the new holder's
+chat lands on the key, the previous holder's leaves it. A key paused at its limit by chat
+can come back under it that way, and Waldur then resumes it.
 
 ## The chat surface (Open WebUI)
 
@@ -42585,7 +42782,9 @@ way that looks like a Waldur bug.
 - **`BYPASS_MODEL_ACCESS_CONTROL=True`** — without it a newly created account sees an
   **empty model list** and every chat returns `Model not found`. Open WebUI shows
   non-admins only models that have a stored model record, and models discovered from a
-  connection have none.
+  connection have none. **Except with per-key API keys**, which need it **off**: there the
+  plugin gives each model a record and a group, see
+  [Chat that follows the key](#chat-that-follows-the-key).
 - **`ENABLE_API_KEYS`** (admin config, **not** the env var) — the credential this plugin
   authenticates with.
 
@@ -42620,6 +42819,19 @@ every sync.
 - `POST /api/v1/auths/add` for an existing address is a **400**, so callers look the
   account up first.
 - `DELETE /api/v1/users/{id}` for an unknown id is **`200 true`**, not 404.
+
+Groups and model access, verified against 0.11.3 on 2026-10-15 with
+`BYPASS_MODEL_ACCESS_CONTROL=False`:
+
+- `POST /api/v1/models/model/access/update` with
+  `{"id", "name", "access_grants": [{"principal_type": "group", "principal_id": <id>, "permission": "read"}]}`
+  **replaces** the model's grants, and creates the model's record when it has none.
+- A person then lists and can chat with only the models of the groups they are in; any other
+  is refused at chat time too. A change of membership applies on the next request.
+- `POST /api/v1/groups/id/{id}/users/add` with `{"user_ids": [...]}` is safe **one user per
+  call only**: a batch that includes an existing member silently drops the new members
+  added before it, and still answers 200. Removing a non-member changes nothing.
+- `GET /api/v1/users/{id}/groups` lists one account's groups.
 
 Sign-in still succeeds for a demoted account: the person reaches the "awaiting approval"
 screen and can read their old conversations, but every model call is refused. That is the
@@ -42689,10 +42901,93 @@ LiteLLM's `"Unassigned"` bucket, which no managed address ever matches, so the c
 case separates on its own. Step 2's exclusion covers the other one: a person calling the
 API with their own key appears in both breakdowns and must be billed once.
 
+A proxy that gives an entity no `api_key_breakdown` leaves step 2 unable to tell which key
+each record was served on, and the address on it is whatever the request's header said: a
+key holder can name another member. Such a total is counted only on a day when none of the
+plugin's keys was used (only the shared key, or keys with no slot alias); on any other day
+it is skipped with a warning, losing that day's chat usage rather than billing a person for
+someone else's API calls. Proxies validated with this plugin always give the split.
+
 The address-to-resource map is read from the proxy (`GET /user/list`, filtered on the
 metadata stamp), not from Waldur — the reporting backend never sees a team list, and the
 stamp is in any case what decides where an address bills. An API-only offering never
 makes that call.
+
+### Chat that follows the key
+
+On an offering with both a chat surface and
+[per-key API keys](#per-key-api-keys), chat is granted by the key assigned to a person,
+not by project membership:
+
+- **Chat needs an assigned key.** A member's chat account is enabled while a key assigned to
+  them serves, and disabled when it is paused (at its limit or by hand), deleted or assigned
+  to someone else, when they leave the project, and while the resource is paused. A member
+  with no key has no chat. That includes people who chatted by membership before key
+  management was turned on: their chat closes until a key is assigned to them.
+- **Chat offers only the key's models.** Open WebUI lists and serves a person only the models
+  whose group they are in. The plugin keeps one group per model of the offering
+  (`waldur-model-<model>`), grants each model to its group, and puts the person in the
+  groups of their key's models: all of them for a key with every model. A model dropped
+  from the offering's `models` closes too: every `waldur-model-*` group counts as the
+  plugin's, so people leave the groups of retired models on the next membership sync. An
+  Open WebUI with such groups therefore serves one key-managed offering only.
+- **Chat counts against the key.** The person's chat usage is reported on their key, so
+  Waldur pauses the key, and with it the chat, at the key's limit.
+- **One key carries a person's chat.** Waldur lets a person hold several keys on a resource;
+  their chat follows the lowest-numbered one, whatever its state, and is closed while that key
+  is paused. Moving chat to another key while one is paused at its limit would let chat
+  alternate between the two and never stop.
+
+Who holds which key comes from Waldur: the membership sync reads the resource's keys and
+their assignees on every pass, and the key's alias is stamped on the person's LiteLLM user
+(`waldur_api_key` in its `metadata`). So a reassignment, a missed command, or an account that
+only appeared at the person's first sign-in all converge on the next membership sync. A newly
+created key's assignee is applied straight away.
+
+How the two request paths are governed:
+
+| | API calls, with the person's key | Chat, through Open WebUI |
+|---|---|---|
+| Authenticates as | the person's key | Open WebUI's shared key |
+| Usage reported on | the key it was served on | the key assigned to the person |
+| Model list | the proxy, on the key | Open WebUI, by group membership |
+| Monthly limit | Waldur (report → pause), plus the key's `max_budget` | Waldur (report → pause) |
+| Per-minute limits | the proxy, on the key | **not enforced** |
+| Pause | the key is blocked | the chat account is disabled |
+
+Two limits of this design are accepted:
+
+- **Chat can overshoot a monthly limit** until the next usage report (30 minutes by
+  default): only Waldur enforces it there.
+- **Per-minute limits do not apply in chat.** Chat authenticates as the shared key, which
+  the proxy checks instead.
+
+What the Open WebUI deployment needs on top of the list above:
+
+- **`BYPASS_MODEL_ACCESS_CONTROL=False`.** With it on, everyone sees every model.
+- **The offering's `models` setting.** It is the list the plugin makes groups for; without
+  it, chat model access is left to the operator.
+- **`DEFAULT_GROUP_ID` empty**, or naming a group that grants no models. It is applied to
+  every account at creation, the agent's own included.
+- **Group sync from the identity provider off**: `ENABLE_OAUTH_GROUP_MANAGEMENT`,
+  `WEBUI_AUTH_TRUSTED_GROUPS_HEADER` and SCIM each rewrite a person's groups at sign-in and
+  would undo the plugin's. If OAuth group management has to stay on, set
+  `OAUTH_BLOCKED_GROUPS` to cover `waldur-model-*`.
+- **The task model and the context-compaction model left unset** ("current model"). Open
+  WebUI checks them as the user, so naming one would need every user to have access to it.
+- **`DEFAULT_USER_ROLE=pending`**, as for SSO above, so an account a person creates at sign-in
+  stays closed until the plugin opens it.
+
+The plugin re-grants each model to its group on every pass, so a model an admin set to
+Public in the UI is closed again. Admins bypass model access control altogether.
+
+`BYPASS_MODEL_ACCESS_CONTROL` is instance-wide: an Open WebUI shared with an offering that
+grants chat by membership hides every model from that offering's people too. Give such an
+offering its own Open WebUI.
+
+Turning key management off again leaves each person's `waldur_api_key` stamp on their LiteLLM
+user, and restore keeps reading it. Remove the stamps (or the users, which the next
+membership sync re-adds) when switching an offering back to chat by membership.
 
 ### Chat surface settings (`openwebui:`, nested under the management settings)
 
@@ -42734,6 +43029,11 @@ that provisions and revokes people.
 | `remove_users_from_resource()` | Open WebUI role → `pending` (or `DELETE`), then `POST /user/delete` |
 | `list_resource_users()` | `GET /user/list`, filtered on the `waldur_resource` metadata stamp |
 | `get_resource_metadata()` | `active` = any key not blocked |
+| `mint_resource_key()` | `POST /key/generate` as the next free slot, with the key's own limits, models and records |
+| `pause_resource_key()` | `POST /key/update`: `blocked: true` and `waldur_key_paused`, plus the holder's chat closed |
+| `resume_` / `update_resource_key()` | `POST /key/update`: backstop, `models`, `blocked`, records; chat follows |
+| `delete_resource_key()` | `POST /key/delete`, plus the holder's chat closed and unlinked |
+| `sync_resource_key_assignees()` | stamps each member's key alias, opens or closes their chat, sets their model groups |
 | `recreate_missing_resource()` | returns `False` + warning — the agent cannot restore a key it never kept |
 
 > **`soft_delete` does not apply.** `delete_resource()` is overridden, so the core's soft-delete
@@ -42763,7 +43063,10 @@ bounds that reuse so it cannot outlive the pass. It defaults to **half**
 `WALDUR_SITE_AGENT_REPORT_PERIOD_MINUTES` (so 15 minutes on the default 30-minute period): a whole
 period would keep an entry alive into the next pass, which is exactly when fresh numbers are due.
 
-**Rollup:** usage is attributed per **resource**, not per key. On an offering with a
+**Per key:** `get_resource_key_usage_report()` reports the same rows one level finer, for an
+offering with [per-key API keys](#per-key-api-keys).
+
+**Rollup:** the resource total is attributed per **resource**, not per key. On an offering with a
 chat surface it is also attributed per **person** — see
 [How chat usage is billed](#how-chat-usage-is-billed). The `-<n>` slot suffix is stripped
 from the alias and the rows are summed, so rotating a key does not split a tenant's bill and a
@@ -42928,6 +43231,11 @@ Verified against `ghcr.io/berriai/litellm:main-stable` (open-source, **no** ente
 2026-08-25. These are the answers the implementation is built on; re-check them when targeting a
 much older or newer proxy.
 
+The per-key API keys were validated on LiteLLM 1.105.1. LiteLLM 1.107.0 answers 500 instead of
+401/403 when it refuses a key for authentication or budget (a blocked key, a key over its
+`max_budget`, a model the key does not allow): the refusal still holds, but clients see a server
+error.
+
 ### Enterprise-gated endpoints
 
 Three endpoints refuse to run without a `LITELLM_LICENSE`, and they do not agree on a status code —
@@ -42980,6 +43288,19 @@ using it would reintroduce the hash → alias map.
   (alongside `keys` and `total_count`), not nested under a `metadata` object — unlike
   `/user/daily/activity`, which nests them. Paging past the last page returns an empty `keys` list
   rather than an error. The two clients read the field from different places for this reason.
+- **`/key/generate` and `/key/update` take `metadata`, and `/key/update` *replaces* it.**
+  Posting `{"metadata": {"only": 1}}` to a key carrying three entries leaves exactly
+  `{"only": 1}`. So the plugin always writes a key's whole metadata, merged with what it
+  read. `/user/update` replaces a user's `metadata` the same way. Verified 2026-10-15.
+- **One `/key/update` can set `blocked` and `metadata` together**, and a key blocked that way
+  answers 401 at once. `/key/update` with `models` narrows the key: a model outside the list
+  answers 403. `models: []` is stored as `[]`, which the proxy reads as every model.
+  Verified 2026-10-15.
+- **A key with `models: ["no-default-models"]` can call no model.** A real model answers 403,
+  the reserved name itself 400 (no deployment), and the key's `/v1/models` lists nothing.
+  LiteLLM documents the name for users only; on a key it works because a key calls only the
+  names it lists. A made-up name blocks calls too, but `/v1/models` then lists it.
+  Verified 2026-10-15.
 - **`blocked` comes back as `null`, not `false`,** for a key that was never blocked, so it must be
   read as truthy/falsy rather than compared against `False`.
 - **Aliases are globally unique**: a duplicate `key_alias` is rejected with 400. A delete frees the
@@ -47181,6 +47502,9 @@ Every key the plugin reads. Keys not listed here are ignored.
 - `execution_mode` (default: `cli`) — `cli` or `rest`.
 - `rest_api` (default: unset) — slurmrestd connection, required when `execution_mode: rest` — see
   [REST mode](#rest-api-execution-mode).
+- `usage_tres_source` (default: `requested`) — Bill job usage on `requested` (sacct `ReqTRES`) or
+  `allocated` (sacct `AllocTRES`) TRES, in both execution modes — see [Usage
+  reporting](#usage-reporting).
 - `default_partition` (default: unset) — Partition for user associations when partitions are not
   enforced.
 - `enforce_offering_partitions` (default: `false`) — Create one association per partition of the
@@ -47268,15 +47592,55 @@ offerings:
 - `verify_ssl` (default: `true`) — Verify TLS certificates.
 - `timeout` (default: `30`) — Request timeout in seconds.
 
-**Usage reporting differs slightly between modes.** CLI mode runs
-`sacct --truncate --allocations --format=Account,ReqTRES,Elapsed,User` and so
-bills *requested* TRES. REST mode reads `GET /slurmdb/{version}/jobs/` and
-bills the TRES the job was *allocated* (falling back to requested TRES for jobs
-that never started), clipped to the reporting month like `sacct --truncate`.
-For jobs whose allocation differs from their request (e.g. whole-node
-allocation) the two modes report different numbers.
+Usage reporting gives the same numbers in both modes — see [Usage reporting](#usage-reporting).
 
 Recommended SLURM version for REST mode: 25.11 or newer.
+
+### Usage reporting
+
+Usage is reported per account and user for the current month. CLI mode runs
+`sacct --truncate --allocations` over the month; REST mode reads
+`GET /slurmdb/{version}/jobs/` and applies the same rules, so both modes report
+the same usage for the same jobs:
+
+- The month's dates follow the offering's `timezone`; its edges are read in the
+  agent host's local time in both modes, as `sacct` reads them.
+- Only the part of a job inside the month is billed, and the month never extends
+  past now: a job still running is billed up to the time of the report.
+- Time a job spent suspended is not billed once it has been resumed. A job still
+  suspended when the report runs is billed for its current suspension too, as
+  slurmdbd only takes off suspend intervals that have ended.
+- A job requeued within the month (node failure, preemption, `scontrol requeue`)
+  is billed for its **last run only**, as `sacct` reports it without
+  `--duplicates`. Runs in different months are each billed in their own month.
+  SLURM's own rollups (`sreport`, fairshare) count every run, so the agent can
+  report less than `sreport` for such jobs.
+
+`usage_tres_source` picks which of a job's TRES the usage is multiplied by:
+
+- `requested` (default) — the TRES the job asked for (`ReqTRES`).
+- `allocated` — the TRES the scheduler gave it (`AllocTRES`), falling back to
+  `ReqTRES` for a job that never started.
+
+The two differ in practice. A job that asks for `--gres=gpu:1` without a type
+has only `gres/gpu=1` in `ReqTRES`, so its usage never reaches a typed GPU
+component such as `gres/gpu:h200-141g`; `AllocTRES` names the type that was
+allocated (if `AccountingStorageTRES` tracks it). But `AllocTRES` also counts
+CPUs the scheduler added beyond the request — whole cores on nodes with
+`ThreadsPerCore=2`, `DefCpuPerGPU`, exclusive nodes — so switching to
+`allocated` can raise CPU usage:
+
+```text
+ReqTRES:   billing=8,cpu=8,gres/gpu=1,mem=65536M,node=1
+AllocTRES: billing=16,cpu=16,gres/gpu:h200-141g=1,gres/gpu=1,mem=65536M,node=1
+```
+
+Whenever a GPU type is recorded — in `AllocTRES`, and in `ReqTRES` for a job
+that asks for a type (`--gres=gpu:h200:2`) — the generic `gres/gpu` total is
+there too. So with either setting, configure typed GPU components or a generic
+`gres/gpu` component, never both, or such GPUs are billed twice. Before
+switching a billed offering, compare a month of
+`sacct --format=JobID,ReqTRES,AllocTRES` output.
 
 ### Account settings: users vs. accounts
 
@@ -64097,6 +64461,38 @@ The resource-creation check (`_check_project_policies` / `_check_customer_polici
 
 The kept decision is a snapshot: it stays on the instance until the next own evaluation replaces it, so code that runs an action later on the same instance should evaluate first.
 
+##### What started an evaluation, and who
+
+Every event an evaluation's actions emit also records why the evaluation ran. `system_actor_event_context` (`policy/utils.py`) puts these fields into the event context, so they reach every event emitted within the evaluation, including the resource-save events its actions cause:
+
+| Field | Meaning |
+|-------|---------|
+| `trigger` | What started it (`EvaluationTriggers` in `policy/structures.py`, see below) |
+| `trigger_object_uuid` | The object behind the trigger: the invoice item, credit, component usage, policy or resource; absent for the periodic sweep |
+| `initiated_by_uuid`, `initiated_by_username` | The person whose action started it; absent when nobody did, for example the sweep, a usage report from a site agent outside a request, or a background job that runs as a robot account (`ROBOT_USERNAMES`: `system_robot`, `openportal_robot`), which is never recorded as an initiator. Under impersonation the impersonator is the initiator, as for revisions |
+| `initiated_as_username` | Under impersonation only: the account the initiator was acting as |
+
+The event's own `user_*` fields stay the system robot whenever a person is replaced, so the robot is still recorded as the actor; the `initiated_by_*` fields keep the person.
+
+A new trigger replaces the old one and its object together, so a context that still carries an earlier trigger's object never lends it to an unrelated evaluation. The initiator is the person acting now when there is one; a recorded initiator only carries over while the events are a robot's.
+
+Celery copies the event context into every task published while an evaluation runs, its fields included, so the events of the work an evaluation sets off (an order it creates, say) still say what started it. Whether an evaluation is running *here* is tracked per thread (`utils.in_evaluation`), not read from the context: a task that merely carries an earlier evaluation's fields is not inside it.
+
+| `trigger` | Path |
+|-----------|------|
+| `policy_saved` | The policy serializer's `save()`, when a create or update fires or resets the policy |
+| `invoice_item_saved` | An invoice item saved, through the project, customer and offering cost-policy handlers |
+| `credit_changed` | A `CustomerCredit` or `ProjectCredit` value change, or a change to the credit's offerings |
+| `usage_reported` | A component usage saved, through the offering and customer usage-policy handlers and the SLURM periodic-usage policy dispatch. The SLURM evaluation does not run in `system_actor_event_context`, so its events keep the reporting user as the event user, who is also its `initiated_by_*` |
+| `periodic_sweep` | `check_polices`, the beat task that re-evaluates every policy |
+| `reconcile` | The sweep re-applying an already-fired policy's idempotent actions (`_reconcile_idempotent_actions`) |
+| `resource_saved` | Not an evaluation: an already-fired policy's threshold actions, run when an observed resource is saved. The request user stays the event user, since they are the actor here. Inside an evaluation running in the same thread (an action saving the resource) the evaluation's trigger is kept; in a later task that only carries an earlier evaluation's fields, `resource_saved` replaces them |
+| `policy_deleted` | Not an evaluation: a deleted project cost policy's actions being reset. The robot acts and the person who deleted it is the initiator, as on the `policy_saved` reset path |
+
+A cost evaluation caused by usage billing is reported as `invoice_item_saved`, with the invoice item that billing upserted as its object: the usage report's own handlers dispatch only the usage policies.
+
+The handler-driven evaluations run in Celery, away from the request. `_debounced_call` puts the trigger and the object's UUID into the event context while it publishes the task. `celeryconf.pass_event_context` already carries that context, request user included, to the worker, where `bind_event_context` restores it before the task runs. So `evaluate_policies_async` keeps its `(policy_class_path, filters)` signature, and old and new workers both run it during a rolling deploy. Debouncing keeps the first dispatch in its window: later triggers coalesced into it are evaluated, but the events name the first one. The fired / not fired log lines carry the same fields.
+
 See `EstimatedCostPolicyMixin.evaluate` / `_credit_gates` / `_live_balance` and `ProjectEstimatedCostPolicy` / `CustomerEstimatedCostPolicy._live_credit_balance_with_source` in `src/waldur_mastermind/policy/models.py`, and `MonthlyCompensation._restore_written_draw` in `src/waldur_mastermind/invoices/compensations.py`, for the exact implementation.
 
 ### Configuration
@@ -72026,6 +72422,40 @@ const {
 return <Component {...props} />;
 ```
 
+#### Page Content in the Layout Chrome (LayoutSlot)
+
+A page shows content in `Layout`'s chrome, outside its own place in the DOM, by rendering a `LayoutSlot` (`src/navigation/slots.tsx`) in its own JSX. The children are portalled into the slot's element, but stay in the page's React tree: they read the page's state, hooks and context, re-render with the page, and come and go with it.
+
+| Slot            | Where it shows                                       | Occupants            |
+| :-------------- | :--------------------------------------------------- | :------------------- |
+| `hero`          | the page hero above the page tabs                    | one (innermost page) |
+| `actions`       | controls at the end of the page tabs row             | one (innermost page) |
+| `filters`       | the filter bar under the page tabs                   | one (innermost page) |
+| `announcements` | bars under the header, after the admin announcements | all, in mount order  |
+
+```tsx
+return (
+  <>
+    <LayoutSlot name="hero">
+      <PageHero customer={customer} />
+    </LayoutSlot>
+    {offering.state === 'Unavailable' && (
+      <LayoutSlot name="announcements">
+        <AnnouncementBar label={translate('Unavailable')} />
+      </LayoutSlot>
+    )}
+    <UIView />
+  </>
+);
+```
+
+Rules:
+
+- **Render the slot only when there is something to show.** A mounted slot counts as filled, and `Layout` makes room for it (the page tabs row, the filter bar, the content spacing around a hero), even if its children render nothing. Put the condition around `<LayoutSlot>`, not inside it.
+- **Innermost page wins.** `hero`, `actions` and `filters` show only the occupant in the deepest UI-Router view: a page nested inside another hero page replaces its parent's hero, and the parent's shows again when the nested page goes. No `skipHero` route flag is needed for that.
+- **Markup only.** Data the layout needs (tabs, breadcrumbs, title, full-page mode) goes through `usePageTabsTransmitter`, `useBreadcrumbs`, `useTitle`, `useExtraTabs` and `useFullPage`, not through a slot.
+- **Outside `Layout` a slot renders nothing** (a story, a unit test without the shell). Tests that need the content render a host with `useLayoutSlots` and `LayoutSlotsProvider`, as `slots.test.tsx` and `PageBarFilters.test.tsx` do.
+
 #### Route Best Practices
 
 1. **Use `dynamic: true`** for any parameter that controls UI state within a page (subtabs, filters, panel states)
@@ -72206,8 +72636,8 @@ first paint, so the entry graph is kept deliberately small:
   Firefox cancels the page's in-flight requests when a navigation starts, and
   an app booting alongside the redirect would see its lazy chunks fail and
   reload, cancelling the redirect (`src/core/bootGuard.ts`).
-- `yarn build:check` (`scripts/bundle-budget.mjs`, run by the `Check cold-path
-  budget` CI job on every MR) fails when the entry script plus its
+- `yarn build:check` (`scripts/bundle-budget.mjs`, run by the
+  `Check cold-path budget` CI job on every MR) fails when the entry script plus its
   `modulepreload`s exceed the gzip budget, or when echarts, matrix-js-sdk,
   livekit-client, monaco-editor,
   @mdxeditor/editor or mermaid appear in that set. Each of those is loaded
@@ -72355,7 +72785,7 @@ This needs a width-constrained parent: the trail's container must be a flex item
 
 ## Mobile
 
-Below the `md` breakpoint the root app draws the trail in a fixed bar under the header (`BreadcrumbMain mobile`): 55px tall like the header, with its surface, bottom rule and 15px side padding, and lowered under the impersonation bar while it shows (`hasPageBar`). Behind it `BreadcrumbMain` renders a 55px spacer in the page flow, so the announcements, warning bars and page content that follow start below the bar rather than underneath it. The bar keeps the class `breadcrumb-mobile` with no styles of its own: `layout/_toolbar.scss` and `layout/_sticky-top.scss` still use it to place the page tabs and sticky elements below the bar, and the lint rule allows it.
+Below the `md` breakpoint the root app draws the trail in a bar of its own under the header (`BreadcrumbMain mobile`): 55px tall like the header, with its surface, bottom rule and 15px side padding. It sticks on its own right under the header (and the impersonation bar while that shows), and the announcements, warning bars and page content that follow start below it in the page flow. Its measured height is `--layout-breadcrumb-bar-height`, beside the header's `--layout-header-height` (`navigation/chromeHeights.ts`): the page tabs and sticky page content (`--layout-sticky-top`) sit below both, while the floating drawers hang from the header alone and cover the bar, which stays below the drawer layer (`z-99`).
 
 ## Micro-apps
 
@@ -75599,6 +76029,8 @@ Left to do: the suite can drop the legacy half of each selector in `tests/compon
 
 Removing a hook below breaks that suite without failing anything in HomePort, as removing the legacy classes too early did in integration pipeline 138738.
 
+The page chrome is at step 1: the page tabs row, the filter bar under it and the footer render both their legacy class (`toolbar`, `extra-toolbar`, `footer`, unstyled since waldur/waldur-homeport!7967 moved the layout to Tailwind) and a `data-testid`. Dropping the classes with that MR broke integration pipelines 145810 and 145953. Delete them only once the suite selects the test ids.
+
 ## Mapping
 
 | Old selector                                           | New hook                                                                                                     | Before !7711?           |
@@ -75607,6 +76039,9 @@ Removing a hook below breaks that suite without failing anything in HomePort, as
 | `.dropdown-item`                                       | `[data-testid="action-item"]` (also `get_by_role("menuitem")`: every row has the role, inside a menu or not) | role partly, test id no |
 | `.dropdown-toggle`                                     | `[data-testid="actions-toggle"]`; the icon-only kebab is also `get_by_role("button", name="Actions")`        | no                      |
 | `.menu.menu-row` (page tab row)                        | `get_by_role("navigation", name="Page tabs")`                                                                | no                      |
+| `.toolbar` (page tabs row with its actions)            | `[data-testid="page-toolbar"]`                                                                               | no                      |
+| `.extra-toolbar` (filter bar under the page tabs)      | `[data-testid="filter-bar"]`                                                                                 | no                      |
+| `.footer` (app footer)                                 | `[data-testid="app-footer"]`                                                                                 | no                      |
 | `.toolbar .menu-item` (a page tab)                     | `get_by_role("link", name=…)` or `get_by_role("button", name=…)` inside `.toolbar`                           | yes                     |
 | `.menu-arrow` (tab with a submenu)                     | the tab's button has `aria-haspopup="menu"`                                                                  | yes                     |
 | `.menu-sub:visible` (tab submenu)                      | `get_by_role("menu")`                                                                                        | yes                     |
@@ -80809,7 +81244,7 @@ Current architecture and implementation guidance for Tailwind CSS v4, shadcn UI,
    - [Progress](#progress)
    - [Buttons](#buttons)
    - [Sidebar & Mobile Sheet](#sidebar-mobile-sheet)
-   - [Content Drawer (`#kt_drawer`)](#content-drawer-kt-drawer)
+   - [Content Drawer](#content-drawer)
    - [Dropdown & Menu System Map](#dropdown-menu-system-map)
    - [ActionsMenu & ActionItem](#actionsmenu-actionitem)
    - [Nav menus](#nav-menus)
@@ -80836,39 +81271,38 @@ Waldur Homeport operates on two active UI component patterns:
    - Exports `buttonVariants()`, `ButtonVariant` and `ButtonSize` so elements that cannot be a `BaseButton` (links, Radix triggers that need a specific child shape) still get the exact same classes.
 
 2. **Transitional Shells (Radix Engine with Themed Skins)**
-   - Used where extensive surface area requires maintaining existing container styling while leveraging accessible Radix primitives:
-     - `#kt_drawer` (`DrawerRoot.tsx`): Radix `Dialog` driving slide-over content panels.
-   - These still wear Bootstrap/Metronic panel classes; only their _buttons_ have moved to `waldur-ui`.
+   - The content drawer (`DrawerRoot.tsx`) was one; it is Tailwind now, see [Content Drawer](#content-drawer).
    - The header, page-tab and footer menus, the table filter popovers and the action menus used to be shells too. They are now `waldur-ui`'s `Menu` / `MenuPopover`, whose looks keep the Metronic and Bootstrap originals; see [Dropdown & Menu System Map](#dropdown-menu-system-map).
 
 ---
 
 ### Component Standards & Usage Guide
 
-| UI Element                    | Standard Component          | Package       | Usage & Styling Notes                                                                                                                                                                                                                                                                                                              | Prohibited                                                               |
-| :---------------------------- | :-------------------------- | :------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------- |
-| **Alert / Banner**            | `AlertItem`                 | `waldur-ui`   | Pure Tailwind, `--border-secondary`, 5 variants                                                                                                                                                                                                                                                                                    | `react-bootstrap` `Alert`                                                |
-| **Badge / Pill**              | `Badge`                     | `waldur-ui`   | 15 variants × 3 tones, structural `border-[1px]`                                                                                                                                                                                                                                                                                   | `react-bootstrap` `Badge`                                                |
-| **Tooltip**                   | `Tooltip`                   | `waldur-ui`   | Radix Tooltip (hover/focus) + Popover (click fallback)                                                                                                                                                                                                                                                                             | `react-bootstrap` `Tooltip`, `OverlayTrigger`                            |
-| **Popover**                   | `Popover`, `PopoverContent` | `waldur-ui`   | Radix Popover with `--card-bg` / `--border-secondary` tokens                                                                                                                                                                                                                                                                       | `react-bootstrap` `Popover`                                              |
-| **Button**                    | `BaseButton`                | `waldur-ui`   | 12 variants × 3 sizes, inset `box-shadow` border, outline focus ring, semantic button tokens                                                                                                                                                                                                                                       | `react-bootstrap` `Button`, hand-written `btn` class markup              |
-| **Link styled as button**     | `Link` with `buttonVariant` | `@/core/Link` | Same classes as `BaseButton` via `buttonVariants()`; keeps anchor semantics and routing                                                                                                                                                                                                                                            | `<a className="btn …">`                                                  |
-| **Checkbox / radio**          | `Checkbox`, `Radio`         | `waldur-ui`   | Hidden native input + drawn box and SVG mark, `md` 20px / `sm` 16px, `--check-*` tokens; `label` / `description` / `tooltip` props                                                                                                                                                                                                 | `react-bootstrap` `FormCheck` / `Form.Check`, `form-check*` classes      |
-| **Progress meter**            | `Progress`                  | `waldur-ui`   | One value, stacked `segments` or `indeterminate`; neutral track, `variant` colours the fill; `xs` 4 / `sm` 6 / `md` 8 / `lg` 24px; `--progress-*` tokens                                                                                                                                                                           | `react-bootstrap` `ProgressBar`, `.progress` / `.progress-bar` markup    |
-| **On/off toggle**             | `Switch`                    | `waldur-ui`   | Hidden native checkbox + drawn track and knob, `md` 44×24 / `sm` 36×20, `--switch-*` tokens                                                                                                                                                                                                                                        | `type="switch"` `FormCheck`, `form-switch*` classes                      |
-| **Mutually exclusive choice** | `SegmentedControl`          | `waldur-ui`   | Radix RadioGroup, `neutral` / `brand` variants, button sizes                                                                                                                                                                                                                                                                       | `react-bootstrap` `ToggleButtonGroup`, `btn-group` markup                |
-| **Expandable panel group**    | `Accordion`                 | `waldur-ui`   | Radix Accordion, `single` / `multiple`, open header in runtime brand colour; closed panels unmount                                                                                                                                                                                                                                 | `react-bootstrap` `Accordion`                                            |
-| **Single expandable panel**   | `Collapsible`               | `waldur-ui`   | Radix Collapsible, unstyled; `keepMounted` keeps form fields mounted while closed                                                                                                                                                                                                                                                  | `react-bootstrap` `Collapse`, `useAccordionButton`                       |
-| **Sidebar Navigation**        | `Sidebar`, `Sheet`          | `waldur-ui`   | Collapsible desktop rail + mobile Radix Sheet                                                                                                                                                                                                                                                                                      | Metronic sidebar JS                                                      |
-| **Table pagination**          | `TablePagination`           | `waldur-ui`   | `--pagination-*` tokens; `bordered={false}` under a non-table list; desktop/mobile layouts                                                                                                                                                                                                                                         | `react-bootstrap` `Pagination`, `page-link` markup                       |
-| **Table Actions**             | `ActionsMenu`               | `@/table`     | `Menu` in the actions look, with the kebab / labeled / Add toggles                                                                                                                                                                                                                                                                 | `react-bootstrap` `DropdownButton`                                       |
-| **Header Chrome Menu**        | `Menu`                      | `waldur-ui`   | `Menu` in the nav look; `openOnHover="desktop"` for hover triggers                                                                                                                                                                                                                                                                 | N/A                                                                      |
-| **Header icon button**        | `IconButton`                | `waldur-ui`   | 40px, rem-sized icon (`iconSize` `md` 1.54rem / `lg` 1.85rem), `--btn-secondary-bg` fill on hover, keyboard focus and `aria-expanded`; `indicator` for a custom dot. Pixel-matched to the legacy button, geometry pinned by `e2e-visual/top-bar-geometry.spec.ts`; the ring is on `:focus-visible` only, the one deliberate change | `.btn-nav-item` + `.svg-icon` markup                                     |
-| **App header bar**            | `TopBar`                    | `waldur-ui`   | `left` / `center` / `right` slots; 55px / 15px padding, 65px / 32px from `lg`, `border-secondary` rule, `bg-primary`. `AppHeader` adds the fixed position, sidebar offset, `z-header` (lifted over open drawers) and `print:hidden`. Geometry pinned by `e2e-visual/top-bar-geometry.spec.ts`                                      | Metronic `.header` + `.container-fluid` (`layout/_header.scss`)          |
-| **Breadcrumbs**               | `BreadcrumbTrail`           | `waldur-ui`   | Router-agnostic trail (a crumb's `to` links through the provider's `renderLink`), set per page with `useBreadcrumbs`; overflow collapse, middle truncation, switcher dropdowns; `Breadcrumb*` primitives below it. See [breadcrumbs.md](breadcrumbs.md)                                                                            | `react-bootstrap` `Breadcrumb` / `BreadcrumbItem`, `.breadcrumb*` markup |
-| **Slide-Over Drawer**         | `DrawerRoot`                | `@/drawer`    | Radix Dialog with CSS keyframe transitions                                                                                                                                                                                                                                                                                         | N/A                                                                      |
+| UI Element                    | Standard Component                                          | Package                      | Usage & Styling Notes                                                                                                                                                                                                                                                                                                              | Prohibited                                                                                    |
+| :---------------------------- | :---------------------------------------------------------- | :--------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------- |
+| **Alert / Banner**            | `AlertItem`                                                 | `waldur-ui`                  | Pure Tailwind, `--border-secondary`, 5 variants                                                                                                                                                                                                                                                                                    | `react-bootstrap` `Alert`                                                                     |
+| **Badge / Pill**              | `Badge`                                                     | `waldur-ui`                  | 15 variants × 3 tones, structural `border-[1px]`                                                                                                                                                                                                                                                                                   | `react-bootstrap` `Badge`                                                                     |
+| **Tooltip**                   | `Tooltip`                                                   | `waldur-ui`                  | Radix Tooltip (hover/focus) + Popover (click fallback)                                                                                                                                                                                                                                                                             | `react-bootstrap` `Tooltip`, `OverlayTrigger`                                                 |
+| **Popover**                   | `Popover`, `PopoverContent`                                 | `waldur-ui`                  | Radix Popover with `--card-bg` / `--border-secondary` tokens                                                                                                                                                                                                                                                                       | `react-bootstrap` `Popover`                                                                   |
+| **Button**                    | `BaseButton`                                                | `waldur-ui`                  | 12 variants × 3 sizes, inset `box-shadow` border, outline focus ring, semantic button tokens                                                                                                                                                                                                                                       | `react-bootstrap` `Button`, hand-written `btn` class markup                                   |
+| **Link styled as button**     | `Link` with `buttonVariant`                                 | `@/core/Link`                | Same classes as `BaseButton` via `buttonVariants()`; keeps anchor semantics and routing                                                                                                                                                                                                                                            | `<a className="btn …">`                                                                       |
+| **Checkbox / radio**          | `Checkbox`, `Radio`                                         | `waldur-ui`                  | Hidden native input + drawn box and SVG mark, `md` 20px / `sm` 16px, `--check-*` tokens; `label` / `description` / `tooltip` props                                                                                                                                                                                                 | `react-bootstrap` `FormCheck` / `Form.Check`, `form-check*` classes                           |
+| **Progress meter**            | `Progress`                                                  | `waldur-ui`                  | One value, stacked `segments` or `indeterminate`; neutral track, `variant` colours the fill; `xs` 4 / `sm` 6 / `md` 8 / `lg` 24px; `--progress-*` tokens                                                                                                                                                                           | `react-bootstrap` `ProgressBar`, `.progress` / `.progress-bar` markup                         |
+| **On/off toggle**             | `Switch`                                                    | `waldur-ui`                  | Hidden native checkbox + drawn track and knob, `md` 44×24 / `sm` 36×20, `--switch-*` tokens                                                                                                                                                                                                                                        | `type="switch"` `FormCheck`, `form-switch*` classes                                           |
+| **Mutually exclusive choice** | `SegmentedControl`                                          | `waldur-ui`                  | Radix RadioGroup, `neutral` / `brand` variants, button sizes                                                                                                                                                                                                                                                                       | `react-bootstrap` `ToggleButtonGroup`, `btn-group` markup                                     |
+| **Expandable panel group**    | `Accordion`                                                 | `waldur-ui`                  | Radix Accordion, `single` / `multiple`, open header in runtime brand colour; closed panels unmount                                                                                                                                                                                                                                 | `react-bootstrap` `Accordion`                                                                 |
+| **Single expandable panel**   | `Collapsible`                                               | `waldur-ui`                  | Radix Collapsible, unstyled; `keepMounted` keeps form fields mounted while closed                                                                                                                                                                                                                                                  | `react-bootstrap` `Collapse`, `useAccordionButton`                                            |
+| **Sidebar Navigation**        | `Sidebar`, `Sheet`                                          | `waldur-ui`                  | Collapsible desktop rail + mobile Radix Sheet                                                                                                                                                                                                                                                                                      | Metronic sidebar JS                                                                           |
+| **Table pagination**          | `TablePagination`                                           | `waldur-ui`                  | `--pagination-*` tokens; `bordered={false}` under a non-table list; desktop/mobile layouts                                                                                                                                                                                                                                         | `react-bootstrap` `Pagination`, `page-link` markup                                            |
+| **Table Actions**             | `ActionsMenu`                                               | `@/table`                    | `Menu` in the actions look, with the kebab / labeled / Add toggles                                                                                                                                                                                                                                                                 | `react-bootstrap` `DropdownButton`                                                            |
+| **Header Chrome Menu**        | `Menu`                                                      | `waldur-ui`                  | `Menu` in the nav look; `openOnHover="desktop"` for hover triggers                                                                                                                                                                                                                                                                 | N/A                                                                                           |
+| **Header icon button**        | `IconButton`                                                | `waldur-ui`                  | 40px, rem-sized icon (`iconSize` `md` 1.54rem / `lg` 1.85rem), `--btn-secondary-bg` fill on hover, keyboard focus and `aria-expanded`; `indicator` for a custom dot. Pixel-matched to the legacy button, geometry pinned by `e2e-visual/top-bar-geometry.spec.ts`; the ring is on `:focus-visible` only, the one deliberate change | `.btn-nav-item` + `.svg-icon` markup                                                          |
+| **App header bar**            | `TopBar`                                                    | `waldur-ui`                  | `left` / `center` / `right` slots; 55px / 15px padding, 65px / 32px from `lg`, `border-secondary` rule, `bg-primary`. `AppHeader` adds the fixed position, sidebar offset, `z-header` (lifted over open drawers) and `print:hidden`. Geometry pinned by `e2e-visual/top-bar-geometry.spec.ts`                                      | Metronic `.header` + `.container-fluid` (`layout/_header.scss`)                               |
+| **Page container**            | `PAGE_CONTAINER_CLASSNAME` / `PAGE_CONTAINER_XXL_CLASSNAME` | `@/navigation/pageContainer` | Full width, centred, 15px side padding, 32px from `lg`; the XXL variant caps at 1320px from `2xl`. Print drops its padding, margin and background. In `cn()` with `p-[0px] lg:p-[0px]` to remove the padding (full-page views)                                                                                                     | Bootstrap `.container-fluid` / `.container-xxl` with Metronic's padding (`layout/_main.scss`) |
+| **Breadcrumbs**               | `BreadcrumbTrail`                                           | `waldur-ui`                  | Router-agnostic trail (a crumb's `to` links through the provider's `renderLink`), set per page with `useBreadcrumbs`; overflow collapse, middle truncation, switcher dropdowns; `Breadcrumb*` primitives below it. See [breadcrumbs.md](breadcrumbs.md)                                                                            | `react-bootstrap` `Breadcrumb` / `BreadcrumbItem`, `.breadcrumb*` markup                      |
+| **Slide-Over Drawer**         | `DrawerRoot`                                                | `@/drawer`                   | Radix Dialog with CSS keyframe transitions                                                                                                                                                                                                                                                                                         | N/A                                                                                           |
 
-The breadcrumb trail has no Bootstrap or Metronic styles left, the phone breadcrumb bar included; `breadcrumb-mobile` remains only as a hook for the toolbar and sticky offsets (see [breadcrumbs.md](breadcrumbs.md)).
+The breadcrumb trail has no Bootstrap or Metronic styles left, the phone breadcrumb bar included (see [breadcrumbs.md](breadcrumbs.md)).
 
 The _Prohibited_ column is convention; the subset that lint enforces is listed under [Linting & Guardrails](#linting-guardrails) (`ToggleButtonGroup` and `btn-group` markup are not).
 
@@ -80950,10 +81384,11 @@ At Metronic's forced root font size of `13px` (and `12px` on mobile):
 
 ### Root Font-Size & Fractional Rem Scaling
 
-Metronic's compiled CSS forces a non-standard root font size:
+The app's base styles (in `src/tailwind.css`, moved there from Metronic's `core/layout/_base.scss`) force a non-standard root font size, scaled by the user's `--font-size-adjust`:
 
 - Desktop (`>= 768px`): `html, body { font-size: 13px !important; }`
 - Mobile (`< 768px`): `html, body { font-size: 12px !important; }`
+- Body text is `1.077rem` (14px at the 13px root).
 
 Tailwind's default rem-based scale assumes a `16px` root. In `src/tailwind.css`, `@theme` overrides standard tokens (`--spacing`, `--text-sm`, `--text-base`, `--radius-md`, `--radius-lg`) with explicit values to compensate.
 
@@ -81240,12 +81675,14 @@ Three primitives in `waldur-ui` (`packages/ui/src`) and `Link` in `@/core/Link` 
 
 ---
 
-### Content Drawer (`#kt_drawer`)
+### Content Drawer
 
-`src/drawer/DrawerRoot.tsx` wraps the shared drawer panel in Radix `Dialog.Root` and `Dialog.Content`.
+`src/drawer/DrawerRoot.tsx` wraps the shared drawer panel in Radix `Dialog.Root` and `Dialog.Content`, styled with Tailwind (Metronic's `.drawer` and card classes are gone).
 
-- **Animation Detection via `@keyframes`**: Radix `Presence` monitors CSS `@keyframes` (`animationstart`/`animationend`) to delay unmounting. Plain CSS transitions are ignored. `_shell.scss` attaches explicit `@keyframes kt-drawer-slide-in` and `kt-drawer-slide-out` to `#kt_drawer`.
-- **Width Custom Property**: Sizing is controlled via `--drawer-width`, allowing responsive full-screen toggles without direct inline style overrides.
+- **Animation Detection via `@keyframes`**: Radix `Presence` monitors CSS `@keyframes` (`animationstart`/`animationend`) to delay unmounting. Plain CSS transitions are ignored. The panel runs `waldur-drawer-slide-in` / `waldur-drawer-slide-out` (`waldur-design-tokens`' `animations.css`) off Radix's `data-state`.
+- **State in React**: `DrawerContext` holds the expanded and history-open state and the panel and toolbar elements (for portals). DrawerRoot derives `--drawer-width` from them and mirrors them as `data-expanded` / `data-history-open`; `isDrawerOpen()` reads the provider's state, not the DOM.
+- **Floating cards**: a `shellClass` (`shellClasses.ts`) turns the panel into a card under the header, placed from `--layout-header-height` and `--layout-page-bar-height`.
+- **Styling hooks**: `data-slot="drawer"`, `drawer-overlay`, `drawer-header`, `drawer-toolbar`, `drawer-body` and `drawer-footer`, plus `data-shell`.
 
 ---
 
@@ -88026,7 +88463,8 @@ Each row is one key:
   the project.
 - **Limits & usage** — how much of its monthly limit the key has used, for the
   component closest to its limit.
-- **Models** — the models the key may call, or **All models**.
+- **Models** — the models the key may call, **All models**, or **No models**
+  for a key that cannot call any (see [Models](#models)).
 - **State** — **OK**, **Paused**, **Paused at limit**, **Erred**, or a
   transitional state while a change is in progress.
 - **Issued** — when the current key value was created or last rotated.
@@ -88064,11 +88502,13 @@ Project managers and organization owners can request additional keys with
    it empty for a key shared by the project.
 2. Optionally set **limits** per component. Each field shows the resource's
    limit; leave a field empty to let the key use up to the resource limit.
-3. Optionally tick the **Models** the key may call. Leave all unticked to allow
-   every model.
+3. Choose the **Models** the key may call. **All models** is ticked to begin
+   with. Untick it to choose models one by one (see [Models](#models)).
 4. Click **Submit**.
 
 [Image: Requesting an API key]
+
+[Image: The models of a requested key, on All models by default]
 
 The new key appears as **Creating** and turns **OK** once the provider has
 created it. Its key ID is assigned at that point.
@@ -88082,12 +88522,90 @@ something.
 
 [Image: Editing a key's settings]
 
-- The **assignee** can be changed at any time, except while the key is being
-  deleted.
+- Changing the **assignee** of a key that has been created **rotates** it: its
+  current value stops working, and the new assignee reveals the new value.
+  Clearing the assignee rotates it too. The dialog warns about this before you
+  save. The assignee can be changed only while the key is **OK**, or **Erred**
+  after a failed rotation: resume a paused key, wait for a change in progress,
+  or retry a failed change first. A requested key that has not been created
+  yet takes the new assignee without a rotation.
+- A person can be the assignee of only one key of a resource. Choosing someone
+  who already holds a key is refused.
 - **Limits** and **models** can be changed while the key is **OK** or
   **Paused**. On an active key the change is sent to the provider and the key
   shows **Updating** until it is applied. On a paused key the change is stored
   and applied when the key is resumed.
+
+[Image: Changing the assignee rotates the key]
+
+The assignee of a key can rotate it themselves, unless it has reached one of
+its monthly [limits](#limits). Every other change stays with whoever can
+request keys.
+
+## Models
+
+A key's model selection is one of three:
+
+| Selection | The key may call | Shown as |
+| --- | --- | --- |
+| **All models** ticked | every model the resource allows | **All models** |
+| Some models ticked | those models only | the list of models |
+| Nothing ticked | no model | **No models** |
+
+[Image: A key with no models in the keys table]
+
+The dialogs list only the models the resource allows (see
+[The resource's models](#the-resources-models)), so a key can narrow its
+resource but never widen it.
+
+**Request key** starts on **All models**. Ticking **All models** locks the
+individual ticks. Untick it to choose models one by one again.
+
+While nothing is selected, the dialog warns that the key will not be able to
+call any model. The warning does not stop you from submitting.
+
+[Image: A key's settings with no model selected]
+
+A model the provider retires, or the resource stops allowing, disappears from
+the list, and the key is updated at the provider so it can no longer call it.
+The key keeps it, and gets it back if the model returns. A key that
+was limited to such models only can call none of them: it shows **No models**,
+and its settings dialog opens with nothing ticked. Saving the dialog never
+opens such a key to every model. Tick **All models**, or the models it should
+call, to make it usable again.
+
+!!! note
+    Not every backend can restrict a key's models. On one that cannot, such as
+    the Envoy AI Gateway, a request or an edit that leaves a key with anything
+    but **All models** fails, and the key shows **Erred**. After a failed edit,
+    set the key to **All models** with **Edit key settings**. After a failed
+    request, delete the key and request it again with **All models** ticked.
+    The resource has to stay on **All models** too, or every key's change
+    fails.
+
+## The resource's models
+
+The resource's own **Models** option, in the resource's **Options**, decides
+which models its keys can call at all, on an offering that manages keys one by
+one. It takes the same three forms as a key:
+
+| Selection | The resource's keys may call |
+| --- | --- |
+| **All models** ticked | every model of the offering, including ones the provider adds later |
+| Some models ticked | those models only |
+| Nothing ticked | no model |
+
+A new resource starts on **All models**: the order form offers **All models**,
+ticked to begin with, and refuses an order with no model selected. Change the
+selection later with **Update option** on the **Models** row. There, nothing
+ticked is allowed, and the dialog warns that the resource's keys will not be
+able to call any model.
+
+A key set to **All models** follows the resource: it can call whatever the
+resource allows. A key set to some models can call those of them the resource
+still allows. When the resource's selection changes, every key whose models
+change with it is updated at the provider, and shows **Updating** until that is
+applied. A paused key gets its new models when it is resumed.
 
 ## Limits
 
@@ -88140,8 +88658,24 @@ control the tab:
 - **Hide API keys tab** removes the tab from the offering's resources.
 
 The models offered in the key dialogs are the choices of the offering's
-`models` resource option, narrowed to the resource's own selection when it has
-one. Without that option, the key dialogs show no model list.
+`models` resource option, narrowed to the resource's own selection. Without
+that option, the key dialogs show no model list and every requested key may
+call every model. **All models** on a resource is a setting of its own, not a
+choice: an offering that lists an "All models" entry among its model choices
+should drop it, and resources that had it selected should be switched to
+**All models** by hand.
+
+A `models` option that allows several choices offers **All models** on any
+offering, and new resources start on it, so turning on **Manage API keys one by
+one** later finds them on every model. A single-choice `models` option has no
+**All models** and does not narrow the keys.
+
+Removing a model from the option's choices retires it: every key restricted
+to named models that included it is updated at the backend without it. A key
+on **All models**, on a resource on **All models**, is not restricted by name,
+so it can still call a retired model as long as the backend serves it — and on
+a backend that cannot restrict keys at all, such as the Envoy AI Gateway, every
+key can. Remove a retired model from the backend as well.
 
 !!! warning
     Without **Manage API keys one by one**, consumers can only reveal and rotate
@@ -124888,6 +125422,53 @@ single key cannot be limited, and a leaked key can only be rotated. So a key may
 carry an **assignee**, and then only that person (plus staff and support) can
 reveal it.
 
+**A resource under per-key management starts with no keys.** Where the offering
+manages keys one by one (`enable_api_key_provisioning`, below) and the agent's
+backend can mint a key on request, the agent provisions none. A key can be
+requested at any time there, so a replacement is created, clients move to it, and
+the old key is deleted. The default pair would only be two shared keys with no
+assignee and no limits, which any member of the resource's project or
+organization can reveal. Its users request their own keys instead. A restored
+resource follows the same rule. Its key rows were deleted when it terminated, so
+it comes back with none. Existing resources keep the keys they have when the option is turned
+on or off. Wherever either condition does not hold, the pair stays, as on a
+backend without per-key commands such as ceph-s3. The agent decides this, so
+Waldur's API and models are unchanged.
+
+**The assignee can rotate their own key.** Whoever is trusted with a key's value
+is trusted to replace it, so a person who suspects their key has leaked does not
+have to find a manager while it stays live. Nothing else follows from being the
+assignee: pausing, resuming, deleting and editing the key stay with whoever
+manages the resource's users. A separate permission for this was considered and
+dropped — it would be one more thing for a project to grant, to the one person
+who already holds the secret.
+
+**One key per person.** A person is the assignee of at most one key on a
+resource; a request or an edit that would hand them a second is refused with
+400, naming the key they hold. A backend ties a person's own use of the
+resource to the key assigned to them — LiteLLM's chat follows it and bills it —
+and two keys would leave that two answers. A key holds its assignee until it is
+`Deleted`: one still `Deleting` may yet fail and stay in service. Keys on other
+resources do not count, so someone can hold one key on each of several
+resources. The check runs with the resource row locked, so two concurrent
+assignments cannot both pass; there is no database constraint, so keys assigned
+before the rule keep their assignees until someone edits them.
+
+**A key changes hands by rotation.** Where the offering manages keys, setting,
+changing or clearing the assignee of a key that holds a secret rotates it. The
+previous assignee may have revealed the old value — and so may any member of the
+project while the key was unassigned — and the backend charges a key's use and
+ties chat to whoever holds it now, so keeping the secret would let the old holder
+spend against the new holder's limit. The old secret stops working once the
+agent acknowledges the rotation, and the new assignee reveals the new value.
+Limits and models set in the same edit are saved on the key and carried by the
+`rotate` command. A key changes hands only from `OK`, or from `Erred` after a
+failed rotation (the rotation is then retried with the new assignee). A paused
+key, or one with another command in flight or failed, refuses the edit with 400
+on `user`: resume it, wait for the command, or retry it first. A key that holds
+no secret yet (a pending request) and any key of an offering without key
+management just take the new assignee, with no command.
+
 **Limits are enforced by Waldur, not the gateway.** The Envoy backend's
 `set_resource_limits` is a no-op by design: limits are enforced by Waldur (report
 → pause → block). A per-key limit works the same way — reported per-key usage that
@@ -124928,12 +125509,13 @@ on only for a backend whose agent sets `supports_resource_api_key_lifecycle`.
 | `issued_at` | when the agent last stored a value: the key's creation or its latest rotation. Unlike `modified`, a pause, resume or edit leaves it alone, so it is the age of the value in use |
 | `state` | FSM, aligned to resource states (below) |
 | `pending_action` | the command in flight (`ResourceApiKeyActions`: `create`, `rotate`, `pause`, `resume`, `delete`, `update`); blank once settled, kept on `Erred` to show which command failed |
-| `user` | optional assignee; only they can reveal the key |
+| `user` | optional assignee; only they can reveal the key, and they can rotate it. A person is the assignee of at most one key per resource that is not `Deleted` |
 | `limits` | optional per-component limits, keyed by component type; zero means no limit |
-| `allowed_models` | optional model allowlist; null allows every model |
+| `allowed_models` | the models the key may call, never null: `["*"]` for every model, `[]` for none, or a list of names ([below](#model-lists)) |
 | `current_usages` | per-component usage in `usage_period`, as last reported by the agent |
 | `usage_period` | the month `current_usages` covers (its first day); usage of an earlier month counts against no limit |
 | `paused_by_limit` | Waldur paused the key because its usage reached a limit; such a key is resumed automatically once under its limits again |
+| `models_outdated` | the resource's model selection changed while the key could not take an `update`; Waldur sends one once the key settles ([below](#resource-selection)) |
 | `error_message` | agent-reported failure detail when `Erred` |
 | `modified` | `TimeStampedModel`; the time the key last changed state or settings — the agent's sweep reads it as "in this state since". Usage reports do not touch it |
 
@@ -124953,6 +125535,114 @@ an optional `client_id`; a backend with a stable identifier omits it. A value
 already held by another key of the same resource — a deleted one included — is
 rejected: usage is attributed by `client_id`, so a deleted key's identifier is
 never handed out again.
+
+### Model lists {#model-lists}
+
+A key's `allowed_models` has three forms, and so has its resource's selection
+([below](#resource-selection)):
+
+| Value | Meaning on a key | Meaning on a resource |
+| --- | --- | --- |
+| `["*"]` | every model its resource allows | every model of the offering, including ones it adds later |
+| `[]` | no model: the key cannot call anything | no model: none of its keys can call anything |
+| `["a", "b"]` | those models | those models |
+
+"Every model" has a value of its own so that an empty list can mean what it
+looks like. With null or an empty list standing for every model, the selection
+that looked most restrictive was the least restrictive one, and a key limited to
+a model the provider later retired could be widened to all of them by saving it
+with nothing ticked.
+
+- `*` means every model only as the sole entry; next to another entry it is
+  refused. It is not a pattern: `provider/*` is just a model name.
+- A key's names must be among those its resource allows: the resource's own
+  names, or the offering's `resource_options.options.models.choices` when the
+  resource is on every model (any name, when the offering lists none). A name
+  the offering no longer lists is allowed by no resource.
+- A request that leaves `allowed_models` out creates a key with `[]`; an edit that
+  leaves it out does not change it. Null is refused.
+- A key the agent reports on its own (`report_created`) was never restricted at
+  the backend, so it is stored as `["*"]`. Keys that existed before the list
+  became non-null were migrated from null to `["*"]`.
+- On an offering without `enable_api_key_provisioning` the field reads as null,
+  like every governance field.
+
+A backend that cannot restrict a key's models has to refuse every list but
+`["*"]`, the empty one included, so that Waldur never shows "No models" for a
+key that can call all of them. The Envoy AI Gateway plugin does, so on Envoy a
+resource has to stay on every model: any narrower effective list errs the key.
+Removing a model from the offering's choices drops it from every effective
+list that names it, but `["*"]` names nothing: a key whose effective list is
+`["*"]`, and every key on Envoy, can call a retired model for as long as the
+backend serves it. The provider has to remove it from the backend too.
+
+#### The resource's selection {#resource-selection}
+
+A resource option named `models` of type `select_string_multi` is the resource's
+model selection, on any offering: it takes `["*"]`, a new resource starts on it,
+and an empty one means none. Under `enable_api_key_provisioning` it narrows
+every key of the resource; without it, it narrows nothing, but an offering that
+turns key management on later finds its resources already on every model. When
+selections start or stop narrowing — key management is turned on, or the option
+becomes or stops being a multiple choice — or the provider adds or removes a
+model in the option's choices, every key whose effective list changes with it
+is sent an `update`. Turning key management off sends nothing:
+its keys take no governed command. A single-choice `models` option has no room
+for `*` and narrows nothing.
+
+- **Effective list.** Waldur stores a key's list as chosen and sends the agent
+  the effective one: the resource's selection, then the key's, less any model
+  the offering no longer lists. Every model stays `["*"]`.
+
+  | Resource | Key | Sent |
+  | --- | --- | --- |
+  | `["*"]` | `["*"]` | `["*"]` |
+  | `["a", "b"]` | `["*"]` | `["a", "b"]` |
+  | `["a", "b"]` | `["b", "c"]` | `["b"]` |
+  | `[]` | anything | `[]` |
+  | `["*"]` | `["a", "c"]`, with `c` no longer listed | `["a"]` |
+
+  The key listing carries both: `allowed_models` is the key's own list,
+  `effective_models` the one a command carries. A sweep that replays a command
+  from the listing sends `effective_models`. A key keeps names its resource has
+  since stopped allowing, or the offering stopped listing, and an edit may send
+  them back unchanged; it cannot add new ones. A model the provider lists again
+  is sent again to the keys that kept it.
+- **Values.** Resource-option validation (`update_options`,
+  `update_options_direct`, and the provider's `new_options` at approval)
+  accepts a lone `*` although it is not among the option's choices, and refuses
+  it next to a name.
+- **New resources** are on `["*"]` unless the order chose a selection. Resources
+  that had no selection, or an empty one, were migrated to `["*"]`, since an
+  empty selection used to leave their keys every model. An offering that lists
+  an "All models" entry among its own choices should drop it; resources holding
+  it have to be switched to every model by hand.
+- **A key the agent reports** on its own (`report_created`) is stored as
+  `["*"]`; when its resource allows fewer models, Waldur sends it an `update`
+  with them at once.
+- **A change** to the selection, by any path that saves the resource's options,
+  sends an `update` for every key whose effective list it changes. Requesting
+  and reporting a key lock the resource row, so a key created while the
+  selection changes is either seen by the change or created with the new one.
+  A paused key's `resume` carries the new list instead, and a deleted one needs
+  none. A key that cannot take a command — one is in flight, or its last one
+  failed — is marked `models_outdated`; once it settles `OK`, Waldur sends the
+  `update`, unless a command carrying its settings (`create`, `update`,
+  `resume`) went first. The hourly `send_outdated_api_key_models` task sends
+  any settled key still marked.
+- **Rollout.** A site agent that predates `effective_models` replays a stuck
+  command with the key's own `allowed_models`, which is wider than what Waldur
+  sent when the resource is narrowed. Upgrade agents before narrowing resources.
+  Keys the upgrade finds applied wider than their resource now allows — until
+  then a selection narrowed only the portal's dialogs, and a model the offering
+  stopped listing was still sent — are marked
+  `models_outdated` by a migration and sent their effective list by the hourly
+  task. On Envoy those keys then err, within the hour: put such resources on
+  every model before upgrading, by clearing their selection, which the
+  migration then turns into `["*"]`.
+  The migration rewrites resources, not pending orders: an option order placed
+  before it with an empty `models` meant every model, and now means none. Check
+  pending option orders of such offerings when upgrading.
 
 ### States
 
@@ -125065,23 +125755,28 @@ sequenceDiagram
 
 Rotation never touches the other keys, so a consumer authenticating with a
 sibling key keeps working throughout — that is what makes it zero-downtime, and
-why two keys are provisioned.
+why two keys are provisioned where keys are not managed one by one.
 
 Commands (observable type `resource_api_key_rotation` — the name predates the
 other commands and agents subscribe to it by name) carry a **slim** payload:
 resource/key identifiers, `client_id`, and `action`, never key material.
-`create`, `update` and `resume` also carry the key's `limits` and
-`allowed_models`, so settings edited while a key was paused are applied when it
-resumes. The key only ever travels agent → Waldur, in the `report_created` /
-`set_key` request body (TLS), and is encrypted on receipt. When a resource is
+`create`, `rotate`, `update` and `resume` also carry the key's `limits` and its
+effective `allowed_models` ([the resource's selection](#resource-selection)), so
+settings edited while a key was paused are applied when it resumes, and a key
+rotated because it changed hands keeps the settings Waldur has for it. Agents
+from before `rotate` carried them ignore them and keep the backend's. The key only ever
+travels agent → Waldur, in the `report_created` / `set_key` request body (TLS),
+and is encrypted on receipt. When a resource is
 terminated, its remaining key rows — deleted ones included — are deleted by the
 termination callback.
 
 **Limits.** The agent reports each key's usage so far in a month with
 `report_usage`. When a key is `OK`, has no command in flight and its usage this
 month reaches a non-zero limit, Waldur issues a `pause` for that key alone, marks
-it `paused_by_limit` and audit-logs it as automatic. The resource and its other
-keys keep serving. An `Erred` key is not paused automatically — its failed
+it `paused_by_limit` and audit-logs it as automatic. A key over its limit while
+a command is in flight is checked again when the agent acknowledges that
+command: if it settles `OK`, it is paused at once rather than serving until the
+next report. The resource and its other keys keep serving. An `Erred` key is not paused automatically — its failed
 command needs a person to retry it first.
 
 Waldur resumes a key it paused for its limit, again audit-logged as automatic, as
@@ -125092,8 +125787,8 @@ soon as its usage is under every limit again:
 - the hourly `resume_api_keys_under_limit` task, for a month that begins before
   the agent reports anything for it.
 
-A resume by hand clears the mark: if the key is still over its limit, the next
-report pauses it again. A key a person paused is never resumed automatically.
+A resume by hand clears the mark, but does not override the limit: if the key is
+still over it, it is paused again once the agent acknowledges the resume. A key a person paused is never resumed automatically.
 
 ## API
 
@@ -125108,9 +125803,9 @@ Consumer side. The actions marked *governance* need the offering's
 `enable_api_key_provisioning`; without it they return 400.
 
 - `GET /` and `GET /{uuid}/` — list/retrieve status (`client_id`, state,
-  `pending_action`, `modified`, error message, assignee, limits, models, usage — no
-  secret). Visible to resource project/customer members and the provider
-  organization.
+  `pending_action`, `modified`, error message, assignee, limits, models as chosen
+  and effective, usage — no secret). Visible to resource project/customer
+  members and the provider organization.
 - `GET /{uuid}/reveal/` — return the decrypted value (in the body, never the
   URL, with `Cache-Control: no-store`). Restricted to **consumer-side** access —
   a member of the resource's project or its customer, plus staff/support; a
@@ -125120,23 +125815,37 @@ Consumer side. The actions marked *governance* need the offering's
   `OK` key is revealed — a transitional or paused key's stored value may not
   match the gateway. **Audited** — each reveal emits the
   `marketplace_resource_api_key_revealed` event identifying the key.
-- `POST /{uuid}/rotate/` — the `rotate` command. Available on every backend.
+- `POST /{uuid}/rotate/` — the `rotate` command. Available on every backend,
+  and to the key's assignee as well as to whoever holds `RESOURCE.MANAGE_USERS`.
 - `POST /{uuid}/resume/` — the `resume` command. Available on every backend
   too, so a key paused before the provider switched governance off can come
   back.
 - `POST /{uuid}/retry/` — re-sends the command that left the key `Erred`
-  (`pending_action`); governed unless that command is `rotate` or `resume`.
+  (`pending_action`); governed unless that command is `rotate` or `resume`. The
+  key's assignee can retry a failed `rotate`; a retry of any other command is
+  refused to them with `403`.
 - `POST /` *(governance)* — request a key: `{resource, user?, limits?,
   allowed_models?}`. Creates a `Creating` row and the `create` command; Waldur
   generates nothing. The assignee must be a member of the resource's project (an
-  organization role alone is not enough), limits must name offering components,
-  and models must be among the offering's
-  `resource_options.options.models.choices` when it lists any.
-- `PATCH /{uuid}/` *(governance)* — change `user`, `limits`, `allowed_models`. An
-  assignee change is Waldur's alone, but audited as
-  `marketplace_resource_api_key_updated`, since it decides who may reveal the
-  key. A change to limits or models is the `update` command — or, on a paused key,
-  is stored and sent with its `resume`. Unassigning (`{"user": null}`) needs no
+  organization role alone is not enough) and must not already hold a key on the
+  resource (see **One key per person** above), limits must name offering components,
+  and models must be among those the resource allows. `["*"]`, which stands for
+  every model the resource allows, is always accepted, and a request without
+  `allowed_models` creates a key with `[]`, no model
+  ([model lists](#model-lists)).
+- `PATCH /{uuid}/` *(governance)* — change `user`, `limits`, `allowed_models`. A
+  new assignee must not hold another key on the resource. An assignee change on
+  a key that holds a secret is the `rotate` command, carrying any limits and
+  models set with it (see **A key changes hands by rotation** above); refused
+  with 400 on `user` for a paused key or one with another command pending or
+  failed. On a key with no secret yet, or without key management, it is
+  Waldur's alone, but audited as `marketplace_resource_api_key_updated`, since
+  it decides who may reveal the key. Once it commits, a site-agent offering's agent is sent a `user_role` sync
+  message for the key's resource (`resource_uuid` set), so a backend that ties a
+  person's own use of the resource to their key — LiteLLM's chat follows it —
+  applies the new assignee without waiting for an unrelated membership event.
+  Otherwise a change to limits or models is the `update` command — or, on a
+  paused key, is stored and sent with its `resume`. Unassigning (`{"user": null}`) needs no
   governance: reveal still honours an assignee set while governance was on, and
   only this lets someone other than staff lift it.
 - `POST /{uuid}/pause/` *(governance)* — the `pause` command.
@@ -125146,9 +125855,45 @@ Consumer side. The actions marked *governance* need the offering's
 - `GET /usage_totals/?resource_uuid=` — the resource's reported key usage this
   month, summed per component, deleted keys included.
 
-Every command is gated on `RESOURCE.MANAGE_USERS` (project or customer scope),
-refused while the resource is terminating/terminated or while the key already
-has an unacknowledged command, and emits an audit event when it is issued:
+Every command is gated on `RESOURCE.MANAGE_USERS` (project or customer scope).
+`rotate`, and a `retry` of a failed rotation, also admit the key's **assignee**
+without that permission, under the conditions `reveal` holds them to: still a
+member of the resource's project or its customer, and not a minimal-visibility
+viewer. An assignee who no longer reaches the key at all — they left the
+project and hold no role on its customer — gets `404`, since the key is not
+listed for them; one who still lists it some other way (through the provider
+organization, or as global support) gets `403`. Whether the caller is still the
+assignee, and which command a retry repeats, are checked with the key locked, so
+a key reassigned meanwhile is refused. An unassigned key gives ordinary members
+nothing: it is rotated by a manager.
+
+Three things stay closed to the assignee:
+
+- Their rotation never stands in for another command that failed. Once
+  governance is off a manager may rotate a key whose `pause` failed, but for
+  the assignee that would undo a pause meant for them, so it is refused with
+  `403`.
+- They cannot rotate an `OK` key whose usage this month has reached one of its
+  limits (`409`). A usage report pauses only a settled key, so a rotation in
+  flight would hold the limit pause off for the very person the limit is set
+  for. A manager can still rotate it, and the key is paused once the agent
+  acknowledges the rotation.
+  This holds only where limits are enforced: not once governance is off, and
+  not for a retry of a failed rotation, since an `Erred` key is not paused for
+  its limit and the retry is what settles it.
+- A [personal access token](personal-access-tokens.md) cannot act as the
+  assignee: its scopes delegate role permissions, and being a key's assignee is
+  not one, so a token limited to reading would otherwise be able to replace the
+  key.
+
+A rotation in flight also makes the key refuse a manager's `pause` or delete
+until the agent acknowledges it. Each rotation is audited, and unassigning the
+key — accepted mid-command — ends an assignee's rotations.
+
+Every command is refused while the resource is terminating/terminated or while
+the key already has an unacknowledged command, and emits an audit event naming
+whoever issued it — a manager, the assignee, or Waldur itself for a limit pause
+or resume:
 `marketplace_resource_api_key_requested`, `_rotated`, `_paused`, `_resumed`,
 `_updated` or `_deleted`. Those events read as requested ("Pause of API key … has
 been requested by …"), since the agent has not carried the command out yet; an
@@ -125197,9 +125942,10 @@ flight still settles if the provider switches governance off.
 **Reconciliation sweep contract.** A command is published once; if the agent
 misses it, the key waits in its transitional state. An agent that re-drives keys
 stuck in `Updating` (listing `state=Updating&modified_before=…`) must replay the
-command named by `pending_action`, not assume a rotation: `Updating` also covers
-`pause`, `resume` and `update`, and a rotation replayed over a lost pause would
-install a new secret that `set_key` then refuses. Keys stuck in `Creating` and
+command named by `pending_action` with the key's `effective_models`, not assume
+a rotation: `Updating` also covers `pause`, `resume` and `update`, and a
+rotation replayed over a lost pause would install a new secret that `set_key`
+then refuses. Keys stuck in `Creating` and
 `Deleting` are found the same way; a replayed `create` that lands after the
 original one is refused by `set_key` and withdrawn by the agent. A sweep written
 before this change must be updated before an offering turns on

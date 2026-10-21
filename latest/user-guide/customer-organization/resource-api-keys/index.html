@@ -17517,6 +17517,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Models
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-resources-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The resource's models
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#limits" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19538,6 +19560,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Models
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-resources-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The resource's models
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#limits" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -19616,7 +19660,8 @@ key therefore shows a transitional state (<strong>Creating</strong>, <strong>Rot
   the project.</li>
 <li><strong>Limits &amp; usage</strong> — how much of its monthly limit the key has used, for the
   component closest to its limit.</li>
-<li><strong>Models</strong> — the models the key may call, or <strong>All models</strong>.</li>
+<li><strong>Models</strong> — the models the key may call, <strong>All models</strong>, or <strong>No models</strong>
+  for a key that cannot call any (see <a href="#models">Models</a>).</li>
 <li><strong>State</strong> — <strong>OK</strong>, <strong>Paused</strong>, <strong>Paused at limit</strong>, <strong>Erred</strong>, or a
   transitional state while a change is in progress.</li>
 <li><strong>Issued</strong> — when the current key value was created or last rotated.</li>
@@ -19646,11 +19691,12 @@ value afterwards.</p>
    it empty for a key shared by the project.</li>
 <li>Optionally set <strong>limits</strong> per component. Each field shows the resource's
    limit; leave a field empty to let the key use up to the resource limit.</li>
-<li>Optionally tick the <strong>Models</strong> the key may call. Leave all unticked to allow
-   every model.</li>
+<li>Choose the <strong>Models</strong> the key may call. <strong>All models</strong> is ticked to begin
+   with. Untick it to choose models one by one (see <a href="#models">Models</a>).</li>
 <li>Click <strong>Submit</strong>.</li>
 </ol>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/resource-api-keys-request.png" data-desc-position="bottom"><img alt="Requesting an API key" src="../../img/resource-api-keys-request.png"></a></p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/resource-api-keys-request-models.png" data-desc-position="bottom"><img alt="The models of a requested key, on All models by default" src="../../img/resource-api-keys-request-models.png"></a></p>
 <p>The new key appears as <strong>Creating</strong> and turns <strong>OK</strong> once the provider has
 created it. Its key ID is assigned at that point.</p>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/resource-api-keys-requested.png" data-desc-position="bottom"><img alt="A requested key waiting to be created" src="../../img/resource-api-keys-requested.png"></a></p>
@@ -19659,13 +19705,114 @@ created it. Its key ID is assigned at that point.</p>
 something.</p>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/resource-api-keys-edit.png" data-desc-position="bottom"><img alt="Editing a key's settings" src="../../img/resource-api-keys-edit.png"></a></p>
 <ul>
-<li>The <strong>assignee</strong> can be changed at any time, except while the key is being
-  deleted.</li>
+<li>Changing the <strong>assignee</strong> of a key that has been created <strong>rotates</strong> it: its
+  current value stops working, and the new assignee reveals the new value.
+  Clearing the assignee rotates it too. The dialog warns about this before you
+  save. The assignee can be changed only while the key is <strong>OK</strong>, or <strong>Erred</strong>
+  after a failed rotation: resume a paused key, wait for a change in progress,
+  or retry a failed change first. A requested key that has not been created
+  yet takes the new assignee without a rotation.</li>
+<li>A person can be the assignee of only one key of a resource. Choosing someone
+  who already holds a key is refused.</li>
 <li><strong>Limits</strong> and <strong>models</strong> can be changed while the key is <strong>OK</strong> or
   <strong>Paused</strong>. On an active key the change is sent to the provider and the key
   shows <strong>Updating</strong> until it is applied. On a paused key the change is stored
   and applied when the key is resumed.</li>
 </ul>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/resource-api-keys-edit-assignee.png" data-desc-position="bottom"><img alt="Changing the assignee rotates the key" src="../../img/resource-api-keys-edit-assignee.png"></a></p>
+<p>The assignee of a key can rotate it themselves, unless it has reached one of
+its monthly <a href="#limits">limits</a>. Every other change stays with whoever can
+request keys.</p>
+<h2 id="models">Models</h2>
+<p>A key's model selection is one of three:</p>
+<table>
+<thead>
+<tr>
+<th>Selection</th>
+<th>The key may call</th>
+<th>Shown as</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>All models</strong> ticked</td>
+<td>every model the resource allows</td>
+<td><strong>All models</strong></td>
+</tr>
+<tr>
+<td>Some models ticked</td>
+<td>those models only</td>
+<td>the list of models</td>
+</tr>
+<tr>
+<td>Nothing ticked</td>
+<td>no model</td>
+<td><strong>No models</strong></td>
+</tr>
+</tbody>
+</table>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/resource-api-keys-no-models.png" data-desc-position="bottom"><img alt="A key with no models in the keys table" src="../../img/resource-api-keys-no-models.png"></a></p>
+<p>The dialogs list only the models the resource allows (see
+<a href="#the-resources-models">The resource's models</a>), so a key can narrow its
+resource but never widen it.</p>
+<p><strong>Request key</strong> starts on <strong>All models</strong>. Ticking <strong>All models</strong> locks the
+individual ticks. Untick it to choose models one by one again.</p>
+<p>While nothing is selected, the dialog warns that the key will not be able to
+call any model. The warning does not stop you from submitting.</p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/resource-api-keys-edit-no-models.png" data-desc-position="bottom"><img alt="A key's settings with no model selected" src="../../img/resource-api-keys-edit-no-models.png"></a></p>
+<p>A model the provider retires, or the resource stops allowing, disappears from
+the list, and the key is updated at the provider so it can no longer call it.
+The key keeps it, and gets it back if the model returns. A key that
+was limited to such models only can call none of them: it shows <strong>No models</strong>,
+and its settings dialog opens with nothing ticked. Saving the dialog never
+opens such a key to every model. Tick <strong>All models</strong>, or the models it should
+call, to make it usable again.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Not every backend can restrict a key's models. On one that cannot, such as
+the Envoy AI Gateway, a request or an edit that leaves a key with anything
+but <strong>All models</strong> fails, and the key shows <strong>Erred</strong>. After a failed edit,
+set the key to <strong>All models</strong> with <strong>Edit key settings</strong>. After a failed
+request, delete the key and request it again with <strong>All models</strong> ticked.
+The resource has to stay on <strong>All models</strong> too, or every key's change
+fails.</p>
+</div>
+<h2 id="the-resources-models">The resource's models</h2>
+<p>The resource's own <strong>Models</strong> option, in the resource's <strong>Options</strong>, decides
+which models its keys can call at all, on an offering that manages keys one by
+one. It takes the same three forms as a key:</p>
+<table>
+<thead>
+<tr>
+<th>Selection</th>
+<th>The resource's keys may call</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>All models</strong> ticked</td>
+<td>every model of the offering, including ones the provider adds later</td>
+</tr>
+<tr>
+<td>Some models ticked</td>
+<td>those models only</td>
+</tr>
+<tr>
+<td>Nothing ticked</td>
+<td>no model</td>
+</tr>
+</tbody>
+</table>
+<p>A new resource starts on <strong>All models</strong>: the order form offers <strong>All models</strong>,
+ticked to begin with, and refuses an order with no model selected. Change the
+selection later with <strong>Update option</strong> on the <strong>Models</strong> row. There, nothing
+ticked is allowed, and the dialog warns that the resource's keys will not be
+able to call any model.</p>
+<p>A key set to <strong>All models</strong> follows the resource: it can call whatever the
+resource allows. A key set to some models can call those of them the resource
+still allows. When the resource's selection changes, every key whose models
+change with it is updated at the provider, and shows <strong>Updating</strong> until that is
+applied. A paused key gets its new models when it is resumed.</p>
 <h2 id="limits">Limits</h2>
 <p>Limits are <strong>monthly</strong> and enforced by Waldur:</p>
 <ul>
@@ -19712,8 +19859,22 @@ control the tab:</p>
 <li><strong>Hide API keys tab</strong> removes the tab from the offering's resources.</li>
 </ul>
 <p>The models offered in the key dialogs are the choices of the offering's
-<code>models</code> resource option, narrowed to the resource's own selection when it has
-one. Without that option, the key dialogs show no model list.</p>
+<code>models</code> resource option, narrowed to the resource's own selection. Without
+that option, the key dialogs show no model list and every requested key may
+call every model. <strong>All models</strong> on a resource is a setting of its own, not a
+choice: an offering that lists an "All models" entry among its model choices
+should drop it, and resources that had it selected should be switched to
+<strong>All models</strong> by hand.</p>
+<p>A <code>models</code> option that allows several choices offers <strong>All models</strong> on any
+offering, and new resources start on it, so turning on <strong>Manage API keys one by
+one</strong> later finds them on every model. A single-choice <code>models</code> option has no
+<strong>All models</strong> and does not narrow the keys.</p>
+<p>Removing a model from the option's choices retires it: every key restricted
+to named models that included it is updated at the backend without it. A key
+on <strong>All models</strong>, on a resource on <strong>All models</strong>, is not restricted by name,
+so it can still call a retired model as long as the backend serves it — and on
+a backend that cannot restrict keys at all, such as the Envoy AI Gateway, every
+key can. Remove a retired model from the backend as well.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>Without <strong>Manage API keys one by one</strong>, consumers can only reveal and rotate
