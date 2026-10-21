@@ -26,6 +26,89 @@ By default, the policy accounts for any available project or organization credit
 
 The credit that counts is what is left after this month's usage so far, so the policy acts as soon as usage has spent the credit down to the limit — it does not wait for the month-end billing run. With the period set to **Total**, cost from earlier months stays in the total; once that alone exceeds the limit, the limit effectively means "act when less than this much credit remains". To cap a single month's spend instead, use a monthly period.
 
+### Why a cost policy fired or reset
+
+When a project or organization cost policy fires or resets, the event of each action it runs (for example "request downscaling" or "reset downscaling") records why. These events are listed under **Audit logs** for the project and the organization. The audit log does not show the figures yet; they are in the event's `context`, which the API returns (`GET /api/events/?event_type=request_downscaling`).
+
+The policy compares two things:
+
+1. **Cost after credit:** the cost in the policy's period, minus what credit pays. If this is at or below the limit, the policy does not fire.
+2. **Credit left:** if the cost is over the limit and the policy accounts for credit, the policy fires only once the credit left is at or below the limit.
+
+**Example.** A project with:
+
+- a project credit allocation of 2 900 CHF, funded by a 100 000 CHF organization credit;
+- 7 701.67 CHF of cost last month that no credit covered;
+- 3 000 CHF of usage this month;
+- a policy with limit 100, period **Total**, and "Account for available credit" on.
+
+The credit pays 2 900 of this month's 3 000, so the cost after credit is 7 701.67 + 3 000 − 2 900 = 7 801.67, which is over 100. The allocation is spent, so the credit left is 0, at or below 100. The policy fires. Its event contains:
+
+| Field | What it means | Example |
+|---|---|---|
+| `triggered` | Whether the policy fired: `true` means its actions ran, `false` means it did not fire or was reset | `true` |
+| `gate` | Which check decided; see the next table | `credit_exhausted` |
+| `evaluated_cost` | The cost after credit that was compared with the limit: the invoices of the policy's period, with the credit already applied to them, minus `credit_deduction` | `7801.67` |
+| `credit_deduction` | Credit that this month's usage will use but that is not on the invoice yet. Credit is applied to an invoice when the month is billed; until then the policy subtracts it here. Credit already applied, for example in earlier months, is part of the invoices' totals and is not counted again | `2900.00` |
+| `credit_value_compared` | The credit left, as it stands now: the balance after this month's usage so far. For a project with its own credit allocation, it is the lower of the allocation and the organization credit that funds it. Empty when the cost was not over the limit, because the credit was not checked | `0.00` |
+| `limit_cost` | The policy's limit | `100` |
+| `period` | The policy's period: `1` Total (all months), `2` one month, `3` three months, `4` twelve months | `1` |
+| `use_credit` | Whether "Account for available credit" is on | `true` |
+| `credit_balance` | The organization credit as stored. It only goes down at the month-end billing run, so during the month it can be higher than what is really left | `100000` |
+| `project_credit_balance` | The project credit allocation as stored, with the same month-end lag | `2900` |
+
+To see why a policy fired, read `credit_value_compared`, not `credit_balance` or `project_credit_balance`. In the example, the stored allocation still reads 2 900, but this month's usage has already spent it, so the credit left is 0.
+
+`gate` is one of:
+
+| `gate` | Fires | Meaning |
+|---|---|---|
+| `cost_below_limit` | No | The cost after credit is at or below the limit |
+| `held_by_project_credit` | No | The cost is over the limit, but the project's credit allocation still has more than the limit left |
+| `held_by_customer_credit` | No | The cost is over the limit, but the organization credit still has more than the limit left |
+| `credit_exhausted` | Yes | The cost is over the limit and the credit left is at or below it. A project allocation counts as 0 when the organization credit that funds it does not exist |
+| `no_credit` | Yes | The cost is over the limit and there is no credit |
+| `credit_ignored` | Yes | The cost is over the limit and "Account for available credit" is off |
+
+A reset event, such as "reset downscaling" after a credit top-up, carries the same fields: `triggered` is `false` and `gate` says what is holding the policy back, for example `held_by_project_credit`.
+
+Events of actions that run without a new evaluation do not have these fields. Examples are refusing an order because the policy has already fired, and undoing actions when a policy is deleted.
+
+### What started an evaluation, and who
+
+The same events also record what made Waldur check the policy, and whose action that was. The actions themselves are carried out by the platform: such an event names the `system_robot` account as its user, not the person whose change caused it.
+
+| Field | What it means |
+|---|---|
+| `trigger` | What started the check; see the next table |
+| `trigger_object_uuid` | The object behind it: the invoice item, credit, usage report, policy or resource. Empty for the periodic check |
+| `initiated_by_username`, `initiated_by_uuid` | The person whose action started it. Empty when nobody did: the periodic check, usage reported by a site agent, or background jobs such as monthly invoicing |
+
+| `trigger` | What happened |
+|---|---|
+| `policy_saved` | The policy was created or changed |
+| `invoice_item_saved` | An invoice line was added or changed, for example by usage billing |
+| `credit_changed` | An organization or project credit changed, or the offerings it covers |
+| `usage_reported` | Usage was reported for a resource |
+| `periodic_sweep` | Waldur's regular check of all policies |
+| `reconcile` | That regular check re-applying the actions of a policy that had already fired, to resources that became eligible since |
+| `resource_saved` | A resource was created or changed while the policy had already fired, for example an order refused. Here the person who made the change is the event's user |
+| `policy_deleted` | The policy was deleted, and its actions were undone |
+
+In the example above, the "reset downscaling" event after the top-up has `trigger` `credit_changed`, `trigger_object_uuid` the project credit, and `initiated_by_username` the person who topped it up.
+
+When several changes come within a couple of minutes of each other, Waldur checks the policy once for all of them. The event then names the first change and the person who made it.
+
+### Changes to a policy
+
+Creating, changing and deleting a cost policy produce the events `policy_created`, `policy_updated` and `policy_deleted`, with the user who did it. `policy_updated` lists each changed setting with its old and new value. Staff and support users can also see every earlier version of a policy, and who saved it. In the cost policy list, open the policy's actions menu and select "Version history".
+    ![Version history in the cost policy actions](../img/Cost_policy_version_history_action.png)
+
+The dialog lists the versions, newest first, with the user who saved each one. Select a version to compare it with the one before it; the changed settings are listed first. To see the policy as it was at a given time, pick a date under "State at". A version saved by a change that also made the policy fire or reset shows that too, under "Action triggered".
+    ![Version history of a cost policy](../img/Cost_policy_version_history.png)
+
+The same history is available through the API: `GET /api/marketplace-project-estimated-cost-policies/<uuid>/history/`, and likewise for organization and offering policies.
+
 ## Cost policies for offerings
 
 Offering managers can set cost policies for specific organization groups. This allows to trigger some actions, when cost is reached. To add new policy, offering manager should open offering management page (Organization from the left menu, then Service provider -> Marketplace -> Offering) and then Policy -> Cost policy from the top. This view provides an overview about already defined policies. To create a new one, select "Add" from the right.
