@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-20T02:04:05.979197Z
+Generated: 2026-10-21T02:03:57.199509Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -70129,6 +70129,7 @@ The following models have version history endpoints:
 | Model | Endpoint | Description |
 |-------|----------|-------------|
 | Customer | `/api/customers/{uuid}/history/` | Organization accounts |
+| Project | `/api/projects/{uuid}/history/` | Projects, including soft-deleted ones |
 | User | `/api/users/{uuid}/history/` | User accounts |
 | SSH Key | `/api/keys/{uuid}/history/` | SSH public keys |
 | Offering | `/api/marketplace-provider-offerings/{uuid}/history/` | Service offerings |
@@ -70331,6 +70332,28 @@ Tracked fields include:
 - `contact_details`, `email`
 - `registration_code`, `agreement_number`
 - `country`, `vat_code`
+
+### Projects
+
+Every save that changes a project field records a version, wherever the save
+comes from: the REST API (update, `move_project`, `recover`, `set_slug`,
+`update_affiliation`), soft deletion, end-date change approval, openportal sync
+and management commands. Bulk queryset updates bypass model saves and record
+nothing - `import_structure --update-existing` is one. The comment names the
+changed fields, for example `Changed: end_date, slug`, and the revision is
+credited to the requesting user (the impersonator, under impersonation). A save
+that changes only `modified`, `termination_metadata` or `end_date_updated_at`
+records nothing.
+
+Tracked fields include:
+
+- `name`, `description`, `slug`, `customer`
+- `start_date`, `end_date`, `end_date_requested_by`, `grace_period_days`
+- `max_service_accounts`, `staff_notes`, `is_removed`
+
+Soft-deleted projects keep their history and remain reachable by UUID.
+Projects that existed before version history was enabled carry a single
+`Initial version (backfill)` entry as their baseline.
 
 ### Users
 
@@ -71323,6 +71346,7 @@ Guides for working on Waldur HomePort. Start with [development-setup.md](develop
 | [tailwind-shadcn-migration-notes.md](tailwind-shadcn-migration-notes.md) | Bootstrap → Tailwind/shadcn migration: cascade layers, `!important` collisions, token extraction, lint rules, visual-parity tests            |
 | [e2e-locators.md](e2e-locators.md)                                       | How waldur-integration-testing locates menus, tabs and filters (roles and test ids), and what replaced the old class names                   |
 | [menus.md](menus.md)                                                     | Menus, dropdowns and popovers: which component to use, recipes, rules, how the looks work, testing                                           |
+| [modals.md](modals.md)                                                   | Modals: `openDialog`, `ModalDialog`, `ModalShell`, the parts, sizes and options, `data-slot` styling hooks, testing                          |
 
 ## API and data
 
@@ -72248,7 +72272,7 @@ This needs a width-constrained parent: the trail's container must be a flex item
 
 ## Mobile
 
-Below the `md` breakpoint the root app draws the trail in a fixed bar under the header (`BreadcrumbMain mobile`). That bar is still positioned by `.breadcrumb-mobile` in `src/metronic/sass/custom/_breadcrumb.scss` (also matched by `layout/_toolbar.scss` and `layout/_sticky-top.scss`). It is header layout, not breadcrumb styling, and moves with the header's own migration; the lint rule allows the class.
+Below the `md` breakpoint the root app draws the trail in a fixed bar under the header (`BreadcrumbMain mobile`): 55px tall like the header, with its surface, bottom rule and 15px side padding, and lowered under the impersonation bar while it shows (`hasPageBar`). Behind it `BreadcrumbMain` renders a 55px spacer in the page flow, so the announcements, warning bars and page content that follow start below the bar rather than underneath it. The bar keeps the class `breadcrumb-mobile` with no styles of its own: `layout/_toolbar.scss` and `layout/_sticky-top.scss` still use it to place the page tabs and sticky elements below the bar, and the lint rule allows it.
 
 ## Micro-apps
 
@@ -73384,11 +73408,18 @@ import { SubmitButton } from '@/form';
 ```tsx
 import { CloseDialogButton } from '@/modal/CloseDialogButton';
 
-// Simple close
-<Modal.Footer>
-  <CloseDialogButton />
-  <SubmitButton submitting={submitting} label={translate('Save')} />
-</Modal.Footer>
+// Simple close, in ModalDialog's footer
+<ModalDialog
+  title={translate('Edit')}
+  footer={
+    <>
+      <CloseDialogButton />
+      <SubmitButton submitting={submitting} label={translate('Save')} />
+    </>
+  }
+>
+  …
+</ModalDialog>
 
 // Custom label
 <CloseDialogButton label={translate('Discard')} />
@@ -73399,10 +73430,12 @@ import { CloseDialogButton } from '@/modal/CloseDialogButton';
 
 ### Modal and Dialog Components
 
+See [modals.md](modals.md) for the whole modal API.
+
 | Component              | Location                           | Description           | Key Features                       |
 | ---------------------- | ---------------------------------- | --------------------- | ---------------------------------- |
 | **ModalDialog**        | `src/modal/ModalDialog.tsx`        | Base modal component  | Header, body, footer, icon support |
-| **ConfirmationDialog** | `src/modal/ConfirmationDialog.tsx` | Confirmation modal    | Destructive actions, custom text   |
+| **ConfirmationDialog** | `waldur-ui`                        | Confirmation modal    | Destructive actions, custom text   |
 | **ActionDialog**       | `src/modal/ActionDialog.tsx`       | Generic action dialog | Form support, validation           |
 
 ### Button Factory Components
@@ -74495,16 +74528,15 @@ that expose those roles — and how to change one.
 
 **Colour ramps are edited in one file:**
 `packages/design-tokens/tokens/colors.json`.
-Never edit the two files generated from it:
+Never edit the file generated from it:
 
-| Generated file                                             | Consumer                                                                                                                            |
-| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `src/metronic/sass/_color-ramps.scss`                      | Bootstrap/Metronic (`$gray-500`, `$success-600`, …), the same values as the CSS ramps; and `css-color($ramp, $step)` for a data URI |
-| `packages/design-tokens/src/css/primitives/colorRamps.css` | Tailwind and CSS variables (`--color-gray-500`, `bg-success-600`), declared once in `@theme static`                                 |
+| Generated file                                             | Consumer                                                                                            |
+| ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `packages/design-tokens/src/css/primitives/colorRamps.css` | Tailwind and CSS variables (`--color-gray-500`, `bg-success-600`), declared once in `@theme static` |
 
 ```bash
-yarn tokens:generate   # rewrite both files from the JSON
-yarn tokens:check      # exit 1 if either is stale (also run by the unit tests)
+yarn tokens:generate   # rewrite colorRamps.css from the JSON
+yarn tokens:check      # exit 1 if it is stale (also run by the unit tests)
 yarn tokens:audit      # dead/ghost tokens, redundant aliases, new duplicate roles (exit 1)
 yarn tokens:duplicates # the same, plus the full duplicate value-profile report
 ```
@@ -74520,23 +74552,19 @@ in both themes and the pair is not in `DUPLICATE_BASELINE` (see [Guards](#guards
 
 ```jsonc
 "success": {
-  "description": "Optional; becomes a comment in both outputs.",
+  "description": "Optional; becomes a comment in the output.",
   "steps": {
-    "50":  { "light": "#ecfdf3" },
-    "400": { "light": "#f670c7", "scss": false }       // CSS-only: no SCSS variable
+    "50":  { "light": "#ecfdf3" }
   }
 }
 ```
 
-Optional ramp-level keys: `scssName` (the SCSS variable prefix when it differs from the CSS
-name — `error` is `$danger-*`), `scssDefault: false` (omit `!default`), `css: false` (SCSS
-only — the static default green `primary`, which Tailwind never sees), `scss: false` (CSS
-only — `gray-dark`).
+Optional ramp-level key: `css: false` (leave the ramp out of the CSS).
 
 Colours are lower-case `#rrggbb`; the generator rejects anything else. A step has one value:
 the key is `light` for history, and the generator rejects a `dark` one. Ramps are physical and
-the same in both themes; dark UI picks other steps through the semantic tokens. (The SCSS ramps
-used to be theme-inverted for a separate dark compile, `style.dark.scss`, which is gone.)
+the same in both themes; dark UI picks other steps through the semantic tokens. (The Sass
+ramps used to be theme-inverted for a separate dark compile, `style.dark.scss`, which is gone.)
 
 ## Gray in dark mode: `gray` and `gray-dark`
 
@@ -74555,8 +74583,7 @@ Dark UI wants neutral grays where the light `gray` is blue-tinted (500 is `#6670
   unconditionally, while the `light` style reads `gray`). A component that needs a dark-specific
   gray writes `dark:bg-[var(--color-gray-dark-800)]` or `dark:bg-gray-dark-800`.
 
-`gray-dark` is CSS-only (`"scss": false`); SCSS reads it, where a `var()` cannot reach (a data
-URI), as `css-color(gray-dark, 500)`. Its values are what the old theme-inverted SCSS grays were
+Sass never reads `gray-dark`. Its values are what the old theme-inverted SCSS grays were
 in dark mode, re-indexed: `gray-dark-N` was the dark value of the mirrored `$gray-N` (25 ↔ 950,
 50 ↔ 900, …). The `mirrored-ramp-color()` mixin keeps that pairing for one-off SCSS colours.
 
@@ -74741,7 +74768,7 @@ beats every Tailwind utility, important or not: a class Tailwind also defined (`
 removes `color`, `background-color`, `border-color` and `border-top`/`-end`/`-bottom`/`-start`
 from `$utilities`, and the `border: 0` `.border-0` from its `border` utility. (Its width
 utilities stay: `.border-0` … `.border-5`, `.border-top-0`, … set only `border-width`.) Every colour class is Tailwind's and
-follows the design tokens. (`$theme-colors` itself keeps its keys, for the Bootstrap components.)
+follows the design tokens. (`$theme-colors` is an empty map, so no Bootstrap component emits a contextual colour either.)
 
 Bootstrap's old class names paint nothing now, except those Tailwind defines itself (the status
 utilities). They were migrated as:
@@ -74786,10 +74813,9 @@ green, whatever the tenant configured. So:
   `var(--brand-50)` with a `dark-theme` override to `var(--brand-900)`. For a focus glow, use
   `color-mix(in srgb, var(--focus-ring-color) 25%, transparent)`.
 - Never pass a CSS variable into a Sass colour function (`tint-color`, `shade-color`, `mix`,
-  `rgba($x, …)`): they need a compile-time colour. That is why `$primary` itself stays static.
-- `_variables.custom.scss` already points the Bootstrap outputs that would otherwise paint the
-  static green at the runtime brand: the shared focus glow (`$input-btn-focus-color`: inputs,
-  selects, `.btn-close`), the active list-group row and the range thumb. `.svg-icon-primary`
+  `rgba($x, …)`): they need a compile-time colour. That is why the static `$component-active-bg` (the default green, which Bootstrap tints) stays a literal.
+- `_colors.scss` already points the Bootstrap outputs that would otherwise paint the
+  static green at the runtime brand: the active list-group row and the range thumb. `.svg-icon-primary`
   is `var(--brand-color)`, so it follows the brand too.
 
 ## Font size
@@ -74865,7 +74891,7 @@ to prevent fractional `rem` compression under Waldur's forced 13px root font siz
 | `--radius-lg`    | 8px    | `rounded-lg`    | `$border-radius` / `-lg` (8px)   | Cards, panels, dialog headers, table containers |
 | `--radius-xl`    | 12px   | `rounded-xl`    | `$border-radius-xl` (12px)       | Prominent cards, thread bubbles, chat panels    |
 | `--radius-2xl`   | 16px   | `rounded-2xl`   | `$border-radius-2xl` (16px)      | Large feature cards, hero containers            |
-| `--radius-modal` | 20px   | `rounded-modal` | —                                | Dialog content and Sidebar mode-switcher card   |
+| `--radius-modal` | 20px   | `rounded-modal` | —                                | Sidebar mode-switcher card                      |
 | `--radius-full`  | 9999px | `rounded-full`  | `rounded-pill`, `rounded-circle` | Avatars, pills, circular badges, status dots    |
 
 - **No Bootstrap `rounded-0`, `rounded-pill`, `rounded-circle`.** Bootstrap radius utilities are
@@ -74961,8 +74987,6 @@ They live with the tokens they document, so a token change and its story change 
 
 ## What is not generated (yet)
 
-- **Derived SCSS variables** — `$success`, `$success-active`, `$text-muted`, `$dark-active`, … stay in
-  `_colors.scss` (they use Sass functions and reference other variables).
 - **The brand ramp** — `--brand-*` is tenant-configurable and injected at runtime
   (`initBrandTokens()`).
 - **The semantic layer** — `--border-*`/`--text-*`/`--btn-*`/`--status-*` CSS files
@@ -75073,11 +75097,13 @@ Outside that SCSS nothing reads them any more, so neither check has a per-file a
 
 1. Edit `tokens/colors.json`.
 2. `yarn tokens:generate`.
-3. Commit the JSON and both generated files together.
+3. Commit the JSON and the generated file together.
 
 Changing a light value changes what the app renders in both Bootstrap and Tailwind components
-at once, which is the point. A new ramp or step appears in SCSS as `$<name>-<step>` and in CSS
-as `--color-<name>-<step>` (and so as Tailwind utilities).
+at once, which is the point. A new ramp or step appears in CSS as `--color-<name>-<step>` (and so as Tailwind utilities).
+Sass defines no colour ramp. Every Sass colour variable (tokens as `var(--…)`, plus `$white`,
+`$black` and the static default green) lives in `src/metronic/sass/_colors.scss`, and Bootstrap's own
+defaults fill every other `$gray-*` / `$primary` name, none of which reaches a compiled rule.
 
 ## Verifying a refactor changes nothing
 
@@ -75510,6 +75536,8 @@ Removing a hook below breaks that suite without failing anything in HomePort, as
 | `.nav-tabs` / `.nav-line-tabs` (router tab bar)        | `nav[aria-label="Tabs"]` (`TAB_BAR` in `homeport_hooks.py`); a page hero, table sub-tabs or reporting        | no                      |
 | `get_by_role("tab")` in a router tab bar               | `get_by_role("link", name=…)`, or `"button"` for a disabled tab (`tab_item()`)                               | no                      |
 | `.card-body .nav-tabs` (in-page section tabs)          | `[role="tablist"]` with `get_by_role("tab", name=…)` (`SECTION_TABS`)                                        | yes                     |
+| `.modal.show`, `.modal-content` (a dialog)             | `get_by_role("dialog")`, filtered by name or text; its parts are `[data-slot="modal-body"]` and so on        | yes                     |
+| `.btn-close` (a dialog's close button)                 | `get_by_role("button", name="Close")` inside the dialog                                                      | yes                     |
 
 Tab bars moved to waldur-ui's `TabNav` / `Tabs` in waldur/waldur-homeport!7825; the suite matches both markups since waldur/waldur-integration-testing!193. A router tab bar's `aria-label` defaults to "Tabs"; keep that default (or update `TAB_BAR`) when labelling a bar.
 
@@ -77556,6 +77584,8 @@ rather than copying `src/navigation/header/breadcrumb/`. It knows no router:
 a `renderLink` on the provider turns a crumb's `to` into your router's link.
 See [breadcrumbs.md](breadcrumbs.md).
 
+The boot splash is shared too: see [Boot splash](#boot-splash).
+
 **The convention is directory presence, not a manifest.** Every `apps/*`
 member is picked up automatically — by `yarn install` (via the
 workspace glob), by the Dockerfile's build loop, by CI's typecheck/build
@@ -77588,6 +77618,50 @@ entry/port; generalizing to every `apps/*` member automatically would need
 a small discoverable ports registry (e.g. extending the `waldur.deploy`
 package.json convention below with a `devPort` field) — not worth it with
 only one real example today.
+
+## Boot splash
+
+`packages/boot-splash` (`waldur-boot-splash`) gives every app the same
+branded loading screen as the root app, from the very first frame:
+
+- **`waldurBootSplash()`** (`waldur-boot-splash/vite`) goes in the app's
+  `vite.config.ts`. It inlines the splash's styles into the app's own
+  `index.html`, adds its markup at the end of `<body>` (outside the app's
+  root, as a fixed layer), and links a small `boot-splash.js` that runs
+  render-blocking in `<head>` and brands the splash from the cache before it
+  paints. The script is served in dev and emitted in build as a
+  content-hashed file under `assets/`, so nginx's immutable caching applies
+  and a new version always gets a new URL. It is an external file, not
+  inline, because production sends `script-src 'self'`. `index.html` itself
+  needs nothing. Other pages built with the same config, such as Storybook's
+  `iframe.html`, are left alone.
+- **`saveSplashBranding(WALDUR_CORE, { translate })`** caches the
+  deployment's name, brand colour, compact logo and dark-theme setting, and
+  the splash's text in the user's language, for the next visit. The logo is
+  redrawn at display size into a small data URI; one that can't be made
+  small enough is dropped, so the splash shows the default mark instead of an
+  empty box. `bootstrapMicroApp()` calls it once the runtime config and the
+  user's language have loaded; the root app calls it from
+  `afterBootstrap()`.
+- **`useBootSplashDismiss(ready)`** (`waldur-boot-splash/react`) fades the
+  splash out once `ready`, or removes it if unmounted first, so a crash
+  never stays hidden behind it. `AppShell` passes "bootstrapped"
+  (`whenMicroAppBootstrapped()` from `waldur-shell`): the splash stays
+  until the tenant's brand, font, sidebar style and language are applied,
+  so the switch from the defaults happens behind it. The root app instead
+  waits for its first route and that route's code chunks
+  (`src/BootSplashGate.tsx`). For anything else, `dismissBootSplash()`.
+
+Every app on the origin shares the cache (`waldur/boot-splash`) and the
+theme key, so the root app and its micro-apps brand each other's splash: a
+user who has opened one gets a branded splash in the others on first visit.
+A browser that has never loaded any of them shows the `defaultName` passed to
+the plugin, the Waldur colours and English text.
+
+A micro-app that crashes before `AppShell` mounts keeps the splash, whose
+"Taking longer than usual" notice offers a reload after 8 seconds. Mount
+`useBootSplashDismiss` higher up, or call `dismissBootSplash()` from the
+error screen, if the app has one of its own.
 
 ## Build & serve pipeline
 
@@ -77704,6 +77778,14 @@ MR's live k8s preview, while never appearing in a real `Publish` image.
    reference wiring. Skip this only if the
    new app genuinely needs different chrome, not just different nav
    content (`AppShell` already takes nav items/page content as props).
+   Add `waldurBootSplash()` from `waldur-boot-splash/vite` to its
+   `vite.config.ts` plugins for the shared boot splash (see
+   [Boot splash](#boot-splash)); `AppShell` takes it down once the app is
+   bootstrapped.
+   `AppShell` also hosts dialogs: page content opens them with `useModal()`
+   / `confirm()` from `waldur-ui`, as in the main app (see
+   [modals.md](modals.md)). For `useManagedMutation` from `waldur-shell`,
+   wrap the app in a react-query `QueryClientProvider`.
 3. Decide whether it ships: omit `"waldur": { "deploy": false }` to ship by
    default, or add it if it's a demo/POC that should stay CI/preview-only
    (see above).
@@ -77734,6 +77816,122 @@ MR's live k8s preview, while never appearing in a real `Publish` image.
   trick) composed at the ingress/Helm layer instead of in this
   repo's `nginx-tpl.conf` — real infra work, only worth it once independent
   deploy cadence is an actual requirement.
+
+---
+
+### Modals
+<!-- Source: docs/developer-guide/ui/modals.md -->
+
+# Modals
+
+Every dialog is waldur-ui's Modal (`packages/ui/src/Dialog/Modal.tsx`), a Radix Dialog drawn in the app's modal geometry. There is no Bootstrap modal any more: react-bootstrap's `Modal`, `CloseButton` and `ModalContext`, and the `.modal*` / `.btn-close` classes, are gone, and the `no-bootstrap-modal` lint rule keeps them out.
+
+The same component serves micro-apps: it has no app dependencies, and every length is in px, so it is the same size under the app's 13px root and a micro-app's 16px one.
+
+## Where the pieces live
+
+Everything a dialog needs is shared, so a micro-app gets the same `openDialog`, `confirm()`, dirty-form guard and mutation hooks as the app:
+
+| Piece                                                                                                                                                                                                                       | Package                           |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| `ModalShell`, `ModalDialog`, the parts (`ModalHeader` … `ModalCloseButton`)                                                                                                                                                 | `waldur-ui`                       |
+| `ModalProvider`, `useModal`, `ModalService`, `ModalRoot`, `ConfirmModalRoot`, `ConfirmationDialog`, `DeleteConfirmationDialog`, `CloseDialogButton`, `DirtyFormContext`, the types (`AppModalProps`, `ConfirmationOptions`) | `waldur-ui`                       |
+| `useManagedMutation`, `useBatchMutation`                                                                                                                                                                                    | `waldur-shell` (uses react-query) |
+| `showErrorResponse`, `setErrorResponseFormatter`                                                                                                                                                                            | `waldur-notifications`            |
+
+In the app, `src/modal/*` re-export these, so `@/modal/actions`, `@/modal/ModalDialog`, `@/modal/useManagedMutation` and the rest keep working. The app adds only what is its own: `ModalRoot`/`ConfirmModalRoot` pass a Sentry error boundary (`ModalErrorBoundary`), `@/core/DirtyFormContext` keeps the react-final-form `DirtyStateReporter`, and `@/store/notify` registers the app's API error formatter, which the mutation hooks' error toasts then use.
+
+A micro-app gets the host from `AppShell`, which mounts `ModalProvider`, `ModalRoot` and `ConfirmModalRoot` (with the shell's error boundary) around the page. The mutation hooks need a `QueryClientProvider` above them, which the micro-app provides.
+
+### Extra fields in a confirmation
+
+`confirm()` takes a text input (`showInput`, resolved as `result.input`) or any extra control through `extraField`: a `render(value, onChange)`, the `resultKey` it resolves under and an optional `toResult`. The app's OpenStack router picker is one:
+
+```tsx
+confirm(title, body, { extraField: routerConfirmField(tenant.uuid) });
+// resolves with { router: <router url> } when a router is picked
+```
+
+## Which piece to use
+
+| Need                                                            | Use                                                                                                           |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Open a dialog from anywhere in the app                          | `openDialog(MyDialog, { size, resolve })` (`useModal()`) or `ModalService.open`                               |
+| Ask yes/no                                                      | `confirm(title, body, options)` (`useModal()`), or `waitForConfirmation`                                      |
+| The dialog's own layout                                         | `ModalDialog` (`@/modal/ModalDialog`): `title`, `subtitle`, `iconNode`, `footer`, `actions`                   |
+| A dialog rendered in place (no `openDialog`), or in a micro-app | `<ModalShell open onHide size>` around a `ModalDialog`                                                        |
+| A layout `ModalDialog` doesn't cover                            | `ModalHeader`, `ModalTitle`, `ModalSubtitle`, `ModalBody`, `ModalFooter`, `ModalCloseButton` from `waldur-ui` |
+| Close the dialog from inside it                                 | `CloseDialogButton`, or `useModalHide()` from `waldur-ui`                                                     |
+
+`ModalRoot` (the `openDialog` host) asks before closing a dialog whose form has unsaved input; `ConfirmModalRoot` opens confirmations on the `confirm` layer above it.
+
+```tsx
+const EditNameDialog = ({ resolve }) => (
+  <Form onSubmit={resolve.onSubmit}>
+    {({ handleSubmit, submitting }) => (
+      // The form wraps the whole ModalDialog, so a submit button in `footer`
+      // is inside it.
+      <form onSubmit={handleSubmit}>
+        <ModalDialog
+          title={translate('Edit name')}
+          footer={
+            <>
+              <CloseDialogButton />
+              <SubmitButton submitting={submitting} label={translate('Save')} />
+            </>
+          }
+        >
+          <StringGroup name="name" label={translate('Name')} spaceless />
+        </ModalDialog>
+      </form>
+    )}
+  </Form>
+);
+
+openDialog(EditNameDialog, { size: 'md', resolve: { onSubmit } });
+```
+
+## Shell options
+
+Passed to `openDialog` (or as `ModalShell` props):
+
+| Option               | Default | Effect                                                                                                   |
+| -------------------- | ------- | -------------------------------------------------------------------------------------------------------- |
+| `size`               | 544px   | `sm` 400px, `md` 544px, `lg` 840px from 992px, `xl` 1140px from 1200px                                   |
+| `centered`           | `true`  | Centre the box vertically                                                                                |
+| `scrollable`         | `true`  | Keep header and footer in view and scroll the body; `false` scrolls the whole overlay instead            |
+| `backdrop`           | `true`  | `'static'`: a click outside doesn't close it; `false`: no backdrop                                       |
+| `keyboard`           | `true`  | Escape closes it                                                                                         |
+| `animation`          | `true`  | The fade and slide                                                                                       |
+| `title`              | —       | The accessible name when the visible title isn't a string (a string `ModalDialog` title names it itself) |
+| `dialogClassName`    | —       | Classes on the outer box, which sizes and places it (`sm:max-w-[650px]` for a custom width)              |
+| `className`          | —       | Classes on the scrolling overlay, a hook for a stylesheet                                                |
+| `layer` (shell only) | `modal` | `confirm` stacks it above another open modal                                                             |
+
+For a width between the sizes, pass `dialogClassName: 'sm:max-w-[650px]'`: the `sm:` prefix replaces the default width rather than sitting under it.
+
+## Styling a part
+
+Each part carries a `data-slot`: `modal-backdrop`, `modal` (the scrolling overlay), `modal-dialog` (the outer box), `modal-content` (the visible box), `modal-header`, `modal-title`, `modal-subtitle`, `modal-close`, `modal-body` and `modal-footer`. A stylesheet that needs to reach into a dialog scopes by its own hook class and the slot:
+
+```scss
+// RoleFormDialog.scss
+[data-slot='modal-dialog'].role-dialog {
+  max-width: 932px;
+}
+```
+
+Component stylesheets imported from TSX are unlayered, so they beat Tailwind utilities; Metronic SCSS is in the `bootstrap` layer and does not.
+
+Prefer props first: `bodyClassName="p-0"`, `headerClassName`, `footerClassName`. They go through `cn()`, so a padding class replaces the part's own instead of fighting it.
+
+## Geometry
+
+The values are the old Bootstrap modal's as Metronic and the app restyled it: 12px radius, `--bg-primary`, a two-step shadow (`--modal-shadow-xs` / `--modal-shadow`), 24px padding (12px above the body under a header, 8px above the footer), an 18px/28px medium title, a 14px `text-quaternary` subtitle, and a 13px close glyph at half opacity. The backdrop is `--modal-backdrop-bg` with a 3px blur; the layers are `--z-index-modal-backdrop`/`--z-index-modal` (1050/1055) and `--z-index-confirm-backdrop`/`--z-index-confirm` (1060/1065), below popovers, menus and date pickers so those open over a dialog.
+
+## Tests
+
+Find a dialog by its role and name, not by class: `screen.getByRole('dialog', { name: … })`, `getByRole('button', { name: 'Close' })`. For structure, use the slots (`[data-slot="modal-body"]`) or `getByTestId('modal-footer')`. The waldur-integration-testing suite finds dialogs the same way (see [e2e-locators.md](e2e-locators.md)).
 
 ---
 
@@ -80551,7 +80749,7 @@ Waldur Homeport operates on two active UI component patterns:
 1. **Modern Tailwind / Radix Primitives (`packages/ui`, exported as `waldur-ui`)**
    - Built with pure Tailwind v4 utilities and CSS design tokens from `packages/design-tokens`.
    - Free of all Bootstrap and Metronic classes, SCSS variables, and runtime mixins.
-   - Includes `BaseButton`, `SegmentedControl`, `AlertItem`, `Badge`, `Tooltip`, `Popover`, `Breadcrumb` (with `BreadcrumbTrail`), `MiddleTruncate`, `Sidebar`, `Sheet`, `Dialog`, `Menu`, `MenuPopover`, `Checkbox`, `Radio`, `Switch`, `RadioGroup`, `Progress`, `Tag`, `Card`, `Avatar`, `Toast`, `FeaturedIcon`, `StatCard`, `CopyButton`, `LoadingSpinner`, `Accordion`, `AccordionCard`, `Collapsible`, and `TablePagination` (with `Pagination` and `PageSizeSelect`).
+   - Includes `BaseButton`, `SegmentedControl`, `AlertItem`, `Badge`, `Tooltip`, `Popover`, `Breadcrumb` (with `BreadcrumbTrail`), `MiddleTruncate`, `Sidebar`, `Sheet`, `Modal` (see [modals.md](modals.md)), `Menu`, `MenuPopover`, `Checkbox`, `Radio`, `Switch`, `RadioGroup`, `Progress`, `Tag`, `Card`, `Avatar`, `Toast`, `FeaturedIcon`, `StatCard`, `CopyButton`, `LoadingSpinner`, `Accordion`, `AccordionCard`, `Collapsible`, and `TablePagination` (with `Pagination` and `PageSizeSelect`).
    - Exports `buttonVariants()`, `ButtonVariant` and `ButtonSize` so elements that cannot be a `BaseButton` (links, Radix triggers that need a specific child shape) still get the exact same classes.
 
 2. **Transitional Shells (Radix Engine with Themed Skins)**
@@ -80564,28 +80762,30 @@ Waldur Homeport operates on two active UI component patterns:
 
 ### Component Standards & Usage Guide
 
-| UI Element                    | Standard Component          | Package       | Usage & Styling Notes                                                                                                                                                                                                                                   | Prohibited                                                               |
-| :---------------------------- | :-------------------------- | :------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :----------------------------------------------------------------------- |
-| **Alert / Banner**            | `AlertItem`                 | `waldur-ui`   | Pure Tailwind, `--border-secondary`, 5 variants                                                                                                                                                                                                         | `react-bootstrap` `Alert`                                                |
-| **Badge / Pill**              | `Badge`                     | `waldur-ui`   | 15 variants × 3 tones, structural `border-[1px]`                                                                                                                                                                                                        | `react-bootstrap` `Badge`                                                |
-| **Tooltip**                   | `Tooltip`                   | `waldur-ui`   | Radix Tooltip (hover/focus) + Popover (click fallback)                                                                                                                                                                                                  | `react-bootstrap` `Tooltip`, `OverlayTrigger`                            |
-| **Popover**                   | `Popover`, `PopoverContent` | `waldur-ui`   | Radix Popover with `--card-bg` / `--border-secondary` tokens                                                                                                                                                                                            | `react-bootstrap` `Popover`                                              |
-| **Button**                    | `BaseButton`                | `waldur-ui`   | 12 variants × 3 sizes, inset `box-shadow` border, outline focus ring, semantic button tokens                                                                                                                                                            | `react-bootstrap` `Button`, hand-written `btn` class markup              |
-| **Link styled as button**     | `Link` with `buttonVariant` | `@/core/Link` | Same classes as `BaseButton` via `buttonVariants()`; keeps anchor semantics and routing                                                                                                                                                                 | `<a className="btn …">`                                                  |
-| **Checkbox / radio**          | `Checkbox`, `Radio`         | `waldur-ui`   | Hidden native input + drawn box and SVG mark, `md` 20px / `sm` 16px, `--check-*` tokens; `label` / `description` / `tooltip` props                                                                                                                      | `react-bootstrap` `FormCheck` / `Form.Check`, `form-check*` classes      |
-| **Progress meter**            | `Progress`                  | `waldur-ui`   | One value, stacked `segments` or `indeterminate`; neutral track, `variant` colours the fill; `xs` 4 / `sm` 6 / `md` 8 / `lg` 24px; `--progress-*` tokens                                                                                                | `react-bootstrap` `ProgressBar`, `.progress` / `.progress-bar` markup    |
-| **On/off toggle**             | `Switch`                    | `waldur-ui`   | Hidden native checkbox + drawn track and knob, `md` 44×24 / `sm` 36×20, `--switch-*` tokens                                                                                                                                                             | `type="switch"` `FormCheck`, `form-switch*` classes                      |
-| **Mutually exclusive choice** | `SegmentedControl`          | `waldur-ui`   | Radix RadioGroup, `neutral` / `brand` variants, button sizes                                                                                                                                                                                            | `react-bootstrap` `ToggleButtonGroup`, `btn-group` markup                |
-| **Expandable panel group**    | `Accordion`                 | `waldur-ui`   | Radix Accordion, `single` / `multiple`, open header in runtime brand colour; closed panels unmount                                                                                                                                                      | `react-bootstrap` `Accordion`                                            |
-| **Single expandable panel**   | `Collapsible`               | `waldur-ui`   | Radix Collapsible, unstyled; `keepMounted` keeps form fields mounted while closed                                                                                                                                                                       | `react-bootstrap` `Collapse`, `useAccordionButton`                       |
-| **Sidebar Navigation**        | `Sidebar`, `Sheet`          | `waldur-ui`   | Collapsible desktop rail + mobile Radix Sheet                                                                                                                                                                                                           | Metronic sidebar JS                                                      |
-| **Table pagination**          | `TablePagination`           | `waldur-ui`   | `--pagination-*` tokens; `bordered={false}` under a non-table list; desktop/mobile layouts                                                                                                                                                              | `react-bootstrap` `Pagination`, `page-link` markup                       |
-| **Table Actions**             | `ActionsMenu`               | `@/table`     | `Menu` in the actions look, with the kebab / labeled / Add toggles                                                                                                                                                                                      | `react-bootstrap` `DropdownButton`                                       |
-| **Header Chrome Menu**        | `Menu`                      | `waldur-ui`   | `Menu` in the nav look; `openOnHover="desktop"` for hover triggers                                                                                                                                                                                      | N/A                                                                      |
-| **Breadcrumbs**               | `BreadcrumbTrail`           | `waldur-ui`   | Router-agnostic trail (a crumb's `to` links through the provider's `renderLink`), set per page with `useBreadcrumbs`; overflow collapse, middle truncation, switcher dropdowns; `Breadcrumb*` primitives below it. See [breadcrumbs.md](breadcrumbs.md) | `react-bootstrap` `Breadcrumb` / `BreadcrumbItem`, `.breadcrumb*` markup |
-| **Slide-Over Drawer**         | `DrawerRoot`                | `@/drawer`    | Radix Dialog with CSS keyframe transitions                                                                                                                                                                                                              | N/A                                                                      |
+| UI Element                    | Standard Component          | Package       | Usage & Styling Notes                                                                                                                                                                                                                                                                                                              | Prohibited                                                               |
+| :---------------------------- | :-------------------------- | :------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------- |
+| **Alert / Banner**            | `AlertItem`                 | `waldur-ui`   | Pure Tailwind, `--border-secondary`, 5 variants                                                                                                                                                                                                                                                                                    | `react-bootstrap` `Alert`                                                |
+| **Badge / Pill**              | `Badge`                     | `waldur-ui`   | 15 variants × 3 tones, structural `border-[1px]`                                                                                                                                                                                                                                                                                   | `react-bootstrap` `Badge`                                                |
+| **Tooltip**                   | `Tooltip`                   | `waldur-ui`   | Radix Tooltip (hover/focus) + Popover (click fallback)                                                                                                                                                                                                                                                                             | `react-bootstrap` `Tooltip`, `OverlayTrigger`                            |
+| **Popover**                   | `Popover`, `PopoverContent` | `waldur-ui`   | Radix Popover with `--card-bg` / `--border-secondary` tokens                                                                                                                                                                                                                                                                       | `react-bootstrap` `Popover`                                              |
+| **Button**                    | `BaseButton`                | `waldur-ui`   | 12 variants × 3 sizes, inset `box-shadow` border, outline focus ring, semantic button tokens                                                                                                                                                                                                                                       | `react-bootstrap` `Button`, hand-written `btn` class markup              |
+| **Link styled as button**     | `Link` with `buttonVariant` | `@/core/Link` | Same classes as `BaseButton` via `buttonVariants()`; keeps anchor semantics and routing                                                                                                                                                                                                                                            | `<a className="btn …">`                                                  |
+| **Checkbox / radio**          | `Checkbox`, `Radio`         | `waldur-ui`   | Hidden native input + drawn box and SVG mark, `md` 20px / `sm` 16px, `--check-*` tokens; `label` / `description` / `tooltip` props                                                                                                                                                                                                 | `react-bootstrap` `FormCheck` / `Form.Check`, `form-check*` classes      |
+| **Progress meter**            | `Progress`                  | `waldur-ui`   | One value, stacked `segments` or `indeterminate`; neutral track, `variant` colours the fill; `xs` 4 / `sm` 6 / `md` 8 / `lg` 24px; `--progress-*` tokens                                                                                                                                                                           | `react-bootstrap` `ProgressBar`, `.progress` / `.progress-bar` markup    |
+| **On/off toggle**             | `Switch`                    | `waldur-ui`   | Hidden native checkbox + drawn track and knob, `md` 44×24 / `sm` 36×20, `--switch-*` tokens                                                                                                                                                                                                                                        | `type="switch"` `FormCheck`, `form-switch*` classes                      |
+| **Mutually exclusive choice** | `SegmentedControl`          | `waldur-ui`   | Radix RadioGroup, `neutral` / `brand` variants, button sizes                                                                                                                                                                                                                                                                       | `react-bootstrap` `ToggleButtonGroup`, `btn-group` markup                |
+| **Expandable panel group**    | `Accordion`                 | `waldur-ui`   | Radix Accordion, `single` / `multiple`, open header in runtime brand colour; closed panels unmount                                                                                                                                                                                                                                 | `react-bootstrap` `Accordion`                                            |
+| **Single expandable panel**   | `Collapsible`               | `waldur-ui`   | Radix Collapsible, unstyled; `keepMounted` keeps form fields mounted while closed                                                                                                                                                                                                                                                  | `react-bootstrap` `Collapse`, `useAccordionButton`                       |
+| **Sidebar Navigation**        | `Sidebar`, `Sheet`          | `waldur-ui`   | Collapsible desktop rail + mobile Radix Sheet                                                                                                                                                                                                                                                                                      | Metronic sidebar JS                                                      |
+| **Table pagination**          | `TablePagination`           | `waldur-ui`   | `--pagination-*` tokens; `bordered={false}` under a non-table list; desktop/mobile layouts                                                                                                                                                                                                                                         | `react-bootstrap` `Pagination`, `page-link` markup                       |
+| **Table Actions**             | `ActionsMenu`               | `@/table`     | `Menu` in the actions look, with the kebab / labeled / Add toggles                                                                                                                                                                                                                                                                 | `react-bootstrap` `DropdownButton`                                       |
+| **Header Chrome Menu**        | `Menu`                      | `waldur-ui`   | `Menu` in the nav look; `openOnHover="desktop"` for hover triggers                                                                                                                                                                                                                                                                 | N/A                                                                      |
+| **Header icon button**        | `IconButton`                | `waldur-ui`   | 40px, rem-sized icon (`iconSize` `md` 1.54rem / `lg` 1.85rem), `--btn-secondary-bg` fill on hover, keyboard focus and `aria-expanded`; `indicator` for a custom dot. Pixel-matched to the legacy button, geometry pinned by `e2e-visual/top-bar-geometry.spec.ts`; the ring is on `:focus-visible` only, the one deliberate change | `.btn-nav-item` + `.svg-icon` markup                                     |
+| **App header bar**            | `TopBar`                    | `waldur-ui`   | `left` / `center` / `right` slots; 55px / 15px padding, 65px / 32px from `lg`, `border-secondary` rule, `bg-primary`. `AppHeader` adds the fixed position, sidebar offset, `z-header` (lifted over open drawers) and `print:hidden`. Geometry pinned by `e2e-visual/top-bar-geometry.spec.ts`                                      | Metronic `.header` + `.container-fluid` (`layout/_header.scss`)          |
+| **Breadcrumbs**               | `BreadcrumbTrail`           | `waldur-ui`   | Router-agnostic trail (a crumb's `to` links through the provider's `renderLink`), set per page with `useBreadcrumbs`; overflow collapse, middle truncation, switcher dropdowns; `Breadcrumb*` primitives below it. See [breadcrumbs.md](breadcrumbs.md)                                                                            | `react-bootstrap` `Breadcrumb` / `BreadcrumbItem`, `.breadcrumb*` markup |
+| **Slide-Over Drawer**         | `DrawerRoot`                | `@/drawer`    | Radix Dialog with CSS keyframe transitions                                                                                                                                                                                                                                                                                         | N/A                                                                      |
 
-The breadcrumb trail has no Bootstrap or Metronic styles left; the mobile header's `.breadcrumb-mobile` positioning is the one deliberate leftover (see [breadcrumbs.md](breadcrumbs.md)).
+The breadcrumb trail has no Bootstrap or Metronic styles left, the phone breadcrumb bar included; `breadcrumb-mobile` remains only as a hook for the toolbar and sticky offsets (see [breadcrumbs.md](breadcrumbs.md)).
 
 The _Prohibited_ column is convention; the subset that lint enforces is listed under [Linting & Guardrails](#linting-guardrails) (`ToggleButtonGroup` and `btn-group` markup are not).
 
@@ -80732,9 +80932,7 @@ This guarantees `lg` resolves to `992px` identically across Tailwind `lg:` varia
 
 ### Design Tokens & Color Systems
 
-1. **Single Source of Truth**: All color ramps originate in `packages/design-tokens/tokens/colors.json`. Running `yarn tokens:generate` outputs:
-   - `src/metronic/sass/_color-ramps.scss` (consumed by Bootstrap & Metronic SCSS)
-   - `packages/design-tokens/src/css/primitives/colorRamps.css` (consumed by Tailwind)
+1. **Single Source of Truth**: All color ramps originate in `packages/design-tokens/tokens/colors.json`. Running `yarn tokens:generate` outputs `packages/design-tokens/src/css/primitives/colorRamps.css` (consumed by Tailwind). Sass reads no colour ramp: `$white` and `$black` are the only Sass colours the theme defines (top of `core/components/_variables.scss`).
 2. **Theme Color Semantics**:
    - In Tailwind CSS: `--color-gray-N` maintains physical lightness across themes (e.g., `gray-900` is always dark). Dark UI uses a dedicated inverted ramp: `--color-gray-dark-N`.
    - In Metronic SCSS: `$gray-N` variables invert automatically in dark mode (`$gray-900` becomes light in dark mode).
@@ -81701,24 +81899,20 @@ The theme is one attribute: `data-theme="light|dark"` on `<html>`. Everything fo
 
 There used to be a second, dark compile (`style.dark.scss`, `$mode: dark`, with the SCSS ramps
 inverted by `isDarkMode()`), swapped in when the theme changed. It is gone; don't reintroduce a
-theme-specific SCSS value. A colour inside an SVG data URI, which a `var()` cannot reach, is a
-function of its colour (`_svg-icons.scss`); a dark variant is a `dark-theme` override that passes
-it `css-color(gray-dark, …)`, which gives the CSS ramp value as Sass. Prefer an inline SVG with
-`currentColor` where you can — the breadcrumb separator moved off a data URI for that reason.
+theme-specific SCSS value. A colour inside an SVG data URI cannot be reached by a `var()`; use an inline SVG with
+`currentColor` instead — the breadcrumb separator and the close icon moved off data URIs for that reason.
 
 ## Key Files
 
-| File                                             | Purpose                                                                                                                              |
-| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `src/theme/ThemeProvider.tsx`                    | React context provider for theme state                                                                                               |
-| `src/theme/useTheme.ts`                          | Hook to access current theme                                                                                                         |
-| `src/theme/ThemeStorage.ts`                      | localStorage persistence                                                                                                             |
-| `src/theme/utils.ts`                             | Injects the Metronic stylesheet once, sets `data-theme`, initial theme detection                                                     |
-| `src/theme/ThemeSwitcher.tsx`                    | UI toggle component                                                                                                                  |
-| `src/metronic/sass/_tokens.scss`                 | Ring and focus-ring variables                                                                                                        |
-| `src/metronic/sass/_colors.scss`                 | Derived color variables (`$success`, `$text-muted`, brand ramp, …)                                                                   |
-| `src/metronic/sass/_color-ramps.scss`            | Theme-aware color ramps — **generated**, edit `packages/design-tokens/tokens/colors.json` (see [design-tokens.md](design-tokens.md)) |
-| `src/metronic/sass/core/base/mixins/_theme.scss` | `dark-theme` / `light-theme` mixins, `mirrored-ramp-color()`                                                                         |
+| File                                             | Purpose                                                                          |
+| ------------------------------------------------ | -------------------------------------------------------------------------------- |
+| `src/theme/ThemeProvider.tsx`                    | React context provider for theme state                                           |
+| `src/theme/useTheme.ts`                          | Hook to access current theme                                                     |
+| `src/theme/ThemeStorage.ts`                      | localStorage persistence                                                         |
+| `src/theme/utils.ts`                             | Injects the Metronic stylesheet once, sets `data-theme`, initial theme detection |
+| `src/theme/ThemeSwitcher.tsx`                    | UI toggle component                                                              |
+| `src/metronic/sass/_colors.scss`                 | Every Sass colour variable (design tokens as `var(--…)`, `$white`, `$black`)     |
+| `src/metronic/sass/core/base/mixins/_theme.scss` | `dark-theme` / `light-theme` mixins, `mirrored-ramp-color()`                     |
 
 ## Theme Initialization Flow
 
@@ -110940,6 +111134,7 @@ td:nth-child(4) {
 | `create_initial_revision` | `Django Signal (post_save)` | `core.SshPublicKey` | Create an initial reversion snapshot when an object is first created. |
 | `create_initial_revision` | `Django Signal (post_save)` | `core.NotificationTemplate` | Create an initial reversion snapshot when an object is first created. |
 | `create_initial_revision` | `Django Signal (post_save)` | `structure.Customer` | Create an initial reversion snapshot when an object is first created. |
+| `create_initial_revision` | `Django Signal (post_save)` | `structure.Project` | Create an initial reversion snapshot when an object is first created. |
 | `create_initial_revision` | `Django Signal (post_save)` | `invoices.Invoice` | Create an initial reversion snapshot when an object is first created. |
 | `create_initial_revision` | `Django Signal (post_save)` | `marketplace.Resource` | Create an initial reversion snapshot when an object is first created. |
 | `create_initial_revision` | `Django Signal (post_save)` | `marketplace.Offering` | Create an initial reversion snapshot when an object is first created. |
@@ -110947,6 +111142,7 @@ td:nth-child(4) {
 | `create_notification_about_permission_request_has_been_rejected` | `Django Signal (post_save)` | `users.PermissionRequest` | Notify the requester when their permission request has been rejected. |
 | `create_notification_about_permission_request_has_been_submitted` | `Django Signal (post_save)` | `users.PermissionRequest` | Send a notification when a permission request has been submitted. |
 | `create_project_metadata_completion` | `Django Signal (post_save)` | `structure.Project` | Create ChecklistCompletion for project metadata when a project is created. |
+| `create_project_revision_on_update` | `Django Signal (post_save)` | `structure.Project` | Snapshot a project whenever a field other than the ignored ones changes. |
 | `create_revision_on_update` | `Django Signal (post_save)` | `core.User` | Snapshot a user whenever an audited field actually changes. See |
 | `deactivate_user_if_no_roles` | `Custom Signal (role_revoked)` | `—` | Deactivate a user if they no longer have any active roles. |
 | `delete_error_message` | `Custom Signal (post_transition)` | `structure.ServiceSettings` | Delete error message if instance state changed from erred |
@@ -111728,11 +111924,11 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 760
+Total unique handlers found: 762
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 2 handlers
-- **waldur_core**: 349 handlers
+- **waldur_core**: 351 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
 - **waldur_mastermind**: 350 handlers
