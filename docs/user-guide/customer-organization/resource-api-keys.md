@@ -11,6 +11,22 @@ provider's site agent, which carries it out on the backend and reports back. A
 key therefore shows a transitional state (**Creating**, **Rotating**,
 **Pausing**, **Resuming**, **Updating**, **Deleting**) until the agent confirms the change.
 
+## The keys a new resource starts with
+
+The keys a new resource starts with depend on whether the provider manages keys
+one by one (see [For service providers](#for-service-providers)):
+
+- **Without key management**, the resource is created with **two keys**, both
+  shared by the project. There are two so that one keeps working while the other
+  is rotated.
+- **With key management**, the resource starts with **no keys**. Its **API
+  keys** tab stays empty until someone [requests a key](#requesting-a-key). To
+  replace a key without interruption, request a new one, move your clients to
+  it, and then delete the old one.
+
+A resource restored after termination follows the same rule. Turning key
+management on or off later does not add or remove keys on existing resources.
+
 ## The API keys tab
 
 Open the resource and select the **API keys** tab.
@@ -77,7 +93,7 @@ monthly [limits](#limits): such a key is about to be paused.
 
 ## Requesting a key
 
-Project managers and organization owners can request additional keys with
+Project managers and organization owners can request keys with
 **Request key**:
 
 1. Optionally choose an **Assignee** — only project members are offered. Leave
@@ -239,7 +255,8 @@ control the tab:
   restrictions, pausing and deleting. It is available on site-agent offerings.
   Turn it on only if the backend behind the site agent supports per-key
   management, such as the Envoy AI Gateway. Other backends, such as Ceph S3,
-  fail those actions.
+  fail those actions. With it on, new resources start with no keys instead of
+  two shared ones; existing resources keep theirs.
 - **Hide API keys tab** removes the tab from the offering's resources.
 
 The models offered in the key dialogs are the choices of the offering's
