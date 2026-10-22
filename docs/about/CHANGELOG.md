@@ -1,5 +1,56 @@
 # Changelog
 
+## 8.1.4-rc.2 - 2026-10-22
+
+### Highlights
+
+Cost policies now explain themselves. Waldur shows why each policy fires or waits, records what started each evaluation and which gate decided it, and keeps a version history of policy changes. Resource API keys are easier to manage: you can pick "All models" explicitly, the person a key is assigned to can rotate it, and the site agent is told when a key changes hands. Organization owners and readers get access to organization reporting through a new permission, and platform settings now live in a built-in settings store instead of django-constance.
+
+### What's New
+
+- **Cost policy status**: Each cost policy now reports why it fires or is waiting. The policy list shows this as a single status badge and lists the organization credit only once. The project's "what happens next" view says when a credit is holding a policy back.
+- **Cost policy audit trail**: Waldur records what started each cost policy evaluation, who started it, and which gate decided the outcome. Project credit changes made by staff now appear in the project's audit log.
+- **Version history**: Cost policies and projects now keep a version history. You can open a policy's history from its actions, and staff and support can open a project's history from the project list.
+- **Organization reporting permission**: A new permission, CUSTOMER.VIEW_REPORTING, gives access to organization reporting. Organization owners and readers have it.
+- **MCP server groundwork**: Waldur now includes an early skeleton of a Model Context Protocol (MCP) server. It authenticates with personal access tokens and is started with the `mcp_server` management command.
+- **Project resources at a glance**: You can expand a project in the organization project list to see its resources.
+- **SLURM placement in proposals**: Proposal resource requests now show the SLURM QoS and partition.
+
+### Improvements
+
+- **Resource API key models**: An empty model list on an API key now means no models, and `*` means every model. API key dialogs have a new "All models" checkbox.
+- **Resource API key management**: The person a key is assigned to can rotate it from the resource page. Each person can hold only one API key per resource. The site agent is notified when a key is reassigned. The API keys tab now appears on managed resources even before they have any keys.
+- **Settings store**: Platform settings have moved from django-constance to a built-in settings store, and a migration imports existing settings. The Helm Matrix cleanup now works with whichever settings table is present.
+- **AI assistant**: Chat tools now check tool sets and roles themselves. The anonymous marketplace discovery chat has new access-guidance rules, and its KPIs show how often searches return no results.
+- **Support requests**: Ticket comments now go to the backend the ticket belongs to, and fail gracefully if that backend can't take them. Support requests opened from an offering no longer use the offering's provider as the organization, and the caller can follow the request.
+- **Notification settings**: Notification event groups now have readable titles, descriptions and sections.
+- **Maintenance badges**: A maintenance window that is currently open shows as in progress, and its badge sits on its own line in the resource list.
+- **Tables**: Tables page through the rows they already hold, and short lists no longer show a pager.
+- **Page loading**: A loading bar shows while you move between pages. The startup splash screen is branded and has slow-loading and error states.
+- **Privacy and impersonation**: The user Audit log tab and IP column are hidden from viewers who aren't allowed to read them. Staff impersonating a user can see the user's API token even when it is concealed.
+- **Smaller UI touches**: OpenStack subnets without a name show their CIDR instead. The project hero bar now works as navigation rather than tabs. The affiliation dialog requires the start date to be before the end date. Onboarding verification statuses are now capitalized.
+- **Interface migration**: The header, breadcrumbs, modals and page layout have moved from Metronic and Bootstrap to shared Waldur UI components and Tailwind.
+- **Dependency updates**: Backend libraries (aiohttp, Pillow, certifi, pypdf) and frontend tooling (vite, markdown-it, vitest, Storybook) were updated to fix security advisories.
+
+### Bug Fixes
+
+- Marketplace resources return to the OK state when their backend recovers.
+- Resource creation is now checked against the credit gates of the cost policy itself.
+- Credit compensations no longer count toward a total limit's billed quantity.
+- Event filters by UUID now match events filed on a project's or organization's feed. The credit and access subnet history logs are now read through the organization scope.
+- The API now declares the OpenStack instance `server_group` field as nullable.
+- Bulk invitations no longer stall when the same email is invited to several projects.
+- Fixed a landing page crash ("Converting circular structure to JSON"), and a proposal page crash for staff before the call loads.
+- The cookie consent dialog no longer reopens after you close or accept it.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [31 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.4-rc.1...8.1.4-rc.2) - Cost policy status, evaluation records and history, resource API key rules, CUSTOMER.VIEW_REPORTING, project version history, an MCP server skeleton, the built-in settings store and tighter chat tool checks.
+- **Waldur Homeport**: [46 commits](https://github.com/waldur/waldur-homeport/compare/8.1.4-rc.1...8.1.4-rc.2) - UI for cost policy status and history, API key "All models" and rotation, organization reporting access and project version history. Also a new boot splash and loading bar, and the move of the header, breadcrumbs, modals and layout to Waldur UI.
+- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.1.4-rc.1...8.1.4-rc.2) - Matrix settings cleanup now works with the new settings store.
+
+---
+
 ## 8.1.4-rc.1 - 2026-10-18
 
 ### Highlights
