@@ -90,6 +90,12 @@ Gate 2 is only consulted once gate 1 is already open — a `use_credit=False` po
 
 In practice, a credit-funded policy fires as soon as the month's usage has spent the credit down to the limit, rather than at the month-end billing run. With period **Total** and earlier uncovered cost already above the limit, gate 1 stays open permanently and gate 2 alone decides, so `limit_cost` effectively means "act when less than this much credit remains".
 
+### Why a cost policy fired, reset, or is waiting
+
+Every evaluation records which check decided it. When an evaluation fires or resets a policy, the events of the actions it runs (`request_downscaling`, `reset_downscaling`, `request_pausing`, `notify_*`, and so on) carry that decision in their context: `gate`, the check that decided, and the figures it compared. The audit log lists these events. The figures are in the event's context, which the API returns (`GET /api/events/`).
+
+For what each field and each `gate` value means, with a worked example, see [Why a cost policy fired or reset](../../user-guide/customer-organization/cost-and-usage-policies.md#why-a-cost-policy-fired-or-reset) in the user guide.
+
 For the full mechanics — how compensation actually gets computed and persisted, and a verified worked example of the two gates disagreeing — see [Cost Policies and Compensation](../../developer-guide/guides/billing-and-invoicing.md#cost-policies-and-compensation).
 
 ## Related concepts
