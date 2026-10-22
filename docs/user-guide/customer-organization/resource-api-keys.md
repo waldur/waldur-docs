@@ -48,8 +48,10 @@ Each row is one key:
 
 Expand a row to see every component: its usage this month, and each of the
 key's limits on a shorter or longer period, such as **Token cost · Daily
-limit**. A limit marked *(inherited)* is the resource's own limit: the key has
-no monthly limit of its own for that component.
+limit**. A limit marked *(inherited)* is the resource's spending limit for that
+component and period. It is the one in force because the key has no limit of
+its own for that period, or because its own limit is higher than the
+resource's.
 
 ![A key's usage per component](../img/resource-api-keys-row-details.png)
 
