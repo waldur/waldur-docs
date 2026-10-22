@@ -217,13 +217,15 @@ and a monthly limit, so one person's run cannot spend the group's month on a
 Tuesday.
 
 - **Monthly** is available on every component. The other periods are available
-  where the provider lets customers set spending limits on the component for
-  its resources.
+  where the provider lets customers set
+  [spending limits](resource-spending-limits.md) on the component for its
+  resources.
 - Periods are calendar periods in UTC: a day resets at 00:00 UTC, a week on
   Monday, a month on the 1st, a quarter on 1 January, April, July and October,
   and a year on 1 January. The reset time is shown next to each field.
-- A key's limit may not exceed the resource's own spending limit for the same
-  period ("Up to …" under the field), and a shorter period's limit may not
+- A key's limit may not exceed the resource's own
+  [spending limit](resource-spending-limits.md) for the same period ("Up to …"
+  under the field), and a shorter period's limit may not
   exceed a longer one's: daily ≤ weekly ≤ monthly ≤ quarterly ≤ yearly.
 - A limit must be above **0**. To stop a key, pause it.
 
