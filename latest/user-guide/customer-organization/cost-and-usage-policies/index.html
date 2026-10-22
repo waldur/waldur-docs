@@ -19626,7 +19626,7 @@ model, see <a href="../../../about/concepts/policies/">Policies</a>.</p>
 <p>By default, the policy accounts for any available project or organization credit — credit is subtracted before the limit is enforced, so a project with sufficient credit does not trigger the policy. Disable "Account for available credit" to enforce the limit against the raw invoice cost, regardless of credit balance.</p>
 <p>The credit that counts is what is left after this month's usage so far, so the policy acts as soon as usage has spent the credit down to the limit — it does not wait for the month-end billing run. With the period set to <strong>Total</strong>, cost from earlier months stays in the total; once that alone exceeds the limit, the limit effectively means "act when less than this much credit remains". To cap a single month's spend instead, use a monthly period.</p>
 <h3 id="what-a-cost-policy-is-doing-now">What a cost policy is doing now</h3>
-<p>The cost policy list shows, next to <strong>Action triggered</strong>, what the policy's latest evaluation found, so a policy that is over its limit but waiting for credit does not look broken. <strong>Current cost</strong> is the figure the policy compares with its threshold: the cost in the policy's period, less what credit pays.
+<p>The <strong>Action triggered</strong> column shows one status per policy: what its latest evaluation found. A policy that is over its limit but waiting for credit therefore does not look broken. <strong>Current cost</strong> is the figure the policy compares with its threshold: the cost in the policy's period, less what credit pays. The organization's credit, as its balance at the start of the month, is shown once under the list title.
     <a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/Cost_policy_status_list.png" data-desc-position="bottom"><img alt="Cost policy statuses" src="../../img/Cost_policy_status_list.png"></a></p>
 <table>
 <thead>
@@ -19642,25 +19642,25 @@ model, see <a href="../../../about/concepts/policies/">Policies</a>.</p>
 </tr>
 <tr>
 <td><strong>Waiting for project credit</strong> / <strong>Waiting for organization credit</strong></td>
-<td>The cost is over the threshold, but that credit still has more left than the threshold. The line under it shows how much is left; the policy fires once it falls to the threshold.</td>
+<td>The cost is over the threshold, but that credit still has more left than the threshold. The policy fires once it falls to the threshold.</td>
 </tr>
 <tr>
-<td><strong>Limit reached, actions pending</strong></td>
-<td>The policy fires on the current figures, and its actions run at its next evaluation.</td>
+<td><strong>Actions pending</strong></td>
+<td>The cost is over the threshold and the policy fires on the current figures. Its actions run at its next evaluation.</td>
 </tr>
 <tr>
 <td><strong>Limit reached</strong></td>
-<td>The policy has fired and its actions have run.</td>
+<td>The policy has fired and its actions have run. For an action that changes resources, such as pausing, the number of resources it changed is shown next to the status.</td>
 </tr>
 <tr>
 <td><strong>Resets at next evaluation</strong></td>
-<td>The policy fired earlier but is no longer over its limit, for example after a credit top-up; its actions are undone at its next evaluation.</td>
+<td>The policy fired earlier but is no longer over its limit, for example after a credit top-up. Its actions are undone at its next evaluation.</td>
 </tr>
 </tbody>
 </table>
-<p>Point at the status, or move to it with the keyboard, to see the full reason with the figures:
+<p>Point at the status, or move to it with the keyboard, to see the full reason with the figures: the cost, the threshold and, for a policy waiting for credit, how much credit is left.
     <a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/Cost_policy_status_tooltip.png" data-desc-position="bottom"><img alt="Reason a cost policy waits" src="../../img/Cost_policy_status_tooltip.png"></a></p>
-<p>Project managers and members see the same statuses, but not the organization's credit: for a policy held by the organization credit they see "Credit left is above the limit" without the amount.</p>
+<p>Project managers and members see the same statuses, but not the organization's credit. For a policy held by the organization credit, the reason they see leaves out the amount.</p>
 <p>On a project's dashboard, the credit card shows a warning when one of the project's cost policies has reached its limit and its actions are about to run, or when the credit left is within 20 % of a policy's threshold.</p>
 <h3 id="why-a-cost-policy-fired-or-reset">Why a cost policy fired or reset</h3>
 <p>When a project or organization cost policy fires or resets, the event of each action it runs (for example "request downscaling" or "reset downscaling") records why. These events are listed under <strong>Audit logs</strong> for the project and the organization. The audit log does not show the figures yet; they are in the event's <code>context</code>, which the API returns (<code>GET /api/events/?event_type=request_downscaling</code>).</p>
