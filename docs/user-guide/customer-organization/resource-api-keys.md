@@ -38,16 +38,18 @@ Each row is one key:
 - **Key ID** — the identifier the backend knows the key by.
 - **Assignee** — the person the key belongs to, or a dash for a key shared by
   the project.
-- **Limits & usage** — how much of its monthly limit the key has used, for the
-  component closest to its limit.
+- **Limits & usage** — how much of a limit the key has used, for the limit
+  closest to being reached, of any component and period.
 - **Models** — the models the key may call, **All models**, or **No models**
   for a key that cannot call any (see [Models](#models)).
 - **State** — **OK**, **Paused**, **Paused at limit**, **Erred**, or a
   transitional state while a change is in progress.
 - **Issued** — when the current key value was created or last rotated.
 
-Expand a row to see every component. A limit marked *(inherited)* is the
-resource's own limit: the key has no limit of its own for that component.
+Expand a row to see every component: its usage this month, and each of the
+key's limits on a shorter or longer period, such as **Token cost · Daily
+limit**. A limit marked *(inherited)* is the resource's own limit: the key has
+no monthly limit of its own for that component.
 
 ![A key's usage per component](../img/resource-api-keys-row-details.png)
 
@@ -101,8 +103,9 @@ Project managers and organization owners can request keys with
    later (see [Giving a key to someone else](#giving-a-key-to-someone-else)), and
    a person can be the assignee of only one key of a resource: choosing someone
    who already holds one is refused.
-2. Optionally set **limits** per component. Each field shows the resource's
-   limit; leave a field empty to let the key use up to the resource limit.
+2. Optionally set **limits** per component and period (see [Limits](#limits)).
+   Each field shows the resource's limit for that period; leave a field empty
+   to let the key use up to the resource limit.
 3. Choose the **Models** the key may call. **All models** is ticked to begin
    with. Untick it to choose models one by one (see [Models](#models)).
 4. Click **Submit**.
@@ -218,20 +221,41 @@ applied. A paused key gets its new models when it is resumed.
 
 ## Limits
 
-Limits are **monthly** and enforced by Waldur:
+A key can have a limit per component for each **period** the provider offers:
+daily, weekly, monthly, quarterly or yearly. A research group that puts a
+monthly budget into a resource can, for example, give each member's key a daily
+and a monthly limit, so one person's run cannot spend the group's month on a
+Tuesday.
 
-- When a key's usage this month reaches one of its limits, Waldur pauses that
-  key only. The resource and its other keys keep working. The key shows
-  **Paused at limit**.
+- **Monthly** is available on every component. The other periods are available
+  where the provider lets customers set spending limits on the component for
+  its resources.
+- Periods are calendar periods in UTC: a day resets at 00:00 UTC, a week on
+  Monday, a month on the 1st, a quarter on 1 January, April, July and October,
+  and a year on 1 January. The reset time is shown next to each field.
+- A key's limit may not exceed the resource's own spending limit for the same
+  period ("Up to …" under the field), and a shorter period's limit may not
+  exceed a longer one's: daily ≤ weekly ≤ monthly ≤ quarterly ≤ yearly.
+- A limit must be above **0**. To stop a key, pause it.
+
+Limits are enforced by Waldur:
+
+- When a key's usage in a period reaches its limit for that period, Waldur
+  pauses that key only. The resource and its other keys keep working. The key
+  shows **Paused at limit**; hover over it to see which limit stopped it and
+  when it resumes.
 - A key paused at its limit is resumed automatically once it is under its
-  limits again — when a new month begins, or when you raise or remove the limit
-  that stopped it.
+  limits again — within a few minutes of the reset of the limit that stopped it,
+  or when you raise or remove that limit.
 - If you resume such a key by hand while it is still over its limit, it is
   paused again on the next usage report.
 
 !!! note
     Usage is reported by the provider periodically, so a key can go somewhat
-    over its limit before it is paused.
+    over its limit before it is paused. Daily, weekly, quarterly and yearly
+    limits need the provider to report each key's usage per day. With a
+    provider that reports only monthly totals, monthly limits are enforced in
+    full, and a quarterly or yearly limit counts only the current month.
 
 ## Pausing, resuming and deleting
 
