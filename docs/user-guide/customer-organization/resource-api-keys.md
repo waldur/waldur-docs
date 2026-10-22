@@ -64,7 +64,8 @@ eye icon, and the copy button puts it on the clipboard.
 
 ![Revealing an API key](../img/resource-api-keys-reveal.png)
 
-Any member of the resource's project can reveal a shared key. A key with an
+Anyone with a role in the resource's project or in its organization can reveal
+a shared key. A key with an
 **assignee** can be revealed only by that person (and by staff and support).
 
 !!! tip
@@ -91,7 +92,7 @@ resuming, deleting and editing it stay with organization owners.
 
 A paused key cannot be rotated until it has been resumed. Where limits are
 enforced, an assignee also cannot rotate a key that has reached one of its
-monthly [limits](#limits): such a key is about to be paused.
+[limits](#limits), of any period: such a key is about to be paused.
 
 ## Requesting a key
 
@@ -132,8 +133,7 @@ On an active key the change is sent to the provider and the key shows
 applied when the key is resumed.
 
 The assignee of a key can rotate it themselves, unless it has reached one of
-its monthly [limits](#limits). Every other change stays with whoever can
-request keys.
+its [limits](#limits). Every other change stays with whoever can request keys.
 
 ## Giving a key to someone else
 
@@ -228,13 +228,15 @@ and a monthly limit, so one person's run cannot spend the group's month on a
 Tuesday.
 
 - **Monthly** is available on every component. The other periods are available
-  where the provider lets customers set spending limits on the component for
-  its resources.
+  where the provider lets customers set
+  [spending limits](resource-spending-limits.md) on the component for its
+  resources.
 - Periods are calendar periods in UTC: a day resets at 00:00 UTC, a week on
   Monday, a month on the 1st, a quarter on 1 January, April, July and October,
   and a year on 1 January. The reset time is shown next to each field.
-- A key's limit may not exceed the resource's own spending limit for the same
-  period ("Up to …" under the field), and a shorter period's limit may not
+- A key's limit may not exceed the resource's own
+  [spending limit](resource-spending-limits.md) for the same period ("Up to …"
+  under the field), and a shorter period's limit may not
   exceed a longer one's: daily ≤ weekly ≤ monthly ≤ quarterly ≤ yearly.
 - A limit must be above **0**. To stop a key, pause it.
 
@@ -244,11 +246,13 @@ Limits are enforced by Waldur:
   pauses that key only. The resource and its other keys keep working. The key
   shows **Paused at limit**; hover over it to see which limit stopped it and
   when it resumes.
-- A key paused at its limit is resumed automatically once it is under its
-  limits again — within a few minutes of the reset of the limit that stopped it,
-  or when you raise or remove that limit.
+- A key paused at its limit is resumed automatically once it is under every
+  limit it has reached — within a few minutes of the reset of the last of them,
+  or when you raise or remove them. A longer limit reached while the key is
+  paused holds it too: a key paused by its daily limit that then reaches its
+  monthly one stays paused until the month resets.
 - If you resume such a key by hand while it is still over its limit, it is
-  paused again on the next usage report.
+  paused again as soon as the provider confirms the resume.
 
 !!! note
     Usage is reported by the provider periodically, so a key can go somewhat
