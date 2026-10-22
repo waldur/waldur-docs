@@ -79,16 +79,19 @@ afterwards. The resource's other keys are not affected.
 
 Who can rotate a key:
 
-- **Organization owners** can rotate any key of the resource.
+- **Organization owners**, **project managers** and **project
+  administrators** manage the resource's keys, and can rotate any of them.
 - The **assignee** of a key can rotate their own key, from the **Actions** menu
-  or with the **Rotate** button shown when revealing it. They do not need an
-  organization owner for it, so a key that may have leaked can be replaced
-  straight away.
-- Other project members cannot rotate keys. A key shared by the project has no
-  assignee, so it is rotated by an organization owner.
+  or with the **Rotate** button shown when revealing it. They do not need
+  anyone who manages the keys for it, so a key that may have leaked can be
+  replaced straight away.
+- Project members cannot rotate a key that is not assigned to them. A key
+  shared by the project has no assignee, so it is rotated by someone who
+  manages the keys.
 
 Rotating is the only change an assignee can make to their key. Pausing,
-resuming, deleting and editing it stay with organization owners.
+resuming, deleting and editing it stay with organization owners, project
+managers and project administrators.
 
 A paused key cannot be rotated until it has been resumed. Where limits are
 enforced, an assignee also cannot rotate a key that has reached one of its
@@ -96,8 +99,8 @@ enforced, an assignee also cannot rotate a key that has reached one of its
 
 ## Requesting a key
 
-Project managers and organization owners can request keys with
-**Request key**:
+Organization owners, project managers and project administrators can request
+keys with **Request key**:
 
 1. Optionally choose an **Assignee** — only project members are offered. Leave
    it empty for a key shared by the project. The assignee cannot be changed
@@ -280,7 +283,8 @@ change, and **Delete**. A key whose settings update failed can also be corrected
 with **Edit key settings**, which sends the update again.
 
 The assignee of a key is offered **Retry** only when the change that failed was
-a rotation of it. Any other failed change is retried by an organization owner.
+a rotation of it. Any other failed change is retried by an organization owner,
+a project manager or a project administrator.
 
 ## For service providers
 
