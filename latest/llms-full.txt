@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-22T02:03:53.590701Z
+Generated: 2026-10-22T08:52:35.165295Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -9206,6 +9206,23 @@ options:
 
 Run the Matrix bot: Waldur's encrypted member of every Waldur room. It answers commands and posts everything Waldur sends as the bot. Run exactly one; a second process refuses to start while the first holds the bot's lease. Until the homeserver and appservice are configured it waits, and when they change it starts over with the new settings.
 
+## mcp_server
+
+Serve the remote MCP endpoint (/mcp) and /health. The endpoint answers 404 while the MCP_ENABLED setting is off.
+
+```bash
+
+usage: waldur mcp_server [--host HOST] [--port PORT] [--db-threads DB_THREADS]
+
+options:
+  --host HOST
+  --port PORT
+  --db-threads DB_THREADS
+                        Threads that run database calls; each holds one
+                        connection.
+
+```
+
 ## migrate_fresh
 
 Create the schema of an empty database from the models and record all migrations as applied.
@@ -13718,6 +13735,14 @@ Maximum number of network ACL entries per personal access token.
 **Default value:** 50
 
 Maximum audit events a single personal access token may generate per hour, counted separately for source-address changes and for rejections. Bounds the event table against a caller who holds one valid token and rotates source addresses.
+
+### MCP server
+
+#### MCP_ENABLED
+
+**Type:** bool
+
+Serve the remote MCP endpoint (/mcp) from the `waldur mcp_server` process, so AI agent clients can act as the signed-in user.
 
 ### Site Agent Logs
 
@@ -20236,6 +20261,7 @@ td:nth-child(4) {
 | `waldur-marketplace-script-cleanup-orphaned-k8s-resources` | `waldur_marketplace_script.cleanup_orphaned_k8s_resources` | 1 hour | Remove orphaned Kubernetes Jobs and ConfigMaps created by Waldur that are older than 1 hour. |
 | `waldur-marketplace-script-pull-resources` | `waldur_marketplace_script.pull_resources` | 1 hour | Pull resources from marketplace script offerings by executing configured pull scripts. |
 | `waldur-marketplace-script-remove-old-dry-runs` | `waldur_marketplace_script.remove_old_dry_runs` | 1 day | Remove old dry run records that are older than one day. |
+| `waldur-marketplace-send-outdated-api-key-models` | `waldur_mastermind.marketplace.send_outdated_api_key_models` | 1 hour | Send settled API keys the models their resource changed meanwhile. |
 | `waldur-marketplace-sync-component-usage-summaries` | `waldur_mastermind.marketplace.sync_component_usage_summaries` | 1 day | Runs nightly to keep the current month's ComponentUsageMonthly records up to date. |
 | `waldur-mastermind-reject-past-bookings` | `waldur_mastermind.booking.reject_past_bookings` | Cron: `0 10 * * * (m/h/dM/MY/d)` | Reject booking resources that have start times in the past. |
 | `waldur-mastermind-send-notifications-about-upcoming-bookings` | `waldur_mastermind.booking.send_notifications_about_upcoming_bookings` | Cron: `0 9 * * * (m/h/dM/MY/d)` | Send email notifications to users about their upcoming bookings. |
@@ -87284,6 +87310,26 @@ By default, the policy accounts for any available project or organization credit
 
 The credit that counts is what is left after this month's usage so far, so the policy acts as soon as usage has spent the credit down to the limit — it does not wait for the month-end billing run. With the period set to **Total**, cost from earlier months stays in the total; once that alone exceeds the limit, the limit effectively means "act when less than this much credit remains". To cap a single month's spend instead, use a monthly period.
 
+### What a cost policy is doing now
+
+The cost policy list shows, next to **Action triggered**, what the policy's latest evaluation found, so a policy that is over its limit but waiting for credit does not look broken. **Current cost** is the figure the policy compares with its threshold: the cost in the policy's period, less what credit pays.
+    [Image: Cost policy statuses]
+
+| Status | Meaning |
+|---|---|
+| **Below limit** | The cost after credit is at or below the threshold. |
+| **Waiting for project credit** / **Waiting for organization credit** | The cost is over the threshold, but that credit still has more left than the threshold. The line under it shows how much is left; the policy fires once it falls to the threshold. |
+| **Limit reached, actions pending** | The policy fires on the current figures, and its actions run at its next evaluation. |
+| **Limit reached** | The policy has fired and its actions have run. |
+| **Resets at next evaluation** | The policy fired earlier but is no longer over its limit, for example after a credit top-up; its actions are undone at its next evaluation. |
+
+Point at the status, or move to it with the keyboard, to see the full reason with the figures:
+    [Image: Reason a cost policy waits]
+
+Project managers and members see the same statuses, but not the organization's credit: for a policy held by the organization credit they see "Credit left is above the limit" without the amount.
+
+On a project's dashboard, the credit card shows a warning when one of the project's cost policies has reached its limit and its actions are about to run, or when the credit left is within 20 % of a policy's threshold.
+
 ### Why a cost policy fired or reset
 
 When a project or organization cost policy fires or resets, the event of each action it runs (for example "request downscaling" or "reset downscaling") records why. These events are listed under **Audit logs** for the project and the organization. The audit log does not show the figures yet; they are in the event's `context`, which the API returns (`GET /api/events/?event_type=request_downscaling`).
@@ -112513,6 +112559,7 @@ td:nth-child(4) {
 | `send_resource_messages_on_project_move` | `Custom Signal (project_moved)` | `—` | Push a RESOURCE message for every active site-agent resource in a moved project. |
 | `send_resource_state_change_to_message_queue` | `Django Signal (post_save)` | `marketplace.Resource` | Emit a resource event on creation and every state transition. |
 | `send_resource_update_message_to_queue` | `Django Signal (post_save)` | `marketplace.Resource` | No description |
+| `send_resource_user_sync_on_api_key_assignee_change` | `Custom Signal (resource_api_key_assignee_changed)` | `—` | Ask the agent to sync the users of a resource whose key changed hands. |
 | `send_role_granted_message_to_queue` | `Custom Signal (role_granted)` | `—` | No description |
 | `send_role_revoked_message_to_queue` | `Custom Signal (role_revoked)` | `—` | No description |
 | `send_user_attribute_update_message` | `Django Signal (post_save)` | `core.User` | Publish OFFERING_USER events when User profile attributes change. |
@@ -112571,6 +112618,8 @@ td:nth-child(4) {
 | `trigger_scim_sync_on_offering_user_ok` | `Django Signal (post_save)` | `marketplace.OfferingUser` | Trigger SCIM entitlements synchronization when OfferingUser transitions to OK with username. |
 | `trigger_scim_sync_on_resource_ok` | `Django Signal (post_save)` | `marketplace.Resource` | Trigger SCIM entitlements synchronization when resource transitions to OK. |
 | `trigger_user_action_recalculation_on_order_state_change` | `Django Signal (post_save)` | `marketplace.Order` | Trigger immediate UserAction recalculation when Order state changes. |
+| `update_api_keys_on_resource_models_change` | `Django Signal (post_save)` | `marketplace.Resource` | Send a resource's keys the models its changed selection leaves them. |
+| `update_api_keys_when_offering_models_change` | `Django Signal (post_save)` | `marketplace.Offering` | Send keys their effective models when the offering changes them: key |
 | `update_argocd_secret_when_resource_options_changed` | `Django Signal (post_save)` | `marketplace.Resource` | No description |
 | `update_cache_when_invoice_item_is_deleted` | `Django Signal (post_delete)` | `invoices.InvoiceItem` | No description |
 | `update_cache_when_invoice_item_is_updated` | `Django Signal (post_save)` | `invoices.InvoiceItem` | No description |
@@ -112679,14 +112728,14 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 763
+Total unique handlers found: 766
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_autoprovisioning**: 2 handlers
 - **waldur_core**: 352 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 350 handlers
+- **waldur_mastermind**: 353 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 14 handlers
 - **waldur_openstack_replication**: 1 handlers
