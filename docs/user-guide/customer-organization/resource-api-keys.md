@@ -97,7 +97,10 @@ Project managers and organization owners can request keys with
 **Request key**:
 
 1. Optionally choose an **Assignee** — only project members are offered. Leave
-   it empty for a key shared by the project.
+   it empty for a key shared by the project. The assignee cannot be changed
+   later (see [Giving a key to someone else](#giving-a-key-to-someone-else)), and
+   a person can be the assignee of only one key of a resource: choosing someone
+   who already holds one is refused.
 2. Optionally set **limits** per component. Each field shows the resource's
    limit; leave a field empty to let the key use up to the resource limit.
 3. Choose the **Models** the key may call. **All models** is ticked to begin
@@ -113,32 +116,40 @@ created it. Its key ID is assigned at that point.
 
 ![A requested key waiting to be created](../img/resource-api-keys-requested.png)
 
-## Changing a key's assignee, limits and models
+## Changing a key's limits and models
 
 Choose **Edit key settings**. **Save** stays disabled until you change
 something.
 
 ![Editing a key's settings](../img/resource-api-keys-edit.png)
 
-- Changing the **assignee** of a key that has been created **rotates** it: its
-  current value stops working, and the new assignee reveals the new value.
-  Clearing the assignee rotates it too. The dialog warns about this before you
-  save. The assignee can be changed only while the key is **OK**, or **Erred**
-  after a failed rotation: resume a paused key, wait for a change in progress,
-  or retry a failed change first. A requested key that has not been created
-  yet takes the new assignee without a rotation.
-- A person can be the assignee of only one key of a resource. Choosing someone
-  who already holds a key is refused.
-- **Limits** and **models** can be changed while the key is **OK** or
-  **Paused**. On an active key the change is sent to the provider and the key
-  shows **Updating** until it is applied. On a paused key the change is stored
-  and applied when the key is resumed.
-
-![Changing the assignee rotates the key](../img/resource-api-keys-edit-assignee.png)
+**Limits** and **models** can be changed while the key is **OK** or **Paused**.
+On an active key the change is sent to the provider and the key shows
+**Updating** until it is applied. On a paused key the change is stored and
+applied when the key is resumed.
 
 The assignee of a key can rotate it themselves, unless it has reached one of
 its monthly [limits](#limits). Every other change stays with whoever can
 request keys.
+
+## Giving a key to someone else
+
+A key's assignee is chosen when the key is requested and stays until the key is
+deleted. It cannot be changed or cleared. A key's limits and its usage this
+month belong to the key, not to whoever holds it, so a key that changed hands
+would count one person's use against another person's allowance.
+
+To give a key to someone else:
+
+1. [Request a key](#requesting-a-key) with the new holder as its assignee, and
+   the limits and models the old key had.
+2. Once it is **OK**, move the clients that used the old key to the new one.
+3. [Delete](#pausing-resuming-and-deleting) the old key.
+
+Someone who leaves the project keeps any key assigned to them working until it
+is deleted. To cut them off, delete their key, and request a new one if someone
+else should take over their work. A key shared by the project stays shared: to
+give someone a personal key, request one for them.
 
 ## Models
 
@@ -283,5 +294,5 @@ key can. Remove a retired model from the backend as well.
     Without **Manage API keys one by one**, consumers can only reveal and rotate
     keys, and resume keys that were paused earlier. Per-key usage is not
     recorded, so limits are no longer enforced, but a key keeps its assignee:
-    only that person can still reveal it. Project managers and organization
-    owners can share such a key with the project again with **Unassign**.
+    only that person can still reveal it. Keys can be neither requested nor
+    deleted then, so such a key stays with its assignee.
