@@ -26,6 +26,26 @@ By default, the policy accounts for any available project or organization credit
 
 The credit that counts is what is left after this month's usage so far, so the policy acts as soon as usage has spent the credit down to the limit — it does not wait for the month-end billing run. With the period set to **Total**, cost from earlier months stays in the total; once that alone exceeds the limit, the limit effectively means "act when less than this much credit remains". To cap a single month's spend instead, use a monthly period.
 
+### What a cost policy is doing now
+
+The cost policy list shows, next to **Action triggered**, what the policy's latest evaluation found, so a policy that is over its limit but waiting for credit does not look broken. **Current cost** is the figure the policy compares with its threshold: the cost in the policy's period, less what credit pays.
+    ![Cost policy statuses](../img/Cost_policy_status_list.png)
+
+| Status | Meaning |
+|---|---|
+| **Below limit** | The cost after credit is at or below the threshold. |
+| **Waiting for project credit** / **Waiting for organization credit** | The cost is over the threshold, but that credit still has more left than the threshold. The line under it shows how much is left; the policy fires once it falls to the threshold. |
+| **Limit reached, actions pending** | The policy fires on the current figures, and its actions run at its next evaluation. |
+| **Limit reached** | The policy has fired and its actions have run. |
+| **Resets at next evaluation** | The policy fired earlier but is no longer over its limit, for example after a credit top-up; its actions are undone at its next evaluation. |
+
+Point at the status, or move to it with the keyboard, to see the full reason with the figures:
+    ![Reason a cost policy waits](../img/Cost_policy_status_tooltip.png)
+
+Project managers and members see the same statuses, but not the organization's credit: for a policy held by the organization credit they see "Credit left is above the limit" without the amount.
+
+On a project's dashboard, the credit card shows a warning when one of the project's cost policies has reached its limit and its actions are about to run, or when the credit left is within 20 % of a policy's threshold.
+
 ### Why a cost policy fired or reset
 
 When a project or organization cost policy fires or resets, the event of each action it runs (for example "request downscaling" or "reset downscaling") records why. These events are listed under **Audit logs** for the project and the organization. The audit log does not show the figures yet; they are in the event's `context`, which the API returns (`GET /api/events/?event_type=request_downscaling`).
