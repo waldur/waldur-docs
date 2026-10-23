@@ -49,6 +49,10 @@ with one field per period the provider offers:
   or a shorter period's limit above a longer one's is refused, and the order
   cannot be submitted until it is corrected.
 - A limit of **0** keeps the resource restricted for as long as it is set.
+- A notice under the limits says what reaching one does on this offering (see
+  [What happens at a limit](#what-happens-at-a-limit)): access pauses, or the
+  resource is downscaled, until that limit resets — or, where the provider has
+  set neither, reaching a limit is only reported.
 
 A plan that bills the component by limit takes no spending limits on it, so
 the section is not shown for it.
@@ -68,6 +72,8 @@ no provider approval.
   checked again straight away: if raising or removing limits brings usage under
   every limit, a restriction they caused lifts without waiting for the next
   usage report.
+- The dialog shows the same notice as the order form on what reaching a limit
+  does on this offering.
 
 A limit stays in force if the provider later stops offering its period. The
 dialog warns that some limits are on periods the provider no longer offers,
@@ -98,8 +104,9 @@ when each limit resets, and when usage was last reported.
     usage are still shown, but nothing is restricted when one is reached.
 
 A resource's [API keys](resource-api-keys.md#limits) can have limits of their
-own, each within the resource's limit for the same period. A key that reaches
-its limit is paused alone, and the resource keeps working.
+own, each within the resource's limits for the same and every longer period:
+under a resource limit of 40 a month, no key can have a daily limit of 50. A
+key that reaches its limit is paused alone, and the resource keeps working.
 
 ## For service providers
 
@@ -128,6 +135,11 @@ usage per day. Those limits add up the amounts reported for each UTC day, so
 offer them only where the site agent or integration reports per-day usage. An
 integration that reports a total for the month can offer monthly, quarterly and
 yearly limits.
+
+API keys have a setting of their own for this: a key is offered limits other
+than monthly only where the offering declares that the site agent reports each
+key's usage per day (see
+[Resource API keys](resource-api-keys.md#for-service-providers)).
 
 ### Pausing or downscaling at a limit
 
