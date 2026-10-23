@@ -38,16 +38,20 @@ Each row is one key:
 - **Key ID** — the identifier the backend knows the key by.
 - **Assignee** — the person the key belongs to, or a dash for a key shared by
   the project.
-- **Limits & usage** — how much of its monthly limit the key has used, for the
-  component closest to its limit.
+- **Limits & usage** — how much of a limit the key has used, for the limit
+  closest to being reached, of any component and period.
 - **Models** — the models the key may call, **All models**, or **No models**
   for a key that cannot call any (see [Models](#models)).
 - **State** — **OK**, **Paused**, **Paused at limit**, **Erred**, or a
   transitional state while a change is in progress.
 - **Issued** — when the current key value was created or last rotated.
 
-Expand a row to see every component. A limit marked *(inherited)* is the
-resource's own limit: the key has no limit of its own for that component.
+Expand a row to see every component: its usage this month, and each of the
+key's limits on a shorter or longer period, such as **Token cost · Daily
+limit**. A limit marked *(inherited)* is the resource's spending limit for that
+component and period. It is the one in force because the key has no limit of
+its own for that period, or because its own limit is higher than the
+resource's.
 
 ![A key's usage per component](../img/resource-api-keys-row-details.png)
 
@@ -62,7 +66,8 @@ eye icon, and the copy button puts it on the clipboard.
 
 ![Revealing an API key](../img/resource-api-keys-reveal.png)
 
-Any member of the resource's project can reveal a shared key. A key with an
+Anyone with a role in the resource's project or in its organization can reveal
+a shared key. A key with an
 **assignee** can be revealed only by that person (and by staff and support).
 
 !!! tip
@@ -89,7 +94,7 @@ resuming, deleting and editing it stay with organization owners.
 
 A paused key cannot be rotated until it has been resumed. Where limits are
 enforced, an assignee also cannot rotate a key that has reached one of its
-monthly [limits](#limits): such a key is about to be paused.
+[limits](#limits), of any period: such a key is about to be paused.
 
 ## Requesting a key
 
@@ -98,8 +103,9 @@ Project managers and organization owners can request keys with
 
 1. Optionally choose an **Assignee** — only project members are offered. Leave
    it empty for a key shared by the project.
-2. Optionally set **limits** per component. Each field shows the resource's
-   limit; leave a field empty to let the key use up to the resource limit.
+2. Optionally set **limits** per component and period (see [Limits](#limits)).
+   Each field shows the highest limit the key may have for that period; leave
+   a field empty to let the key use up to the resource limit.
 3. Choose the **Models** the key may call. **All models** is ticked to begin
    with. Untick it to choose models one by one (see [Models](#models)).
 4. Click **Submit**.
@@ -137,8 +143,7 @@ something.
 ![Changing the assignee rotates the key](../img/resource-api-keys-edit-assignee.png)
 
 The assignee of a key can rotate it themselves, unless it has reached one of
-its monthly [limits](#limits). Every other change stays with whoever can
-request keys.
+its [limits](#limits). Every other change stays with whoever can request keys.
 
 ## Models
 
@@ -207,16 +212,57 @@ applied. A paused key gets its new models when it is resumed.
 
 ## Limits
 
-Limits are **monthly** and enforced by Waldur:
+A key can have a limit per component for each **period** the provider offers:
+daily, weekly, monthly, quarterly or yearly. A research group that puts a
+monthly budget into a resource can, for example, give each member's key a daily
+and a monthly limit, so one person's run cannot spend the group's month on a
+Tuesday.
 
-- When a key's usage this month reaches one of its limits, Waldur pauses that
-  key only. The resource and its other keys keep working. The key shows
-  **Paused at limit**.
-- A key paused at its limit is resumed automatically once it is under its
-  limits again — when a new month begins, or when you raise or remove the limit
-  that stopped it.
+Which periods a key offers depends on how the provider set up the offering (see
+[For service providers](#for-service-providers)):
+
+- **Monthly** is available on every component of the offering, including one
+  the plan prices at zero: a LiteLLM cost cap, for example, is priced at zero
+  yet measures what the key spends.
+- **Daily**, **weekly**, **quarterly** and **yearly** limits are available only
+  where the provider's site agent reports each key's usage per day, and then on
+  the periods the provider lets customers set
+  [spending limits](resource-spending-limits.md) on for the component's
+  resources. Elsewhere a key can be limited per month only.
+- Where the provider does not let users limit keys, **Request key** and **Edit
+  key settings** show no limit fields.
+
+The limits themselves:
+
+- Periods are calendar periods in UTC: a day resets at 00:00 UTC, a week on
+  Monday, a month on the 1st, a quarter on 1 January, April, July and October,
+  and a year on 1 January. The reset time is shown next to each field.
+- A key's limit may not exceed the resource's own
+  [spending limit](resource-spending-limits.md) for the same period or for any
+  longer period ("Up to …" under the field). Under a resource limit of 40 a
+  month, for example, a key cannot have a daily limit of 50. The provider's
+  maximum caps the resource's limits, not the key's.
+- A shorter period's limit may not exceed a longer one's: daily ≤ weekly ≤
+  monthly ≤ quarterly ≤ yearly.
+- A limit must be above **0**. To stop a key, pause it.
+
+A limit the key already holds is kept, even once its period is no longer
+offered or the resource's limit has dropped below it, so that editing one period
+never forces a change to another. It is still enforced until you clear it.
+
+Limits are enforced by Waldur:
+
+- When a key's usage in a period reaches its limit for that period, Waldur
+  pauses that key only. The resource and its other keys keep working. The key
+  shows **Paused at limit**; hover over it to see which limit stopped it and
+  when it resumes.
+- A key paused at its limit is resumed automatically once it is under every
+  limit it has reached — within a few minutes of the reset of the last of them,
+  or when you raise or remove them. A longer limit reached while the key is
+  paused holds it too: a key paused by its daily limit that then reaches its
+  monthly one stays paused until the month resets.
 - If you resume such a key by hand while it is still over its limit, it is
-  paused again on the next usage report.
+  paused again as soon as the provider confirms the resume.
 
 !!! note
     Usage is reported by the provider periodically, so a key can go somewhat
@@ -243,10 +289,15 @@ with **Edit key settings**, which sends the update again.
 The assignee of a key is offered **Retry** only when the change that failed was
 a rotation of it. Any other failed change is retried by an organization owner.
 
+A key whose pause at its [limit](#limits) failed is still active at the
+provider, as the **Erred** state's tooltip says. Waldur sends the pause again
+every few minutes while the key is still over its limit, until the provider
+applies it. A key that is back under its limits by then is left **Erred** for
+you to retry or delete.
+
 ## For service providers
 
-Two options in the offering's **Integration → Resource display options**
-control the tab:
+The offering's **Integration → Resource display options** control the tab:
 
 ![Offering options for API keys](../img/resource-api-keys-offering-options.png)
 
@@ -257,6 +308,17 @@ control the tab:
   management, such as the Envoy AI Gateway. Other backends, such as Ceph S3,
   fail those actions. With it on, new resources start with no keys instead of
   two shared ones; existing resources keep theirs.
+- **Let users limit API keys**, shown once **Manage API keys one by one** is
+  on, lets users set [limits](#limits) on each key, within the resource's own
+  limits. It is on by default. Turned off, the key dialogs show no limit fields
+  and no new key limit is accepted; limits keys already hold stay, and are
+  enforced, until they are cleared.
+- **Site agent reports API key usage per day**, also shown once **Manage API
+  keys one by one** is on, is off by default. Keys are then limited per month
+  only. Turn it on to offer keys daily, weekly, quarterly and yearly limits, on
+  the periods each component offers to resources. Nothing checks it: turn it on
+  only if the site agent reports each key's usage per day, or those limits are
+  never reached. Limits keys already hold are kept when it is turned off.
 - **Hide API keys tab** removes the tab from the offering's resources.
 
 The models offered in the key dialogs are the choices of the offering's
