@@ -67,8 +67,22 @@ eye icon, and the copy button puts it on the clipboard.
 ![Revealing an API key](../img/resource-api-keys-reveal.png)
 
 Anyone with a role in the resource's project or in its organization can reveal
-a shared key. A key with an
-**assignee** can be revealed only by that person (and by staff and support).
+a shared key. A key with an **assignee** can be revealed only by that person.
+
+Being staff or support gives no extra right to reveal a key. Outside the
+resource's project and organization **Reveal** is disabled for them; inside it
+they reveal only what any other member could.
+Staff who need a key impersonate its assignee, or for a shared key a member of
+the project. Support users cannot impersonate, so they have no way to see a key
+they could not reveal themselves.
+
+Impersonation works only for a person who has signed in to Waldur before and
+has not signed out since; it does not matter whether their session has expired.
+Where passkeys are required for staff, the staff user must have signed in with
+their passkey.
+
+Each reveal appears in the resource's event log, and a reveal made through
+impersonation names the staff user as the impersonator.
 
 !!! tip
     If a key may have been exposed, [rotate it](#rotating-a-key).
