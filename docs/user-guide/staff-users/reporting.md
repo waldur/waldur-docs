@@ -3,11 +3,24 @@
 ## HomePort reports
 
 Waldur HomePort includes a number of built-in reports based on the user activity. Reports can be accessed by
-staff and support users from the "Reporting" sidebar menu.
+staff and support users from the **Reporting** sidebar menu.
+
+The **Overview** tab shows the number of service providers, offerings, active users, projects and
+resources, with charts of their growth. The buttons in the top right corner set the period: all
+time, 6 months or 12 months. The other tabs group the reports by topic:
+
+- **Resources** — usage, usage by user and organization quotas.
+- **Provider** — capacity of offering plans, a provider overview and provider revenue.
+- **Financial** — growth, monthly revenue by organization and offering costs.
+- **Proposals** — call performance, review progress and resource demand of calls for proposals.
+- **Users** — demographics, user analytics and affiliations.
+- **Operations** — orders, maintenance and provisioning statistics.
+
+Each chart has an **Export** menu to download its data.
 
 <figure markdown="span">
-  ![Homeport reports](../img/reporting-homeport.png)
-  <figcaption>List of built-in reports in HomePort</figcaption>
+  ![Reporting overview](../img/reporting-overview.png)
+  <figcaption>Overview tab of the Reporting menu</figcaption>
 </figure>
 
 ## Reports for organization owners

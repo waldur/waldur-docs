@@ -4,27 +4,35 @@ The portal allows you to customize its appearance to match your organization's b
 
 ## Accessing Branding Settings
 
-1. Navigate to the Administration section in the left-side menu
-2. Click on Settings
-3. Select the Branding tab
+1. Select **Administration** in the sidebar.
+2. Open **User interface → Branding**.
 
-![Branding](../img/path-to-branding.png)
+Each setting has an edit button; the search box finds a setting by name.
+
+![Branding settings](../img/branding-settings.png)
 
 ## Available Customisation Options
 
 ### Branding
 
-- **Site Name**: Sets the name of the organization.
-- **Page title**: It is used as page title.
+- **Site name**: Human-friendly name of the Waldur deployment.
+- **Short page title**: Prefix of the page title.
+- **Full page title**: Default page title when a page does not set its own.
 - **Site description**: Description of the Waldur deployment.
+- **Homeport URL**: Used for rendering callback URLs in HomePort.
+- **Rancher username input label**: Label of the username field in Rancher user access management.
+- **Disclaimer area text**: Text shown in the disclaimer area below the footer.
 
-### On the same page, you will find more sections to customise
+### On the same page, you will find more tabs to customise
 
-- Marketplace branding
+- Marketplace Branding
 - Notifications
 - Links
 - Theme
+- About us page
+- Login page
 - Images
+- Table settings
 
 !!! note
     All changes in branding settings will be applied system-wide. Please preview changes before saving to ensure they meet your organization's visual guidelines.

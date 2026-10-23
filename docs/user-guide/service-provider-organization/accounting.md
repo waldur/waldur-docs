@@ -4,20 +4,31 @@
 
 ### Service provider revenue
 
-If the organization is service provider, then it is possible to check the amount of revenue of a running month. To do that, open the organization dashboard, choose "Service provider" view and then dashboard opens. There you will see the total amount of estimated revenue and also 11 previous months.
+If the organization is a service provider, open it and select the **Service provider** tab. The
+**Dashboard** shows the estimated revenue of the running month, with a chart of the previous
+months, and counters for active clients, active resources, published offerings, open support
+tickets, orders pending approval and erred resources.
 
-By clicking on "Active clients" on the left, it's possible to see more detailed information about clients and amounts.
-   ![Service provider revenue](../img/sp_revenue.jpg)
+![Service provider dashboard](../img/sp-dashboard.png)
+
+The **Customers** tab lists the organizations, projects and users that use the provider's
+offerings. The **Organizations** list shows each customer's estimated cost for the month.
+
+![Customers of a service provider](../img/sp-customers.png)
 
 ### Invoices
 
-Waldur provides a convenient way to see the invoices issued to the organization. Open the organization dashboard and select “Accounting” from the top menu and then “Invoices”. Now you’re able to see all invoices issued to the organization.
-   ![Invoices](../img/Invoices.jpg)
+To see the invoices issued to the organization, open it and select **Accounting → Invoices**.
 
-Invoices’ information can be downloaded in different formats as well.
-   ![Invoice export](../img/Invoice_export.jpg)
+![Invoices of an organization](../img/org-invoices.png)
+
+To download the invoice list, click **Export** and choose the format: copy to clipboard, CSV,
+PDF or Excel. **Apply table filters** exports only the rows that match the current filters, and
+**All pages** exports every page instead of the one shown.
+
+![Export dialog](../img/table-export-dialog.png)
 
 ### Estimated cost
 
-Estimated cost of a running month can be seen from the same view as invoices. By default, it shows top 4 projects with the highest cost. By clicking “Details”, you are able to see all projects with estimated costs.
-   ![Estimated cost](../img/Estimated_cost.jpg)
+The estimated cost of the running month is shown above the invoices. The card lists the
+resources with the highest estimated cost; click **Details** to see the whole breakdown.

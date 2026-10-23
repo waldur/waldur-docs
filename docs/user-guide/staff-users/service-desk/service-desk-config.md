@@ -6,13 +6,20 @@ For how the service desk is wired into Waldur, and which events open tickets aut
 [Service Desk integrations](../../../integrations/service-desk/service-desk-integrations.md) and
 [Service Desk offerings](../../../integrations/service-desk/service-desk-offerings.md).
 
-To set up the configuration, navigate to the Service Desk configuration page by going to **Administration** -> **Service Desk**.
+To set up the configuration, open the Service Desk configuration page: **Administration** ->
+**Configuration** -> **Service desk settings**. The page has four tabs: **Configuration**,
+**Credentials** (one card per external service desk), **Issue status mapping** and **Support
+users**. The **Configuration** tab holds the general settings:
 
 * **Waldur support enabled** - Toggle **Yes** if you want to use support plugin.
-* **Waldur support active backend type** - Select the active configuration.
+* **Waldur support active backend type** - Select the active configuration: basic, atlassian, zammad or smax.
 * **Waldur support display request type** - Toggle to show the request type.
+* **Waldur support issue key prefix** - Prefix of ticket keys created by the built-in service desk, such as `WLD` in `WLD-A1B2C3D4`.
+* **Waldur support provider routing enabled** - Route tickets to the helpdesks of service providers automatically.
+* **Waldur support auto assign** and **auto assign strategy** - Assign new tickets to support users automatically, to the least loaded one or in turn (round robin).
+* **Waldur support sla enabled**, **sla response hours** and **sla resolution hours** - Track SLA deadlines for the first response and the resolution of tickets in the built-in service desk.
 
-![Service desk configuration](../../img/Service_desk_config.png)
+![Service desk configuration](../../img/service-desk-settings.png)
 
 ## Choosing a backend
 
@@ -165,23 +172,29 @@ Waldur looks up the site's cloud ID, connects through the Atlassian API gateway 
 
 ## Zammad configuration
 
-To configure Zammad for Waldur, open the Service Desk configuration page and select **Configure** from the Zammad box.
+To configure Zammad for Waldur, open the **Credentials** tab of the Service Desk configuration
+page, open the status button on the Zammad card (**Not configured** until it is set up) and
+select **Edit**.
+
+![Service desk cards on the Credentials tab](../../img/service-desk-credentials.png)
 
 A popup will appear. Fill in the required fields and click **Update**.
 
 * **Zammad API server URL** - Zammad instance API URL.
 * **Authorization token** - Zammad instance API token.
-* **Zammad group** - Zammad instance group under which the tickets are created.
-* **Zammad article type** - Zammad instance article type. Usually "email".
-* **Zammad comment maker** - Additional comment line in Zammad, if the ticket is created in Waldur.
+* **Zammad group** - Zammad instance group under which the tickets are created. If not specified, the first group is used.
+* **Type of a comment** - Zammad instance article type. Usually "email".
+* **Zammad comment marker** - Marker that separates comments made via Waldur from comments added natively in Zammad.
 * **Comment prefix with user info** - Additional comment line in Zammad with user name, who created the ticket.
-* **Zammad comment cooldown duration** - Time (in seconds) to remove the comment until it is saved in the system.
+* **Zammad comment cooldown duration** - Time (in minutes) during which a comment can still be deleted.
+* **Zammad webhook shared secret** - Shared secret expected in the `X-Webhook-Secret` header of inbound Zammad webhook deliveries. If left empty, webhook authentication is not enforced.
 
-![Zammad configuration](../../img/Zammad_config.png)
+![Zammad configuration](../../img/service-desk-zammad.png)
 
 ## Smax configuration
 
-To configure Smax for Waldur, open the Service Desk configuration page and select **Configure** from the Smax box.
+To configure Smax for Waldur, open the **Credentials** tab of the Service Desk configuration
+page, open the status button on the Smax card and select **Edit**.
 
 A popup will appear. Fill in the required fields and click **Update**.
 
