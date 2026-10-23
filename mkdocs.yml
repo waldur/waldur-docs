@@ -59,7 +59,13 @@ markdown_extensions:
       alternate_style: true
 
 plugins:
-  - materialx/search
+  - materialx/search:
+      # Split on punctuation and code delimiters, not only whitespace and hyphens, so
+      # "(SLURM)", "config.yaml", "/api/marketplace-offering-users/" and
+      # "waldur_site_agent" are found by their words. Unlike Material's suggestion for
+      # technical docs this does not split camelCase, which would index "OpenStack" as
+      # "open" + "stack" and lose it for anyone typing "openstack".
+      separator: '[\s\u200b\-_,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;'
   - awesome-pages
   - d2:
       layout: elk
@@ -115,5 +121,8 @@ plugins:
       exclude:
         - API/
         - API/*
+
+hooks:
+  - hooks/search_weights.py
 
 copyright: Copyright &copy; 2016 - 2025 Waldur team

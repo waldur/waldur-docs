@@ -258,24 +258,68 @@ function renderDiagram(index) {
         });
 }
 
+/* ── Search query stopwords ─────────────────────────────────────────── */
+
+// Material appends a wildcard to every query word, and a wildcard term skips
+// the stopword filter, so in "why is my resource paused?" the words "is" and
+// "my" match "issue", "isolation" and "mysql" and push the answer down. The
+// index holds no stopwords, so drop them from the query before it reaches the
+// search worker, together with a trailing "?" or "!", which no indexed word
+// ends with. Lunr's English list, which built the index.
+var SEARCH_STOPWORDS = (
+    'a able about across after all almost also am among an and any are as at be because been but by ' +
+    'can cannot could dear did do does either else ever every for from get got had has have he her ' +
+    'hers him his how however i if in into is it its just least let like likely may me might most ' +
+    'must my neither no nor not of off often on only or other our own rather said say says she ' +
+    'should since so some than that the their them then there these they this tis to too twas us ' +
+    'wants was we were what when where which while who whom why will with would yet you your'
+).split(' ');
+
+function dropStopwords(query) {
+    var words = query.split(/\s+/).filter(Boolean).map(function(word) {
+        return word.replace(/[?!]+$/, '');
+    });
+    var kept = words.filter(function(word) {
+        return word && SEARCH_STOPWORDS.indexOf(word.toLowerCase()) === -1;
+    });
+    return kept.length ? kept.join(' ') : query;
+}
+
+// The query is the only message to the search worker whose data is a string;
+// the index setup carries an object. Anything else passes through untouched.
+(function() {
+    const postMessage = Worker.prototype.postMessage;
+    Worker.prototype.postMessage = function(message, transfer) {
+        if (message && typeof message.data === 'string') {
+            message = Object.assign({}, message, { data: dropStopwords(message.data) });
+        }
+        return postMessage.call(this, message, transfer);
+    };
+})();
+
 /* ── Search section filters ─────────────────────────────────────────── */
 
 function initSearchFilters() {
     // Content-type categories with path-based classification rules.
     // Order matters: first match wins. More specific paths go first.
+    //
+    // Every category starts on. Material renders the first 10 results and
+    // loads more only when the list is scrolled, so a category that starts
+    // off hides results without making room for others: "site agent" showed
+    // "165 matching documents" above an empty list. Reference and changelog
+    // pages are ranked down at build time instead (hooks/search_weights.py).
     var CATEGORIES = [
         { key: 'guides',       label: 'Guides',       on: true },
         { key: 'admin',        label: 'Admin',        on: true },
         { key: 'developer',    label: 'Developer',    on: true },
         { key: 'integrations', label: 'Integrations', on: true },
-        { key: 'reference',    label: 'Reference',    on: false },
-        { key: 'changelog',    label: 'Changelog',    on: false }
+        { key: 'reference',    label: 'Reference',    on: true },
+        { key: 'changelog',    label: 'Changelog',    on: true }
     ];
 
     // Reference paths — large, dense, auto-generated or specification-heavy
     var REFERENCE_PREFIXES = [
         'admin-guide/mastermind-configuration/',
-        'admin-guide/providers/site-agent/',
         'admin-guide/waldur-shell/',
         'developer-guide/core-concepts/',
         'developer-guide/plugins/',
