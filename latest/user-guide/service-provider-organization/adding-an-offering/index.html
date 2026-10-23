@@ -18439,6 +18439,45 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#checking-what-customers-type" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checking what customers type
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Checking what customers type">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adding-a-prefix-or-suffix-or-changing-the-case" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a prefix or suffix, or changing the case
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#requiring-a-unique-value" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requiring a unique value
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#kubernetes-cluster-topology" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -20409,6 +20448,45 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#checking-what-customers-type" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checking what customers type
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Checking what customers type">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adding-a-prefix-or-suffix-or-changing-the-case" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a prefix or suffix, or changing the case
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#requiring-a-unique-value" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requiring a unique value
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#kubernetes-cluster-topology" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -21144,6 +21222,66 @@ the whole offering component.</p>
 <p class="admonition-title">Note</p>
 <p>An input that another input's rule refers to cannot be deleted, and it cannot lose its type or a choice the rule uses. Change or remove the rule first.</p>
 </div>
+<h3 id="checking-what-customers-type">Checking what customers type</h3>
+<p>When your backend accepts only certain values, for example a DNS-safe name or a fixed-length code, give the input a validation pattern. The order form then checks the value while the customer types, and a wrong value is caught before the order is submitted instead of failing at provisioning.</p>
+<p><strong>String</strong> and <strong>Text</strong> inputs have these settings on the <strong>Settings</strong> step of the <strong>Add option</strong> or edit dialog:</p>
+<ul>
+<li><strong>Validation pattern</strong> — a regular expression the whole value must match. You do not need <code>^</code> and <code>$</code>: a value that only contains a match is rejected.</li>
+<li><strong>Validation error message</strong> — what the customer sees when the value does not match. Leave it empty to show the pattern itself, which few customers can read, so a message is recommended. It can only be set together with a pattern.</li>
+</ul>
+<p>For example, a project slug of 3 to 31 lowercase letters, digits and dashes, starting with a letter:</p>
+<ul>
+<li><strong>Validation pattern</strong>: <code>[a-z][a-z0-9-]{2,30}</code></li>
+<li><strong>Validation error message</strong>: <em>Lowercase letters, digits and dashes; 3–31 characters, starting with a letter.</em></li>
+</ul>
+<p>Some more patterns:</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Pattern</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Six digits</td>
+<td><code>[0-9]{6}</code></td>
+</tr>
+<tr>
+<td>Up to 20 letters, digits or underscores</td>
+<td><code>\w{1,20}</code></td>
+</tr>
+<tr>
+<td>Cost centre such as <code>CC-1234</code></td>
+<td><code>CC-[0-9]{4}</code></td>
+</tr>
+<tr>
+<td>Email address on one domain</td>
+<td><code>[a-z0-9._-]+@example\.org</code></td>
+</tr>
+</tbody>
+</table>
+<p>The pattern is checked in three places: in the order form, again by Waldur when the order is created, and whenever the value is changed later — when you edit the order while approving it, or when the customer changes a resource option. An empty value is not checked: mark the input required to make the customer enter one.</p>
+<p>When you save the input, the pattern must be valid, at most 500 characters long, and match the input's default value, if it has one.</p>
+<div class="admonition tip">
+<p class="admonition-title">Writing patterns</p>
+<ul>
+<li>Use syntax that works in both Python and JavaScript, since both the browser and the server check the value. The editor rejects patterns the browser cannot use, such as named groups written the Python way, <code>(?P&lt;name&gt;…)</code>.</li>
+<li><code>\w</code>, <code>\d</code>, <code>\s</code> and <code>\b</code> match ASCII characters only: <code>\w</code> does not match <code>ä</code> or <code>é</code>. List such letters explicitly when you need them.</li>
+<li>Spaces are part of the pattern and are not trimmed, and neither is the customer's value: a trailing space makes <code>[0-9]{6}</code> fail.</li>
+<li>Keep patterns simple. A pattern whose checking takes too long is stopped, and the order is rejected with <em>Value could not be checked against the pattern in time. Please contact the service provider.</em> Nested repetition such as <code>(a+)+</code> is the usual cause.</li>
+</ul>
+</div>
+<h4 id="adding-a-prefix-or-suffix-or-changing-the-case">Adding a prefix or suffix, or changing the case</h4>
+<p>The same step lets you rewrite the value before it is stored, so that customers do not have to type a fixed part themselves:</p>
+<ul>
+<li><strong>Prefix</strong> and <strong>Suffix</strong> are added before and after what the customer types. A value that already starts with the prefix, or ends with the suffix, does not get it twice.</li>
+<li><strong>Change case</strong> converts what the customer types to <strong>Lower case</strong> or <strong>Upper case</strong>. The prefix and suffix are kept as you wrote them.</li>
+</ul>
+<p>The order form shows the stored value under the input, for example <em>Will be saved as <code>acme-logs</code></em>. The validation pattern describes only the part the customer types, so it is checked before the prefix and suffix are added and before the case is changed. With a prefix of <code>acme-</code> and <strong>Lower case</strong>, the pattern <code>[a-z0-9-]+</code> rejects <code>Logs</code>; use <code>[A-Za-z0-9-]+</code> to let customers type in either case.</p>
+<h4 id="requiring-a-unique-value">Requiring a unique value</h4>
+<p>Turn on <strong>Unique across resources</strong> on the first step of the dialog when no two resources of the offering may use the same value, for example a bucket or host name. It is available for <strong>String</strong>, <strong>Text</strong>, <strong>Integer</strong> and <strong>Select</strong> inputs. An order or a change that reuses a value is rejected with <em>This value is already used by another resource of this offering.</em>, shown next to the input.</p>
+<p>A value stays taken until its resource is terminated, including while the resource is in an erred state, since it may still exist in your backend. Values held by pending orders count as taken too. This check runs when the order is submitted, not while the customer types.</p>
 <h3 id="kubernetes-cluster-topology">Kubernetes cluster topology</h3>
 <p>The <strong>Single-Datacenter Kubernetes Configuration</strong> and <strong>Multi-Datacenter Kubernetes Configuration</strong> inputs let the customer describe a cluster: Kubernetes version, OpenStack infrastructure, node groups and access rules. In the input's settings, <strong>Cluster topology</strong> decides how the controller nodes are placed:</p>
 <ul>
