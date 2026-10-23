@@ -38,20 +38,27 @@ Each row is one key:
 - **Key ID** — the identifier the backend knows the key by.
 - **Assignee** — the person the key belongs to, or a dash for a key shared by
   the project.
-- **Limits & usage** — how much of a limit the key has used, for the limit
-  closest to being reached, of any component and period.
+- **Limits & usage** — how much of a limit the key has used, for the key's own
+  limit closest to being reached, of any component and period. A key with no
+  limits of its own shows the resource's limit it is closest to instead.
 - **Models** — the models the key may call, **All models**, or **No models**
   for a key that cannot call any (see [Models](#models)).
 - **State** — **OK**, **Paused**, **Paused at limit**, **Erred**, or a
-  transitional state while a change is in progress.
+  transitional state while a change is in progress. A key that would otherwise
+  be served shows **Blocked: resource paused** while its resource is paused
+  (see [When the resource is paused](#when-the-resource-is-paused)).
 - **Issued** — when the current key value was created or last rotated.
 
-Expand a row to see every component: its usage this month, and each of the
-key's limits on a shorter or longer period, such as **Token cost · Daily
-limit**. A limit marked *(inherited)* is the resource's spending limit for that
-component and period. It is the one in force because the key has no limit of
-its own for that period, or because its own limit is higher than the
-resource's.
+Expand a row to see every component: its usage this month, against the
+monthly limit in force on the key, and each of the key's own limits on other
+periods, such as **Token cost · Daily limit**. A limit marked *(inherited)* is
+the resource's spending limit for that component and period. It is the one in
+force because the key has no monthly limit of its own, or because the key's
+own limit is higher than the resource's. Going over an inherited limit does
+not pause the key — the row then says *over the resource's limit*. Where the
+provider pauses resources at their limit, the resource reaching that limit
+pauses the resource and so every key (see
+[When the resource is paused](#when-the-resource-is-paused)).
 
 ![A key's usage per component](../img/resource-api-keys-row-details.png)
 
@@ -241,10 +248,11 @@ applied. A paused key gets its new models when it is resumed.
 ## Limits
 
 A key can have a limit per component for each **period** the provider offers:
-daily, weekly, monthly, quarterly or yearly. A research group that puts a
-monthly budget into a resource can, for example, give each member's key a daily
-and a monthly limit, so one person's run cannot spend the group's month on a
-Tuesday.
+daily, weekly, monthly, quarterly, yearly or all-time. A research group that
+puts a monthly budget into a resource can, for example, give each member's key
+a daily and a monthly limit, so one person's run cannot spend the group's month
+on a Tuesday, or give a visiting student's key an all-time limit for the whole
+of their stay.
 
 Which periods a key offers depends on how the provider set up the offering (see
 [For service providers](#for-service-providers)):
@@ -252,11 +260,15 @@ Which periods a key offers depends on how the provider set up the offering (see
 - **Monthly** is available on every component of the offering, including one
   the plan prices at zero: a LiteLLM cost cap, for example, is priced at zero
   yet measures what the key spends.
+- **All-time** is available wherever the provider lets customers set an
+  all-time [spending limit](resource-spending-limits.md#all-time-limits) on
+  the component's resources. It needs no per-day usage.
 - **Daily**, **weekly**, **quarterly** and **yearly** limits are available only
   where the provider's site agent reports each key's usage per day, and then on
   the periods the provider lets customers set
   [spending limits](resource-spending-limits.md) on for the component's
-  resources. Elsewhere a key can be limited per month only.
+  resources. Elsewhere a key can be limited per month, and for all time where
+  that is offered.
 - Where the provider does not let users limit keys, **Request key** and **Edit
   key settings** show no limit fields.
 
@@ -265,13 +277,17 @@ The limits themselves:
 - Periods are calendar periods in UTC: a day resets at 00:00 UTC, a week on
   Monday, a month on the 1st, a quarter on 1 January, April, July and October,
   and a year on 1 January. The reset time is shown next to each field.
+- An all-time limit never resets. It counts all the key's own usage, in every
+  month it reported in: a key requested again starts from zero, while a
+  rotated key keeps its usage.
 - A key's limit may not exceed the resource's own
   [spending limit](resource-spending-limits.md) for the same period or for any
   longer period ("Up to …" under the field). Under a resource limit of 40 a
-  month, for example, a key cannot have a daily limit of 50. The provider's
-  maximum caps the resource's limits, not the key's.
+  month, for example, a key cannot have a daily limit of 50, and under a
+  resource's all-time limit of 2000 no limit of the key may be above 2000. The
+  provider's maximum caps the resource's limits, not the key's.
 - A shorter period's limit may not exceed a longer one's: daily ≤ weekly ≤
-  monthly ≤ quarterly ≤ yearly.
+  monthly ≤ quarterly ≤ yearly ≤ all-time.
 - A limit must be above **0**. To stop a key, pause it.
 
 A limit the key already holds is kept, even once its period is no longer
@@ -289,12 +305,38 @@ Limits are enforced by Waldur:
   or when you raise or remove them. A longer limit reached while the key is
   paused holds it too: a key paused by its daily limit that then reaches its
   monthly one stays paused until the month resets.
+- A key paused at its **all-time** limit stays paused until that limit is
+  raised or cleared: it never resets. Its tooltip says so.
 - If you resume such a key by hand while it is still over its limit, it is
   paused again as soon as the provider confirms the resume.
+- While the resource itself is paused or downscaled at one of its own
+  [spending limits](resource-spending-limits.md#what-happens-at-a-limit), no
+  key is resumed automatically: the resource's usage is over its limit, so
+  none of its keys may spend. Keys whose limits have reset are resumed once
+  the resource's restriction lifts.
+
+![A key paused at its all-time limit](../img/resource-api-keys-paused-at-limit.png)
 
 !!! note
     Usage is reported by the provider periodically, so a key can go somewhat
     over its limit before it is paused.
+
+!!! note
+    A key that existed before all-time limits counts its earlier months only
+    as far back as the provider's per-day reports of its usage were kept —
+    from the start of the previous year at most — and not at all where the
+    provider reported only monthly totals for it.
+
+## When the resource is paused
+
+A paused resource serves none of its keys, whatever their own state. The **API
+keys** tab then says so above the table, and, when a spending limit paused the
+resource, which limit holds it and what lifts the pause. Each key that would
+otherwise be served shows **Blocked: resource paused**, and hovering over it
+says the same. The keys keep their own states and limits: once the resource is
+resumed, each key is served again unless it is paused itself.
+
+![The keys of a resource paused at its all-time limit](../img/resource-api-keys-resource-paused.png)
 
 ## Pausing, resuming and deleting
 
@@ -343,12 +385,23 @@ The offering's **Integration → Resource display options** control the tab:
   and no new key limit is accepted; limits keys already hold stay, and are
   enforced, until they are cleared.
 - **Site agent reports API key usage per day**, also shown once **Manage API
-  keys one by one** is on, is off by default. Keys are then limited per month
-  only. Turn it on to offer keys daily, weekly, quarterly and yearly limits, on
-  the periods each component offers to resources. Nothing checks it: turn it on
-  only if the site agent reports each key's usage per day, or those limits are
-  never reached. Limits keys already hold are kept when it is turned off.
+  keys one by one** is on, is off by default. Keys are then limited per month,
+  and for all time where a component offers an all-time limit. Turn it on to
+  offer keys daily, weekly, quarterly and yearly limits, on the periods each
+  component offers to resources. Nothing checks it: turn it on only if the site
+  agent reports each key's usage per day, or those limits are never reached.
+  Limits keys already hold are kept when it is turned off.
 - **Hide API keys tab** removes the tab from the offering's resources.
+
+A key's all-time usage adds up the figures the site agent reports for it month
+by month. Its last report of a month leaves out the usage between that report
+and midnight, so the site agent sends each key's figures for the previous
+month once more during the first days of a new month
+(`api_key_final_report_days`, three days by default, see the
+[site agent configuration](../../admin-guide/providers/site-agent/docs/configuration.md)).
+Waldur keeps the higher of the figures it holds and the ones reported, and the
+late figures can pause a key at once. A site agent without this report leaves
+those minutes out of every key's all-time usage.
 
 The models offered in the key dialogs are the choices of the offering's
 `models` resource option, narrowed to the resource's own selection. Without

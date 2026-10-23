@@ -303,7 +303,7 @@ For offerings with **limit-based** components, Waldur can automatically restrict
 
 ### Enabling it
 
-1. Open the offering's **Edit** page, go to the **Integration** settings and open the **Resource lifecycle** tab.
+1. Open the offering's **Edit** page and go to **Integration → Operations**, to the **Resource lifecycle** section.
 2. Set **Action on usage limit** to one of:
     - **Pause** — the resource is paused when the limit is reached.
     - **Downscale** — the resource is downscaled when the limit is reached.
@@ -317,6 +317,7 @@ Pause and downscale are mutually exclusive — an offering uses at most one of t
 - When the reported usage of any limit-based component reaches or exceeds its limit for the current period, the resource is automatically **paused** or **downscaled**, according to the offering setting.
 - The restriction is **lifted automatically** when usage drops back below the limit — for example, when a new billing period resets the period's usage, or when the component's limit is raised.
 - For the **Total** accounting period, usage accumulates over the whole life of the resource and never resets, so the restriction is lifted only if the limit is increased.
+- The same setting acts on the [spending limits](../customer-organization/resource-spending-limits.md) customers set on **usage-based** components. A reached spending limit lifts when its period resets, or when the customer raises or clears it. An all-time spending limit never resets, so only raising or clearing it lifts the restriction.
 - The feature toggles the same **Paused** / **Downscaled** state shown on the resource page. Only restrictions applied by this feature are lifted automatically — a resource paused manually, by a grace period, or by a cost and usage policy is left untouched.
 - While the resource's project is in its [grace period](../customer-organization/project-management.md#grace-period), a pause is not lifted even when usage drops below the limit; it is lifted once the grace period no longer applies.
 
