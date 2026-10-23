@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-22T18:02:55.666255Z
+Generated: 2026-10-23T02:03:51.378071Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -80435,6 +80435,8 @@ When rendering multiple tables within tabs, use the `TableWithTabs` wrapper comp
 
 `TableWithTabs` (`src/table/TableWithTabs.tsx`) is a layout wrapper that renders waldur-ui `Tabs` (see [tabs.md](../tabs.md)). Each tab maps to a lazy-loaded child component.
 
+It is homeport's wrapper over the router-free `BaseTableWithTabs`, adding `syncWithUrlKey` (through `useUrlTab` and UI-Router). `BaseTableWithTabs` keeps the open tab itself, or takes it as `activeKey`/`onSelect` from a caller that keeps it elsewhere; use it outside homeport.
+
 This wrapper manages:
 
 - Active tab state.
@@ -80790,7 +80792,7 @@ Adjust header toolbar visibility and standalone modes:
 
 - **`title`**: String or React Node overriding the table header title.
 - **`hideTitle`**: Boolean to hide the title header.
-- **`alterTitle`**: Auto-resolved page title calculated by `useTable` from breadcrumbs. Used as a default fallback when `title` is not provided.
+- **`alterTitle`**: The default title `useTable` gets from the table host: the last breadcrumb in homeport (`src/core/tableHost.ts`), `document.title` without a configured host. Used as a fallback when `title` is not provided.
 - **`subtitle`**: Secondary text displayed below the title.
 - **`verboseName`**: Defines the resource type name. It is automatically title-cased as a fallback for the title header and used dynamically in empty and search-miss placeholder screens (e.g., "There are no projects yet.", "No projects found matching current filters.").
 - **`emptyMessage`**: React Node to completely override the text displayed when the table contains zero rows.
@@ -81038,7 +81040,7 @@ Every tab bar in HomePort is built from `waldur-ui` primitives (`Tabs`, `TabNav`
 | changes the URL; the router draws the panel (no panels here)            | `TabNav` with link `items`                                                        |
 | switches panels that are tables, in an expandable row or a card section | `EmbeddedTabs` (`@/table/EmbeddedTabs`)                                           |
 | shares one card header and toolbar between several tables               | `TableWithTabs` (see [layout-wrappers](table/layout-wrappers.md))                 |
-| is a table's own router-driven sub-navigation (`tabs` prop of `Table`)  | `TableNav` (formerly `TableTabs`), a `TabNav`                                     |
+| is a table's own router-driven sub-navigation (`tabs` prop of `Table`)  | `TableNav` (formerly `TableTabs`), a `TabNav`; `BaseTable` takes any bar as `nav` |
 | groups form fields into URL-synced, searchable sections                 | `TabbedSection` (see [forms.md](forms.md))                                        |
 | is a segmented bar over a few large panels (e.g. the sign-in method)    | `Tabs` with `TabsList variant="segmented"`, see [Segmented tabs](#segmented-tabs) |
 | is a two-or-three-way view switch rather than tabs of content           | `SegmentedControl` (see [a11y-decision-matrix.md](a11y-decision-matrix.md))       |
@@ -81270,7 +81272,7 @@ Use this instead of `SegmentedControl` whenever each option owns a distinct, lar
   **Don't make every param dynamic.** `dynamic` only helps a param the page rewrites with `stateService.go` on the _same_ state while it is mounted, and only if the page reads that param reactively (`useCurrentStateAndParams`, `useUrlTab`). Leave it alone when:
 
   - the page reads it **once at mount** (`useState(params.mode)`), because a remount is what picks up a new value. The reporting analytics routes' `?mode` is the example: made dynamic, a deep link to another mode would leave the page stale;
-  - it is a **table filter**, because filters are written with `router.urlService.url(...)` (`src/core/filters.ts`), which updates the URL without a state transition, so the page never remounts for them;
+  - it is a **table filter**, because filters are written with `router.urlService.url(...)` (homeport's table host, `src/core/tableHost.ts`), which updates the URL without a state transition, so the page never remounts for them;
   - it is only set **on entry** (`?token=…`, `?review_uuid=…`, links from other pages).
 
   The rule is limited to `tab`, `q` and `*_tab` / `*Tab` for that reason. A tab bar driven by another param name (the call lists use `?state`) has to be declared dynamic by hand, after checking that the page reads the param reactively.
