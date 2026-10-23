@@ -17676,6 +17676,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../resource-spending-limits/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Resource spending limits
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../resource_management/" class="md-nav__link">
         
   
@@ -19716,16 +19744,20 @@ management on or off later does not add or remove keys on existing resources.</p
 <li><strong>Key ID</strong> — the identifier the backend knows the key by.</li>
 <li><strong>Assignee</strong> — the person the key belongs to, or a dash for a key shared by
   the project.</li>
-<li><strong>Limits &amp; usage</strong> — how much of its monthly limit the key has used, for the
-  component closest to its limit.</li>
+<li><strong>Limits &amp; usage</strong> — how much of a limit the key has used, for the limit
+  closest to being reached, of any component and period.</li>
 <li><strong>Models</strong> — the models the key may call, <strong>All models</strong>, or <strong>No models</strong>
   for a key that cannot call any (see <a href="#models">Models</a>).</li>
 <li><strong>State</strong> — <strong>OK</strong>, <strong>Paused</strong>, <strong>Paused at limit</strong>, <strong>Erred</strong>, or a
   transitional state while a change is in progress.</li>
 <li><strong>Issued</strong> — when the current key value was created or last rotated.</li>
 </ul>
-<p>Expand a row to see every component. A limit marked <em>(inherited)</em> is the
-resource's own limit: the key has no limit of its own for that component.</p>
+<p>Expand a row to see every component: its usage this month, and each of the
+key's limits on a shorter or longer period, such as <strong>Token cost · Daily
+limit</strong>. A limit marked <em>(inherited)</em> is the resource's spending limit for that
+component and period. It is the one in force because the key has no limit of
+its own for that period, or because its own limit is higher than the
+resource's.</p>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/resource-api-keys-row-details.png" data-desc-position="bottom"><img alt="A key's usage per component" src="../../img/resource-api-keys-row-details.png"></a></p>
 <p>The <strong>Actions</strong> menu at the end of each row offers what the key's state allows.</p>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/resource-api-keys-actions.png" data-desc-position="bottom"><img alt="Actions available on an active key" src="../../img/resource-api-keys-actions.png"></a></p>
@@ -19733,7 +19765,8 @@ resource's own limit: the key has no limit of its own for that component.</p>
 <p>Choose <strong>Reveal</strong> to see the key value. The value is masked until you click the
 eye icon, and the copy button puts it on the clipboard.</p>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/resource-api-keys-reveal.png" data-desc-position="bottom"><img alt="Revealing an API key" src="../../img/resource-api-keys-reveal.png"></a></p>
-<p>Any member of the resource's project can reveal a shared key. A key with an
+<p>Anyone with a role in the resource's project or in its organization can reveal
+a shared key. A key with an
 <strong>assignee</strong> can be revealed only by that person (and by staff and support).</p>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
@@ -19757,15 +19790,16 @@ afterwards. The resource's other keys are not affected.</p>
 resuming, deleting and editing it stay with organization owners.</p>
 <p>A paused key cannot be rotated until it has been resumed. Where limits are
 enforced, an assignee also cannot rotate a key that has reached one of its
-monthly <a href="#limits">limits</a>: such a key is about to be paused.</p>
+<a href="#limits">limits</a>, of any period: such a key is about to be paused.</p>
 <h2 id="requesting-a-key">Requesting a key</h2>
 <p>Project managers and organization owners can request keys with
 <strong>Request key</strong>:</p>
 <ol>
 <li>Optionally choose an <strong>Assignee</strong> — only project members are offered. Leave
    it empty for a key shared by the project.</li>
-<li>Optionally set <strong>limits</strong> per component. Each field shows the resource's
-   limit; leave a field empty to let the key use up to the resource limit.</li>
+<li>Optionally set <strong>limits</strong> per component and period (see <a href="#limits">Limits</a>).
+   Each field shows the highest limit the key may have for that period; leave
+   a field empty to let the key use up to the resource limit.</li>
 <li>Choose the <strong>Models</strong> the key may call. <strong>All models</strong> is ticked to begin
    with. Untick it to choose models one by one (see <a href="#models">Models</a>).</li>
 <li>Click <strong>Submit</strong>.</li>
@@ -19796,8 +19830,7 @@ something.</p>
 </ul>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/resource-api-keys-edit-assignee.png" data-desc-position="bottom"><img alt="Changing the assignee rotates the key" src="../../img/resource-api-keys-edit-assignee.png"></a></p>
 <p>The assignee of a key can rotate it themselves, unless it has reached one of
-its monthly <a href="#limits">limits</a>. Every other change stays with whoever can
-request keys.</p>
+its <a href="#limits">limits</a>. Every other change stays with whoever can request keys.</p>
 <h2 id="models">Models</h2>
 <p>A key's model selection is one of three:</p>
 <table>
@@ -19889,16 +19922,55 @@ still allows. When the resource's selection changes, every key whose models
 change with it is updated at the provider, and shows <strong>Updating</strong> until that is
 applied. A paused key gets its new models when it is resumed.</p>
 <h2 id="limits">Limits</h2>
-<p>Limits are <strong>monthly</strong> and enforced by Waldur:</p>
+<p>A key can have a limit per component for each <strong>period</strong> the provider offers:
+daily, weekly, monthly, quarterly or yearly. A research group that puts a
+monthly budget into a resource can, for example, give each member's key a daily
+and a monthly limit, so one person's run cannot spend the group's month on a
+Tuesday.</p>
+<p>Which periods a key offers depends on how the provider set up the offering (see
+<a href="#for-service-providers">For service providers</a>):</p>
 <ul>
-<li>When a key's usage this month reaches one of its limits, Waldur pauses that
-  key only. The resource and its other keys keep working. The key shows
-  <strong>Paused at limit</strong>.</li>
-<li>A key paused at its limit is resumed automatically once it is under its
-  limits again — when a new month begins, or when you raise or remove the limit
-  that stopped it.</li>
+<li><strong>Monthly</strong> is available on every component of the offering, including one
+  the plan prices at zero: a LiteLLM cost cap, for example, is priced at zero
+  yet measures what the key spends.</li>
+<li><strong>Daily</strong>, <strong>weekly</strong>, <strong>quarterly</strong> and <strong>yearly</strong> limits are available only
+  where the provider's site agent reports each key's usage per day, and then on
+  the periods the provider lets customers set
+  <a href="../resource-spending-limits/">spending limits</a> on for the component's
+  resources. Elsewhere a key can be limited per month only.</li>
+<li>Where the provider does not let users limit keys, <strong>Request key</strong> and <strong>Edit
+  key settings</strong> show no limit fields.</li>
+</ul>
+<p>The limits themselves:</p>
+<ul>
+<li>Periods are calendar periods in UTC: a day resets at 00:00 UTC, a week on
+  Monday, a month on the 1st, a quarter on 1 January, April, July and October,
+  and a year on 1 January. The reset time is shown next to each field.</li>
+<li>A key's limit may not exceed the resource's own
+  <a href="../resource-spending-limits/">spending limit</a> for the same period or for any
+  longer period ("Up to …" under the field). Under a resource limit of 40 a
+  month, for example, a key cannot have a daily limit of 50. The provider's
+  maximum caps the resource's limits, not the key's.</li>
+<li>A shorter period's limit may not exceed a longer one's: daily ≤ weekly ≤
+  monthly ≤ quarterly ≤ yearly.</li>
+<li>A limit must be above <strong>0</strong>. To stop a key, pause it.</li>
+</ul>
+<p>A limit the key already holds is kept, even once its period is no longer
+offered or the resource's limit has dropped below it, so that editing one period
+never forces a change to another. It is still enforced until you clear it.</p>
+<p>Limits are enforced by Waldur:</p>
+<ul>
+<li>When a key's usage in a period reaches its limit for that period, Waldur
+  pauses that key only. The resource and its other keys keep working. The key
+  shows <strong>Paused at limit</strong>; hover over it to see which limit stopped it and
+  when it resumes.</li>
+<li>A key paused at its limit is resumed automatically once it is under every
+  limit it has reached — within a few minutes of the reset of the last of them,
+  or when you raise or remove them. A longer limit reached while the key is
+  paused holds it too: a key paused by its daily limit that then reaches its
+  monthly one stays paused until the month resets.</li>
 <li>If you resume such a key by hand while it is still over its limit, it is
-  paused again on the next usage report.</li>
+  paused again as soon as the provider confirms the resume.</li>
 </ul>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -19922,9 +19994,13 @@ change, and <strong>Delete</strong>. A key whose settings update failed can also
 with <strong>Edit key settings</strong>, which sends the update again.</p>
 <p>The assignee of a key is offered <strong>Retry</strong> only when the change that failed was
 a rotation of it. Any other failed change is retried by an organization owner.</p>
+<p>A key whose pause at its <a href="#limits">limit</a> failed is still active at the
+provider, as the <strong>Erred</strong> state's tooltip says. Waldur sends the pause again
+every few minutes while the key is still over its limit, until the provider
+applies it. A key that is back under its limits by then is left <strong>Erred</strong> for
+you to retry or delete.</p>
 <h2 id="for-service-providers">For service providers</h2>
-<p>Two options in the offering's <strong>Integration → Resource display options</strong>
-control the tab:</p>
+<p>The offering's <strong>Integration → Resource display options</strong> control the tab:</p>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/resource-api-keys-offering-options.png" data-desc-position="bottom"><img alt="Offering options for API keys" src="../../img/resource-api-keys-offering-options.png"></a></p>
 <ul>
 <li><strong>Manage API keys one by one</strong> turns on everything above apart from
@@ -19934,6 +20010,17 @@ control the tab:</p>
   management, such as the Envoy AI Gateway. Other backends, such as Ceph S3,
   fail those actions. With it on, new resources start with no keys instead of
   two shared ones; existing resources keep theirs.</li>
+<li><strong>Let users limit API keys</strong>, shown once <strong>Manage API keys one by one</strong> is
+  on, lets users set <a href="#limits">limits</a> on each key, within the resource's own
+  limits. It is on by default. Turned off, the key dialogs show no limit fields
+  and no new key limit is accepted; limits keys already hold stay, and are
+  enforced, until they are cleared.</li>
+<li><strong>Site agent reports API key usage per day</strong>, also shown once <strong>Manage API
+  keys one by one</strong> is on, is off by default. Keys are then limited per month
+  only. Turn it on to offer keys daily, weekly, quarterly and yearly limits, on
+  the periods each component offers to resources. Nothing checks it: turn it on
+  only if the site agent reports each key's usage per day, or those limits are
+  never reached. Limits keys already hold are kept when it is turned off.</li>
 <li><strong>Hide API keys tab</strong> removes the tab from the offering's resources.</li>
 </ul>
 <p>The models offered in the key dialogs are the choices of the offering's
