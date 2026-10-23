@@ -9,9 +9,9 @@ Waldur ships its own [user](platform.md) directory but is almost always fronted 
 ```d2
 direction: down
 classes: {
-  ext:    { style: { fill: "#e8f5e8"; stroke: "#2e7d32" } }
-  waldur: { style: { fill: "#dae8fc"; stroke: "#6c8ebf" } }
-  down:   { style: { fill: "#fff8e1"; stroke: "#f57f17" } }
+  ext:    { style: { fill: "#e8f5e8"; font-color: "#1f2328"; stroke: "#2e7d32" } }
+  waldur: { style: { fill: "#dae8fc"; font-color: "#1f2328"; stroke: "#6c8ebf" } }
+  down:   { style: { fill: "#fff8e1"; font-color: "#1f2328"; stroke: "#f57f17" } }
 }
 
 idp: Identity provider\n(SAML / OIDC / LDAP) { class: ext }

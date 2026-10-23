@@ -1150,7 +1150,7 @@ specifically. The real workers will not see it.
 
 ### Cross-references for gunicorn diagnostics
 
-- [Troubleshooting broker / Celery worker timeouts](#troubleshooting-broker--celery-worker-timeouts)
+- [Troubleshooting broker / Celery worker timeouts](#troubleshooting-broker-celery-worker-timeouts)
   — the most common cause of gunicorn worker timeouts in waldur
 - [API server problems](#api-server-problems) — higher-level
   HTTP-side debugging

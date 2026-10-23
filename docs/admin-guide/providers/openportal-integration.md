@@ -27,8 +27,8 @@ Traffic flows both ways:
 ```d2
 direction: down
 classes: {
-  waldur: { style: { fill: "#dae8fc"; stroke: "#6c8ebf" } }
-  agent:  { style: { fill: "#f8cecc"; stroke: "#b85450" } }
+  waldur: { style: { fill: "#dae8fc"; font-color: "#1f2328"; stroke: "#6c8ebf" } }
+  agent:  { style: { fill: "#f8cecc"; font-color: "#1f2328"; stroke: "#b85450" } }
 }
 
 portal_side: Portal side {

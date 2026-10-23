@@ -11,9 +11,9 @@ The one exception is the `block_creation_of_new_resources` action on cost polici
 ```d2
 direction: right
 classes: {
-  scope:   { style: { fill: "#e8f5e8"; stroke: "#2e7d32" } }
-  policy:  { style: { fill: "#fff8e1"; stroke: "#f57f17" } }
-  action:  { style: { fill: "#e1f5fe"; stroke: "#0277bd" } }
+  scope:   { style: { fill: "#e8f5e8"; font-color: "#1f2328"; stroke: "#2e7d32" } }
+  policy:  { style: { fill: "#fff8e1"; font-color: "#1f2328"; stroke: "#f57f17" } }
+  action:  { style: { fill: "#e1f5fe"; font-color: "#1f2328"; stroke: "#0277bd" } }
 }
 
 org: Organization { class: scope }

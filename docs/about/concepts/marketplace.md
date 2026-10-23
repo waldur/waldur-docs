@@ -9,10 +9,10 @@ The Waldur Marketplace is the catalog and order pipeline through which projects 
 ```d2
 direction: down
 classes: {
-  structure:    { style: { fill: "#e8f5e8"; stroke: "#2e7d32" } }
-  catalog:      { style: { fill: "#e1f5fe"; stroke: "#0277bd" } }
-  provisioning: { style: { fill: "#fff3e0"; stroke: "#ef6c00" } }
-  billing:      { style: { fill: "#f3e5f5"; stroke: "#7b1fa2" } }
+  structure:    { style: { fill: "#e8f5e8"; font-color: "#1f2328"; stroke: "#2e7d32" } }
+  catalog:      { style: { fill: "#e1f5fe"; font-color: "#1f2328"; stroke: "#0277bd" } }
+  provisioning: { style: { fill: "#fff3e0"; font-color: "#1f2328"; stroke: "#ef6c00" } }
+  billing:      { style: { fill: "#f3e5f5"; font-color: "#1f2328"; stroke: "#7b1fa2" } }
 }
 
 structure: Structure {

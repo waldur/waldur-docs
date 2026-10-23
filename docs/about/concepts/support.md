@@ -9,9 +9,9 @@ Waldur exposes a "Support" interface so consumers and providers can raise ticket
 ```d2
 direction: down
 classes: {
-  ui:      { style: { fill: "#e8f5e8"; stroke: "#2e7d32" } }
-  waldur:  { style: { fill: "#dae8fc"; stroke: "#6c8ebf" } }
-  ext:     { style: { fill: "#fff8e1"; stroke: "#f57f17" } }
+  ui:      { style: { fill: "#e8f5e8"; font-color: "#1f2328"; stroke: "#2e7d32" } }
+  waldur:  { style: { fill: "#dae8fc"; font-color: "#1f2328"; stroke: "#6c8ebf" } }
+  ext:     { style: { fill: "#fff8e1"; font-color: "#1f2328"; stroke: "#f57f17" } }
 }
 
 user: User { class: ui; shape: person }

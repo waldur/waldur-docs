@@ -1,3 +1,135 @@
+/* ── Mermaid readability ────────────────────────────────────────────── */
+
+// Material renders each diagram into a closed shadow root with a stylesheet of
+// its own, and three of its rules leave text unreadable in one colour scheme:
+// - `.nodeLabel p` takes the theme's label colour, so a node's own `color:`
+//   (from `style` or `classDef`) never reaches its text while its `fill:` does;
+// - `else` labels of sequence diagrams (`.sectionTitle`) get no colour at all
+//   and render black;
+// - sequence numbers are white on a light circle in dark mode.
+// The root is closed, so keep a handle on it when Material creates it.
+var MERMAID_READABILITY_CSS =
+    '.nodeLabel p { color: inherit !important; }' +
+    '.sectionTitle { fill: var(--md-mermaid-sequence-loop-fg-color) !important; }' +
+    '.sequenceNumber { fill: var(--waldur-mermaid-sequence-number-fg-color, var(--md-mermaid-sequence-number-fg-color)) !important; }';
+
+(function() {
+    const attachShadow = Element.prototype.attachShadow;
+    Element.prototype.attachShadow = function(init) {
+        const root = attachShadow.call(this, init);
+        if (this.classList.contains('mermaid')) {
+            new MutationObserver(function() {
+                fixMermaidReadability(root);
+            }).observe(root, { childList: true });
+        }
+        return root;
+    };
+})();
+
+function fixMermaidReadability(root) {
+    if (!root.querySelector('svg') || root.querySelector('style[data-readability]')) {
+        return;
+    }
+    keepDiagramReadable(root.querySelector('svg'), root.host || root);
+    const style = document.createElement('style');
+    style.setAttribute('data-readability', '');
+    style.textContent = MERMAID_READABILITY_CSS;
+    root.appendChild(style);
+
+    // Labels take the theme's text colour even where the theme's background is
+    // not what is behind them: a node or subgraph with a fill of its own, a
+    // plain node inside a filled subgraph (the theme's node fill is
+    // translucent), a state-diagram note in dark mode. Where the text falls
+    // below 4.5:1 against what is actually behind it, use dark or white text.
+    // Labels with a colour of their own are left as they are.
+    const page = parseRgba(getComputedStyle(document.body).backgroundColor) || [255, 255, 255, 1];
+    const filledClusters = [];
+    root.querySelectorAll('g.cluster').forEach(function(cluster) {
+        const shape = cluster.querySelector('rect');
+        if (shape && /fill/.test(shape.getAttribute('style') || '')) {
+            const fill = parseRgba(getComputedStyle(shape).fill);
+            if (fill) {
+                filledClusters.push({ box: shape.getBoundingClientRect(), fill: composite(fill, page) });
+            }
+        }
+    });
+    root.querySelectorAll('g.node, g.cluster').forEach(function(group) {
+        const shape = group.querySelector('rect, polygon, path, circle, ellipse');
+        const fill = shape && parseRgba(getComputedStyle(shape).fill);
+        if (!fill) {
+            return;
+        }
+        let base = page;
+        if (!group.classList.contains('cluster')) {
+            const box = shape.getBoundingClientRect();
+            const x = box.left + box.width / 2;
+            const y = box.top + box.height / 2;
+            const cluster = filledClusters.filter(function(c) {
+                return x > c.box.left && x < c.box.right && y > c.box.top && y < c.box.bottom;
+            }).pop();
+            if (cluster) {
+                base = cluster.fill;
+            }
+        }
+        const background = composite(fill, base);
+        group.querySelectorAll('.nodeLabel').forEach(function(label) {
+            if (/color/.test(label.getAttribute('style') || '')) {
+                return;
+            }
+            const text = parseRgba(getComputedStyle(label).color);
+            if (text && contrastRatio(composite(text, background), background) >= 4.5) {
+                return;
+            }
+            label.style.setProperty('color', relativeLuminance(background) > 0.4 ? '#1f2328' : '#ffffff', 'important');
+        });
+    });
+}
+
+// A wide diagram is shrunk to the column width, and a long left-to-right chain
+// ends up with text a few pixels high. Keep at least this share of its natural
+// size and let it scroll sideways instead.
+var DIAGRAM_MIN_SCALE = 0.75;
+
+function keepDiagramReadable(svg, container) {
+    const width = svg.viewBox && svg.viewBox.baseVal ? svg.viewBox.baseVal.width : 0;
+    if (!width) {
+        return;
+    }
+    svg.style.minWidth = Math.round(width * DIAGRAM_MIN_SCALE) + 'px';
+    container.style.overflowX = 'auto';
+}
+
+// [r, g, b, alpha], or null for no fill at all
+function parseRgba(value) {
+    const match = /rgba?\(([^)]+)\)/.exec(value || '');
+    if (!match) {
+        return null;
+    }
+    const parts = match[1].split(/[\s,/]+/).filter(Boolean).map(Number);
+    const alpha = parts.length > 3 ? parts[3] : 1;
+    return alpha === 0 ? null : [parts[0], parts[1], parts[2], alpha];
+}
+
+function composite(top, bottom) {
+    return [0, 1, 2].map(function(i) {
+        return top[i] * top[3] + bottom[i] * (1 - top[3]);
+    }).concat(1);
+}
+
+function relativeLuminance(rgb) {
+    const channel = rgb.map(function(value) {
+        value /= 255;
+        return value <= 0.03928 ? value / 12.92 : Math.pow((value + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * channel[0] + 0.7152 * channel[1] + 0.0722 * channel[2];
+}
+
+function contrastRatio(a, b) {
+    const la = relativeLuminance(a.slice(0, 3));
+    const lb = relativeLuminance(b.slice(0, 3));
+    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Wait for Mermaid to finish rendering
     setTimeout(function() {
@@ -14,6 +146,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     observer.observe(document.body, { childList: true, subtree: true });
+
+    // D2 diagrams are inline SVG, one per colour scheme
+    document.querySelectorAll('.d2 svg[data-d2-version]').forEach(function(svg) {
+        keepDiagramReadable(svg, svg.parentElement);
+    });
 
     // Initialize search section filters
     initSearchFilters();
@@ -59,6 +196,7 @@ function openDiagramModal(mermaidElement) {
     diagram.className = 'mermaid';
     renderDiagram(diagramIndex).then(function(svg) {
         diagram.innerHTML = svg;
+        fixMermaidReadability(diagram);
     });
 
     // Create close button

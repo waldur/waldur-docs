@@ -12,10 +12,16 @@ poetry run mkdocs serve
 node lint-markdown.mjs && poetry run mkdocs build --strict
 ```
 
+A strict build fails when the checkout path contains a dot-directory, such as a `ws env` worktree
+under `.worktrees/`: include-markdown's `exclude` glob skips dot-directories, so
+`templates.md` is no longer excluded. Build through a path without one, e.g. a symlink:
+`mkdocs build --strict -f /path/without/dots/mkdocs.yml`.
+
 ## Project Structure
 
 ```
 docs/
+├── get-started/        # Quickstarts (hand-written)
 ├── admin-guide/        # Deployment, configuration (sysadmins)
 ├── developer-guide/    # Architecture, contribution (developers)
 ├── user-guide/         # UI workflows (end users)
@@ -29,6 +35,23 @@ The generated API reference is **not** in this repository. It lives in
 <https://api-docs.waldur.com/> (moved out in `0ed2b1d7f`, WAL-9565).
 
 **Config files:** `mkdocs.yml`, `external-sources.yml`, `pyproject.toml`
+
+## Navigation
+
+Tabs and sidebars come from `.pages` files (the `awesome-pages` plugin), not from `mkdocs.yml`.
+A page's URL is its file path, and product code, packaging READMEs and the changelog JSON fetch
+link to those URLs, so **restructure navigation by editing `.pages`, never by moving files**.
+
+- `docs/.pages` maps top-level directories to tabs: Get started (`get-started/`), Use Waldur
+  (`user-guide/`), Operate Waldur (`admin-guide/`), Integrations, Build with Waldur
+  (`integrator-guide/` + `developer-guide/`), About.
+- End every `nav:` list with `...`, so pages added by the external sync appear on their own.
+  Hide a page deliberately with a filter: `- ... | regex=^(?!page-name)`.
+- A tab can only group **top-level** directories. A nested path such as `admin-guide/providers`
+  in `docs/.pages` becomes a plain link and drops those pages from the nav; group nested
+  directories in their own guide's `.pages` instead.
+- `.pages` files inside synced directories are safe: the sync only removes files that carry the
+  external-document marker.
 
 ## Key Rules
 

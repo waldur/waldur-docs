@@ -9,8 +9,8 @@ Quotas are hard upper bounds on a measurable property within a scope — e.g. "t
 ```d2
 direction: right
 classes: {
-  scope: { style: { fill: "#e8f5e8"; stroke: "#2e7d32" } }
-  q:     { style: { fill: "#fff8e1"; stroke: "#f57f17" } }
+  scope: { style: { fill: "#e8f5e8"; font-color: "#1f2328"; stroke: "#2e7d32" } }
+  q:     { style: { fill: "#fff8e1"; font-color: "#1f2328"; stroke: "#f57f17" } }
 }
 
 org: Organization { class: scope }
