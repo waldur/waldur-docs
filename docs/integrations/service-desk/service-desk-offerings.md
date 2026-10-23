@@ -12,9 +12,9 @@ For the service desk itself, see [Service Desk integrations](service-desk-integr
 ```d2
 direction: right
 classes: {
-  frontend: { style: { fill: "#d5e8d4"; stroke: "#82b366" } }
-  backend:  { style: { fill: "#dae8fc"; stroke: "#6c8ebf" } }
-  external: { style: { fill: "#f8cecc"; stroke: "#b85450" } }
+  frontend: { style: { fill: "#d5e8d4"; font-color: "#1f2328"; stroke: "#82b366" } }
+  backend:  { style: { fill: "#dae8fc"; font-color: "#1f2328"; stroke: "#6c8ebf" } }
+  external: { style: { fill: "#f8cecc"; font-color: "#1f2328"; stroke: "#b85450" } }
 }
 
 user: User { class: frontend; shape: person }

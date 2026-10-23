@@ -14,10 +14,10 @@ pending_provider: pending\nprovider
 pending_project: pending\nproject
 pending_start: pending\nstart date
 executing
-done: done { style: { fill: "#c8e6c9" } }
-erred: erred { style: { fill: "#ffcdd2" } }
-canceled: canceled { style: { fill: "#eeeeee" } }
-rejected: rejected { style: { fill: "#ffcdd2" } }
+done: done { style: { fill: "#c8e6c9"; font-color: "#1f2328" } }
+erred: erred { style: { fill: "#ffcdd2"; font-color: "#1f2328" } }
+canceled: canceled { style: { fill: "#eeeeee"; font-color: "#1f2328" } }
+rejected: rejected { style: { fill: "#ffcdd2"; font-color: "#1f2328" } }
 
 pending_consumer -> pending_provider: consumer approves
 pending_consumer -> rejected: consumer rejects
@@ -50,11 +50,11 @@ pending_provider -> canceled
 direction: right
 
 creating: Creating
-ok: OK { style: { fill: "#c8e6c9" } }
-erred: Erred { style: { fill: "#ffcdd2" } }
+ok: OK { style: { fill: "#c8e6c9"; font-color: "#1f2328" } }
+erred: Erred { style: { fill: "#ffcdd2"; font-color: "#1f2328" } }
 updating: Updating
 terminating: Terminating
-terminated: Terminated { style: { fill: "#eeeeee" } }
+terminated: Terminated { style: { fill: "#eeeeee"; font-color: "#1f2328" } }
 
 creating -> ok
 creating -> erred

@@ -271,8 +271,8 @@ This release focuses on deployment configuration and operational tuning for both
 
 ### Core Component Activity
 
-- **Waldur Helm**: [38 commits](https://github.com/waldur/waldur-helm/compare/8.1.0...8.1.2) - encryption key wiring, configurable country list, memory tuning values, network policy and ingress fixes.
-- **Waldur Docker Compose**: [32 commits](https://github.com/waldur/waldur-docker-compose/compare/8.1.0...8.1.2) - encryption key passthrough, memory tuning environment knobs, and Caddy compression and CSP updates.
+- **Waldur Helm**: [38 commits](https://github.com/waldur/waldur-helm/compare/8.0.9...8.1.2) - encryption key wiring, configurable country list, memory tuning values, network policy and ingress fixes.
+- **Waldur Docker Compose**: [32 commits](https://github.com/waldur/waldur-docker-compose/compare/8.0.9...8.1.2) - encryption key passthrough, memory tuning environment knobs, and Caddy compression and CSP updates.
 
 ### Resources
 
@@ -330,8 +330,8 @@ This release makes the marketplace far more controllable for providers and opera
 
 - **Waldur Mastermind**: [296 commits](https://github.com/waldur/waldur-mastermind/compare/8.0.9...8.1.0) - provider helpdesk, access subnets, POSIX ID pools, affiliates and volume discounts, proposal workflow engine, performance and memory work
 - **Waldur Homeport**: [268 commits](https://github.com/waldur/waldur-homeport/compare/8.0.9...8.1.0) - helpdesk and AI assistant UIs, credit dashboards, call management redesign, table enhancements, extraction of shared packages
-- **Waldur Helm**: [38 commits](https://github.com/waldur/waldur-helm/compare/8.0.9...8.1.0) - field encryption key wiring, API response compression, matrix network policies, memory tuning values
-- **Waldur Docker Compose**: [32 commits](https://github.com/waldur/waldur-docker-compose/compare/8.0.9...8.1.0) - field encryption key, response compression, memory tuning environment knobs
+- **Waldur Helm**: [38 commits](https://github.com/waldur/waldur-helm/compare/8.0.9...8.1.2) - field encryption key wiring, API response compression, matrix network policies, memory tuning values
+- **Waldur Docker Compose**: [32 commits](https://github.com/waldur/waldur-docker-compose/compare/8.0.9...8.1.2) - field encryption key, response compression, memory tuning environment knobs
 
 ### Resources
 

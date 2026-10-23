@@ -9,8 +9,8 @@ Waldur organizes everything around three primitives: **users**, **organizations*
 ```d2
 direction: right
 classes: {
-  primitive: { style: { fill: "#e8f5e8"; stroke: "#2e7d32" } }
-  derived: { style: { fill: "#fff8e1"; stroke: "#f57f17" } }
+  primitive: { style: { fill: "#e8f5e8"; font-color: "#1f2328"; stroke: "#2e7d32" } }
+  derived: { style: { fill: "#fff8e1"; font-color: "#1f2328"; stroke: "#f57f17" } }
 }
 
 user: User { class: primitive; shape: person }

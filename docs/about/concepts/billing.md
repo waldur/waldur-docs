@@ -9,9 +9,9 @@ Waldur tracks the consumption of every [marketplace](marketplace.md) resource an
 ```d2
 direction: down
 classes: {
-  source:  { style: { fill: "#e8f5e8"; stroke: "#2e7d32" } }
-  derived: { style: { fill: "#fff8e1"; stroke: "#f57f17" } }
-  output:  { style: { fill: "#e1f5fe"; stroke: "#0277bd" } }
+  source:  { style: { fill: "#e8f5e8"; font-color: "#1f2328"; stroke: "#2e7d32" } }
+  derived: { style: { fill: "#fff8e1"; font-color: "#1f2328"; stroke: "#f57f17" } }
+  output:  { style: { fill: "#e1f5fe"; font-color: "#1f2328"; stroke: "#0277bd" } }
 }
 
 plan: Plan\n(price per unit) { class: source }

@@ -8,7 +8,7 @@ Prerequisites:
    pip3 install -r refresher/requirements.txt
    ```
 
-2. Install the glauth binary to `/usr/bin/glauth`. Use the same version as pinned by `GLAUTH_VERSION` in the [Dockerfile](../Dockerfile), e.g.:
+2. Install the glauth binary to `/usr/bin/glauth`. Use the same version as pinned by `GLAUTH_VERSION` in the [Dockerfile](https://github.com/waldur/glauth/blob/main/Dockerfile), e.g.:
 
    ```bash
    wget -O /usr/bin/glauth https://github.com/glauth/glauth/releases/download/GLAuth-v2.5.0/glauth-linux-amd64

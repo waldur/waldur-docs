@@ -19,10 +19,10 @@ organizations, projects, and roles — see [Platform](../about/concepts/platform
 ```d2
 direction: down
 classes: {
-  frontend:      { style: { fill: "#d5e8d4"; stroke: "#82b366" } }
-  backend:       { style: { fill: "#dae8fc"; stroke: "#6c8ebf" } }
-  infra:         { style: { fill: "#fff2cc"; stroke: "#d6b656" } }
-  agent:         { style: { fill: "#f8cecc"; stroke: "#b85450" } }
+  frontend:      { style: { fill: "#d5e8d4"; font-color: "#1f2328"; stroke: "#82b366" } }
+  backend:       { style: { fill: "#dae8fc"; font-color: "#1f2328"; stroke: "#6c8ebf" } }
+  infra:         { style: { fill: "#fff2cc"; font-color: "#1f2328"; stroke: "#d6b656" } }
+  agent:         { style: { fill: "#f8cecc"; font-color: "#1f2328"; stroke: "#b85450" } }
 }
 
 user: User { class: frontend; shape: person }

@@ -104,8 +104,8 @@ The toggle sets the **provider-wide default**. Users can override it per instanc
     ![Activate button on a draft offering](../img/offering-activate-button.png)
 
 !!! tip
-    For more advanced cases of management of offerings, take a look at how a SLURM offering can be managed using
-    [Ansible module](https://github.com/waldur/ansible-waldur-module/blob/develop/waldur_batch_offering.py).
+    To manage offerings as code, use the `offering` module of the `waldur.marketplace`
+    [Ansible collection](../../integrator-guide/ansible/index.md).
 
 ## Configuring billing model per component
 

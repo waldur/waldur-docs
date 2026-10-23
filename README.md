@@ -4,12 +4,18 @@ Documentation for Waldur, an open-source hybrid cloud management platform. This 
 
 ## Documentation Structure
 
-- **admin-guide/** - System deployment, configuration, and administration
-- **developer-guide/** - Architecture, development setup, and contribution guidelines
-- **user-guide/** - End-user functionality and interfaces
-- **integrator-guide/** - API documentation and third-party integrations
-- **integrations/** - Specific integration implementations
-- **about/** - Project overview, governance, and changelog
+Each top-level directory is one tab of the site, or part of one:
+
+| Tab | Directory | Contents |
+|-----|-----------|----------|
+| Get started | `get-started/` | Quickstarts: try, use, deploy, call the API, contribute |
+| Use Waldur | `user-guide/` | End-user, service provider, call manager and staff tasks in the UI |
+| Operate Waldur | `admin-guide/` | Deployment, configuration, identity providers, providers, operations |
+| Integrations | `integrations/` | Third-party integrations |
+| Build with Waldur | `integrator-guide/`, `developer-guide/` | API, SDK, CLI, Terraform, Ansible; Waldur internals |
+| About | `about/` | Concepts, terminology, changelog, governance |
+
+Navigation comes from the `.pages` files, see [CLAUDE.md](CLAUDE.md#navigation).
 
 ## Prerequisites
 

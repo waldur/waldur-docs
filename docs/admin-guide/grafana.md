@@ -119,5 +119,5 @@ The exporter currently publishes the following metric families.
 
 !!! note
     This list tracks the exporter's source. If a metric you need is missing, check
-    [`src/app.py`](https://github.com/waldur/waldur-prometheus-exporter/blob/main/src/app.py)
+    [`src/app.py`](https://github.com/waldur/waldur-prometheus-exporter/blob/develop/src/app.py)
     in the exporter repository — it is the authoritative list.
