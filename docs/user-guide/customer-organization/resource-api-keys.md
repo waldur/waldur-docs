@@ -221,13 +221,14 @@ Tuesday.
 Which periods a key offers depends on how the provider set up the offering (see
 [For service providers](#for-service-providers)):
 
-- **Monthly** is available on every component the resource's plan charges for.
+- **Monthly** is available on every component of the offering, including one
+  the plan prices at zero: a LiteLLM cost cap, for example, is priced at zero
+  yet measures what the key spends.
 - **Daily**, **weekly**, **quarterly** and **yearly** limits are available only
   where the provider's site agent reports each key's usage per day, and then on
   the periods the provider lets customers set
   [spending limits](resource-spending-limits.md) on for the component's
   resources. Elsewhere a key can be limited per month only.
-- A component the plan does not charge for takes no key limits.
 - Where the provider does not let users limit keys, **Request key** and **Edit
   key settings** show no limit fields.
 
