@@ -17528,10 +17528,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#changing-a-keys-assignee-limits-and-models" class="md-nav__link">
+  <a href="#changing-a-keys-limits-and-models" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Changing a key's assignee, limits and models
+        Changing a key's limits and models
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#giving-a-key-to-someone-else" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Giving a key to someone else
       
     </span>
   </a>
@@ -19621,10 +19632,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#changing-a-keys-assignee-limits-and-models" class="md-nav__link">
+  <a href="#changing-a-keys-limits-and-models" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Changing a key's assignee, limits and models
+        Changing a key's limits and models
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#giving-a-key-to-someone-else" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Giving a key to someone else
       
     </span>
   </a>
@@ -19778,25 +19800,31 @@ the old one stops working, so anything using the key needs the new value
 afterwards. The resource's other keys are not affected.</p>
 <p>Who can rotate a key:</p>
 <ul>
-<li><strong>Organization owners</strong> can rotate any key of the resource.</li>
+<li><strong>Organization owners</strong>, <strong>project managers</strong> and <strong>project
+  administrators</strong> manage the resource's keys, and can rotate any of them.</li>
 <li>The <strong>assignee</strong> of a key can rotate their own key, from the <strong>Actions</strong> menu
-  or with the <strong>Rotate</strong> button shown when revealing it. They do not need an
-  organization owner for it, so a key that may have leaked can be replaced
-  straight away.</li>
-<li>Other project members cannot rotate keys. A key shared by the project has no
-  assignee, so it is rotated by an organization owner.</li>
+  or with the <strong>Rotate</strong> button shown when revealing it. They do not need
+  anyone who manages the keys for it, so a key that may have leaked can be
+  replaced straight away.</li>
+<li>Project members cannot rotate a key that is not assigned to them. A key
+  shared by the project has no assignee, so it is rotated by someone who
+  manages the keys.</li>
 </ul>
 <p>Rotating is the only change an assignee can make to their key. Pausing,
-resuming, deleting and editing it stay with organization owners.</p>
+resuming, deleting and editing it stay with organization owners, project
+managers and project administrators.</p>
 <p>A paused key cannot be rotated until it has been resumed. Where limits are
 enforced, an assignee also cannot rotate a key that has reached one of its
 <a href="#limits">limits</a>, of any period: such a key is about to be paused.</p>
 <h2 id="requesting-a-key">Requesting a key</h2>
-<p>Project managers and organization owners can request keys with
-<strong>Request key</strong>:</p>
+<p>Organization owners, project managers and project administrators can request
+keys with <strong>Request key</strong>:</p>
 <ol>
 <li>Optionally choose an <strong>Assignee</strong> — only project members are offered. Leave
-   it empty for a key shared by the project.</li>
+   it empty for a key shared by the project. The assignee cannot be changed
+   later (see <a href="#giving-a-key-to-someone-else">Giving a key to someone else</a>), and
+   a person can be the assignee of only one key of a resource: choosing someone
+   who already holds one is refused.</li>
 <li>Optionally set <strong>limits</strong> per component and period (see <a href="#limits">Limits</a>).
    Each field shows the highest limit the key may have for that period; leave
    a field empty to let the key use up to the resource limit.</li>
@@ -19809,28 +19837,32 @@ enforced, an assignee also cannot rotate a key that has reached one of its
 <p>The new key appears as <strong>Creating</strong> and turns <strong>OK</strong> once the provider has
 created it. Its key ID is assigned at that point.</p>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/resource-api-keys-requested.png" data-desc-position="bottom"><img alt="A requested key waiting to be created" src="../../img/resource-api-keys-requested.png"></a></p>
-<h2 id="changing-a-keys-assignee-limits-and-models">Changing a key's assignee, limits and models</h2>
+<h2 id="changing-a-keys-limits-and-models">Changing a key's limits and models</h2>
 <p>Choose <strong>Edit key settings</strong>. <strong>Save</strong> stays disabled until you change
 something.</p>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/resource-api-keys-edit.png" data-desc-position="bottom"><img alt="Editing a key's settings" src="../../img/resource-api-keys-edit.png"></a></p>
-<ul>
-<li>Changing the <strong>assignee</strong> of a key that has been created <strong>rotates</strong> it: its
-  current value stops working, and the new assignee reveals the new value.
-  Clearing the assignee rotates it too. The dialog warns about this before you
-  save. The assignee can be changed only while the key is <strong>OK</strong>, or <strong>Erred</strong>
-  after a failed rotation: resume a paused key, wait for a change in progress,
-  or retry a failed change first. A requested key that has not been created
-  yet takes the new assignee without a rotation.</li>
-<li>A person can be the assignee of only one key of a resource. Choosing someone
-  who already holds a key is refused.</li>
-<li><strong>Limits</strong> and <strong>models</strong> can be changed while the key is <strong>OK</strong> or
-  <strong>Paused</strong>. On an active key the change is sent to the provider and the key
-  shows <strong>Updating</strong> until it is applied. On a paused key the change is stored
-  and applied when the key is resumed.</li>
-</ul>
-<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/resource-api-keys-edit-assignee.png" data-desc-position="bottom"><img alt="Changing the assignee rotates the key" src="../../img/resource-api-keys-edit-assignee.png"></a></p>
+<p><strong>Limits</strong> and <strong>models</strong> can be changed while the key is <strong>OK</strong> or <strong>Paused</strong>.
+On an active key the change is sent to the provider and the key shows
+<strong>Updating</strong> until it is applied. On a paused key the change is stored and
+applied when the key is resumed.</p>
 <p>The assignee of a key can rotate it themselves, unless it has reached one of
 its <a href="#limits">limits</a>. Every other change stays with whoever can request keys.</p>
+<h2 id="giving-a-key-to-someone-else">Giving a key to someone else</h2>
+<p>A key's assignee is chosen when the key is requested and stays until the key is
+deleted. It cannot be changed or cleared. A key's limits and its usage this
+month belong to the key, not to whoever holds it, so a key that changed hands
+would count one person's use against another person's allowance.</p>
+<p>To give a key to someone else:</p>
+<ol>
+<li><a href="#requesting-a-key">Request a key</a> with the new holder as its assignee, and
+   the limits and models the old key had.</li>
+<li>Once it is <strong>OK</strong>, move the clients that used the old key to the new one.</li>
+<li><a href="#pausing-resuming-and-deleting">Delete</a> the old key.</li>
+</ol>
+<p>Someone who leaves the project keeps any key assigned to them working until it
+is deleted. To cut them off, delete their key, and request a new one if someone
+else should take over their work. A key shared by the project stays shared: to
+give someone a personal key, request one for them.</p>
 <h2 id="models">Models</h2>
 <p>A key's model selection is one of three:</p>
 <table>
@@ -19993,7 +20025,8 @@ keeps the error message. An erred key offers <strong>Retry</strong>, which repea
 change, and <strong>Delete</strong>. A key whose settings update failed can also be corrected
 with <strong>Edit key settings</strong>, which sends the update again.</p>
 <p>The assignee of a key is offered <strong>Retry</strong> only when the change that failed was
-a rotation of it. Any other failed change is retried by an organization owner.</p>
+a rotation of it. Any other failed change is retried by an organization owner,
+a project manager or a project administrator.</p>
 <p>A key whose pause at its <a href="#limits">limit</a> failed is still active at the
 provider, as the <strong>Erred</strong> state's tooltip says. Waldur sends the pause again
 every few minutes while the key is still over its limit, until the provider
@@ -20045,8 +20078,8 @@ key can. Remove a retired model from the backend as well.</p>
 <p>Without <strong>Manage API keys one by one</strong>, consumers can only reveal and rotate
 keys, and resume keys that were paused earlier. Per-key usage is not
 recorded, so limits are no longer enforced, but a key keeps its assignee:
-only that person can still reveal it. Project managers and organization
-owners can share such a key with the project again with <strong>Unassign</strong>.</p>
+only that person can still reveal it. Keys can be neither requested nor
+deleted then, so such a key stays with its assignee.</p>
 </div>
 
 
