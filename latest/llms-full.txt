@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-23T19:26:39.370610Z
+Generated: 2026-10-23T21:50:29.597078Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -36386,9 +36386,10 @@ normal agent operation:
   CephFS xattrs, XFS user quotas, or Lustre user quotas.
 - **Per-project directory + Lustre group/project quota**
   (`project_directory`) — runs in `order_process` mode during resource
-  creation (`_pre_create_resource`). Creates a shared project directory,
-  applies ownership / permissions / ACLs, and optionally sets a Lustre
-  *project* quota keyed on the LDAP group GID.
+  creation (`_on_backend_resource_created`). Creates a shared project
+  directory, applies ownership / permissions / ACLs, and optionally sets a
+  Lustre *project* quota keyed on the LDAP group GID (plus an optional
+  offset).
 
 The two are independent — you can enable either, both, or neither. Failures
 in either are logged but do not abort agent operation.
@@ -36551,13 +36552,14 @@ backend_settings:
       block_hardlimit: 6442450944
       inode_softlimit: 5000000
       inode_hardlimit: 7000000
+      project_id_offset: 0             # Lustre project ID = LDAP GID + offset
 ```
 
 ### What the agent does on resource creation
 
-When `project_directory.enabled: true`, `_pre_create_resource` calls
-`_setup_project_directory(resource_backend_id)` after the SLURM account
-hierarchy is created. It executes (in order):
+When `project_directory.enabled: true`, `_on_backend_resource_created` calls
+`_setup_project_directory(resource_backend_id)` once SLURM has accepted the
+new account, after the LDAP project group is created. It executes (in order):
 
 ```bash
 mkdir -p   <base_path>/<resource_backend_id>
@@ -36593,20 +36595,48 @@ and that the project group exists in LDAP before the resource is created.
 If the prerequisites are met, the agent runs:
 
 ```bash
-lfs setquota -p <gid> [-b <block_softlimit>] [-B <block_hardlimit>] \
-                      [-i <inode_softlimit>] [-I <inode_hardlimit>] <mount_point>
-lfs project -p <gid> -r -s <project_path>
+lfs setquota -p <project_id> [-b <block_softlimit>] [-B <block_hardlimit>] \
+                             [-i <inode_softlimit>] [-I <inode_hardlimit>] <mount_point>
+lfs project -p <project_id> -r -s <project_path>
 ```
 
-Each `-b/-B/-i/-I` flag is included only if the corresponding limit is set
-in the configuration. `mount_point` defaults to `/valhalla`.
+where `<project_id>` is the group's GID plus `project_id_offset` (default
+`0`, so the GID itself). Each `-b/-B/-i/-I` flag is included only if the
+corresponding limit is set in the configuration. `mount_point` defaults to
+`/valhalla`.
 
 Note that this is a **project quota** (`-p`), not a group or user quota. The
-GID coming from LDAP is reused as the Lustre project ID, and the directory
-tree is tagged with that project ID via `lfs project -r -s`.
+quota is set on the project ID, and the directory tree is tagged with the
+same project ID via `lfs project -r -s` (`-s` makes new files and
+subdirectories inherit it).
 
 Unlike subsystem A, no verification step is run. Failures from
 `lfs setquota` are logged but do not abort resource creation.
+
+### Choosing a project ID offset
+
+Lustre project IDs are a namespace of their own, but every tree tagged with
+the same project ID shares one quota. If the site also tags other trees with
+project IDs — typically home directories tagged with the owner's UID — and
+UIDs and GIDs overlap, a project directory can land on the ID of somebody's
+home directory. Set `project_id_offset` to move the project directories into
+a range nothing else uses; for example, with an offset of `1000000000` the
+group with GID `10136` gets project ID `1000010136`.
+
+- Project IDs are 32-bit: the largest usable one is `4294967294`
+  (`4294967295` is reserved and rejected by `lfs` and the kernel). The agent
+  refuses to start when the offset itself is negative, not an integer, or
+  above that limit, and skips the quota (logging an error) for a group whose
+  GID plus the offset exceeds it.
+- The offset applies only to project directories created after it is set:
+  the agent never re-tags existing directories. To move an existing one, tag
+  it and set its quota under the new ID, then remove the old ID's limits:
+
+  ```bash
+  lfs project  -p <new_id> -r -s <project_path>
+  lfs setquota -p <new_id> -b <soft> -B <hard> [-i <soft> -I <hard>] <mount_point>
+  lfs setquota -p <old_id> --delete <mount_point>
+  ```
 
 ## Examples
 
@@ -36633,7 +36663,7 @@ A complete reference example showing both subsystems is in
   implementation choice — the quota requires the GID and the GID lookup goes
   through the LDAP client.
 - **No verification** is run after `lfs setquota -p` (the homedir-quota path
-  *does* verify). Operators should spot-check with `lfs quota -p <gid>
+  *does* verify). Operators should spot-check with `lfs quota -p <project_id>
   <mount>` after onboarding the first project.
 
 ## Operator troubleshooting
@@ -36652,7 +36682,7 @@ lfs quota -u alice /home
 Verify a project directory's Lustre quota / project ID:
 
 ```bash
-lfs quota   -p <gid>     /valhalla
+lfs quota   -p <project_id> /valhalla    # project_id = GID + project_id_offset
 lfs project -d /valhalla/projects/<resource_backend_id>
 ```
 
@@ -87695,19 +87725,32 @@ model, see [Policies](../../about/concepts/policies.md).
 
 ## Cost policies for organizations
 
-Staff role can define cost policies for organizations. To add a new policy, open Administrations menu from the left and then Organizations -> Cost policies from the top. This view provides an overview about already defined policies. To create a new one, select "Add" from the right.
-    [Image: Cost policy for organization]
+Staff users define cost policies for organizations. Open **Administration** in the sidebar, then
+**Organizations & compliance → Credits & cost policies**, and select the **Cost policies** tab.
+It lists the policies already defined. To create one, click **Add**.
 
-From the popup, select organization, then set estimated cost limit and finally choose the action (what happens, when the limit is reached).
-    [Image: New organization cost policy]
+[Image: Cost policies for organizations]
+
+In the dialog, select one or more organizations and the period. The dialog shows each selected
+organization's cost in previous months, this month and in total, to help you choose the limit.
+Then enter the estimated cost limit and choose the action, which is what happens when the limit
+is reached.
+
+[Image: New organization cost policy]
 
 ## Cost policies for projects
 
-Organization owners can set different cost policies for projects under particular organization. To add a new policy, open Organizations menu from the left and then Policy -> Cost policies from the top. This view provides an overview about already defined policies. To create a new one, select "Add" from the right.
-    [Image: Cost policy for project]
+Organization owners can set different cost policies for the projects of their organization. Open
+the organization, then **Policy → Cost policies**. The page lists the policies already defined. To
+create one, click **Add**.
 
-From the popup, select project, then set estimated cost limit and finally choose the action (what happens, when the limit is reached).
-    [Image: New project cost policy]
+[Image: Cost policies for projects]
+
+In the dialog, select one or more projects and the period; each project shows its estimated cost
+for this month, and a table shows its cost so far. Then enter the estimated cost limit and choose
+the action, which is what happens when the limit is reached.
+
+[Image: New project cost policy]
 
 When exactly one project is selected, the policy can optionally be limited to a single resource. Use the "Limit to resource" field to pick a resource: only that resource's cost is then measured against the limit, and the policy's actions (for example pausing, downscaling or scheduled termination) apply only to that resource. Leaving the field empty keeps the policy scoped to the whole project. Blocking the creation of new resources is not available for resource-scoped policies, since that action is project-wide.
 
@@ -87820,19 +87863,37 @@ The same history is available through the API: `GET /api/marketplace-project-est
 
 ## Cost policies for offerings
 
-Offering managers can set cost policies for specific organization groups. This allows to trigger some actions, when cost is reached. To add new policy, offering manager should open offering management page (Organization from the left menu, then Service provider -> Marketplace -> Offering) and then Policy -> Cost policy from the top. This view provides an overview about already defined policies. To create a new one, select "Add" from the right.
-    [Image: Cost policy for offering]
+Offering managers can set cost policies for specific organization groups, so that an action is
+taken when the cost of the offering's resources reaches a limit. Open the organization, select the
+**Service provider** tab, then **Marketplace → Offerings**, and open the offering. On its
+**Manage** tab, select **Policy → Cost policy**.
 
-From the popup, set estimated cost limit, choose the action what happens after cost is reached (block creation of new resources or notifying the organization owners). Then, it is needed to select period (is this policy per month, quarter, annual or total) and finally select organization group for which this policy applies to.
-    [Image: New offering cost policy]
+[Image: Policy menu on the offering's Manage tab]
+
+The **Cost** tab lists the policies already defined. To create one, click **Add**.
+
+[Image: Cost policies for an offering]
+
+In the dialog, enter the estimated cost limit and choose the action: block creation of new
+resources, or notify the organization owners. Then select the period (1, 3 or 12 months, or the
+total) and the organization groups the policy applies to.
+
+[Image: New offering cost policy]
 
 ## Usage policies for offerings
 
-Offering manager can set different usage policies for specific organization groups. This allows to trigger some actions, when usage of defined resource component is reached. To add new policy, offering manager should open offering management page (Organization from the left menu, then Service provider -> Marketplace -> Offering) and then Policy -> Usage policy from the top. This view provides an overview about already defined policies. To create a new one, select "Add" from the right.
-    [Image: Offering usage policy]
+Offering managers can set usage policies for specific organization groups, so that an action is
+taken when the usage of a resource component reaches a limit. On the offering's **Manage** tab,
+select **Policy → Usage policy**. The **Usage** tab lists the policies already defined. To create
+one, click **Add**.
 
-From the popup, select accounting component and set limit for that. Several compoments can be defined in one policy. Then, it is needed to select period (is this policy per month, quarter, annual or total) and finally select organization group for which this policy applies to.
-    [Image: New offering usage policy]
+[Image: Usage policies for an offering]
+
+In the dialog, select a component and enter its limit. Click **Add** to limit more components in
+the same policy. Then choose the action, the period and the organization groups the policy
+applies to.
+
+[Image: New offering usage policy]
 
 ---
 
@@ -88002,23 +88063,32 @@ organization owners can distribute allocated credits to projects. Projects can u
 overused resources are invoiced according to the pricing plan. Organization owners can use credit management together
 with the [cost and usage policies](cost-and-usage-policies.md) to handle overconsumption.
 
-To see current credit management policies, open the organization dashboard and then
+To see the credit allocated to projects, open the organization and then
 **Accounting → Credit management**.
 
 !!! note
     The **Credit management** entry only appears once staff have assigned a credit to the
     organization. If you do not see it, no credit has been granted yet.
 
-[Image: Customer credit policies]
+[Image: Project credits of an organization]
 
-To create a new one, click "Add" on the right. A popup opens with configuration fields:
+To allocate credit to a project, click **Add**. A dialog opens with these fields:
 
-1. Project - select the project, which can use the credits.
-2. Allocate credit - set the maximum amount of credits.
-3. Use organization credit after exceeding allocated amount - Enable, if project can use organization credits after running out of project credits. If disabled, resource usage will be invoiced according to the pricing plan.
-4. If all set, click "Create".
+1. **Project** - the project that can use the credit.
+2. **Allocate credit** - the amount of credit. The sum of all project credits cannot exceed the
+   organization's credit; the dialog shows how much is available.
+3. **End date** - optional. On that date the remaining credit is set to 0. It must be the first
+   day of a month.
+4. **Minimal consumption logic**, **Expected consumption**, **Grace coefficient** and **Apply as
+   minimal consumption** - how much the credit is reduced each month at least, even if the
+   project uses less. They work as for organization credits, see
+   [Credit management for staff](../staff-users/credit-management-staff.md).
+5. Click **Confirm**.
 
-[Image: New project credit policy]
+[Image: Add project credit dialog]
+
+When a project's credit is spent, further usage of its resources is invoiced according to the
+pricing plan.
 
 ---
 
@@ -88316,20 +88386,36 @@ Organization team contains users with different roles. See
 [Roles and permissions](../../about/terminology/roles_and_permissions.md#user-roles-in-organization)
 for the per-role permission matrix.
 
+The team is on the organization's **Team** tab. **Active** lists the members, **Invitations**
+the email invitations that are not accepted yet, and **Group invitations** the shareable
+invitation links. **Add** offers three ways to add people:
+
+- **Invite by mail** sends an invitation to one or more email addresses.
+- **Group invitation** creates a link that you can share with many people. Users who open it
+  request the role, and the request is approved by an organization owner, or automatically if
+  the link is set up that way.
+- **Member** gives a role to a user who already has an account, see
+  [Team management for staff](../staff-users/team-management-staff.md).
+
+[Image: Organization Team tab with the Add menu open]
+
 ## Adding organization members
 
-1. Open your organization in Waldur.
-2. Select "Team" from the menu and click on "Invitations".
-3. By clicking "Add" open "Invite by email" window.
+1. Open the organization and select the **Team** tab.
+2. Click **Add** and select **Invite by mail**.
+3. Enter the email address and select the role. Organization roles (**Organization owner**,
+   **Organization reader**, **Organization support**) apply to the whole organization. For a
+   project role, also select the project. Click **Add another user** to invite more people at
+   once, or **Import** a list of addresses from a CSV file.
 
-    [Image: Select organization]<br><br>
+    [Image: Invite by email dialog with the role list open]
 
-4. Insert user's email and set the role for the new user and continue.
+4. Click **Continue**. Optionally, write a **Custom message**; it is added to the invitation
+   email.
+5. Click **Send invitation**. The user gets an email with a link to accept the invitation.
 
-    [Image: Select organization]<br><br>
-
-5. Fill in your custom message on the right side of the window and send the invitation.
-6. User now will get invitation email with the acceptance link.
+The invitation is listed on the **Invitations** tab until the user accepts it. Use the row's
+actions menu to **Resend** or **Cancel** it.
 
 ---
 
@@ -88430,17 +88516,26 @@ Project creation is allowed for organization owners in their organizations and s
 !!! note
     User must have an account in Waldur instance to create projects.
 
-1. Select your home organization.
-2. Under the **Project** tab, click on **Add**.
-3. Fill the necessary fields (fields marked with * are mandatory) and click **Create**.
+1. Open your organization and select the **Projects** tab.
+2. Click **Add**.
+3. Enter the **Project name**. It is required and appears in accounting data. Select an
+   **Affiliation** if your organization uses them, then click **Create**.
 
-    - **Project name** - The original title of the project.
+    [Image: Create project dialog]
+
+    The administrator decides which other fields the dialog shows. Depending on the platform, it
+    can also ask for:
+
     - **Project description** - A brief description about the project.
     - **OECD FoS code** - OECD science field code ([more info](https://joinup.ec.europa.eu/collection/eu-semantic-interoperability-catalogue/solution/field-science-and-technology-classification/about))
     - **Start date** - once reached, marks the date when prepared user invitations are sent out and triggers the processing of previously made resource orders.
     - **End date** – once reached (plus any configured grace period), triggers the creation of termination orders for the existing resources. If the resources have already been terminated by this time, the project will be removed. The date is inclusive.
 
-4. If you need to edit project details later, open your project and select the **Edit** tab.
+4. To change the project's details later, or to set those the dialog did not ask for, open the
+   project and select the **Edit** tab. **General** holds the name, start and end dates and
+   description.
+
+    [Image: General settings on the project's Edit tab]
 
 !!! note
     Your Waldur administrator may enforce a project name convention (for example, a maximum length). If the name you enter does not meet the requirement, the form shows an error and the project is not created. See [Project name restrictions](../staff-users/project-name-restrictions.md).
@@ -88449,8 +88544,6 @@ Project creation is allowed for organization owners in their organizations and s
     1. If a resource has a termination date that comes after the project's end date, the project's end date will automatically become that resource's termination date.
     2. If a resource has a termination date that comes before the project's end date, we'll use the resource's original termination date.
     3. Important: Setting any end date (either the project's or a resource's) only creates a termination request. The resource remains active in the project until the termination process is fully completed.
-
-[Image: type:video]
 
 ## Grace period
 
@@ -88708,33 +88801,53 @@ Project team contains users with different roles. See
 [Roles and permissions](../../about/terminology/roles_and_permissions.md#user-roles-in-organization)
 for the per-role permission matrix.
 
+The team is on the project's **Team** tab. **Active** lists the members and their roles,
+**Invitations** the invitations that are not accepted yet. **Add** offers two ways to add
+someone:
+
+- **Member** gives a role to a user who already has an account.
+- **Invite by mail** sends an invitation to an email address.
+
+[Image: Project Team tab with the Add menu open]
+
 ## Adding project members
 
-### New user already has account in current Waldur instance
+### New user already has an account in current Waldur instance
 
-1. Open your project in Waldur.
-2. Select "Team" from top menu and click on "Users".
-3. By clicking "Add member" open "Add project member" window.<br><br>
+1. Open the project and select the **Team** tab.
+2. Click **Add** and select **Member**.
+3. Select the user, then the role: **Project administrator**, **Project manager** or
+   **Project member**.
+4. Optionally, set **Role expires on**. The role is removed on that date.
+5. Click **Add role**. The user gets the role right away; there is no invitation to accept.
 
-    [Image: Select organization]<br><br>
+[Image: Add user dialog with a user and a role selected]
 
-4. Select correct user, set the role and expiration date if necessary.<br><br>
+!!! note
+    The list offers the users of the organization (for organization owners) or of the projects
+    you belong to (for project managers). To add anyone else, invite them by email.
 
-    [Image: Select organization]<br><br>
+### New user doesn't have an account in current Waldur instance
 
-5. Finally, click on "Add".
-6. User now will get invitation email with the acceptance link.<br><br>
+1. Open the project and select the **Team** tab.
+2. Click **Add** and select **Invite by mail**.
+3. Enter the email address and select the role. Click **Add another user** to invite more
+   people at once, or **Import** a list of addresses from a CSV file.
 
-### New user don't have a account in current Waldur instance
+    [Image: Invite by email dialog with an address and a role]
 
-1. Open project in Waldur.
-2. Select "Team" from top menu and click on "Invitations".
-3. By clicking "Invite user" open "Invite by email" window.
-4. Insert user's email and set the role for the new user and continue.
-5. Fill in your custom message on the right side of the window and send the invitation.
-6. User now will get invitation email with the acceptance link.
+4. Click **Continue**. Optionally, write a **Custom message**; it is added to the invitation
+   email.
 
-[Image: type:video]
+    [Image: Custom message step of the invitation]
+
+5. Click **Send invitation**. The user gets an email with a link to accept the invitation.
+
+The invitation appears on the **Invitations** tab as **Pending** until the user accepts it, and
+expires after the date in **Expires at**. Use the row's actions menu to **Resend** or **Cancel**
+it.
+
+[Image: Invitations tab with a pending invitation]
 
 ---
 
@@ -89925,101 +90038,126 @@ usage instead.
 
 ## VPC management
 
-!!! Info
-    There are several Virtual Private Cloud providers available on the ´Marketplace´.
-    You need to provision at least one VPC package from a suitable provider in order to be able to create virtual machines.
+A Virtual Private Cloud (VPC) is a private OpenStack cloud, also called a tenant. It has its own
+quota of CPU cores, RAM and storage and its own internal network. Virtual machines and volumes
+are always created inside a VPC, so a project needs a VPC before you can create virtual machines
+in it.
 
-- Virtual Private Cloud (VPC) resource package can be added by clicking to ´Marketplace´ and selecting ´Private Clouds´ from the menu to go to the list of VPC.
+### Ordering a VPC
 
-[Image: VPC selection]
+1. Open **Marketplace**, choose the category that holds private clouds (**Private Clouds** in
+   this example) and click **Request** on the offering. You can also start from **Add resource**
+   at the top of the sidebar, see [Ordering other resources](#ordering-other-resources).
 
-- Currently, there are three VPC component names listed: ´Cores´, ´Ram´, and ´Storage´. For configuration of a VPC resource please fill in a suitable quantity for each component and click on the ´Add to cart´ button. Here by changing the quantities of components, you can see Prices accordingly per day, per 30 days, per 365 days, and finally the total price of the VPC.
+    [Image: Private Clouds category in the marketplace]
 
-[Image: VPC addition]
+2. Under **General information**, select the organization and the project the VPC belongs to.
+3. Under **Plan**, select a plan and enter the quota you need for each component: **CPU Cores**,
+   **RAM** and **Storage**. Each line shows the component's price and monthly total, and the
+   panel on the right adds them up. Switch on **Yearly estimate** to see the cost for a year.
 
-- It is mandatory to input ´Tenant name´ to order a VPC.
-- We also strongly suggest filling the ´Tenant description´ field.
+    [Image: Plan step of the VPC order form with quotas and prices]
 
-[Image: VPC addition]
+4. Under **Internal network**, keep or change the address range (CIDR) of the VPC's default
+   subnet. **Advanced configuration** lets you skip the default router, the connection to the
+   external network or the default subnet. Leave these off unless your network design needs them.
+5. Under **Final configuration**, enter a **Tenant name** or click **Suggest name**. The name is
+   required and appears in accounting data. Add a description so that others in the project know
+   what the VPC is for. A **Termination date** is optional: when it is reached, the VPC is
+   scheduled for termination.
 
-- Finally click on Add to cart and Request on the next page.
+    [Image: Internal network and final configuration steps of the VPC order form]
 
-[Image: VPC add to cart]
-
-[Image: VPC request]
+6. When every step under **Progress** has a check mark, click **Create** and confirm the order.
 
 ### Request approval
 
-a) If your role in the Project is ´Project Manager´ or ´System Administrator´, please ask your Organization Owner to approve the order.
+After you submit the order, the VPC's page opens. The tracker at the top shows the order's
+progress: created, approved by the organization, approved by the service provider, being
+created, completed.
 
-b) If your role is ´Organization Owner´ you are able to complete the purchase to final approval (click the ´Purchase´ button). Hereafter the system will need a couple of minutes to execute the order. Once the system changes the state to ´Done´, your VPC is ready to use.
+- If you are an **organization owner**, the organization approval is given automatically.
+  Depending on the offering, the service provider approves the order automatically or manually,
+  and then the VPC is created.
 
-[Image: VPC executing]
+    [Image: Order approved and the VPC being created]
 
-[Image: VPC done]
+- If your role cannot approve orders, for example **project manager** or **project member**, the
+  order waits for organization approval.
 
-!!! Info
-    Provisioned VPC resource package will be automatically enabled for the project as a VM provider. For other projects it can be enabled by the organization owner under Provider management within organization workspace.
+    [Image: Order waiting for organization approval]
 
-[Image: type:video]
+    Organization owners find waiting orders under the bell icon in the top bar, in **Pending
+    confirmations**, and approve or decline them there.
+
+    [Image: Pending confirmations panel with Approve and Decline buttons]
+
+Creating the VPC takes a few minutes. When it is done, the state changes to **OK** and the
+**Quotas** tab shows how much of each quota is in use.
+
+[Image: A provisioned VPC and its quota usage]
+
+!!! info
+    Each VPC adds two offerings to the marketplace: **Virtual machine in &lt;VPC name&gt;** and
+    **Volume in &lt;VPC name&gt;**. Only the VPC's project can use them, and the virtual machines
+    and volumes created from them are charged as part of the VPC.
 
 ## VM management
 
-!!! Info
-    Projects need to have at least one VPC resource package enabled before any virtual machines can be created. You can follow this guide to add a new VPC.
+!!! info
+    A virtual machine runs inside a VPC, so its project needs one first. See
+    [Ordering a VPC](#ordering-a-vpc).
 
-- VMs can be added by clicking to ’Marketplace’ and selecting ’Virtual machines’ from the menu to go to the list of Virtual Machines.
+### Ordering a virtual machine
 
-[Image: VM marketplace]
+1. Open **Marketplace** and choose **Virtual Machines**. Each VPC has its own offering,
+   **Virtual machine in &lt;VPC name&gt;**. Click **Request** on the one for the VPC the virtual
+   machine should run in.
 
-- Ordering a ’Virtual Machine’ requires a VM name and selection of a VM image.
-- Please select the ’Image’ for a VM and click on the ’Select’ button, returning to the form.
+    [Image: Virtual machine offerings, one per VPC]
 
-[Image: VM addition 1]
+2. Under **Image**, select the operating system and its version.
+3. Under **Hardware configuration**, select a flavor. The flavor sets the number of vCPUs and the
+   amount of RAM. The bars in the table header show how much of the VPC's vCPU and RAM quota is
+   used, including the selected flavor. A flavor is greyed out when it would exceed the VPC's
+   quota or has less RAM than the image needs.
+4. Selecting a flavor fills in the **System volume size**, which you can increase. Use the toggle
+   next to **Data volume type** to add a second volume. See
+   [System and data volumes](#system-and-data-volumes).
 
-- Selecting the initial VM resource profile, the flavor, by clicking on the ’Flavor: Show choices’ selector is mandatory.
-- The flavor will set the initial resource profile for a VM - how much RAM, vCPU cores, and storage it will have.
+    [Image: Image and hardware configuration steps of the VM order form]
 
-!!! Warning
-    VM images contain their minimum requirements information, and non-matching VM flavors are disabled automatically.
+5. Under **Network and security**:
+    - Select the **SSH public key** to install on the virtual machine. Keys come from your user
+      profile; **Create new** adds one without leaving the form.
+    - Select the **Subnet** to connect to. To reach the virtual machine from outside the VPC,
+      choose **Auto-assign floating IP** or a free floating IP from the list. With
+      **Skip floating IP assignment** it can only be reached from inside the VPC. **Add subnet**
+      connects it to more subnets.
+    - Select the **Security groups**, which are the firewall rules. No incoming traffic is
+      allowed unless a security group allows it, so add one that opens the ports you need, such
+      as SSH (port 22).
 
-- Selecting VM flavor will also update ’System volume size’ with the option to override it manually (to a higher custom value). The size of ’Data Volume’ can be customized and incremented in 1 GB steps. ’System volume’ must be at least 10 GB, and together the two volumes must fit the VPC’s remaining storage quota — see [System and data volumes](#system-and-data-volumes).
+    [Image: Network and security step of the VM order form]
 
-[Image: VM addition 2]
+6. **Scheduling** appears when the VPC has server groups, which control how virtual machines are
+   placed on physical hosts. **Automation** holds an optional start script (cloud-init user data)
+   and the [config drive](#config-drive) toggle.
+7. Under **Final configuration**, enter a **VM name** and a description, and optionally a
+   termination date.
+8. Click **Create** and confirm. The panel on the right shows which VPC the virtual machine is
+   charged to. The order then follows the same [approval flow](#request-approval) as a VPC.
 
-- By default, provisioned virtual machines expect users to log in using SSH keys. The initial SSH key for login should be selected by clicking on the ’SSH public key: Show choices’ selector.
+    [Image: Final configuration step and the Create button]
 
-!!! Warning
-    There has to be at least one SSH public key added to the user profile for it to appear in the SSH key selector list.
+!!! info
+    The **default** security group is selected automatically. It allows outgoing traffic, which
+    the virtual machine needs to answer incoming connections and to reach the OpenStack metadata
+    service. Keep it unless another security group gives the same access.
 
-!!! Info
-    In order to log in to your newly created VM over SSH, you need to use a username depending on your choice of VM Image type and your SSH-RSA key-pair. By default password authentication is disabled.
-
-- Default usernames for login are as follows:
-  - CentOS images: CentOS
-  - Ubuntu images: Ubuntu
-  - Debian images: Debian
-  - FreeBSD images: FreeBSD
-- By default, no incoming connections will be allowed for a VM. Predefined Security Groups (firewall rules) must be linked to a VM in order to open up access (like ssh, HTTP, etc.). By clicking the ’Details’ button, you can see the details about the available ’Security Groups’. ’Security Groups’ can be added while ordering the VM or afterward by editing.
-
-!!! Info
-    VM create form will automatically include a ’default’ security group that enables egress (outgoing) traffic for a VM and which is required in order to reply to any of the incoming packets.
-
-- VM needs to be connected to at least one of the VPC (internal) networks and an external network via floating IP - if external/public access to VM is required.
-
-!!! Info
-    Floating IP is technically realized as 1:1 NAT between VM internal IP and public network IP.
-
-[Image: VM addition 3]
-
-[Image: VM addition 4]
-
-- We strongly suggest also adding ’VM description’. In order to provision the VM, please click on the “Add to cart” button.
-
-[Image: VM request]
-
-!!! Info
-    On the right pane, there will be a ’Checkout summary’ with the purchase overview and indicative VM cost (as part of the VPC package cost).
+!!! info
+    A floating IP is a public address mapped one-to-one to the virtual machine's internal address
+    (1:1 NAT).
 
 ### System and data volumes
 
@@ -90085,31 +90223,55 @@ Leave it off for normal cases where the metadata service is reachable.
 !!! tip
     Hover the question mark next to the field for a full explanation in the UI.
 
-- VM should reach into “Active” status when successfully provisioned. The “Access” field will show the IP address to access VM over SSH (Linux) or over RDP (Windows).
+### Accessing the virtual machine
 
-[Image: VM ready]
+When the virtual machine is ready, its state changes to **Active**. The **Details** tab shows
+its image, flavor, **Fixed IPs** (addresses inside the VPC) and **Floating IPs** (public
+addresses).
 
-!!! Info
-    VM access over SSH or RDP should be permitted by ’Security Groups’ linked to VM.
+[Image: Details of an active virtual machine with its fixed and floating IPs]
 
-## HPC resource management
+Log in over SSH with the private key that matches the key you selected, at the floating IP:
 
-- HPC resources can be added by clicking to ´Marketplace´.
-- Select organization and project (if not filled in yet) from the upper right corner.
-- selecting ´HPC´ category or some other option which represent HPC resources.
-- Select desired resource and click 'Deploy'.
-- Fill in request form fields and click 'Create' on the right.
+```bash
+ssh ubuntu@203.0.113.21
+```
 
-[Image: type:video]
+The user name depends on the image. Cloud images usually use the distribution's name in lower
+case, such as `ubuntu`, `debian` or `rocky`; if unsure, ask the service provider. Password login
+is disabled by default.
 
-## Resource components update
+!!! info
+    SSH (port 22) or RDP (port 3389) access has to be allowed by a security group linked to the
+    virtual machine. To change them later, open **Networking → Security groups** on the virtual
+    machine's page.
 
-If it turns out that initial limits for the resource are too low or higher than expected, then it is possible to change the limits after the resource creation. This can be done by opening the resource management section. Again, like in the resource creation phase, same approval flow applies.
+## Ordering other resources
+
+Other resources, such as HPC allocations or storage, are ordered the same way:
+
+1. Click **Add resource** at the top of the sidebar.
+2. Select the organization and the project.
+3. Choose a category and an offering. You can also search for an offering by name.
+4. Fill in the order form and click **Create**. The order follows the same
+   [approval flow](#request-approval).
+
+[Image: Add resource dialog with categories and offerings]
+
+You can also browse **Marketplace** by category and click **Request** on an offering.
+
+## Changing resource limits
+
+If a resource's limits turn out to be too low or too high, you can change them after the
+resource is created. Open the resource, click **Actions** and select **Change limits**. Enter the
+new limits; the dialog shows the difference from the current limits and the new monthly price.
+Click **Request for a change** to submit it. The change is an order, so it follows the same
+[approval flow](#request-approval) as a new resource.
+
+[Image: Change resource limits dialog with new limits and price difference]
 
 Users who may not change the limits themselves can ask for new ones on offerings
-that enable it — see [Requesting resource limit changes](resource-limit-change-requests.md).
-
-[Image: type:video]
+that enable it, see [Requesting resource limit changes](resource-limit-change-requests.md).
 
 ## Changing a calculated size
 
@@ -90436,41 +90598,40 @@ usage reports.
 
    [Image: Usage reports]
 
-To view the usage information within a project:
+The usage of a single resource is on the resource's own page.
 
 ### Private clouds
 
-To view the usage information within a project:
+1. Open your project and select the **Resources** tab.
+2. Open the private cloud (VPC) resource.
+3. The card at the top shows how much of each limit (CPU cores, RAM, storage) is in use, and
+   the **Quotas** tab shows the usage of every OpenStack quota, grouped into compute (instances,
+   vCPUs, RAM), network (floating IPs, networks, ports, security groups and their rules,
+   subnets) and storage (snapshots, volumes, storage).
 
-1. Open your project in Waldur.
-
-2. Select the private cloud resource that usage report you would like to see.
-
-3. Now private cloud resource dashboard provides the overview of limits and used quotas.
-   [Image: Private cloud usage]
+[Image: Quotas of a private cloud]
 
 ### HPC
 
-1. Open your project in Waldur.
+1. Open your project and select the **Resources** tab.
+2. Open the allocation (resource).
+3. The card at the top shows each component with its usage and limit, its billing type and
+   unit.
+4. Select the **Usage** tab. There is one chart per component; switch between them with the tabs
+   above the chart (**CPU hours** and **Storage** in the example).
 
-2. Select the allocation (resource) that usage report you would like to see.
+    [Image: Usage history chart of an HPC allocation]
 
-3. On this window, Select "Usage" to see the usage of a resource. Use tabs "CPU Allocation", "GPU Allocation", and "Storage Allocation" to see the details.
-   [Image: Resource usage]
+5. For an older resource, buttons above the chart choose the period: **6 months**,
+   **12 months** for resources older than a year, or **From creation** for the whole life of
+   the resource.
+6. To see the numbers, click the table icon next to **Export all**. **Total usages** lists the
+   usage per billing period, **User usages** the usage per user. Click the chart icon to go
+   back.
 
-4. By default, the view shows last 6 months information. To see the usage from the creation of a resource, please use period selector on the right side.
-   [Image: Period selection]
+    [Image: Usage history as a table]
 
-5. Instead of graph view, it is possible to switch to table view as well. To do that, please use switching button on the right next to the period selector.
-   [Image: Table view]
-
-6. It is possible to download the graph views as PNG images. To do that, please use the arrow icon on the right side of the graph.
-   [Image: PNG download]
-
-To check the current resource allocation limit:
-
-1. On the same window, the plan details for Allocation components (CPU, GPU, and storage) can be found on the top-right side.
-   [Image: Resource limits]
+7. **Export all** downloads the usage as PNG, PDF, CSV or Excel.
 
 ## Including terminated resources
 
@@ -91321,23 +91482,34 @@ for deployment-specific documentation.
 
 ### Service provider revenue
 
-If the organization is service provider, then it is possible to check the amount of revenue of a running month. To do that, open the organization dashboard, choose "Service provider" view and then dashboard opens. There you will see the total amount of estimated revenue and also 11 previous months.
+If the organization is a service provider, open it and select the **Service provider** tab. The
+**Dashboard** shows the estimated revenue of the running month, with a chart of the previous
+months, and counters for active clients, active resources, published offerings, open support
+tickets, orders pending approval and erred resources.
 
-By clicking on "Active clients" on the left, it's possible to see more detailed information about clients and amounts.
-   [Image: Service provider revenue]
+[Image: Service provider dashboard]
+
+The **Customers** tab lists the organizations, projects and users that use the provider's
+offerings. The **Organizations** list shows each customer's estimated cost for the month.
+
+[Image: Customers of a service provider]
 
 ### Invoices
 
-Waldur provides a convenient way to see the invoices issued to the organization. Open the organization dashboard and select “Accounting” from the top menu and then “Invoices”. Now you’re able to see all invoices issued to the organization.
-   [Image: Invoices]
+To see the invoices issued to the organization, open it and select **Accounting → Invoices**.
 
-Invoices’ information can be downloaded in different formats as well.
-   [Image: Invoice export]
+[Image: Invoices of an organization]
+
+To download the invoice list, click **Export** and choose the format: copy to clipboard, CSV,
+PDF or Excel. **Apply table filters** exports only the rows that match the current filters, and
+**All pages** exports every page instead of the one shown.
+
+[Image: Export dialog]
 
 ### Estimated cost
 
-Estimated cost of a running month can be seen from the same view as invoices. By default, it shows top 4 projects with the highest cost. By clicking “Details”, you are able to see all projects with estimated costs.
-   [Image: Estimated cost]
+The estimated cost of the running month is shown above the invoices. The card lists the
+resources with the highest estimated cost; click **Details** to see the whole breakdown.
 
 ---
 
@@ -91357,36 +91529,57 @@ creating an offering is through a HomePort.
 
 ## OpenStack offering creation
 
-1. Select organization, which will provide the offering.
+1. Open the organization that will provide the offering and select its **Service provider**
+   tab.
 
-2. Go to Provider dashboard, click **Marketplace** -> **Offerings** from the top menu and then **Add** from the left.
-    [Image: Adding an offering]
+2. Select **Marketplace → Offerings** and click **Add**.
 
-3. A popup opens, fill in the name for the offering, category (e.g. Private clouds) and type (**OpenStack tenant**) and click **Create**.
-    [Image: Adding details]
+    [Image: Offerings of a service provider]
 
-4. An offering configuration page opens with an option to edit different attributes.
+3. In the dialog, enter the offering's name, select a category (for example **Private Clouds**)
+   and the type **OpenStack tenant**, then click **Create**.
 
-    [Image: Adding details]
+    [Image: New offering dialog with the OpenStack tenant type]
 
-5. For the OpenStack integration, select **Integration** -> **Credentials** from the top menu. Fill in requested parameters.
+4. The offering opens on its **Edit** tab, as a draft. **General** holds the name and
+   descriptions; the other tabs hold the integration, public information, order form inputs,
+   roles and accounting.
 
-    - **API URL** - OpenStack deployment keystone URL
+    [Image: Edit tab of a new draft offering]
+
+5. For the OpenStack integration, select **Integration → Credentials** and fill in the
+   parameters. Click the edit button on a row to change it.
+
+    - **API URL** - Keystone authentication URL of the OpenStack deployment
+    - **Authentication type** - a password or an application credential
     - **Domain name** - OpenStack domain name
     - **Username** - Tenant user username
     - **Password** - Tenant user password
     - **Tenant name** - OpenStack tenant name
-    - **External network ID** - OpenStack extnet UUID
+    - **External network ID** - OpenStack external network UUID, used to assign floating IPs
 
-    [Image: Adding details]
+    **Discover** opens a wizard that connects with the credentials, finds the infrastructure
+    (external networks, flavors, volume types) and sets up provisioning and limits from it.
 
-6. If everything is filled in, click on **Synchronize** in the top left corner. After few seconds, the **State** field will show **OK** if the integration is completed between Waldur and OpenStack.
+    [Image: Credentials of an OpenStack offering]
 
-7. To adjust the accounting, select **Accounting** from the top menu. It opens on the **Components** tab, where the default accounting components (Cores, RAM and Storage) are already defined. To set their prices, switch to the **Plans** tab and choose **Edit prices**.
+6. Once the credentials are saved, a **Synchronize** button appears next to them. After the
+   synchronization, the **State** changes to **OK** if Waldur can reach OpenStack.
 
-    [Image: Adding details]
+7. To adjust the accounting, select **Accounting**. It opens on the **Components** tab, where
+   the default accounting components (Cores, RAM and Storage) are already defined.
 
-8. If everything is completed and ready, click on **Activate** in the upper right corner to publish the offering.
+    [Image: Accounting components of an OpenStack offering]
+
+    To set their prices, switch to the **Plans** tab, open the actions menu of the plan and
+    select **Edit prices**. A new offering has a free **Default** plan.
+
+    [Image: Edit prices dialog of a plan]
+
+8. When everything is ready, publish the offering with the button in the upper right corner.
+   If your platform lets service providers manage their offerings, it reads **Activate**;
+   otherwise it reads **Request publishing**, and staff review the offering before it becomes
+   active.
 
 ### Provisioning configuration
 
@@ -91407,28 +91600,39 @@ The toggle sets the **provider-wide default**. Users can override it per instanc
 
 ## SLURM offering creation
 
-1. Select organization, which will provide the offering.
+SLURM clusters are connected through the
+[Waldur site agent](../../admin-guide/providers/site-agent/index.md), which runs next to the
+cluster and keeps its accounts and usage in sync with Waldur. The offering is created in Waldur
+first.
 
-2. Go to Provider dashboard and click on **Marketplace** -> **Offerings** from the top menu and then click **Add** from the right.
-    [Image: Adding an offering]
+1. Open the organization that will provide the offering, select its **Service provider** tab,
+   then **Marketplace → Offerings**, and click **Add**.
 
-3. A popup opens, fill in the name for the offering, category and type.
-    [Image: Adding details]
+2. In the dialog, enter the offering's name, select a category (for example **HPC**) and the type
+   **Waldur site agent**, then click **Create**. The offering opens on its **Edit** tab.
 
-4. An offering configuration page opens with an option to edit different attributes.
-    [Image: Offering details]
+    [Image: New offering dialog with the Waldur site agent type]
 
-5. Under Endpoints section, you can add access endpoints for the offering, for example, management consoles, SSH login nodes or similar.
-    [Image: Offering endpoints]
+3. Under **Public information → Endpoints**, add the access endpoints of the offering, for
+   example SSH login nodes or web portals. Click **Add endpoint** and enter a name and a URL.
 
-    This configuration will display then to resource of the offering a menu for easier navigation to the corresponding services. For SSH protocol this would trigger
-    opening of an SSH client if configured for the browser. Out of the box works on OS X and Linux, requires configuration of the default application on Windows.
-    [Image: Resource endpoints]
+    [Image: Endpoints of an HPC offering]
 
-6. To add accounting components, select "Accounting components" from the top menu and then "Add component" from the right side. Accounting component is a measurable unit of a resource. For example, it can be CPU hours, GPU hours, storage hours, RAM etc.
-    [Image: Accounting components]
+    Customers find the endpoints on their resource's page, under **Access resource**. Each
+    endpoint opens the URL or copies it. For an `ssh://` URL this opens an SSH client if the
+    browser is configured for it; this works out of the box on macOS and Linux and needs a
+    default application on Windows.
 
-7. A popup opens with possibility to configure fields and select the accounting type (whether the component is billed by the usage, max limit or it has a fixed price).
+    [Image: Access resource menu with the offering's endpoints]
+
+4. To add accounting components, select **Accounting** and click **Add component**. An accounting
+   component is a measurable unit of a resource, for example CPU hours, GPU hours, storage or
+   RAM.
+
+    [Image: Accounting components of an HPC offering]
+
+5. In the dialog, enter the component's display name, internal name and measured unit, and select
+   the accounting type, which decides what is billed:
 
     - Usage-based - billing is applied according to the actual usage of the resource during the billing period defined in the accounting plan after the submission of a usage report;
     - Limit-based - billing is applied according to the requested/updated limits of a resource, actual usage can be below the limits and it is not the basis of the billing;
@@ -91436,17 +91640,22 @@ The toggle sets the **provider-wide default**. Users can override it per instanc
     - One-time - billing is applied once on resource activation;
     - One-time on plan switch - billing is applied once on resource activation and everytime a plan has changed, using pricing of a new plan.
 
-    [Image: Accounting component details]
+    [Image: Add component dialog]
 
-8. To configure accounting frequency and prices, select "Accounting plans" from the top menu and then "Add plan" from the right. Select a name for the plan and accounting frequency.
-    [Image: Accounting frequency]
+6. To add a plan, switch to the **Plans** tab and click **Add plan**. Enter a name, select the
+   billing period and enter a price for each component, or mark the plan as free. If you need to
+   provide higher priority access to resources at different prices, create another offering for
+   it.
 
-9. To define prices for the components, select "Actions" and then "Edit prices". Set new price and save. If there is a need to provide higher priority access to resources with different prices, then it is advised to create another offering for this kind of cases.
-    [Image: Offering prices]
+    [Image: Add plan dialog with component prices]
 
-    [Image: Offering prices]
+    To change prices later, open the plan's actions menu and select **Edit prices**.
 
-10. If all set, click "Activate" on the top-right side to make it visible to everybody.
+    [Image: Actions menu of a plan]
+
+7. When everything is ready, click **Activate** (or **Request publishing**) in the upper right
+   corner to make the offering visible to everybody.
+
     [Image: Activate button on a draft offering]
 
 !!! tip
@@ -94992,18 +95201,28 @@ The check and the save run under a row lock, so an order cannot start executing 
 
 In Waldur, only organizations registered as service providers can create offerings and provide the service to users.
 
+Registering requires the *register service provider* permission. Out of the box only staff users
+have it; a deployment can grant it to other roles, such as organization owners.
+
 To register organization as service provider:
 
-1. Open organization dashboard, click on "Edit" and select "Service provider" from the top menu.
-   [Image: Service provider registration]
+1. Open the organization, select the **Edit** tab and then **Service provider**.
+2. Click **Register as service provider**.
 
-2. Click on "Register as service provider" on the right.
-   [Image: Service provider registration]
+    [Image: Service provider tab of an organization that is not a provider yet]
 
-3. Add service provider organization description. This description is visible in the Waldur marketplace under service provider list and under provider details.
-   [Image: Service provider description]
+3. The organization is registered right away. The tab now shows the provider's **API secret
+   code**, a **Description** and **Allowed domains**, and the organization gets a **Service
+   provider** tab next to **Customer**.
 
-4. Make sure that service provider organization category group is also set.
+    [Image: Service provider settings after registration]
+
+4. Add a description of the service provider. It is visible in the marketplace, in the list of
+   service providers and on the provider's details page.
+5. Under **Allowed domains**, list the domains that offering endpoints may point to.
+
+The **Regenerate** button replaces the API secret code. **Disable service provider profile**
+turns the organization back into a regular one.
 
 ---
 
@@ -95307,27 +95526,35 @@ The portal allows you to customize its appearance to match your organization's b
 
 ## Accessing Branding Settings
 
-1. Navigate to the Administration section in the left-side menu
-2. Click on Settings
-3. Select the Branding tab
+1. Select **Administration** in the sidebar.
+2. Open **User interface → Branding**.
 
-[Image: Branding]
+Each setting has an edit button; the search box finds a setting by name.
+
+[Image: Branding settings]
 
 ## Available Customisation Options
 
 ### Branding
 
-- **Site Name**: Sets the name of the organization.
-- **Page title**: It is used as page title.
+- **Site name**: Human-friendly name of the Waldur deployment.
+- **Short page title**: Prefix of the page title.
+- **Full page title**: Default page title when a page does not set its own.
 - **Site description**: Description of the Waldur deployment.
+- **Homeport URL**: Used for rendering callback URLs in HomePort.
+- **Rancher username input label**: Label of the username field in Rancher user access management.
+- **Disclaimer area text**: Text shown in the disclaimer area below the footer.
 
-### On the same page, you will find more sections to customise
+### On the same page, you will find more tabs to customise
 
-- Marketplace branding
+- Marketplace Branding
 - Notifications
 - Links
 - Theme
+- About us page
+- Login page
 - Images
+- Table settings
 
 !!! note
     All changes in branding settings will be applied system-wide. Please preview changes before saving to ensure they meet your organization's visual guidelines.
@@ -95598,25 +95825,35 @@ This guide explains how administrators can change user passwords in Waldur.
 Credit management establishes credit limits for organizations that can be used for purchasing eligible services.
 The credit can optional be sub-allocated to projects and used in [cost policies](../customer-organization/cost-and-usage-policies.md).
 
-Users with staff role can allocate credit points to organizations. This can be done by selecting Administration from the left side menu and then Organizations -> Credit management from the top menu.
+Users with staff role can allocate credit to organizations. Open **Administration** in the
+sidebar, then **Organizations & compliance → Credits & cost policies**. The **Credits** tab lists
+the credits already assigned; the **Cost policies** tab holds the organization
+[cost policies](../customer-organization/cost-and-usage-policies.md#cost-policies-for-organizations).
 
-[Image: Credit management policies]
+[Image: Credits of organizations]
 
-This page provides an overview of already assigned credit policies. To create a new one, click on "Add" from the right. A popup opens with different configuration fields.
+To assign a credit, click **Add**. A dialog opens with these fields.
 
-[Image: Credit management new policy]
+[Image: Add allocation credit dialog]
 
 1. Select an organization to which you would like to assign credits.
 2. Select the offerings the credit may be spent on. **Leave this empty to allow all offerings** —
    an empty list means unrestricted, not "none". Cost on any other offering is invoiced
    normally and is never drawn from the credit.
 3. Set the credit value. This is the total value that the organization will be able to spent.
-4. Minimal consumption logic defines, how minimal monthly consumption is calculated:
+4. Optionally set an end date. On that date the remaining credit is set to 0. It must be the
+   first day of a month.
+5. Minimal consumption logic defines, how minimal monthly consumption is calculated:
 
     - Fixed means that it is possible to define minimal monthly value and overall credit will be reduced by the monthly value, even if the usage has been less than minimal consumption.
     - Linear means that by setting the end date, the total value of the credit will be divided evenly across the period until the end date and the overall value will be reduced monthly by the calculated value even if the consumption is less than the calculated value.
 
-5. If all set, click "Create".
+6. **Expected consumption** is the monthly amount for the fixed logic. It is only charged as a
+   minimum when **Apply as minimal consumption** is on. The **Grace coefficient** lowers that
+   minimum by a percentage: with an expected consumption of 1 000 and a grace coefficient of
+   10 %, at least 900 is deducted each month. In the month of the end date, the full expected
+   consumption is deducted.
+7. If all set, click **Create**.
 
 !!! warning
     Restricting the offerings is not the same as excluding cost from the organization.
@@ -96640,42 +96877,65 @@ In Waldur, an organization represents a configurable grouping unit that can be a
 !!! note
     Organization creation is only allowed for users in Staff role!
 
-1. Login to Waldur and select "Organizations" from the left-side menu and then select "Add" from the right.
-2. Fill the form and click "Create organization":
+1. Select **Organizations** in the sidebar and click **Add**.
+2. Enter the organization's **Name** and a **Contact email**, the address of the person
+   responsible for the organization, and click **Create**.
 
-    - Name - Name of the organization
-    - Contact email - email of the person, who is responsible for the organization
+    [Image: Create an organization dialog]
 
-3. Organization edit page opens, where it is possible to add additional information, like policies, contact information. It is beneficial to assign a predefined category group (like private company, university, government, individial person etc) to organization.
-
-[Image: type:video]
+3. The organization's **Edit** tab opens, where you can add more information, such as the
+   address, contact details and billing settings. It is beneficial to assign a predefined
+   organization group (like private company, university, government, individual person etc) to
+   the organization.
 
 !!! Note
     After the creation of the organization by the staff user, organization owners can manage organization details. To do this, navigate to the organization dashboard and select **Edit**.
 
 ## Organization configuration
 
-The organization edit interface consists of six main tabs, each containing specific configuration options:
+The organization edit interface consists of these tabs, each containing specific configuration
+options: **Basic details**, **Contact**, **Access control**, **Roles**, **Billing**, **Call
+manager**, **Service provider** and **Remove**.
 
 ### Basic details
 
+The **Details** card is split into sub-tabs.
+
+#### Basic info
+
 - **Name** - Full organization name
 - **Abbreviation** - Short form of organization name
-- **Address** - Physical location
-- **Postal code** - Postal/ZIP code
-- **Country** - Country of registration
+- **Description** - Free-text description
 - **Organization groups** - Associated group categories
-- **Location** - Geographic location
 
-### Identifiers
+#### Address
+
+Country, city, state, parish, street, house number, postal code, apartment number,
+household and geographic location.
+
+#### Settings
+
+- **Maximum number of service accounts**
+- **Default grace period (days)** - applied to projects that do not set their own, see
+  [Grace period](../customer-organization/project-management.md#grace-period)
+- **Available affiliations** - affiliations offered to project creators in this organization
+- **Display billing info in projects**
+- **Project slug template** - how slugs of new projects are built
+- **Project metadata schema** - the checklist used to collect project metadata
+
+#### Identifiers
 
 - **UUID** - System-generated unique identifier (non-editable)
-- **Slug** - URL-friendly identifier (non-editable)
+- **Slug** - URL-friendly identifier; changing it may break external integrations
 - **Registration code** - Official registration number
 - **Agreement number** - Contract reference number
 - **Sponsor number** - Sponsorship identifier
 
-[Image: type:image]
+#### Media
+
+The organization's logo.
+
+[Image: Basic details of an organization]
 
 ### Contact information
 
@@ -96719,46 +96979,47 @@ contact information, so it can always be reviewed and cleared.
 
 ### Access control
 
-To configure network access restrictions add access subnets by specifying:
+**Access subnets** lists the organization's trusted networks: address ranges (CIDR) with a
+description, each trusted for signing in to the portal and/or reaching the organization's
+resources of particular offerings, see
+[Access subnets](../customer-organization/resource-access-subnets.md). **Membership
+restrictions** limits who can become a member: when restrictions are configured, only users
+that match at least one of them can join the organization.
 
-- **CIDR** - Network address range
-- **Description** - Purpose or identifier for the subnet
+### Roles
 
-[Image: type:image]
-[Image: type:image]
+Lists the roles available in the organization. Staff users can clone a system role into the
+organization and adjust it, see [Organization-scoped roles](organization-roles.md).
 
 ### Billing
 
 Contains billing-related configurations:
 
-- Billing details
-- Tax information
+- **Accounting start date** - the date billing starts for the organization
+- **VAT code**, **Private person** and **Tax percentage** - tax information used on invoices
 
-[Image: type:image]
+[Image: Billing tab of an organization]
 
 ### Call manager
 
-You can enable Call manager by enabling the radio button:
+You can make the organization a call manager, which lets it run calls for proposals, by
+switching on **Enable call manager**.
 
-- **Enable call manager**
-
-[Image: type:image]
+[Image: Call manager tab of an organization]
 
 ### Service provider
 
-You can register organization as a service provider by pressing the button:
+You can register organization as a service provider by pressing **Register as service
+provider**, see [Service provider registration](../service-provider-organization/service-provider-registration.md).
 
-- **Register as service provider**
-
-[Image: type:image]
+[Image: Service provider tab of an organization]
 
 ### Remove
 
-Provides organization removal functionality:
+Click **Remove organization** to delete the organization. Removing it deletes all related
+resources, and a removed organization cannot be restored.
 
-- Click "Remove organization" button to delete the organization
-
-[Image: type:image]
+[Image: Remove tab of an organization]
 
 !!! note
     Organization removal should be handled with caution as it may affect associated projects and users. Ensure all necessary data is backed up before proceeding with organization removal.
@@ -97148,11 +97409,24 @@ To manage existing offering syncs, follow this process:
 ## HomePort reports
 
 Waldur HomePort includes a number of built-in reports based on the user activity. Reports can be accessed by
-staff and support users from the "Reporting" sidebar menu.
+staff and support users from the **Reporting** sidebar menu.
+
+The **Overview** tab shows the number of service providers, offerings, active users, projects and
+resources, with charts of their growth. The buttons in the top right corner set the period: all
+time, 6 months or 12 months. The other tabs group the reports by topic:
+
+- **Resources** — usage, usage by user and organization quotas.
+- **Provider** — capacity of offering plans, a provider overview and provider revenue.
+- **Financial** — growth, monthly revenue by organization and offering costs.
+- **Proposals** — call performance, review progress and resource demand of calls for proposals.
+- **Users** — demographics, user analytics and affiliations.
+- **Operations** — orders, maintenance and provisioning statistics.
+
+Each chart has an **Export** menu to download its data.
 
 <figure markdown="span">
-  [Image: Homeport reports]
-  <figcaption>List of built-in reports in HomePort</figcaption>
+  [Image: Reporting overview]
+  <figcaption>Overview tab of the Reporting menu</figcaption>
 </figure>
 
 ## Reports for organization owners
@@ -97356,11 +97630,18 @@ For how the service desk is wired into Waldur, and which events open tickets aut
 [Service Desk integrations](../../../integrations/service-desk/service-desk-integrations.md) and
 [Service Desk offerings](../../../integrations/service-desk/service-desk-offerings.md).
 
-To set up the configuration, navigate to the Service Desk configuration page by going to **Administration** -> **Service Desk**.
+To set up the configuration, open the Service Desk configuration page: **Administration** ->
+**Configuration** -> **Service desk settings**. The page has four tabs: **Configuration**,
+**Credentials** (one card per external service desk), **Issue status mapping** and **Support
+users**. The **Configuration** tab holds the general settings:
 
 * **Waldur support enabled** - Toggle **Yes** if you want to use support plugin.
-* **Waldur support active backend type** - Select the active configuration.
+* **Waldur support active backend type** - Select the active configuration: basic, atlassian, zammad or smax.
 * **Waldur support display request type** - Toggle to show the request type.
+* **Waldur support issue key prefix** - Prefix of ticket keys created by the built-in service desk, such as `WLD` in `WLD-A1B2C3D4`.
+* **Waldur support provider routing enabled** - Route tickets to the helpdesks of service providers automatically.
+* **Waldur support auto assign** and **auto assign strategy** - Assign new tickets to support users automatically, to the least loaded one or in turn (round robin).
+* **Waldur support sla enabled**, **sla response hours** and **sla resolution hours** - Track SLA deadlines for the first response and the resolution of tickets in the built-in service desk.
 
 [Image: Service desk configuration]
 
@@ -97515,23 +97796,29 @@ Waldur looks up the site's cloud ID, connects through the Atlassian API gateway 
 
 ## Zammad configuration
 
-To configure Zammad for Waldur, open the Service Desk configuration page and select **Configure** from the Zammad box.
+To configure Zammad for Waldur, open the **Credentials** tab of the Service Desk configuration
+page, open the status button on the Zammad card (**Not configured** until it is set up) and
+select **Edit**.
+
+[Image: Service desk cards on the Credentials tab]
 
 A popup will appear. Fill in the required fields and click **Update**.
 
 * **Zammad API server URL** - Zammad instance API URL.
 * **Authorization token** - Zammad instance API token.
-* **Zammad group** - Zammad instance group under which the tickets are created.
-* **Zammad article type** - Zammad instance article type. Usually "email".
-* **Zammad comment maker** - Additional comment line in Zammad, if the ticket is created in Waldur.
+* **Zammad group** - Zammad instance group under which the tickets are created. If not specified, the first group is used.
+* **Type of a comment** - Zammad instance article type. Usually "email".
+* **Zammad comment marker** - Marker that separates comments made via Waldur from comments added natively in Zammad.
 * **Comment prefix with user info** - Additional comment line in Zammad with user name, who created the ticket.
-* **Zammad comment cooldown duration** - Time (in seconds) to remove the comment until it is saved in the system.
+* **Zammad comment cooldown duration** - Time (in minutes) during which a comment can still be deleted.
+* **Zammad webhook shared secret** - Shared secret expected in the `X-Webhook-Secret` header of inbound Zammad webhook deliveries. If left empty, webhook authentication is not enforced.
 
 [Image: Zammad configuration]
 
 ## Smax configuration
 
-To configure Smax for Waldur, open the Service Desk configuration page and select **Configure** from the Smax box.
+To configure Smax for Waldur, open the **Credentials** tab of the Service Desk configuration
+page, open the status button on the Smax card and select **Edit**.
 
 A popup will appear. Fill in the required fields and click **Update**.
 
