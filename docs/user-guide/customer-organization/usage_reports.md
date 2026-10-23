@@ -11,41 +11,40 @@ usage reports.
 
    ![Usage reports](../img/Usage_filter.png)
 
-To view the usage information within a project:
+The usage of a single resource is on the resource's own page.
 
 ### Private clouds
 
-To view the usage information within a project:
+1. Open your project and select the **Resources** tab.
+2. Open the private cloud (VPC) resource.
+3. The card at the top shows how much of each limit (CPU cores, RAM, storage) is in use, and
+   the **Quotas** tab shows the usage of every OpenStack quota, grouped into compute (instances,
+   vCPUs, RAM), network (floating IPs, networks, ports, security groups and their rules,
+   subnets) and storage (snapshots, volumes, storage).
 
-1. Open your project in Waldur.
-
-2. Select the private cloud resource that usage report you would like to see.
-
-3. Now private cloud resource dashboard provides the overview of limits and used quotas.
-   ![Private cloud usage](../img/Private_cloud_usage.jpg)
+![Quotas of a private cloud](../img/vpc-ready-quotas.png)
 
 ### HPC
 
-1. Open your project in Waldur.
+1. Open your project and select the **Resources** tab.
+2. Open the allocation (resource).
+3. The card at the top shows each component with its usage and limit, its billing type and
+   unit.
+4. Select the **Usage** tab. There is one chart per component; switch between them with the tabs
+   above the chart (**CPU hours** and **Storage** in the example).
 
-2. Select the allocation (resource) that usage report you would like to see.
+    ![Usage history chart of an HPC allocation](../img/resource-usage-history.png)
 
-3. On this window, Select "Usage" to see the usage of a resource. Use tabs "CPU Allocation", "GPU Allocation", and "Storage Allocation" to see the details.
-   ![Resource usage](../img/Resource_usage_main.jpg)
+5. For an older resource, buttons above the chart choose the period: **6 months**,
+   **12 months** for resources older than a year, or **From creation** for the whole life of
+   the resource.
+6. To see the numbers, click the table icon next to **Export all**. **Total usages** lists the
+   usage per billing period, **User usages** the usage per user. Click the chart icon to go
+   back.
 
-4. By default, the view shows last 6 months information. To see the usage from the creation of a resource, please use period selector on the right side.
-   ![Period selection](../img/Resource_usage_period_selection.jpg)
+    ![Usage history as a table](../img/resource-usage-table.png)
 
-5. Instead of graph view, it is possible to switch to table view as well. To do that, please use switching button on the right next to the period selector.
-   ![Table view](../img/Resource_usage_table_view.jpg)
-
-6. It is possible to download the graph views as PNG images. To do that, please use the arrow icon on the right side of the graph.
-   ![PNG download](../img/Resource_usage_png_download.jpg)
-
-To check the current resource allocation limit:
-
-1. On the same window, the plan details for Allocation components (CPU, GPU, and storage) can be found on the top-right side.
-   ![Resource limits](../img/Resource_usage_limits.jpg)
+7. **Export all** downloads the usage as PNG, PDF, CSV or Excel.
 
 ## Including terminated resources
 

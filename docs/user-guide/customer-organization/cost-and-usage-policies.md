@@ -6,19 +6,32 @@ model, see [Policies](../../about/concepts/policies.md).
 
 ## Cost policies for organizations
 
-Staff role can define cost policies for organizations. To add a new policy, open Administrations menu from the left and then Organizations -> Cost policies from the top. This view provides an overview about already defined policies. To create a new one, select "Add" from the right.
-    ![Cost policy for organization](../img/Cost_policies_organizations.png)
+Staff users define cost policies for organizations. Open **Administration** in the sidebar, then
+**Organizations & compliance → Credits & cost policies**, and select the **Cost policies** tab.
+It lists the policies already defined. To create one, click **Add**.
 
-From the popup, select organization, then set estimated cost limit and finally choose the action (what happens, when the limit is reached).
-    ![New organization cost policy](../img/New_organization_policy.png)
+![Cost policies for organizations](../img/cost-policy-organization-list.png)
+
+In the dialog, select one or more organizations and the period. The dialog shows each selected
+organization's cost in previous months, this month and in total, to help you choose the limit.
+Then enter the estimated cost limit and choose the action, which is what happens when the limit
+is reached.
+
+![New organization cost policy](../img/cost-policy-organization-new.png)
 
 ## Cost policies for projects
 
-Organization owners can set different cost policies for projects under particular organization. To add a new policy, open Organizations menu from the left and then Policy -> Cost policies from the top. This view provides an overview about already defined policies. To create a new one, select "Add" from the right.
-    ![Cost policy for project](../img/Cost_policies_projects.png)
+Organization owners can set different cost policies for the projects of their organization. Open
+the organization, then **Policy → Cost policies**. The page lists the policies already defined. To
+create one, click **Add**.
 
-From the popup, select project, then set estimated cost limit and finally choose the action (what happens, when the limit is reached).
-    ![New project cost policy](../img/New_project_policy.png)
+![Cost policies for projects](../img/cost-policy-project-list.png)
+
+In the dialog, select one or more projects and the period; each project shows its estimated cost
+for this month, and a table shows its cost so far. Then enter the estimated cost limit and choose
+the action, which is what happens when the limit is reached.
+
+![New project cost policy](../img/cost-policy-project-new.png)
 
 When exactly one project is selected, the policy can optionally be limited to a single resource. Use the "Limit to resource" field to pick a resource: only that resource's cost is then measured against the limit, and the policy's actions (for example pausing, downscaling or scheduled termination) apply only to that resource. Leaving the field empty keeps the policy scoped to the whole project. Blocking the creation of new resources is not available for resource-scoped policies, since that action is project-wide.
 
@@ -131,16 +144,34 @@ The same history is available through the API: `GET /api/marketplace-project-est
 
 ## Cost policies for offerings
 
-Offering managers can set cost policies for specific organization groups. This allows to trigger some actions, when cost is reached. To add new policy, offering manager should open offering management page (Organization from the left menu, then Service provider -> Marketplace -> Offering) and then Policy -> Cost policy from the top. This view provides an overview about already defined policies. To create a new one, select "Add" from the right.
-    ![Cost policy for offering](../img/Cost_policies_offerings.png)
+Offering managers can set cost policies for specific organization groups, so that an action is
+taken when the cost of the offering's resources reaches a limit. Open the organization, select the
+**Service provider** tab, then **Marketplace → Offerings**, and open the offering. On its
+**Manage** tab, select **Policy → Cost policy**.
 
-From the popup, set estimated cost limit, choose the action what happens after cost is reached (block creation of new resources or notifying the organization owners). Then, it is needed to select period (is this policy per month, quarter, annual or total) and finally select organization group for which this policy applies to.
-    ![New offering cost policy](../img/New_offering_policy.png)
+![Policy menu on the offering's Manage tab](../img/offering-policy-menu.png)
+
+The **Cost** tab lists the policies already defined. To create one, click **Add**.
+
+![Cost policies for an offering](../img/cost-policy-offering-list.png)
+
+In the dialog, enter the estimated cost limit and choose the action: block creation of new
+resources, or notify the organization owners. Then select the period (1, 3 or 12 months, or the
+total) and the organization groups the policy applies to.
+
+![New offering cost policy](../img/cost-policy-offering-new.png)
 
 ## Usage policies for offerings
 
-Offering manager can set different usage policies for specific organization groups. This allows to trigger some actions, when usage of defined resource component is reached. To add new policy, offering manager should open offering management page (Organization from the left menu, then Service provider -> Marketplace -> Offering) and then Policy -> Usage policy from the top. This view provides an overview about already defined policies. To create a new one, select "Add" from the right.
-    ![Offering usage policy](../img/Usage_policy_offerings.png)
+Offering managers can set usage policies for specific organization groups, so that an action is
+taken when the usage of a resource component reaches a limit. On the offering's **Manage** tab,
+select **Policy → Usage policy**. The **Usage** tab lists the policies already defined. To create
+one, click **Add**.
 
-From the popup, select accounting component and set limit for that. Several compoments can be defined in one policy. Then, it is needed to select period (is this policy per month, quarter, annual or total) and finally select organization group for which this policy applies to.
-    ![New offering usage policy](../img/New_offering_usage_policy.png)
+![Usage policies for an offering](../img/usage-policy-offering-list.png)
+
+In the dialog, select a component and enter its limit. Click **Add** to limit more components in
+the same policy. Then choose the action, the period and the organization groups the policy
+applies to.
+
+![New offering usage policy](../img/usage-policy-offering-new.png)

@@ -5,17 +5,26 @@ Project creation is allowed for organization owners in their organizations and s
 !!! note
     User must have an account in Waldur instance to create projects.
 
-1. Select your home organization.
-2. Under the **Project** tab, click on **Add**.
-3. Fill the necessary fields (fields marked with * are mandatory) and click **Create**.
+1. Open your organization and select the **Projects** tab.
+2. Click **Add**.
+3. Enter the **Project name**. It is required and appears in accounting data. Select an
+   **Affiliation** if your organization uses them, then click **Create**.
 
-    - **Project name** - The original title of the project.
+    ![Create project dialog](../img/project-create-dialog.png)
+
+    The administrator decides which other fields the dialog shows. Depending on the platform, it
+    can also ask for:
+
     - **Project description** - A brief description about the project.
     - **OECD FoS code** - OECD science field code ([more info](https://joinup.ec.europa.eu/collection/eu-semantic-interoperability-catalogue/solution/field-science-and-technology-classification/about))
     - **Start date** - once reached, marks the date when prepared user invitations are sent out and triggers the processing of previously made resource orders.
     - **End date** – once reached (plus any configured grace period), triggers the creation of termination orders for the existing resources. If the resources have already been terminated by this time, the project will be removed. The date is inclusive.
 
-4. If you need to edit project details later, open your project and select the **Edit** tab.
+4. To change the project's details later, or to set those the dialog did not ask for, open the
+   project and select the **Edit** tab. **General** holds the name, start and end dates and
+   description.
+
+    ![General settings on the project's Edit tab](../img/project-edit-general.png)
 
 !!! note
     Your Waldur administrator may enforce a project name convention (for example, a maximum length). If the name you enter does not meet the requirement, the form shows an error and the project is not created. See [Project name restrictions](../staff-users/project-name-restrictions.md).
@@ -24,8 +33,6 @@ Project creation is allowed for organization owners in their organizations and s
     1. If a resource has a termination date that comes after the project's end date, the project's end date will automatically become that resource's termination date.
     2. If a resource has a termination date that comes before the project's end date, we'll use the resource's original termination date.
     3. Important: Setting any end date (either the project's or a resource's) only creates a termination request. The resource remains active in the project until the termination process is fully completed.
-
-![type:video](../img/create_project.mp4)
 
 ## Grace period
 

@@ -8,20 +8,29 @@ organization owners can distribute allocated credits to projects. Projects can u
 overused resources are invoiced according to the pricing plan. Organization owners can use credit management together
 with the [cost and usage policies](cost-and-usage-policies.md) to handle overconsumption.
 
-To see current credit management policies, open the organization dashboard and then
+To see the credit allocated to projects, open the organization and then
 **Accounting → Credit management**.
 
 !!! note
     The **Credit management** entry only appears once staff have assigned a credit to the
     organization. If you do not see it, no credit has been granted yet.
 
-![Customer credit policies](../img/Customer_credit_management_list.png)
+![Project credits of an organization](../img/credit-project-list.png)
 
-To create a new one, click "Add" on the right. A popup opens with configuration fields:
+To allocate credit to a project, click **Add**. A dialog opens with these fields:
 
-1. Project - select the project, which can use the credits.
-2. Allocate credit - set the maximum amount of credits.
-3. Use organization credit after exceeding allocated amount - Enable, if project can use organization credits after running out of project credits. If disabled, resource usage will be invoiced according to the pricing plan.
-4. If all set, click "Create".
+1. **Project** - the project that can use the credit.
+2. **Allocate credit** - the amount of credit. The sum of all project credits cannot exceed the
+   organization's credit; the dialog shows how much is available.
+3. **End date** - optional. On that date the remaining credit is set to 0. It must be the first
+   day of a month.
+4. **Minimal consumption logic**, **Expected consumption**, **Grace coefficient** and **Apply as
+   minimal consumption** - how much the credit is reduced each month at least, even if the
+   project uses less. They work as for organization credits, see
+   [Credit management for staff](../staff-users/credit-management-staff.md).
+5. Click **Confirm**.
 
-![New project credit policy](../img/Project_credit_new.png)
+![Add project credit dialog](../img/credit-project-new.png)
+
+When a project's credit is spent, further usage of its resources is invoiced according to the
+pricing plan.

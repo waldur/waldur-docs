@@ -11,36 +11,57 @@ creating an offering is through a HomePort.
 
 ## OpenStack offering creation
 
-1. Select organization, which will provide the offering.
+1. Open the organization that will provide the offering and select its **Service provider**
+   tab.
 
-2. Go to Provider dashboard, click **Marketplace** -> **Offerings** from the top menu and then **Add** from the left.
-    ![Adding an offering](../img/Add_offering_main.png)
+2. Select **Marketplace → Offerings** and click **Add**.
 
-3. A popup opens, fill in the name for the offering, category (e.g. Private clouds) and type (**OpenStack tenant**) and click **Create**.
-    ![Adding details](../img/Add_offering_openstack.png)
+    ![Offerings of a service provider](../img/offering-list-provider.png)
 
-4. An offering configuration page opens with an option to edit different attributes.
+3. In the dialog, enter the offering's name, select a category (for example **Private Clouds**)
+   and the type **OpenStack tenant**, then click **Create**.
 
-    ![Adding details](../img/OpenStack_offering_config1.png)
+    ![New offering dialog with the OpenStack tenant type](../img/offering-new-openstack.png)
 
-5. For the OpenStack integration, select **Integration** -> **Credentials** from the top menu. Fill in requested parameters.
+4. The offering opens on its **Edit** tab, as a draft. **General** holds the name and
+   descriptions; the other tabs hold the integration, public information, order form inputs,
+   roles and accounting.
 
-    - **API URL** - OpenStack deployment keystone URL
+    ![Edit tab of a new draft offering](../img/offering-edit-general.png)
+
+5. For the OpenStack integration, select **Integration → Credentials** and fill in the
+   parameters. Click the edit button on a row to change it.
+
+    - **API URL** - Keystone authentication URL of the OpenStack deployment
+    - **Authentication type** - a password or an application credential
     - **Domain name** - OpenStack domain name
     - **Username** - Tenant user username
     - **Password** - Tenant user password
     - **Tenant name** - OpenStack tenant name
-    - **External network ID** - OpenStack extnet UUID
+    - **External network ID** - OpenStack external network UUID, used to assign floating IPs
 
-    ![Adding details](../img/OpenStack_offering_integration.png)
+    **Discover** opens a wizard that connects with the credentials, finds the infrastructure
+    (external networks, flavors, volume types) and sets up provisioning and limits from it.
 
-6. If everything is filled in, click on **Synchronize** in the top left corner. After few seconds, the **State** field will show **OK** if the integration is completed between Waldur and OpenStack.
+    ![Credentials of an OpenStack offering](../img/offering-openstack-credentials.png)
 
-7. To adjust the accounting, select **Accounting** from the top menu. It opens on the **Components** tab, where the default accounting components (Cores, RAM and Storage) are already defined. To set their prices, switch to the **Plans** tab and choose **Edit prices**.
+6. Once the credentials are saved, a **Synchronize** button appears next to them. After the
+   synchronization, the **State** changes to **OK** if Waldur can reach OpenStack.
 
-    ![Adding details](../img/OpenStack_accounting_config.png)
+7. To adjust the accounting, select **Accounting**. It opens on the **Components** tab, where
+   the default accounting components (Cores, RAM and Storage) are already defined.
 
-8. If everything is completed and ready, click on **Activate** in the upper right corner to publish the offering.
+    ![Accounting components of an OpenStack offering](../img/offering-openstack-accounting.png)
+
+    To set their prices, switch to the **Plans** tab, open the actions menu of the plan and
+    select **Edit prices**. A new offering has a free **Default** plan.
+
+    ![Edit prices dialog of a plan](../img/offering-edit-prices.png)
+
+8. When everything is ready, publish the offering with the button in the upper right corner.
+   If your platform lets service providers manage their offerings, it reads **Activate**;
+   otherwise it reads **Request publishing**, and staff review the offering before it becomes
+   active.
 
 ### Provisioning configuration
 
@@ -61,28 +82,39 @@ The toggle sets the **provider-wide default**. Users can override it per instanc
 
 ## SLURM offering creation
 
-1. Select organization, which will provide the offering.
+SLURM clusters are connected through the
+[Waldur site agent](../../admin-guide/providers/site-agent/index.md), which runs next to the
+cluster and keeps its accounts and usage in sync with Waldur. The offering is created in Waldur
+first.
 
-2. Go to Provider dashboard and click on **Marketplace** -> **Offerings** from the top menu and then click **Add** from the right.
-    ![Adding an offering](../img/Add_offering_main.png)
+1. Open the organization that will provide the offering, select its **Service provider** tab,
+   then **Marketplace → Offerings**, and click **Add**.
 
-3. A popup opens, fill in the name for the offering, category and type.
-    ![Adding details](../img/Add_offering2.jpg)
+2. In the dialog, enter the offering's name, select a category (for example **HPC**) and the type
+   **Waldur site agent**, then click **Create**. The offering opens on its **Edit** tab.
 
-4. An offering configuration page opens with an option to edit different attributes.
-    ![Offering details](../img/Offering_edit.jpg)
+    ![New offering dialog with the Waldur site agent type](../img/offering-new-site-agent.png)
 
-5. Under Endpoints section, you can add access endpoints for the offering, for example, management consoles, SSH login nodes or similar.
-    ![Offering endpoints](../img/Offering_edit_endpoints.png)
+3. Under **Public information → Endpoints**, add the access endpoints of the offering, for
+   example SSH login nodes or web portals. Click **Add endpoint** and enter a name and a URL.
 
-    This configuration will display then to resource of the offering a menu for easier navigation to the corresponding services. For SSH protocol this would trigger
-    opening of an SSH client if configured for the browser. Out of the box works on OS X and Linux, requires configuration of the default application on Windows.
-    ![Resource endpoints](../img/Resource_endpoints.png)
+    ![Endpoints of an HPC offering](../img/offering-endpoints.png)
 
-6. To add accounting components, select "Accounting components" from the top menu and then "Add component" from the right side. Accounting component is a measurable unit of a resource. For example, it can be CPU hours, GPU hours, storage hours, RAM etc.
-    ![Accounting components](../img/Accounting_components.jpg)
+    Customers find the endpoints on their resource's page, under **Access resource**. Each
+    endpoint opens the URL or copies it. For an `ssh://` URL this opens an SSH client if the
+    browser is configured for it; this works out of the box on macOS and Linux and needs a
+    default application on Windows.
 
-7. A popup opens with possibility to configure fields and select the accounting type (whether the component is billed by the usage, max limit or it has a fixed price).
+    ![Access resource menu with the offering's endpoints](../img/resource-access-endpoints.png)
+
+4. To add accounting components, select **Accounting** and click **Add component**. An accounting
+   component is a measurable unit of a resource, for example CPU hours, GPU hours, storage or
+   RAM.
+
+    ![Accounting components of an HPC offering](../img/offering-hpc-components.png)
+
+5. In the dialog, enter the component's display name, internal name and measured unit, and select
+   the accounting type, which decides what is billed:
 
     - Usage-based - billing is applied according to the actual usage of the resource during the billing period defined in the accounting plan after the submission of a usage report;
     - Limit-based - billing is applied according to the requested/updated limits of a resource, actual usage can be below the limits and it is not the basis of the billing;
@@ -90,17 +122,22 @@ The toggle sets the **provider-wide default**. Users can override it per instanc
     - One-time - billing is applied once on resource activation;
     - One-time on plan switch - billing is applied once on resource activation and everytime a plan has changed, using pricing of a new plan.
 
-    ![Accounting component details](../img/Add_component.png)
+    ![Add component dialog](../img/offering-add-component.png)
 
-8. To configure accounting frequency and prices, select "Accounting plans" from the top menu and then "Add plan" from the right. Select a name for the plan and accounting frequency.
-    ![Accounting frequency](../img/Accounting_plan.png)
+6. To add a plan, switch to the **Plans** tab and click **Add plan**. Enter a name, select the
+   billing period and enter a price for each component, or mark the plan as free. If you need to
+   provide higher priority access to resources at different prices, create another offering for
+   it.
 
-9. To define prices for the components, select "Actions" and then "Edit prices". Set new price and save. If there is a need to provide higher priority access to resources with different prices, then it is advised to create another offering for this kind of cases.
-    ![Offering prices](../img/Offering_edit_prices1.png)
+    ![Add plan dialog with component prices](../img/offering-add-plan.png)
 
-    ![Offering prices](../img/Offering_edit_prices.png)
+    To change prices later, open the plan's actions menu and select **Edit prices**.
 
-10. If all set, click "Activate" on the top-right side to make it visible to everybody.
+    ![Actions menu of a plan](../img/offering-plan-actions.png)
+
+7. When everything is ready, click **Activate** (or **Request publishing**) in the upper right
+   corner to make the offering visible to everybody.
+
     ![Activate button on a draft offering](../img/offering-activate-button.png)
 
 !!! tip
