@@ -1,5 +1,62 @@
 # Changelog
 
+## 8.1.4-rc.3 - 2026-10-24
+
+### Highlights
+
+Customers can now cap what a usage-based resource spends per day, week, month, quarter or year, or over its whole lifetime. They can change those caps at any time without placing an order. Resource API keys get the same per-period limits and can now be managed by project managers and administrators. Keys are also handled more safely: a key stays with the person it was issued to, and a deleted user's keys are withdrawn instead of being shared. OpenStack instances gain a hard reboot action, and logging out now revokes the stored identity provider token.
+
+### What's New
+
+- **Per-period spending limits**: Providers choose which periods customers may cap on a usage-based component: day, week, month, quarter, year, or an all-time limit that never resets. Each period can have a default and a maximum. Customers set limits when they order and can change them later with a new "Change spending limits" action, with no order or approval needed. When a limit is reached, the offering's usage-limit action applies until the limit resets. The order form and the dialog say whether that action pauses the resource, downscales it or only reports the overspend.
+- **Spending limit status**: The Usage tab and the resource's components panel show usage against the limit for each period, when each limit resets and why access is paused. The API keys tab names the limit that is holding a paused resource and says when access resumes.
+- **Daily usage reports**: Integrations can report usage per day, and the month's usage is derived from the daily figures. One report can hold at most 1000 items.
+- **API key limits per period**: A resource API key can have its own limit for each period. A key's limit can't be higher than the resource's limit for that period or any longer one. Per offering, providers decide whether consumers may limit keys at all, and whether the site agent reports each key's usage per day. Key limits for periods other than the month are only offered when it does. Keys can also be limited on a component that the plan prices at zero, such as a LiteLLM USD cap.
+- **API key management for project roles**: A new permission, RESOURCE.MANAGE_CONSUMER_API_KEY ("Manage API keys of resources used by the project or organization"), is granted to organization owners, project administrators and project managers. These roles can now lower a key's cap, pause a leaked key or delete a departed member's key.
+- **OpenStack hard reboot**: OpenStack instances have a new hard reboot action, available from the API and the portal.
+- **Role assignment from a user's page**: Staff can grant a user a role directly from the user's affiliations. A role's user listing now also includes users who hold organization copies of that role.
+
+### Improvements
+
+- **API key limit enforcement**: If the site agent fails to apply a limit pause, Waldur retries it, waiting longer after each failure, from 5 minutes up to 6 hours. A key paused at its own limit stays paused while its resource is restricted by the resource's spending limit. Key limits are checked again when they are saved, and audit events record the old and new values.
+- **API key usage data**: A key's daily usage reports are limited in size and in how far back they can go. Each key reads only the daily usage its limits need, and old daily usage is deleted. Older clients that send the flat monthly `limits` field get the amount rounded up to the cent instead of an error.
+- **API key dialogs**: The key dialogs offer only the periods that the resource's plan allows. A limit the key already holds is accepted only if it is left unchanged. Rotate is blocked once any of the key's limits is reached, and the tooltips name that limit and say when the key resumes.
+- **Prepaid components**: Prepaid limits are shown as one total for the whole subscription. Only one-time components can be prepaid, and the component form no longer saves prepaid settings that it hides.
+- **Service accounts**: Service accounts are closed only once a project's deletion has completed. Accounts that are already closed are treated as closed, and accounts left over from removed projects are cleaned up.
+- **Cost policies and credits**: An organization cost policy now deducts only usage compensation. Changing a credit's offering list now re-evaluates the organizations whose credits changed.
+- **Accessibility**: Header and footer link menus open and close from the keyboard. The project filter announces the selected project by name. Focus stays in the tab row when a table tab switches the page.
+- **Smaller UI touches**: Revisiting a page no longer flashes a loading spinner. Per-offering usage views choose the component type from a select instead of tabs. Long offering descriptions are truncated in the Add resource dialog. The error page and the order steps fit mobile screens, and on small screens New chat closes the AI assistant history. The unused reason field has been removed from the offering availability dialog.
+- **Demo presets**: Each demo preset resource is billed once in the current month, and the tenants in the openstack_cloud preset can now be ordered.
+- **Interface migration**: More portal code moved from Bootstrap and lodash to Tailwind and es-toolkit. Form controls moved to a shared waldur-form package, and tables no longer depend on UI-Router.
+- **Dependency updates**: Backend packages (Django REST framework, fastmcp-slim, setuptools) and frontend packages (dompurify, zod, fast-uri, undici) were updated to fix security advisories.
+
+### Security
+
+- **Fixed API key holders**: A key's assignee is set when the key is requested and can no longer be changed. To hand a key over, request one for the new holder and delete the old one. The Unassign action and the assignee field have been removed from the portal.
+- **Deleted users' keys**: Deleting a user now withdraws their API keys. Before, those keys became shared keys that any project member could reveal.
+- **Key reveal**: Staff and support can no longer reveal resource API keys directly, and the portal shows Reveal only where the API allows it.
+- **Identity provider tokens**: The stored identity provider token is revoked and removed when a user logs out, is deactivated or is deleted.
+
+### Bug Fixes
+
+- Resources paused by a project grace period or a cost policy are now also marked as restricted by their usage limit. Before, they could be resumed while still over their spending limit.
+- OpenStack instance actions stop waiting for completion when Nova reports ERROR.
+- Erred resources are labelled Erred instead of OK.
+- The Change spending limits dialog highlights the limit the backend refused. Long reset descriptions no longer squeeze the input fields.
+- Multi-select fields keep their input when the first value is selected. Table cell padding is restored. Organization credit is formatted correctly in the project credit dialog. Wizard step indicators navigate and display correctly.
+- Nested table toolbars no longer show a Filter button that did nothing.
+- The specific error messages for duplicate active affiliates and offering Terms of Service are kept after the Django REST framework upgrade.
+- Service provider revenue is returned with its fractional part.
+- The Helm chart drops the broken PayPal feature and fixes dead documentation links.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [46 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.4-rc.2...8.1.4-rc.3) - Per-period spending limits and daily usage, per-period API key limits with pause retries and cleanup of old usage data, the consumer API key permission, fixed key assignees, identity provider token revocation, OpenStack hard reboot, and fixes for prepaid components, service accounts and cost policies.
+- **Waldur Homeport**: [87 commits](https://github.com/waldur/waldur-homeport/compare/8.1.4-rc.2...8.1.4-rc.3) - UI for spending limits, API key limits and the new key permission, OpenStack hard reboot, staff role assignment, prepaid totals and accessibility fixes. Also the new waldur-form package, the move off lodash and more of the Bootstrap-to-Tailwind migration.
+- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.1.4-rc.2...8.1.4-rc.3) - Removed the broken PayPal feature and fixed dead documentation links.
+
+---
+
 ## 8.1.4-rc.2 - 2026-10-22
 
 ### Highlights
