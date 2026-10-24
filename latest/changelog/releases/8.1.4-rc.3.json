@@ -1,0 +1,3233 @@
+{
+  "schema_version": "1.0.0",
+  "version": "8.1.4-rc.3",
+  "date": "2026-10-24",
+  "type": "rc",
+  "summary": "Waldur 8.1.4-rc.3 adds per-period spending limits on usage-based components. Providers offer day, week, month, quarter, year or all-time caps, customers set them when ordering or change them later without approval, and a reached limit applies the offering's action on usage limit until the limit resets. Resource API keys get the same per-period limits, capped by the resource's limits. Offering options control key limits and per-key daily usage, failed limit pauses are retried, and audit events record old and new limits. A key's assignee is now fixed when the key is requested, so the API refuses to reassign a key. A deleted user's keys are withdrawn instead of becoming shared, staff and support can no longer reveal keys directly, and a new RESOURCE.MANAGE_CONSUMER_API_KEY permission lets project managers and administrators manage keys. OpenStack instances gain a hard reboot action, and stored identity provider tokens are revoked on logout, deactivation and deletion. The release fixes service account closing, cost policy credit evaluation, usage-limit pauses after a grace period and several portal issues, limits prepaid settings to one-time components, updates dependencies for DOMPurify and zod advisories, and continues moving HomePort from lodash and Bootstrap to es-toolkit and Tailwind.",
+  "entries": [
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Accessible names, keyboard access and contrast for shared components",
+      "description": "Previously, some shared components lacked accessible names, keyboard access or enough contrast. Now, icon buttons, selects, tags, badges, sidebars, edit buttons and upload areas have accessible names, keyboard access and enough contrast. The organization and project selects have aria-labels, and WCAG target-size and link-in-text-block violations are fixed.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "2852fd2028",
+        "1964ac8eb9",
+        "80049878f2"
+      ],
+      "id": "8.1.4-rc.1-1"
+    },
+    {
+      "type": "improvement",
+      "category": "identity",
+      "title": "Ask for missing D&B identity fields inline during onboarding",
+      "description": "Previously, missing D&B identity fields during organization onboarding had to be completed elsewhere. Now, the onboarding form asks for missing identity fields inline and sends the full D&B identity. The profile prompt is kept only for missing names.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "3934833ead",
+        "01b0fb3453",
+        "b3502306a5"
+      ],
+      "id": "8.1.4-rc.1-2"
+    },
+    {
+      "type": "feature",
+      "category": "auth",
+      "title": "Audit events for security-relevant actions",
+      "description": "Previously, several security-relevant actions did not create audit events. Now, events are emitted for these actions, including logins through SAML2, OIDC/social and Valimo, deleting an offering, policy changes, and actions in the core admin and organization/project views.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "5916bf98a"
+      ],
+      "id": "8.1.4-rc.1-3"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Backend URL validation in serializers now runs",
+      "description": "BackendURLValidator was attached to serializers without being instantiated, so backend URL checks never ran. It is now instantiated, and URL validation runs in the marketplace, OpenStack, Rancher and VMware serializers. Invalid URLs that were accepted before are now rejected.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "adb76aec5"
+      ],
+      "id": "8.1.4-rc.1-4"
+    },
+    {
+      "type": "feature",
+      "category": "ui",
+      "title": "British English language and US English source strings",
+      "description": "Previously, British English was not offered as a separate language, and source strings mixed spellings. Now, user-visible source strings and feature descriptions in the backend and frontend are spelled in US English, which CI checks. An en-GB locale is generated from them, and translatable model fields such as role descriptions and category titles gain en-GB variants.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Database migrations add en-GB fields, including permissions 0034_role_description_en_gb and marketplace 0307_category_description_en_gb_category_title_en_gb_and_more, and update help texts in existing migrations.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "ade7962eb",
+        "c15824ec7",
+        "7f42bc6eee"
+      ],
+      "id": "8.1.4-rc.1-5"
+    },
+    {
+      "type": "feature",
+      "category": "invoices",
+      "title": "CUSTOMER.VIEW_ACCOUNTING permission gates Accounting",
+      "description": "Previously, no dedicated permission controlled access to the Accounting section of an organization. Now, the new CUSTOMER.VIEW_ACCOUNTING permission gates Accounting pages, credits, payments and payment profiles, and reporting access. Owners and roles cloned from the owner role get the permission and are treated as owners.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "c9c6d9266",
+        "20cb898d86"
+      ],
+      "id": "8.1.4-rc.1-6"
+    },
+    {
+      "type": "feature",
+      "category": "infrastructure",
+      "title": "Deliver event-consumer events to an HTTP webhook",
+      "description": "Previously, event consumers could not deliver events over HTTP. Now, an event consumer can be set up to deliver events to an HTTP webhook. Staff can create and manage webhook event consumers from the pub/sub admin page.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Database migration logging 0030_eventconsumer_webhook_delivery adds webhook delivery fields to event consumers.",
+          "automatic": true
+        }
+      ],
+      "highlight": true,
+      "commits": [
+        "069b3ebc0",
+        "326852f495"
+      ],
+      "id": "8.1.4-rc.1-7"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Design tokens and waldur-ui form controls replace Bootstrap styling",
+      "description": "Previously, the frontend relied on Bootstrap form controls, Bootstrap --bs-* variables and Metronic colour helpers. Now, form inputs, selects and labels use waldur-ui components on a three-layer design token system, with standard layout utilities, font sizes and border radius. Bootstrap CSS that nothing uses is no longer generated, which makes the stylesheet 32% smaller gzipped. The offering search and breadcrumbs share one combobox. Visual regressions from the migration are fixed, including SCSS selectors and wrap breakpoints, brand colour on search and breadcrumb links, font weights, and the link colour in the dark Neumorphism login layout.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "b3a13db3b1",
+        "6e9ed113a4",
+        "01c478f984",
+        "033d51b5f4",
+        "0ed8a656a2",
+        "bd6cbb205c",
+        "c098a38c55",
+        "381fd42139",
+        "de444dbf08",
+        "9f644c758d"
+      ],
+      "id": "8.1.4-rc.1-8"
+    },
+    {
+      "type": "improvement",
+      "category": "openstack",
+      "title": "Disable floating IPs on subnets without a router",
+      "description": "Previously, a floating IP could be selected for a subnet without a router, and the release option was shown when an instance had no floating IPs. Now, floating IPs are disabled for such subnets in the instance deployment form, and the destroy dialog hides the release option when there are no floating IPs.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "f8ec2c4954"
+      ],
+      "id": "8.1.4-rc.1-9"
+    },
+    {
+      "type": "feature",
+      "category": "support",
+      "title": "Draft a support ticket from a Matrix chat thread",
+      "description": "Previously, opening a support ticket from a Matrix chat conversation meant leaving the chat. Now, the bot can draft a support ticket from a Matrix chat thread. Users can review, edit and submit the draft from a card in the chat, and the message composer supports chat commands with a command popup and a commands dialog.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.matrix_chat"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Database migration matrix_chat 0013_ticket_drafts adds storage for ticket drafts.",
+          "automatic": true
+        }
+      ],
+      "highlight": true,
+      "commits": [
+        "6fafea97f",
+        "30e068aa02"
+      ],
+      "id": "8.1.4-rc.1-10"
+    },
+    {
+      "type": "feature",
+      "category": "marketplace",
+      "title": "Edit an offering access endpoint",
+      "description": "Previously, an offering access endpoint could not be updated after creation. Now, an offering access endpoint can be updated through the API, governed by a new permission, and edited from the endpoints section of the offering.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "6c7d2559a",
+        "c46aa996fa"
+      ],
+      "id": "8.1.4-rc.1-11"
+    },
+    {
+      "type": "feature",
+      "category": "invoices",
+      "title": "EU VAT calculation on invoices",
+      "description": "Previously, invoices did not calculate EU VAT. Now, organizations have VAT fields, including a private person flag. VAT rates are stored and can be refreshed with the new refresh_vat_rates management command, and VAT is calculated on invoices and shown in the invoice PDF. New EU VAT settings are available in marketplace administration, and the billing and details panels of an organization show the new fields.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Database migrations add VAT fields to organizations (structure 0086_customer_vat_fields) and a VAT rate table (invoices 0033_vatrate).",
+          "automatic": true
+        },
+        {
+          "type": "config",
+          "description": "Review the new EU VAT settings before invoices are generated.",
+          "automatic": false
+        }
+      ],
+      "highlight": true,
+      "commits": [
+        "2733c2e70",
+        "bbc8ffa847"
+      ],
+      "id": "8.1.4-rc.1-12"
+    },
+    {
+      "type": "feature",
+      "category": "invoices",
+      "title": "Invoice notifications go to an organization's invoice emails",
+      "description": "Previously, an organization could not define separate addresses for invoice notifications. Now, an organization can store invoice email addresses, and invoice notifications are sent to them. A notification is sent when the addresses change. The addresses appear in the contact panel of the organization, and organization export and import include them.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Database migration structure 0087_customer_invoice_emails adds the invoice emails field to organizations.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "7bba99cf8",
+        "cca66d2d7b"
+      ],
+      "id": "8.1.4-rc.1-13"
+    },
+    {
+      "type": "fix",
+      "category": "notifications",
+      "title": "Join HOMEPORT_URL and link paths with exactly one slash",
+      "description": "Links built from HOMEPORT_URL and a path could end up with a doubled or missing slash. They are now joined with exactly one slash.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "7e1715fae"
+      ],
+      "id": "8.1.4-rc.1-14"
+    },
+    {
+      "type": "fix",
+      "category": "support",
+      "title": "Keep line breaks in plain-text issue descriptions and comments",
+      "description": "Line breaks in plain-text issue descriptions and comments were lost when displayed. They are now kept in issue details, comments and the expandable issue list row.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "e801a53ecf"
+      ],
+      "id": "8.1.4-rc.1-15"
+    },
+    {
+      "type": "fix",
+      "category": "ui",
+      "title": "Navigation, error and order status fixes",
+      "description": "The managed project and remote project detail pages are no longer shown as provider or organization tabs, and the organization profile is shown only once on the dashboard. Backend field errors keep the names of lifted response keys. A provider approval is shown as pending while the order waits for the project to start.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "2c40f7c031",
+        "679d42d9e0",
+        "d38bf40054",
+        "e26886102d"
+      ],
+      "id": "8.1.4-rc.1-16"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Non-transactional viewset actions and multipart schema for file-list uploads",
+      "description": "Previously, every viewset action ran inside the request transaction, and endpoints that upload a list of files had no multipart schema. Now, a viewset action can opt out of the request transaction, and file-list uploads are described with a multipart schema in the generated API schema.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "3bf7707f5"
+      ],
+      "id": "8.1.4-rc.1-17"
+    },
+    {
+      "type": "feature",
+      "category": "proposal",
+      "title": "Proposal, review and step counts per call and round",
+      "description": "Previously, no endpoint gave per-call statistics. Now, a call stats endpoint returns the number of proposals, reviews and workflow steps per call and round, along with totals and field descriptions.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "3efe60c29",
+        "d98c0b465",
+        "d9c27cd44"
+      ],
+      "id": "8.1.4-rc.1-18"
+    },
+    {
+      "type": "fix",
+      "category": "openstack",
+      "title": "Recover from stale cached Keystone tokens during OpenStack pulls",
+      "description": "OpenStack pulls could fail when a cached Keystone token had gone stale. The session now recovers from stale cached tokens during pulls.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_openstack"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "8262f5489"
+      ],
+      "id": "8.1.4-rc.1-19"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Resource actions dialog tabbed by action group",
+      "description": "Previously, the Show all dialog for resource actions listed every action together, and some actions were duplicated. Now, the dialog has a tab for each action group, and duplicate pull and end-date actions are removed for marketplace and OpenStack resources.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "3af85b7101"
+      ],
+      "id": "8.1.4-rc.1-20"
+    },
+    {
+      "type": "feature",
+      "category": "marketplace",
+      "title": "Separate feature toggles for OpenPortal sending and receiving portals",
+      "description": "Previously, the sending and receiving OpenPortal pages did not have their own feature toggles. Now, each side has its own toggle and its pages are gated on it. The shared OpenPortal pages are hidden when the portal plays neither side.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "238f06966",
+        "be8645e36a",
+        "05409b4620"
+      ],
+      "id": "8.1.4-rc.1-21"
+    },
+    {
+      "type": "feature",
+      "category": "marketplace",
+      "title": "Show a resource option as the limit of a usage-based component",
+      "description": "Previously, usage-based components showed no limit taken from a resource option. Now, an integer resource option can be configured to show as the limit of a usage-based component. The limit appears in resource details, provider resource lists and the project dashboard.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "433937da5",
+        "3c99ad8098"
+      ],
+      "id": "8.1.4-rc.1-22"
+    },
+    {
+      "type": "feature",
+      "category": "identity",
+      "title": "Staff can accept a user invitation on behalf of a named user",
+      "description": "Previously, only the invited user could accept a user invitation. Now, staff can accept an invitation on behalf of a named user.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "e590d8be0"
+      ],
+      "id": "8.1.4-rc.1-23"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Tabs, tables and button polish",
+      "description": "Previously, several tabs, tables and buttons were styled inconsistently. Now, tab count badges are neutral gray and the active tab's count is highlighted in the primary color. Line tab strips that do not scroll wrap. Tables in framed embedded tabs have a closed frame and square corners. In the proposal row, an empty reviews list drops only the tab strip, and the Reviews tab stays visible when reviews fail to load. Support buttons are tertiary with a headset icon. Other changes: table search height matches the buttons beside it, the first expandable column header is spaced like the other columns, items in the organization Add menu have icons, the Apply to round button is the same size as on My Proposals, and chart target lines stay inside the plot area.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "none"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "c8a0d5448d",
+        "119dd6b480",
+        "916e942f3d",
+        "782b461bdb",
+        "554587a536",
+        "e03dd58ee4",
+        "d50e7039ee",
+        "7ffff7f8c5",
+        "b0e2c9d52b",
+        "a63ee4fe35",
+        "257bd8b21a",
+        "b433a253a5",
+        "1449bb8349",
+        "56caf6ccb0",
+        "b9bc2f1ea6"
+      ],
+      "id": "8.1.4-rc.1-24"
+    },
+    {
+      "type": "feature",
+      "category": "marketplace",
+      "title": "Transform offering option values before storing them",
+      "description": "Previously, option values were stored exactly as the user entered them. Now, offering options can define a transform that is applied to the value before it is stored, in marketplace orders and in proposals. Providers can configure and preview transforms in the option editor and when approving orders.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "10088275e",
+        "2fe8dbd402"
+      ],
+      "id": "8.1.4-rc.1-25"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Typed, masked input in date pickers",
+      "description": "Previously, dates were picked mainly from the calendar popup. Now, a typed, masked input is the main control of the date, date range and month pickers. The month and year dropdowns use library menus, and the month arrows are no longer covered by the caption. In the project create dialog, the start and end dates are checked against each other, with an inline error when the range is inverted.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "8280731dd7",
+        "c108cf836d",
+        "27a2ca1d30",
+        "f73464711b"
+      ],
+      "id": "8.1.4-rc.1-26"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Validate resource end dates on set_end_date",
+      "description": "Previously, set_end_date did not validate the resource end date. Now, the API validates the end date. The termination date pickers in ordering, the end date dialogs, the bulk end date dialog and end date change requests follow the same rules.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "1106d37eb",
+        "f018748b04"
+      ],
+      "id": "8.1.4-rc.1-27"
+    },
+    {
+      "type": "improvement",
+      "category": "auth",
+      "title": "Validate the OIDC ID token against the provider's JWKS on login",
+      "description": "Previously, the ID token returned at login was not checked against the identity provider's JWKS. Now, the ID token is validated against the provider's JWKS on login, and identity providers have new issuer and JWKS URL fields.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_auth_social"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Database migration waldur_auth_social 0017_identityprovider_issuer_jwks_url adds issuer and JWKS URL fields to identity providers.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "4f847ff7c"
+      ],
+      "id": "8.1.4-rc.1-28"
+    },
+    {
+      "type": "improvement",
+      "category": "ai_assistant",
+      "title": "Access guidance and no-result search rate for anonymous discovery chat",
+      "description": "Previously, the anonymous discovery chat had no access-guidance rules, and its KPIs did not show how often searches returned nothing. Now, the anonymous assistant follows access-guidance rules covered by new validation scenarios, and the anonymous chat KPI reports the rate of searches that returned no results.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Database migration chat 0019_anonymouschatinteraction_search_outcome stores the search outcome of anonymous chat interactions.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "f6214d853",
+        "255663bc9"
+      ],
+      "id": "8.1.4-rc.2-1"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Assignees can rotate resource API keys, and one key per person per resource",
+      "description": "Previously, the person a resource API key was assigned to could not rotate it, and one person could hold more than one API key on the same resource. Now, the assignee can rotate the key, and the resource page offers them Rotate. A request for a second API key for the same person on the same resource is refused. The API keys tab appears on managed resources that have no keys yet, and the documentation describes when a resource starts with no API keys.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "d7e5318a6",
+        "8ed2701676",
+        "ff518041f",
+        "ba277012a",
+        "44736a84ec"
+      ],
+      "id": "8.1.4-rc.2-2"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Branded boot splash and a route loading bar",
+      "description": "Previously, the boot splash was not branded and had no slow-loading or error states, and nothing showed that a page was loading when moving between pages. Now, the boot splash is branded and has slow-loading and error states, it is shared with micro-apps as the waldur-boot-splash package, and a loading bar shows while a page loads.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "77b1655787",
+        "8e063376ee",
+        "b175d52b0a"
+      ],
+      "id": "8.1.4-rc.2-3"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Built-in settings store replaces django-constance",
+      "description": "Previously, runtime settings were stored with django-constance. Now, Waldur stores them in a built-in settings store in the new configuration app, which has its own Django admin page and handles secret settings and overrides. A migration imports existing django-constance settings into the new store. The Matrix chat guide in the Helm chart now clears Matrix settings from whichever settings table exists.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "helm"
+      ],
+      "impact": {
+        "risk": "high"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Database migrations configuration 0001_initial and 0002_import_constance_settings create the settings store and import the existing django-constance settings into it.",
+          "automatic": true
+        }
+      ],
+      "highlight": true,
+      "commits": [
+        "af4cae4ea",
+        "0ed8a6b"
+      ],
+      "id": "8.1.4-rc.2-4"
+    },
+    {
+      "type": "fix",
+      "category": "identity",
+      "title": "Bulk invite no longer stalls on the same email across projects",
+      "description": "Bulk invitations stalled when the same email address was invited to several projects. They no longer stall.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "8638cd3e0c"
+      ],
+      "id": "8.1.4-rc.2-5"
+    },
+    {
+      "type": "improvement",
+      "category": "ai_assistant",
+      "title": "Chat tools enforce tool-set and role checks themselves",
+      "description": "Previously, tool-set and role checks were not enforced inside the AI assistant's chat tools. Now, each tool enforces them itself, including the account tools for user overviews, project resources, resource usage and paused resources, and the proposal reviewer's call insights tool.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "81b726ba5"
+      ],
+      "id": "8.1.4-rc.2-6"
+    },
+    {
+      "type": "fix",
+      "category": "policy",
+      "title": "Check resource creation against the cost policy's own credit gates",
+      "description": "Resource creation was not checked against the cost policy's own credit gates. It is now checked against them.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "200aac6a0"
+      ],
+      "id": "8.1.4-rc.2-7"
+    },
+    {
+      "type": "fix",
+      "category": "ui",
+      "title": "Cookie consent dialog no longer reopens after close or accept",
+      "description": "The cookie consent dialog reopened after it was closed or accepted. It now stays closed.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "b07a6f6dd2"
+      ],
+      "id": "8.1.4-rc.2-8"
+    },
+    {
+      "type": "feature",
+      "category": "policy",
+      "title": "Cost policies show why they fire or wait",
+      "description": "Previously, a cost policy did not report why it had or had not fired. Now, the API exposes a trigger_status for each cost policy that explains why it fires or waits. The cost policy lists show the status as a single badge and list the organization credit only once. The project's cost policy details, credit dashboard and policy watch view use the status, and what happens next says when a credit holds a policy back.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "highlight": true,
+      "commits": [
+        "f6ba87279",
+        "d7f1100626",
+        "9aa9d6e28c",
+        "410862097c"
+      ],
+      "id": "8.1.4-rc.2-9"
+    },
+    {
+      "type": "feature",
+      "category": "reporting",
+      "title": "CUSTOMER.VIEW_REPORTING permission for organization reporting",
+      "description": "Previously, there was no CUSTOMER.VIEW_REPORTING permission for granting a role access to organization reporting. Now, the permission exists and is granted to organization owners and readers by default. Organization reporting, including its landing page and organization selector, is shown to roles that hold it.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "8577206f6",
+        "440eb015cc"
+      ],
+      "id": "8.1.4-rc.2-10"
+    },
+    {
+      "type": "fix",
+      "category": "openstack",
+      "title": "Declare OpenStack instance server_group as nullable",
+      "description": "The API did not declare the OpenStack instance server_group field as nullable. It is now declared nullable.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_openstack"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "75b1ccbbd"
+      ],
+      "id": "8.1.4-rc.2-11"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Dependency updates for advisories and scanner findings",
+      "description": "Previously, Waldur shipped backend dependency versions flagged by security advisories and OSV scans, and the frontend toolchain used versions with published advisories. Now, aiohttp is updated to 3.14.5 for security advisories, Pillow to 13.0.0, certifi to 2026.10.19 and pypdf to 6.21.2 for OSV scan findings. In the frontend development and test tooling, vitest is updated to 4.1.12 for GHSA-qxg6-89mg-rqv8 and GHSA-xp26-3454-mjgp, Storybook to 10.6.3 for GHSA-f2ph-cmg5-wxc8, and vite and markdown-it are updated to clear osv-scanner advisories.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "f2206d4be",
+        "d39a3924c",
+        "33b515f2e",
+        "0afcaab26b",
+        "71e9909cbf",
+        "9f477746a0"
+      ],
+      "id": "8.1.4-rc.2-12"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Empty API key model list means no models, and * means every model",
+      "description": "Previously, a resource API key's model list had no * value for every model, and an empty list did not mean no models. Now, an empty list means no models and * means every model, so an API client that sends an empty list grants no models. Resource model selections follow the same rule. API key dialogs and model selection fields have an All models checkbox, and the key list shows keys that have no models.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "high"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Database migrations marketplace 0308_resource_api_key_all_models to 0312_resource_api_key_models_outdated_backfill update stored API key and resource model lists, make the API key model list non-nullable, and add and backfill a models-outdated marker on API keys.",
+          "automatic": true
+        }
+      ],
+      "highlight": true,
+      "commits": [
+        "ab7b33e6b",
+        "024b356248"
+      ],
+      "id": "8.1.4-rc.2-13"
+    },
+    {
+      "type": "fix",
+      "category": "reporting",
+      "title": "Event filters match events filed on project and organization feeds",
+      "description": "Event filters by UUID did not match events filed on a project's or an organization's feed. They now match them, and the project credits and access subnets history logs are read through the organization scope.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "4d0dda203",
+        "82ff3874aa"
+      ],
+      "id": "8.1.4-rc.2-14"
+    },
+    {
+      "type": "feature",
+      "category": "ui",
+      "title": "Expand a project in the organization project list to see its resources",
+      "description": "Previously, the organization project list did not show a project's resources. Now, a project row can be expanded to list its resources.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "a2671f8dcc"
+      ],
+      "id": "8.1.4-rc.2-15"
+    },
+    {
+      "type": "fix",
+      "category": "ui",
+      "title": "Fix landing page crash \"Converting circular structure to JSON\"",
+      "description": "The landing page could crash with \"Converting circular structure to JSON\". The crash is fixed.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "d1f3df1b65"
+      ],
+      "id": "8.1.4-rc.2-16"
+    },
+    {
+      "type": "fix",
+      "category": "proposal",
+      "title": "Fix proposal page crash for staff before the call loads",
+      "description": "The proposal page crashed for staff before the call had loaded. It now waits for the call without crashing.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "3085871bd7"
+      ],
+      "id": "8.1.4-rc.2-17"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Header, breadcrumbs, modals and page layout move to Waldur UI and Tailwind",
+      "description": "Previously, the app header, breadcrumbs, modals and page layout were built on Metronic and Bootstrap. Now, the header uses the waldur-ui TopBar, breadcrumbs use the router-agnostic BreadcrumbTrail, modals come from waldur-ui instead of Bootstrap, and the page layout is built with React and Tailwind instead of Metronic body classes. The Sass colour layer, SVG icon helpers and dead SCSS are retired, and Stylelint rejects retired class selectors. Boolean columns such as Active in Roles and permissions use a shared BooleanField, and fetched table rows are kept in React Query only.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "135dd12292",
+        "3e1ea8c1c0",
+        "c50815affa",
+        "c0af05b879",
+        "3d1fbc6186",
+        "9def871cb7",
+        "749b2fabec",
+        "5f4937d60f",
+        "6d0f789127",
+        "e499273868",
+        "299b98c275",
+        "88bb840b6a"
+      ],
+      "id": "8.1.4-rc.2-18"
+    },
+    {
+      "type": "fix",
+      "category": "invoices",
+      "title": "Leave credit compensations out of a total limit's billed quantity",
+      "description": "Credit compensations were counted in a total limit's billed quantity. They are now left out of it.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "ee3ee523c"
+      ],
+      "id": "8.1.4-rc.2-19"
+    },
+    {
+      "type": "feature",
+      "category": "ai_assistant",
+      "title": "MCP server skeleton with personal access token authentication",
+      "description": "Previously, Waldur had no Model Context Protocol (MCP) server. Now, a new mcp app adds an MCP server skeleton that authenticates clients with personal access tokens and is started with the mcp_server management command.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.mcp"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "1294541d3"
+      ],
+      "id": "8.1.4-rc.2-20"
+    },
+    {
+      "type": "fix",
+      "category": "support",
+      "title": "Open an offering's support request without its provider as organization",
+      "description": "A support request opened from an offering used the offering's provider as its organization. The request is now opened without it, and a test confirms that the caller can follow a request opened about an offering.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "e53a04e59a",
+        "7d4a6167d"
+      ],
+      "id": "8.1.4-rc.2-21"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Open maintenance windows shown as in progress",
+      "description": "Previously, an open maintenance window was not shown as in progress, and its badge shared a line with the resource name in the resource list. Now, an open window is shown as in progress, and its badge has a line of its own.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "c72c77f935"
+      ],
+      "id": "8.1.4-rc.2-22"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Project hero navigation, affiliation date check and onboarding status labels",
+      "description": "Previously, the project hero bar behaved as tabs, the affiliation dialog accepted an end date before the start date, and onboarding verification status labels were not capitalized. Now, the project hero bar works as navigation, the affiliation dialog requires the start date to be before the end date, and onboarding verification status labels are capitalized.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "001f5b7860",
+        "246579433f",
+        "5ae81dacf2"
+      ],
+      "id": "8.1.4-rc.2-23"
+    },
+    {
+      "type": "feature",
+      "category": "reporting",
+      "title": "Project version history for staff and support",
+      "description": "Previously, Waldur did not keep a version history of projects. Now, it records project versions, and staff and support can open a project's version history from the project list's actions. Existing projects get an initial version from a data migration.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Database migration structure 0088_backfill_project_initial_revisions records an initial version for each existing project.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "9d4060193",
+        "3a6a1ef20b"
+      ],
+      "id": "8.1.4-rc.2-24"
+    },
+    {
+      "type": "improvement",
+      "category": "notifications",
+      "title": "Readable titles, descriptions and sections for notification event groups",
+      "description": "Previously, notification event groups in the notification settings had no readable titles or descriptions. Now, each group has a readable title and description, and the groups are arranged in sections.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "78491144a4"
+      ],
+      "id": "8.1.4-rc.2-25"
+    },
+    {
+      "type": "feature",
+      "category": "policy",
+      "title": "Record what started a cost policy evaluation and which gate decided it",
+      "description": "Previously, a cost policy evaluation did not record what started it, who started it or which gate decided its outcome, and staff changes to project credits did not appear in the project's audit log. Now, each evaluation records what started it and who, and which gate decided it. Staff changes to project credits are shown in the project's audit log.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "a17b359a8",
+        "2214280e5",
+        "d4a02d592"
+      ],
+      "id": "8.1.4-rc.2-26"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Return a marketplace resource to OK when its backend recovers",
+      "description": "A marketplace resource did not return to the OK state when its backend recovered. It now does.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "ac33914ac"
+      ],
+      "id": "8.1.4-rc.2-27"
+    },
+    {
+      "type": "fix",
+      "category": "support",
+      "title": "Send ticket comments to the ticket's own backend",
+      "description": "Ticket comments were not always sent to the support backend the ticket belongs to. They are now routed to the ticket's own backend and fail gracefully when that backend cannot take them.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.support"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "4180a1087"
+      ],
+      "id": "8.1.4-rc.2-28"
+    },
+    {
+      "type": "improvement",
+      "category": "openstack",
+      "title": "Show nameless subnets by their CIDR",
+      "description": "Previously, the instance deployment network step and the create port dialog labelled subnets by name, which left subnets without a name unlabelled. Now, a subnet without a name is shown by its CIDR.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "e02257cd8f"
+      ],
+      "id": "8.1.4-rc.2-29"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Site agent is told when a resource API key changes hands",
+      "description": "Previously, the site agent was not told when a resource API key was reassigned to another person. Now, a change of a key's assignee is signalled to the site agent.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.marketplace_site_agent"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "babe314da"
+      ],
+      "id": "8.1.4-rc.2-30"
+    },
+    {
+      "type": "feature",
+      "category": "proposal",
+      "title": "SLURM QoS and partition on proposal resource requests",
+      "description": "Previously, proposal resource requests and call resource templates did not show the SLURM QoS and partition. Now, they show both.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "160c73f11b"
+      ],
+      "id": "8.1.4-rc.2-31"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Tables page through rows they already hold and drop the pager on short lists",
+      "description": "Previously, tables whose rows were already loaded, such as invoice items, import previews and instance IP lists, did not page through those rows, and short lists still showed a pager. Now, these tables page through the rows they hold, and short lists show no pager.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "8b99c824b6"
+      ],
+      "id": "8.1.4-rc.2-32"
+    },
+    {
+      "type": "improvement",
+      "category": "auth",
+      "title": "User audit log visibility and API token access for impersonating staff",
+      "description": "Previously, a user's Audit log tab and IP address column were shown to viewers who could not read them, and staff impersonating a user could not see the user's API token when it was concealed. Now, the tab and column are hidden from those viewers, and staff impersonating a user can see the token.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "51724b42f3",
+        "025af7282a"
+      ],
+      "id": "8.1.4-rc.2-33"
+    },
+    {
+      "type": "feature",
+      "category": "policy",
+      "title": "Version history of cost policies",
+      "description": "Previously, Waldur did not keep earlier versions of a cost policy. Now, it keeps a version history of cost policies, which can be opened from a cost policy's actions, including in an offering's cost policies.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "04b031000",
+        "45e41c29ac"
+      ],
+      "id": "8.1.4-rc.2-34"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "API key audit events record old and new limits",
+      "description": "Previously, a change to an API key's limits was audited only as an update requested by a user, so the log did not show what changed. Now, requesting a key with limits, and every command or direct edit that changes them, puts old_spending_limits and new_spending_limits in the event context. Events that leave the limits alone carry neither.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "54ae495cf"
+      ],
+      "id": "8.1.4-rc.3-1"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Broken PayPal feature removed from the Helm chart",
+      "description": "Previously, the Helm chart carried values and templates for a PayPal feature that did not work. Now, the PayPal feature is removed from the chart's values, config override and helpers.",
+      "scope": "infra",
+      "component": [
+        "helm"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "2d0b3dd"
+      ],
+      "id": "8.1.4-rc.3-2"
+    },
+    {
+      "type": "security",
+      "category": "marketplace",
+      "title": "Deleted user's API keys are withdrawn instead of shared",
+      "description": "Deleting a user's account set their resource API keys' assignee to null. Each personal key became a shared one that any member of the project could reveal, and the deleted user's copy kept working. A pre_delete handler now withdraws every key assigned to the user before the account is deleted. Where the offering manages keys, each key is deleted through the usual command, and a requested key that was not created yet is dropped.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "Waldur releases before 8.1.4-rc.3 with resource API keys",
+        "exploitability": "A user account must be deleted while it holds assigned resource API keys. Afterwards, any member of the key's project could reveal the key, and the deleted user's copy kept working.",
+        "mitigation": "Upgrade to 8.1.4-rc.3. The handler runs when an account is deleted and does not change keys of accounts deleted before the upgrade. On earlier versions, delete a user's assigned API keys before deleting their account."
+      },
+      "commits": [
+        "f8b0408ec"
+      ],
+      "id": "8.1.4-rc.3-3"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Demo preset billing and openstack_cloud tenants",
+      "description": "Demo presets did not bill each preset resource exactly once in the current month, and the openstack_cloud preset's tenants could not be ordered and were not consistent. Now, each preset resource is billed once in the current month, and the openstack_cloud preset's tenants can be ordered and are consistent. The export_structure and import_structure commands are updated to match.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "3d58e203c",
+        "dc42bfd14"
+      ],
+      "id": "8.1.4-rc.3-4"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Dependency updates for scanner findings",
+      "description": "Previously, OSV scans reported findings against fastmcp-slim, setuptools, djangorestframework, fast-uri and undici. Now, Mastermind ships fastmcp-slim 4.1.3, setuptools 84.2.1 and djangorestframework 3.18.3, and HomePort ships fast-uri 3.1.9 and undici 7.30.1. With the newer DRF, the create serializers for customer affiliates and offering Terms of Service keep their own messages naming the active affiliate or Terms of Service, instead of a generic \"must make a unique set\".",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "d27c6ef3d",
+        "c8417e6e9",
+        "86066461e",
+        "ed0b03ca6c"
+      ],
+      "id": "8.1.4-rc.3-5"
+    },
+    {
+      "type": "security",
+      "category": "infrastructure",
+      "title": "DOMPurify upgraded to 3.4.17 for three advisories",
+      "description": "HomePort now ships dompurify 3.4.17, which fixes GHSA-cg2g-xh64-v4q7, GHSA-mrv2-3pqr-j5jr and GHSA-c6gr-qvv4-5v3f.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "Waldur HomePort releases before 8.1.4-rc.3 that ship dompurify older than 3.4.17",
+        "exploitability": "dompurify is a direct HomePort dependency. The commit data does not say how Waldur is exposed through it. See GHSA-cg2g-xh64-v4q7, GHSA-mrv2-3pqr-j5jr and GHSA-c6gr-qvv4-5v3f for exploitation conditions.",
+        "mitigation": "Upgrade HomePort to 8.1.4-rc.3, which ships dompurify 3.4.17."
+      },
+      "commits": [
+        "b63807c698"
+      ],
+      "id": "8.1.4-rc.3-6"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Erred resources are labelled Erred instead of OK",
+      "description": "A resource in the Erred state was labelled OK in the resource list and the resource details header. It is now labelled Erred.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "53ec56f33c"
+      ],
+      "id": "8.1.4-rc.3-7"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Failed API key limit pauses are retried with backoff",
+      "description": "When the site agent reported a key's limit pause as failed, the key stayed Erred and live at the backend. It kept being served past its limit until someone pressed Retry. Now, for a key that is still over a limit on a managed offering and a live resource, a task issues the pause again. The first retry comes five minutes after the failure, and each later retry waits twice as long as the one before, up to six hours. The retries are counted in the key's new limit_pause_retries field. A key Waldur paused for its own limit also stays paused while its resource is restricted for the resource's spending limit, and the resume tasks pick the key up once the restriction lifts. In the portal's Erred tooltip, the agent's error now ends with a period, so the note that follows reads as a separate sentence.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Marketplace migration 0317_resource_api_key_limit_pause_retries adds the key's limit_pause_retries field.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "2984a9bf6",
+        "1439bcb9d",
+        "86f354685",
+        "0aa02278f0"
+      ],
+      "id": "8.1.4-rc.3-8"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Grace-period and cost-policy pauses carry the usage limit marker",
+      "description": "The usage-limit restriction skipped every resource that was already paused, including pauses set by the project grace period or held by a cost policy. Such a resource carried no usage-limit marker. When the grace period was released, the resource was unpaused while still over its limit, and the hourly re-evaluation, which only looks at marked resources, never paused it again. Now, only a pause set by hand is skipped, and a grace-period or cost-policy pause is marked as the usage limit's too.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "630bca63a"
+      ],
+      "id": "8.1.4-rc.3-9"
+    },
+    {
+      "type": "feature",
+      "category": "openstack",
+      "title": "Hard reboot action for OpenStack instances",
+      "description": "Previously, OpenStack instances had no hard reboot action. Now, an instance can be hard rebooted through the API and from the instance's actions in the portal, and the action has its own event types.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_openstack"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "7ba51401f",
+        "241944e02f"
+      ],
+      "id": "8.1.4-rc.3-10"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "HomePort moves further from lodash and Bootstrap",
+      "description": "Previously, HomePort depended on lodash-es and kept Metronic and Bootstrap SCSS under src/metronic. Now, lodash-es is replaced by es-toolkit and banned by a lint rule. The SCSS moves to src/styles/bootstrap, with dead rules pruned and fixed-size Bootstrap utilities replaced by Tailwind. The Tag, Card and SimpleTable components use Tailwind and waldur-ui primitives, and form controls move to a waldur-form package. Tables are decoupled from UI-Router, and the table filter panel opens in a local sheet instead of the app drawer. The unused Mermaid icon pack is removed, and duplicate nested dependency copies are removed from lazy chunks.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "d02d701ec6",
+        "f3fe760d84",
+        "bf32e77cdf",
+        "f82910978c",
+        "31ff0d3711",
+        "57d1e9f7d6",
+        "647faa28f8",
+        "e893b9bff6",
+        "7e3b91581f",
+        "3c6b3d88c1",
+        "d7a5f0659a",
+        "a4d82691c5",
+        "9420b0808a",
+        "6220acf97e",
+        "ae1c9e791a",
+        "4b5fd0eb17",
+        "d4515f015b",
+        "5b16154816",
+        "8a0b947f04",
+        "e1473aa655",
+        "ffb7131e1e",
+        "7b5838f160",
+        "34e9a07eed"
+      ],
+      "id": "8.1.4-rc.3-11"
+    },
+    {
+      "type": "fix",
+      "category": "openstack",
+      "title": "Instance action polling stops when Nova reports ERROR",
+      "description": "Waldur kept polling an OpenStack instance action after Nova reported ERROR. Now, polling stops when Nova reports ERROR.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_openstack"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "da469a6b5"
+      ],
+      "id": "8.1.4-rc.3-12"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Keyboard and screen reader access for menus, project filter and table tabs",
+      "description": "Previously, the header and footer link menus did not work as keyboard disclosures, the project filter did not announce the selected project by name, and switching a router table tab moved focus out of the tab row. Now, the header and footer link menus open as keyboard disclosures, the project filter announces the selected project by name, and focus stays in the tab row when a tab switches the page.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "7e00650fd6",
+        "fd3aac36df",
+        "24c5df3bab"
+      ],
+      "id": "8.1.4-rc.3-13"
+    },
+    {
+      "type": "fix",
+      "category": "ui",
+      "title": "Mobile layout fixes",
+      "description": "Order progress steps did not fit on mobile, and the error page's status code did not fit mobile viewports. Below the lg breakpoint, the AI assistant's history stayed open after New chat. Now, order steps fit on mobile, the error code scales to fit, and New chat closes the history on smaller screens.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "62bdeb8e56",
+        "293e97555a",
+        "d14dd19478"
+      ],
+      "id": "8.1.4-rc.3-14"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Only one-time offering components can be prepaid",
+      "description": "Previously, prepaid settings were accepted on any offering component. Now, only one-time components can be prepaid, and the component form saves a component without the prepaid settings it hides.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "ac619a130",
+        "e02e3f3166"
+      ],
+      "id": "8.1.4-rc.3-15"
+    },
+    {
+      "type": "fix",
+      "category": "policy",
+      "title": "Organization cost policy credit evaluation fixes",
+      "description": "An organization cost policy deducted more than usage compensation from the live credit balance. Changing a credit's offering list did not re-evaluate the organizations whose credits changed. Now, only usage compensation is deducted, and a change to a credit's offering list re-evaluates those organizations.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "d04f715ac",
+        "701987ed0"
+      ],
+      "id": "8.1.4-rc.3-16"
+    },
+    {
+      "type": "feature",
+      "category": "marketplace",
+      "title": "Per-period spending limits on resource API keys",
+      "description": "Previously, a resource API key carried one flat monthly limit per component. Now, a key's limit is one amount per period, like its resource's spending limits: month on every component, plus the other periods the component offers. ResourceApiKey.limits becomes spending_limits, and existing limits move to month. The API still returns limits as a flat monthly view and still accepts it, rounding legacy amounts up to the cent, but a request that sends both limits and spending_limits gets a 400. A key's limit for a period may not exceed the lowest of the resource's limits for that period and every longer one, and a shorter period's limit may not exceed a longer one's. Limits must be above zero, and they are validated again under the resource and key locks. Components that the plan prices at zero, such as a LiteLLM USD cap, accept key limits. Two offering plugin options decide what keys are offered. api_key_limits (on unless set to false) lets consumers limit keys at all. api_key_daily_usage (off unless set) declares that the site agent reports each key's usage per day, which day, week, quarter and year limits need. A per-key daily usage report holds up to 1000 items and refuses dates before the start of the current year, or before the start of the previous month if that is earlier. A key reads only the daily rows its limits reach, and old rows are pruned. In the portal, the key dialogs show one field per period with its reset date and cap new values by the resource's limits. A limit the key already holds is accepted only unchanged. The keys tab reads usage and inherited limits from the resource's spending limits, and an assignee cannot rotate a key once any of its limits is reached.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "high"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "highlight": true,
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Marketplace migrations add per-period key spending limits, move each key's existing limits to its month limit, and add the api_key_daily_usage offering option (0316_api_key_daily_usage_option).",
+          "automatic": true
+        },
+        {
+          "type": "config",
+          "description": "Providers whose site agent reports each API key's usage per day can set plugin_options.api_key_daily_usage on the offering to offer day, week, quarter and year key limits. To turn off key limits for an offering, set plugin_options.api_key_limits to false.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "420eac13a",
+        "ffed2a4aa",
+        "a929e9e66",
+        "0f102ff70",
+        "51ca9ca18",
+        "1d1819625",
+        "d5dfb80b1",
+        "f56451aba",
+        "811aff07a",
+        "c6c2e4001",
+        "e6ac222b9",
+        "4038dc4ae",
+        "41b2e40db",
+        "4c4ce3a35f",
+        "e89052d8dd",
+        "062fcf6cc1",
+        "ef04229242",
+        "3f14286852",
+        "a3367b1453",
+        "40ae999579",
+        "44d7a8f2d9",
+        "bdb02e9d9a",
+        "e654875a1e",
+        "b19be6ef55"
+      ],
+      "id": "8.1.4-rc.3-17"
+    },
+    {
+      "type": "feature",
+      "category": "marketplace",
+      "title": "Per-period spending limits on usage-based components",
+      "description": "Previously, a usage-based offering component could carry only a usage limit that Waldur did not enforce. Now, providers choose which calendar periods customers may cap on a usage-based component, each with an optional default and maximum. The periods are day, week, month, quarter, year and an all-time period that never resets, which API keys can use too. Customers set limits when ordering and change them later with the new Change spending limits action (set_spending_limits), without an order or approval. A reached limit applies the offering's action_on_usage_limit until the limit resets: pause pauses the resource, downscale downscales it, and if the option is unset the limit is only reported. The order form and the dialog say which of these applies. The Usage tab and the resource's components panel show used and limit amounts per period, when each limit resets and why access is paused. The API keys tab's pause banner names the reached limit and when access resumes. If the backend refuses a change, the dialog marks the period it named. Integrations can report usage per day with daily_usages on set_usage, up to 1000 items per report, and the month's component usage is derived from the days.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "highlight": true,
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Marketplace migrations 0308_spending_limits and 0318_resource_api_key_usage_history add the spending limit and usage history storage.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "0c7e95f33",
+        "84a53e30b",
+        "4dcf32145",
+        "31267e0d3",
+        "b36713533d",
+        "48258e16d1",
+        "2a9f69f483",
+        "43f53a321d",
+        "ddda35ab56",
+        "02ba7fbd13",
+        "ae1ebbac03",
+        "ea6b666eb0",
+        "97c4a0eb1c",
+        "eae6324ec4",
+        "b0ac13241b"
+      ],
+      "id": "8.1.4-rc.3-18"
+    },
+    {
+      "type": "fix",
+      "category": "ui",
+      "title": "Portal form, table and wizard fixes",
+      "description": "This entry groups several portal fixes. Wizard step indicators navigate and render their tabs correctly. A multi-select keeps its input mounted when the first value is selected. The project credit dialog formats the organization's credit. Table cells have their gutter padding back, and long offering descriptions are truncated in the Add resource dialog. Nested table toolbars no longer show a Filter button that did nothing. The query error handler now uses the correct state name for the server error page, and the mapping from HTTP status to error page is shared.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "8883be9ecd",
+        "a6138e5e23",
+        "cac9b74448",
+        "fd53fa010a",
+        "56c45f0665",
+        "0885b346b0",
+        "6c879af08e",
+        "62622f7da7"
+      ],
+      "id": "8.1.4-rc.3-19"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Prepaid limits shown as one total for the whole subscription",
+      "description": "Previously, prepaid limits were not shown as a single total for the subscription. Now, the API and the portal show a prepaid limit as one total for the whole subscription. This applies to the order summary, plan details, resource components, resource lists and project dashboards.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "42ac7602d",
+        "5b844e1bbc"
+      ],
+      "id": "8.1.4-rc.3-20"
+    },
+    {
+      "type": "feature",
+      "category": "auth",
+      "title": "Project managers and administrators can manage a resource's API keys",
+      "description": "Previously, a resource's API keys were governed by RESOURCE.MANAGE_USERS, which only the organization owner holds. A project manager or administrator could change the resource's limits but could not give one key a lower cap, pause a leaked key or delete a departed member's key. Now, key management has its own permission, RESOURCE.MANAGE_CONSUMER_API_KEY. It is labelled \"Manage API keys of resources used by the project or organization\" and granted to the organization owner, the project administrator and the project manager. The portal's API keys card checks this permission on the project and its organization only, as the backend does, so a role held as a service provider no longer shows key actions that would fail with 403.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Permissions migration 0035_consumer_api_key_permission adds RESOURCE.MANAGE_CONSUMER_API_KEY.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "a2d750687",
+        "fa56efa2b",
+        "e4d5206e7e",
+        "175642e59d",
+        "219162b15e"
+      ],
+      "id": "8.1.4-rc.3-21"
+    },
+    {
+      "type": "breaking",
+      "category": "marketplace",
+      "title": "Resource API key assignee is fixed when the key is requested",
+      "description": "Previously, a resource API key's assignee could be changed or cleared by editing the key, with a handover rotation and an assignee-changed signal to the site agent. Now, a key's assignee is fixed when the key is requested: on every offering, the API refuses with 400 any edit that names user, null included. To hand a key over, request a key for the new holder and delete the old one. The handover rotation, its state checks, the unassign exemption and the assignee-changed site agent signal are removed. The portal's key edit dialog no longer has an assignee field, rotation warning or assignee lock, and the Unassign row action is gone.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "high"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "review",
+          "description": "Update API clients and scripts that change or clear a resource API key's user through an edit. Request a key for the new holder and delete the old key instead.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "291ee6a16",
+        "f118b1cb1b",
+        "7fa00b29ac"
+      ],
+      "id": "8.1.4-rc.3-22"
+    },
+    {
+      "type": "fix",
+      "category": "identity",
+      "title": "Role list_users matches the role's organization copies",
+      "description": "The role list_users action matched only the role itself, not its organization copies. It now matches the role and its organization copies.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "1ed01154a"
+      ],
+      "id": "8.1.4-rc.3-23"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Service accounts close reliably when a project is deleted",
+      "description": "Service accounts were closed before the project delete committed. Accounts that were already closed were not treated as closed, and the accounts of removed projects were not reconciled. Now, accounts are closed after the project delete commits, an already-closed account counts as closed, and the accounts of removed projects are reconciled.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "38e1c5c4c"
+      ],
+      "id": "8.1.4-rc.3-24"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Service provider revenue includes its fractional part",
+      "description": "Service provider revenue was returned without its fractional part. It is now returned with it.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "bab1c02c2"
+      ],
+      "id": "8.1.4-rc.3-25"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Smaller portal usability improvements",
+      "description": "Previously, per-offering usage views switched component types with tabs, the offering availability dialog had an unused reason field, and revisiting a page briefly showed the loading spinner. Now, per-offering usage views pick the component type from a select, the reason field is removed, and each route's lazy component is created once, so revisits no longer show the spinner.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "03d9f8dc90",
+        "03b42b3cbd",
+        "f4a5d04900"
+      ],
+      "id": "8.1.4-rc.3-26"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Staff and support can no longer reveal resource API keys directly",
+      "description": "Previously, staff and support users could reveal resource API keys directly. Now, the API no longer lets them do so, and the portal offers Reveal to staff and support only where the API allows it.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "e8f95a190",
+        "bba8b52586"
+      ],
+      "id": "8.1.4-rc.3-27"
+    },
+    {
+      "type": "feature",
+      "category": "identity",
+      "title": "Staff can assign roles to a user from the user's affiliations",
+      "description": "Previously, staff had no view for assigning roles to a given user. Now, staff can add a role for a user from the user's affiliations by picking the scope and the role.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "d6ff93ef44"
+      ],
+      "id": "8.1.4-rc.3-28"
+    },
+    {
+      "type": "improvement",
+      "category": "auth",
+      "title": "Stored identity provider token is revoked on logout, deactivation and deletion",
+      "description": "Previously, the identity provider token Waldur stored for a user was kept after the user logged out or the account was deactivated or deleted. Now, the stored token is revoked and removed on logout, deactivation and deletion.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_auth_social"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "1d792c944"
+      ],
+      "id": "8.1.4-rc.3-29"
+    },
+    {
+      "type": "security",
+      "category": "infrastructure",
+      "title": "zod upgraded to 4.6.7 for GHSA-mrhx-c7xc-m3w5",
+      "description": "HomePort now resolves zod 4.6.7, which fixes GHSA-mrhx-c7xc-m3w5.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "low",
+        "affected_versions": "Waldur HomePort releases before 8.1.4-rc.3 that ship zod older than 4.6.7",
+        "exploitability": "zod is a transitive dependency: only yarn.lock changed. The commit data does not say how Waldur is exposed through it. See the advisory for exploitation conditions.",
+        "mitigation": "Upgrade HomePort to 8.1.4-rc.3, which ships zod 4.6.7.",
+        "ghsa": "GHSA-mrhx-c7xc-m3w5"
+      },
+      "commits": [
+        "e22edabaf9"
+      ],
+      "id": "8.1.4-rc.3-30"
+    }
+  ],
+  "since_previous": [
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "API key audit events record old and new limits",
+      "description": "Previously, a change to an API key's limits was audited only as an update requested by a user, so the log did not show what changed. Now, requesting a key with limits, and every command or direct edit that changes them, puts old_spending_limits and new_spending_limits in the event context. Events that leave the limits alone carry neither.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "54ae495cf"
+      ],
+      "id": "8.1.4-rc.3-1"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Broken PayPal feature removed from the Helm chart",
+      "description": "Previously, the Helm chart carried values and templates for a PayPal feature that did not work. Now, the PayPal feature is removed from the chart's values, config override and helpers.",
+      "scope": "infra",
+      "component": [
+        "helm"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "2d0b3dd"
+      ],
+      "id": "8.1.4-rc.3-2"
+    },
+    {
+      "type": "security",
+      "category": "marketplace",
+      "title": "Deleted user's API keys are withdrawn instead of shared",
+      "description": "Deleting a user's account set their resource API keys' assignee to null. Each personal key became a shared one that any member of the project could reveal, and the deleted user's copy kept working. A pre_delete handler now withdraws every key assigned to the user before the account is deleted. Where the offering manages keys, each key is deleted through the usual command, and a requested key that was not created yet is dropped.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "Waldur releases before 8.1.4-rc.3 with resource API keys",
+        "exploitability": "A user account must be deleted while it holds assigned resource API keys. Afterwards, any member of the key's project could reveal the key, and the deleted user's copy kept working.",
+        "mitigation": "Upgrade to 8.1.4-rc.3. The handler runs when an account is deleted and does not change keys of accounts deleted before the upgrade. On earlier versions, delete a user's assigned API keys before deleting their account."
+      },
+      "commits": [
+        "f8b0408ec"
+      ],
+      "id": "8.1.4-rc.3-3"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Demo preset billing and openstack_cloud tenants",
+      "description": "Demo presets did not bill each preset resource exactly once in the current month, and the openstack_cloud preset's tenants could not be ordered and were not consistent. Now, each preset resource is billed once in the current month, and the openstack_cloud preset's tenants can be ordered and are consistent. The export_structure and import_structure commands are updated to match.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "3d58e203c",
+        "dc42bfd14"
+      ],
+      "id": "8.1.4-rc.3-4"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Dependency updates for scanner findings",
+      "description": "Previously, OSV scans reported findings against fastmcp-slim, setuptools, djangorestframework, fast-uri and undici. Now, Mastermind ships fastmcp-slim 4.1.3, setuptools 84.2.1 and djangorestframework 3.18.3, and HomePort ships fast-uri 3.1.9 and undici 7.30.1. With the newer DRF, the create serializers for customer affiliates and offering Terms of Service keep their own messages naming the active affiliate or Terms of Service, instead of a generic \"must make a unique set\".",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "d27c6ef3d",
+        "c8417e6e9",
+        "86066461e",
+        "ed0b03ca6c"
+      ],
+      "id": "8.1.4-rc.3-5"
+    },
+    {
+      "type": "security",
+      "category": "infrastructure",
+      "title": "DOMPurify upgraded to 3.4.17 for three advisories",
+      "description": "HomePort now ships dompurify 3.4.17, which fixes GHSA-cg2g-xh64-v4q7, GHSA-mrv2-3pqr-j5jr and GHSA-c6gr-qvv4-5v3f.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "Waldur HomePort releases before 8.1.4-rc.3 that ship dompurify older than 3.4.17",
+        "exploitability": "dompurify is a direct HomePort dependency. The commit data does not say how Waldur is exposed through it. See GHSA-cg2g-xh64-v4q7, GHSA-mrv2-3pqr-j5jr and GHSA-c6gr-qvv4-5v3f for exploitation conditions.",
+        "mitigation": "Upgrade HomePort to 8.1.4-rc.3, which ships dompurify 3.4.17."
+      },
+      "commits": [
+        "b63807c698"
+      ],
+      "id": "8.1.4-rc.3-6"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Erred resources are labelled Erred instead of OK",
+      "description": "A resource in the Erred state was labelled OK in the resource list and the resource details header. It is now labelled Erred.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "53ec56f33c"
+      ],
+      "id": "8.1.4-rc.3-7"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Failed API key limit pauses are retried with backoff",
+      "description": "When the site agent reported a key's limit pause as failed, the key stayed Erred and live at the backend. It kept being served past its limit until someone pressed Retry. Now, for a key that is still over a limit on a managed offering and a live resource, a task issues the pause again. The first retry comes five minutes after the failure, and each later retry waits twice as long as the one before, up to six hours. The retries are counted in the key's new limit_pause_retries field. A key Waldur paused for its own limit also stays paused while its resource is restricted for the resource's spending limit, and the resume tasks pick the key up once the restriction lifts. In the portal's Erred tooltip, the agent's error now ends with a period, so the note that follows reads as a separate sentence.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Marketplace migration 0317_resource_api_key_limit_pause_retries adds the key's limit_pause_retries field.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "2984a9bf6",
+        "1439bcb9d",
+        "86f354685",
+        "0aa02278f0"
+      ],
+      "id": "8.1.4-rc.3-8"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Grace-period and cost-policy pauses carry the usage limit marker",
+      "description": "The usage-limit restriction skipped every resource that was already paused, including pauses set by the project grace period or held by a cost policy. Such a resource carried no usage-limit marker. When the grace period was released, the resource was unpaused while still over its limit, and the hourly re-evaluation, which only looks at marked resources, never paused it again. Now, only a pause set by hand is skipped, and a grace-period or cost-policy pause is marked as the usage limit's too.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "630bca63a"
+      ],
+      "id": "8.1.4-rc.3-9"
+    },
+    {
+      "type": "feature",
+      "category": "openstack",
+      "title": "Hard reboot action for OpenStack instances",
+      "description": "Previously, OpenStack instances had no hard reboot action. Now, an instance can be hard rebooted through the API and from the instance's actions in the portal, and the action has its own event types.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_openstack"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "7ba51401f",
+        "241944e02f"
+      ],
+      "id": "8.1.4-rc.3-10"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "HomePort moves further from lodash and Bootstrap",
+      "description": "Previously, HomePort depended on lodash-es and kept Metronic and Bootstrap SCSS under src/metronic. Now, lodash-es is replaced by es-toolkit and banned by a lint rule. The SCSS moves to src/styles/bootstrap, with dead rules pruned and fixed-size Bootstrap utilities replaced by Tailwind. The Tag, Card and SimpleTable components use Tailwind and waldur-ui primitives, and form controls move to a waldur-form package. Tables are decoupled from UI-Router, and the table filter panel opens in a local sheet instead of the app drawer. The unused Mermaid icon pack is removed, and duplicate nested dependency copies are removed from lazy chunks.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "d02d701ec6",
+        "f3fe760d84",
+        "bf32e77cdf",
+        "f82910978c",
+        "31ff0d3711",
+        "57d1e9f7d6",
+        "647faa28f8",
+        "e893b9bff6",
+        "7e3b91581f",
+        "3c6b3d88c1",
+        "d7a5f0659a",
+        "a4d82691c5",
+        "9420b0808a",
+        "6220acf97e",
+        "ae1c9e791a",
+        "4b5fd0eb17",
+        "d4515f015b",
+        "5b16154816",
+        "8a0b947f04",
+        "e1473aa655",
+        "ffb7131e1e",
+        "7b5838f160",
+        "34e9a07eed"
+      ],
+      "id": "8.1.4-rc.3-11"
+    },
+    {
+      "type": "fix",
+      "category": "openstack",
+      "title": "Instance action polling stops when Nova reports ERROR",
+      "description": "Waldur kept polling an OpenStack instance action after Nova reported ERROR. Now, polling stops when Nova reports ERROR.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_openstack"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "da469a6b5"
+      ],
+      "id": "8.1.4-rc.3-12"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Keyboard and screen reader access for menus, project filter and table tabs",
+      "description": "Previously, the header and footer link menus did not work as keyboard disclosures, the project filter did not announce the selected project by name, and switching a router table tab moved focus out of the tab row. Now, the header and footer link menus open as keyboard disclosures, the project filter announces the selected project by name, and focus stays in the tab row when a tab switches the page.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "7e00650fd6",
+        "fd3aac36df",
+        "24c5df3bab"
+      ],
+      "id": "8.1.4-rc.3-13"
+    },
+    {
+      "type": "fix",
+      "category": "ui",
+      "title": "Mobile layout fixes",
+      "description": "Order progress steps did not fit on mobile, and the error page's status code did not fit mobile viewports. Below the lg breakpoint, the AI assistant's history stayed open after New chat. Now, order steps fit on mobile, the error code scales to fit, and New chat closes the history on smaller screens.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "62bdeb8e56",
+        "293e97555a",
+        "d14dd19478"
+      ],
+      "id": "8.1.4-rc.3-14"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Only one-time offering components can be prepaid",
+      "description": "Previously, prepaid settings were accepted on any offering component. Now, only one-time components can be prepaid, and the component form saves a component without the prepaid settings it hides.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "ac619a130",
+        "e02e3f3166"
+      ],
+      "id": "8.1.4-rc.3-15"
+    },
+    {
+      "type": "fix",
+      "category": "policy",
+      "title": "Organization cost policy credit evaluation fixes",
+      "description": "An organization cost policy deducted more than usage compensation from the live credit balance. Changing a credit's offering list did not re-evaluate the organizations whose credits changed. Now, only usage compensation is deducted, and a change to a credit's offering list re-evaluates those organizations.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "d04f715ac",
+        "701987ed0"
+      ],
+      "id": "8.1.4-rc.3-16"
+    },
+    {
+      "type": "feature",
+      "category": "marketplace",
+      "title": "Per-period spending limits on resource API keys",
+      "description": "Previously, a resource API key carried one flat monthly limit per component. Now, a key's limit is one amount per period, like its resource's spending limits: month on every component, plus the other periods the component offers. ResourceApiKey.limits becomes spending_limits, and existing limits move to month. The API still returns limits as a flat monthly view and still accepts it, rounding legacy amounts up to the cent, but a request that sends both limits and spending_limits gets a 400. A key's limit for a period may not exceed the lowest of the resource's limits for that period and every longer one, and a shorter period's limit may not exceed a longer one's. Limits must be above zero, and they are validated again under the resource and key locks. Components that the plan prices at zero, such as a LiteLLM USD cap, accept key limits. Two offering plugin options decide what keys are offered. api_key_limits (on unless set to false) lets consumers limit keys at all. api_key_daily_usage (off unless set) declares that the site agent reports each key's usage per day, which day, week, quarter and year limits need. A per-key daily usage report holds up to 1000 items and refuses dates before the start of the current year, or before the start of the previous month if that is earlier. A key reads only the daily rows its limits reach, and old rows are pruned. In the portal, the key dialogs show one field per period with its reset date and cap new values by the resource's limits. A limit the key already holds is accepted only unchanged. The keys tab reads usage and inherited limits from the resource's spending limits, and an assignee cannot rotate a key once any of its limits is reached.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "high"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "highlight": true,
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Marketplace migrations add per-period key spending limits, move each key's existing limits to its month limit, and add the api_key_daily_usage offering option (0316_api_key_daily_usage_option).",
+          "automatic": true
+        },
+        {
+          "type": "config",
+          "description": "Providers whose site agent reports each API key's usage per day can set plugin_options.api_key_daily_usage on the offering to offer day, week, quarter and year key limits. To turn off key limits for an offering, set plugin_options.api_key_limits to false.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "420eac13a",
+        "ffed2a4aa",
+        "a929e9e66",
+        "0f102ff70",
+        "51ca9ca18",
+        "1d1819625",
+        "d5dfb80b1",
+        "f56451aba",
+        "811aff07a",
+        "c6c2e4001",
+        "e6ac222b9",
+        "4038dc4ae",
+        "41b2e40db",
+        "4c4ce3a35f",
+        "e89052d8dd",
+        "062fcf6cc1",
+        "ef04229242",
+        "3f14286852",
+        "a3367b1453",
+        "40ae999579",
+        "44d7a8f2d9",
+        "bdb02e9d9a",
+        "e654875a1e",
+        "b19be6ef55"
+      ],
+      "id": "8.1.4-rc.3-17"
+    },
+    {
+      "type": "feature",
+      "category": "marketplace",
+      "title": "Per-period spending limits on usage-based components",
+      "description": "Previously, a usage-based offering component could carry only a usage limit that Waldur did not enforce. Now, providers choose which calendar periods customers may cap on a usage-based component, each with an optional default and maximum. The periods are day, week, month, quarter, year and an all-time period that never resets, which API keys can use too. Customers set limits when ordering and change them later with the new Change spending limits action (set_spending_limits), without an order or approval. A reached limit applies the offering's action_on_usage_limit until the limit resets: pause pauses the resource, downscale downscales it, and if the option is unset the limit is only reported. The order form and the dialog say which of these applies. The Usage tab and the resource's components panel show used and limit amounts per period, when each limit resets and why access is paused. The API keys tab's pause banner names the reached limit and when access resumes. If the backend refuses a change, the dialog marks the period it named. Integrations can report usage per day with daily_usages on set_usage, up to 1000 items per report, and the month's component usage is derived from the days.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "highlight": true,
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Marketplace migrations 0308_spending_limits and 0318_resource_api_key_usage_history add the spending limit and usage history storage.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "0c7e95f33",
+        "84a53e30b",
+        "4dcf32145",
+        "31267e0d3",
+        "b36713533d",
+        "48258e16d1",
+        "2a9f69f483",
+        "43f53a321d",
+        "ddda35ab56",
+        "02ba7fbd13",
+        "ae1ebbac03",
+        "ea6b666eb0",
+        "97c4a0eb1c",
+        "eae6324ec4",
+        "b0ac13241b"
+      ],
+      "id": "8.1.4-rc.3-18"
+    },
+    {
+      "type": "fix",
+      "category": "ui",
+      "title": "Portal form, table and wizard fixes",
+      "description": "This entry groups several portal fixes. Wizard step indicators navigate and render their tabs correctly. A multi-select keeps its input mounted when the first value is selected. The project credit dialog formats the organization's credit. Table cells have their gutter padding back, and long offering descriptions are truncated in the Add resource dialog. Nested table toolbars no longer show a Filter button that did nothing. The query error handler now uses the correct state name for the server error page, and the mapping from HTTP status to error page is shared.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "8883be9ecd",
+        "a6138e5e23",
+        "cac9b74448",
+        "fd53fa010a",
+        "56c45f0665",
+        "0885b346b0",
+        "6c879af08e",
+        "62622f7da7"
+      ],
+      "id": "8.1.4-rc.3-19"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Prepaid limits shown as one total for the whole subscription",
+      "description": "Previously, prepaid limits were not shown as a single total for the subscription. Now, the API and the portal show a prepaid limit as one total for the whole subscription. This applies to the order summary, plan details, resource components, resource lists and project dashboards.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "42ac7602d",
+        "5b844e1bbc"
+      ],
+      "id": "8.1.4-rc.3-20"
+    },
+    {
+      "type": "feature",
+      "category": "auth",
+      "title": "Project managers and administrators can manage a resource's API keys",
+      "description": "Previously, a resource's API keys were governed by RESOURCE.MANAGE_USERS, which only the organization owner holds. A project manager or administrator could change the resource's limits but could not give one key a lower cap, pause a leaked key or delete a departed member's key. Now, key management has its own permission, RESOURCE.MANAGE_CONSUMER_API_KEY. It is labelled \"Manage API keys of resources used by the project or organization\" and granted to the organization owner, the project administrator and the project manager. The portal's API keys card checks this permission on the project and its organization only, as the backend does, so a role held as a service provider no longer shows key actions that would fail with 403.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Permissions migration 0035_consumer_api_key_permission adds RESOURCE.MANAGE_CONSUMER_API_KEY.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "a2d750687",
+        "fa56efa2b",
+        "e4d5206e7e",
+        "175642e59d",
+        "219162b15e"
+      ],
+      "id": "8.1.4-rc.3-21"
+    },
+    {
+      "type": "breaking",
+      "category": "marketplace",
+      "title": "Resource API key assignee is fixed when the key is requested",
+      "description": "Previously, a resource API key's assignee could be changed or cleared by editing the key, with a handover rotation and an assignee-changed signal to the site agent. Now, a key's assignee is fixed when the key is requested: on every offering, the API refuses with 400 any edit that names user, null included. To hand a key over, request a key for the new holder and delete the old one. The handover rotation, its state checks, the unassign exemption and the assignee-changed site agent signal are removed. The portal's key edit dialog no longer has an assignee field, rotation warning or assignee lock, and the Unassign row action is gone.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "high"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "review",
+          "description": "Update API clients and scripts that change or clear a resource API key's user through an edit. Request a key for the new holder and delete the old key instead.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "291ee6a16",
+        "f118b1cb1b",
+        "7fa00b29ac"
+      ],
+      "id": "8.1.4-rc.3-22"
+    },
+    {
+      "type": "fix",
+      "category": "identity",
+      "title": "Role list_users matches the role's organization copies",
+      "description": "The role list_users action matched only the role itself, not its organization copies. It now matches the role and its organization copies.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "1ed01154a"
+      ],
+      "id": "8.1.4-rc.3-23"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Service accounts close reliably when a project is deleted",
+      "description": "Service accounts were closed before the project delete committed. Accounts that were already closed were not treated as closed, and the accounts of removed projects were not reconciled. Now, accounts are closed after the project delete commits, an already-closed account counts as closed, and the accounts of removed projects are reconciled.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "38e1c5c4c"
+      ],
+      "id": "8.1.4-rc.3-24"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Service provider revenue includes its fractional part",
+      "description": "Service provider revenue was returned without its fractional part. It is now returned with it.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "bab1c02c2"
+      ],
+      "id": "8.1.4-rc.3-25"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Smaller portal usability improvements",
+      "description": "Previously, per-offering usage views switched component types with tabs, the offering availability dialog had an unused reason field, and revisiting a page briefly showed the loading spinner. Now, per-offering usage views pick the component type from a select, the reason field is removed, and each route's lazy component is created once, so revisits no longer show the spinner.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "03d9f8dc90",
+        "03b42b3cbd",
+        "f4a5d04900"
+      ],
+      "id": "8.1.4-rc.3-26"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Staff and support can no longer reveal resource API keys directly",
+      "description": "Previously, staff and support users could reveal resource API keys directly. Now, the API no longer lets them do so, and the portal offers Reveal to staff and support only where the API allows it.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "e8f95a190",
+        "bba8b52586"
+      ],
+      "id": "8.1.4-rc.3-27"
+    },
+    {
+      "type": "feature",
+      "category": "identity",
+      "title": "Staff can assign roles to a user from the user's affiliations",
+      "description": "Previously, staff had no view for assigning roles to a given user. Now, staff can add a role for a user from the user's affiliations by picking the scope and the role.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "d6ff93ef44"
+      ],
+      "id": "8.1.4-rc.3-28"
+    },
+    {
+      "type": "improvement",
+      "category": "auth",
+      "title": "Stored identity provider token is revoked on logout, deactivation and deletion",
+      "description": "Previously, the identity provider token Waldur stored for a user was kept after the user logged out or the account was deactivated or deleted. Now, the stored token is revoked and removed on logout, deactivation and deletion.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_auth_social"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "1d792c944"
+      ],
+      "id": "8.1.4-rc.3-29"
+    },
+    {
+      "type": "security",
+      "category": "infrastructure",
+      "title": "zod upgraded to 4.6.7 for GHSA-mrhx-c7xc-m3w5",
+      "description": "HomePort now resolves zod 4.6.7, which fixes GHSA-mrhx-c7xc-m3w5.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "low",
+        "affected_versions": "Waldur HomePort releases before 8.1.4-rc.3 that ship zod older than 4.6.7",
+        "exploitability": "zod is a transitive dependency: only yarn.lock changed. The commit data does not say how Waldur is exposed through it. See the advisory for exploitation conditions.",
+        "mitigation": "Upgrade HomePort to 8.1.4-rc.3, which ships zod 4.6.7.",
+        "ghsa": "GHSA-mrhx-c7xc-m3w5"
+      },
+      "commits": [
+        "e22edabaf9"
+      ],
+      "id": "8.1.4-rc.3-30"
+    }
+  ],
+  "base_stable_version": "8.1.3",
+  "previous_version": "8.1.4-rc.2",
+  "stable_target": "8.1.4"
+}
