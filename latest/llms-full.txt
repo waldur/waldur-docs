@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-25T20:47:12.321893Z
+Generated: 2026-10-25T21:39:56.307069Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -165,6 +165,8 @@ The most common types of Waldur installations include:
 
 An account in Waldur belonging to a person or a robot. A user can have roles in Organizations and Projects.
 Some users - mostly affiliated with Waldur operator - can have global roles, e.g. support or staff.
+A deployment can also define site-wide roles: a chosen set of permissions, such as listing and
+approving every order, that applies on every object without making the holder staff or support.
 
 ### Organization
 
@@ -268,11 +270,16 @@ Operators see these names in the administration interface and API payloads.
 Every role exposes the same attributes:
 
 - **Name** — unique identifier.
-- **Scope** — context in which the role is applicable (Organization, Project, Call, Offering, Service Provider, Proposal, Call managing organization).
+- **Scope** — context in which the role is applicable (Organization, Project, Call, Offering, Service Provider, Proposal, Call managing organization, or Site-wide).
 - **Description** — brief explanation of the role's purpose.
 - **Active** — whether the role is currently available for assignment.
 
 A user can hold one or more roles within any of those scopes simultaneously.
+
+No site-wide role ships by default. Staff create one in **User roles** with the type
+**Site-wide**, or a deployment defines it with `scope: global` in `custom-roles.yaml`, and staff
+grant it from a user's **Roles and permissions** tab; see
+[site-wide roles](../../developer-guide/guides/waldur-permissions.md#site-wide-roles).
 
 ### Managing roles in the administration interface
 
@@ -8441,7 +8448,7 @@ waldur check_role_names --check global-custom-role --check org-role-unmanaged
 
 usage: waldur check_role_names [--format {text,json}]
                                [--severity {error,warning,info}]
-                               [--check {clone-name-drift,cross-scope-permission,global-custom-role,label-equals-name,label-missing,multi-org-binding,name-not-a-code,org-role-unmanaged,scope-prefix-mismatch,system-name-unknown,system-scope-mismatch,template-without-scope}]
+                               [--check {clone-name-drift,cross-scope-permission,global-custom-role,global-denied-permission,label-equals-name,label-missing,multi-org-binding,name-not-a-code,org-role-unmanaged,scope-prefix-mismatch,system-name-unknown,system-scope-mismatch,template-without-scope}]
                                [--exit-zero]
 
 options:
@@ -8449,7 +8456,7 @@ options:
   --severity {error,warning,info}
                         Lowest severity to report (default: info, i.e.
                         everything)
-  --check {clone-name-drift,cross-scope-permission,global-custom-role,label-equals-name,label-missing,multi-org-binding,name-not-a-code,org-role-unmanaged,scope-prefix-mismatch,system-name-unknown,system-scope-mismatch,template-without-scope}
+  --check {clone-name-drift,cross-scope-permission,global-custom-role,global-denied-permission,label-equals-name,label-missing,multi-org-binding,name-not-a-code,org-role-unmanaged,scope-prefix-mismatch,system-name-unknown,system-scope-mismatch,template-without-scope}
                         Report only this check; repeat for several
   --exit-zero           Always exit with status 0, even when errors are
                         reported
@@ -50955,7 +50962,7 @@ still active.
 | `uuid` | Identifier of the grant itself |
 | `user_uuid`, `user_username`, `user_name`, `user_email`, `user_slug` | The user holding the role |
 | `role_name`, `role_description`, `role_uuid` | The role granted, e.g. `CUSTOMER.OWNER` |
-| `scope_type` | `customer`, `project`, `offering`, `call`, `proposal`, … |
+| `scope_type` | `customer`, `project`, `offering`, `call`, `proposal`, `global`, … |
 | `scope_uuid`, `scope_name` | The object the role applies to |
 | `scope_is_removed` | Whether the scope has since been soft-deleted |
 | `created`, `expiration_time` | When the role was granted, and when it lapses (`null` = no expiry) |
@@ -51026,6 +51033,24 @@ X-Result-Count: 1
 
 The total number of matches is returned in the `X-Result-Count` header, and `Link` carries the
 pagination cursors.
+
+## Site-wide grants
+
+A deployment can define site-wide roles, whose permissions apply on every object rather than on
+one organization or project. A grant of one appears in `/api/user-permissions/` with
+`scope_type` `global`. Staff list, grant and revoke them at
+`/api/global-user-roles/`:
+
+```bash
+GET /api/global-user-roles/                    # active grants
+POST /api/global-user-roles/                   # {"user": "<UUID>", "role": "<UUID or name>", "expiration_time": null}
+DELETE /api/global-user-roles/<grant UUID>/    # revoke
+```
+
+A site-wide role cannot be granted through an organization's or project's add-user action or an
+invitation, and a personal access token cannot be bound to the site scope. What such a role may
+carry, and what each permission opens, is in the
+[permission system guide](../../developer-guide/guides/waldur-permissions.md#site-wide-roles).
 
 ## Listing the available roles
 
@@ -58794,6 +58819,7 @@ Waldur supports multiple authorization scopes, each representing a different org
 | Call Organizer | `proposal.CallManagingOrganisation` | Organization managing calls for proposals |
 | Call | `proposal.Call` | Call for proposals permissions |
 | Proposal | `proposal.Proposal` | Individual proposal permissions |
+| Global | `permissions.GlobalRoleScope` | One site-wide grant. Each permission applies to every object. See [Site-wide roles](../guides/waldur-permissions.md#site-wide-roles) |
 
 ### System Roles
 
@@ -59121,6 +59147,7 @@ can_update_projects = get_connected_projects_by_permission(
 
 | Permission | Description |
 |------------|-------------|
+| `OFFERING.LIST` | List offerings on the provider (management) list. The public catalog does not use it |
 | `OFFERING.CREATE` | Create new offerings |
 | `OFFERING.UPDATE` | Update offering details |
 | `OFFERING.DELETE` | Delete offerings |
@@ -71673,6 +71700,126 @@ my_action_permissions = [
     permission_factory(PermissionEnum.MY_NEW_PERMISSION, ["project.customer"])
 ]
 ```
+
+## Site-wide roles
+
+A role is usually granted on one organization, project, offering, or call. A
+site-wide role is granted once, and each permission on it applies to every
+object.
+
+Define it in `custom-roles.yaml` with `scope: global`. `permissions.yaml` ships
+no global role. A deployment opts in, for example:
+
+```yaml
+- role: GLOBAL.ORDER_DESK
+  description: See every order and approve or reject it
+  scope: global
+  permissions:
+    - ORDER.LIST
+    - ORDER.APPROVE
+    - ORDER.REJECT
+```
+
+Staff can also create the role with `POST /api/roles/` and
+`"content_type": "global"`. The role is left out of the organization role
+picker (`available_for_customer`).
+
+### Granting
+
+Staff assign and revoke holders at `/api/global-user-roles/`. A personal access
+token needs the staff scope.
+
+- `GET` lists the active grants.
+- `POST` body: `user` (uuid), `role` (uuid or name), optional `expiration_time`.
+- `DELETE /api/global-user-roles/<uuid>/` revokes the grant. The row stays
+  inactive for the audit log.
+
+Adding the role through an organization's add-user action fails. The role's
+scope has to match the object. The site scope is also not a target for an
+invitation, a personal access token's `allowed_scopes`, or an event consumer's
+bindings: roles are granted on it, but nothing is bound to it.
+
+### What a site-wide role cannot carry
+
+A site-wide role cannot manage an organization's or a service provider's team:
+`CUSTOMER.CREATE_PERMISSION`, `CUSTOMER.UPDATE_PERMISSION` and
+`CUSTOMER.DELETE_PERMISSION`. Held on every organization, they would let the
+holder make themselves owner of any of them. `POST /api/roles/` and
+`PUT /api/roles/<uuid>/` reject them on a global role, `import_roles` drops them
+with a warning, and a global grant never satisfies them even when a role
+carries one anyway. `waldur check_role_names` reports such a role as
+`global-denied-permission`.
+
+Team management below the organization stays grantable. A desk holding
+`PROJECT.CREATE_PERMISSION` can invite people into any project. Toggling
+`is_staff`, impersonation, site settings and deleting an organization are staff
+checks rather than permissions, so no role carries them.
+
+### What the grant does
+
+Staff still passes before this lookup. `is_support` does not enter
+`has_permission`. It stays the blanket read, and it combines with a global
+write: support can see a row, and the site role supplies the action.
+
+`has_permission` is true on every object for a permission held on the site
+scope. A personal access token must list that permission. A token bound to
+another organization cannot use the grant.
+
+A list opens only for the permission that list already checks. An action
+permission does not open the list. `ORDER.APPROVE` alone cannot list orders,
+and `OFFERING.UPDATE` alone cannot open an offering. The holder acts on a row
+they can already see, because they also hold the list permission, because they
+are support, or because they have a role on that object.
+
+| Permission on the site role | What it lists |
+|---|---|
+| `ORDER.LIST` | Every order |
+| `PROJECT.LIST` | Every project |
+| `RESOURCE.LIST` | Every resource |
+| `OFFERING.LIST` | Every offering on the provider list, including drafts. The public catalog is unchanged |
+| `CALL.LIST` | Every call, and the call lists support can already read, including reviews. Conflict-of-interest disclosures and reviewer bids stay staff-only |
+| `ROUND.LIST` | Every round. It does not open calls or disclosures |
+| `PROPOSAL.LIST` | Every proposal |
+| `INVITATION.LIST` | Every invitation |
+| `SERVICE_ACCOUNT.MANAGE` | Every project service account |
+| `PROJECT.COURSE_ACCOUNT_MANAGE` | Every course account |
+
+`PROJECT.CREATE` does not list organizations. Creating a project still needs an
+organization the user can see. Support plus `PROJECT.CREATE` can create one in
+an organization they do not belong to.
+
+A site role is not membership. `get_connected_customers` and
+`get_connected_projects` stay empty for a user whose only role is site-wide.
+A site-wide `RESOURCE.SET_LIMITS` sees every limit-change request. Approving
+one still needs permission to create the order.
+
+The pending-order dashboard follows the approve rule: an `ORDER.APPROVE` grant
+on the project, on its organization, or on the site. This changes the dashboard
+for deployments that grant no site-wide role too: an approver whose grant is on
+the organization, an organization owner for instance, now sees the orders
+waiting in its projects. Before, the dashboard looked at project grants only.
+
+### What it costs
+
+A site-wide grant is consulted on every permission check, so its cost is what
+every request pays. Until the first global role is granted, the site scope does
+not exist and the checks cost nothing extra: each process notes that once a
+minute. After the first grant, a user's site-wide permissions are loaded once
+per request, so a request pays one query however many checks it makes. A
+Celery task or a shell asks the database on each check.
+
+The first grant on a deployment applies at once in the process that made it,
+and within a minute in the other API and worker processes. Until then they
+treat the grant as absent, so it never applies early. Grants and revokes after
+that apply on the next request.
+
+`OFFERING.LIST` also ships on `CUSTOMER.OWNER`, `CUSTOMER.MANAGER`, and
+`OFFERING.MANAGER`. A role on the organization, project, offering, or service
+provider still sees the offerings that connection already included.
+
+Homeport's role form keeps its scope list in `ROLE_TYPES`. Add `global` there
+before the administration screen can create the role. The grant screen uses
+`/api/global-user-roles/`.
 
 ## Team visibility
 
@@ -98142,6 +98289,24 @@ For each role, administrators can:
 - Proposal
 - Service provider organization
 - Call managing organization
+- Site-wide
+
+### Site-wide roles
+
+A site-wide role's permissions apply on every object, without making the holder staff or support:
+an order desk with **List order** and **Approve order**, for example, sees and approves every
+order in every organization.
+
+- Choose **Site-wide** as the type. The three organization team permissions under
+  **Team members** (create, update and delete permission customer) are greyed out: held on every
+  organization, they would let the holder make themselves owner of any of them.
+- Grant the role from the user's page: **Support → Users → user → Roles and permissions → Add**,
+  scope type **Site-wide**. There is no scope to pick. The grant is listed with scope
+  **Entire site** and is revoked from the same row.
+
+Only staff create and grant site-wide roles. A deployment can also define them with
+`scope: global` in `custom-roles.yaml`. What each permission opens is described in
+[site-wide roles](../../developer-guide/guides/waldur-permissions.md#site-wide-roles).
 
 ## Permission configuration
 
@@ -115844,12 +116009,12 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`UserChecklistMixin`](#userchecklistmixin) | `waldur_core.checklist.mixins` | Mixin for ViewSets that provide checklist functionality to end users |
 | [`LatestAnswerTestMixin`](#latestanswertestmixin) | `waldur_core.checklist.tests.test_latest_answers` | No description available |
 | [`ConstanceTableMixin`](#constancetablemixin) | `waldur_core.configuration.tests.utils` | Gives a test django-constance's settings table |
-| [`CopyButtonMixin`](#copybuttonmixin) | `waldur_core.core.admin` | Mixin to add copy-to-clipboard functionality to form fields in Django admin |
 | [`ExcludedFieldsAdminMixin`](#excludedfieldsadminmixin) | `waldur_core.core.admin` | This mixin allows to toggle display of fields in Django model admin according... |
 | [`ExtraActionsMixin`](#extraactionsmixin) | `waldur_core.core.admin` | Allows to add extra actions to admin list page |
 | [`ExtraActionsObjectMixin`](#extraactionsobjectmixin) | `waldur_core.core.admin` | Allows to add extra actions to admin object edit page |
 | [`HideAdminOriginalMixin`](#hideadminoriginalmixin) | `waldur_core.core.admin` | Encapsulate all admin options and functionality for a given model |
 | [`ReadOnlyAdminMixin`](#readonlyadminmixin) | `waldur_core.core.admin` | Disables all editing capabilities |
+| [`CopyButtonMixin`](#copybuttonmixin) | `waldur_core.core.admin_widgets` | Mixin to add copy-to-clipboard functionality to form fields in Django admin |
 | [`DeleteExecutorMixin`](#deleteexecutormixin) | `waldur_core.core.executors` | Delete object on success or if force flag is enabled |
 | [`ErrorExecutorMixin`](#errorexecutormixin) | `waldur_core.core.executors` | Set object as erred on fail |
 | [`SuccessExecutorMixin`](#successexecutormixin) | `waldur_core.core.executors` | Set object as OK on success, cleanup action and its details |
@@ -116069,14 +116234,6 @@ Gives a test django-constance's settings table.
 Migrations written against it run on databases that have it. The table is
 created inside the test's transaction and goes away with it.
 
-### CopyButtonMixin
-
-**Module:** `waldur_core.core.admin`
-
-**Description:**
-
-Mixin to add copy-to-clipboard functionality to form fields in Django admin.
-
 ### ExcludedFieldsAdminMixin
 
 **Module:** `waldur_core.core.admin`
@@ -116122,6 +116279,14 @@ Encapsulate all admin options and functionality for a given model.
 
 Disables all editing capabilities.
 Please ensure that readonly_fields is specified in derived class.
+
+### CopyButtonMixin
+
+**Module:** `waldur_core.core.admin_widgets`
+
+**Description:**
+
+Mixin to add copy-to-clipboard functionality to form fields in Django admin.
 
 ### DeleteExecutorMixin
 
@@ -116450,10 +116615,14 @@ by appending numeric suffixes when needed.
 Mixin implementing finite state machine (FSM) functionality.
 
 Provides state management with transitions between creation, updating,
-deletion, OK, and error states. Includes error handling capabilities
-and concurrent transition support.
+deletion, OK, and error states. Includes error handling capabilities.
 
-**Base classes:** `ErrorMessageMixin`, `ConcurrentTransitionMixin`
+There is no optimistic locking: saving a stale copy overwrites a state
+changed elsewhere. django_fsm's ConcurrentTransitionMixin used to be listed
+here but sat after django's Model in the MRO, so it never ran; enabling it
+breaks transitions out of ERRED and deferred querysets (#866).
+
+**Base classes:** `ErrorMessageMixin`
 
 ### UiDescribableMixin
 

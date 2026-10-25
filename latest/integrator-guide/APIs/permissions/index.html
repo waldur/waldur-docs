@@ -11780,6 +11780,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#site-wide-grants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Site-wide grants
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#listing-the-available-roles" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -22375,6 +22386,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#site-wide-grants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Site-wide grants
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#listing-the-available-roles" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -22444,7 +22466,7 @@ still active.</p>
 </tr>
 <tr>
 <td><code>scope_type</code></td>
-<td><code>customer</code>, <code>project</code>, <code>offering</code>, <code>call</code>, <code>proposal</code>, …</td>
+<td><code>customer</code>, <code>project</code>, <code>offering</code>, <code>call</code>, <code>proposal</code>, <code>global</code>, …</td>
 </tr>
 <tr>
 <td><code>scope_uuid</code>, <code>scope_name</code></td>
@@ -22596,6 +22618,21 @@ X-Result-Count:<span class="w"> </span><span class="m">1</span>
 </code></pre></div></td></tr></tbody></table></div>
 <p>The total number of matches is returned in the <code>X-Result-Count</code> header, and <code>Link</code> carries the
 pagination cursors.</p>
+<h2 id="site-wide-grants">Site-wide grants</h2>
+<p>A deployment can define site-wide roles, whose permissions apply on every object rather than on
+one organization or project. A grant of one appears in <code>/api/user-permissions/</code> with
+<code>scope_type</code> <code>global</code>. Staff list, grant and revoke them at
+<code>/api/global-user-roles/</code>:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code>GET<span class="w"> </span>/api/global-user-roles/<span class="w">                    </span><span class="c1"># active grants</span>
+POST<span class="w"> </span>/api/global-user-roles/<span class="w">                   </span><span class="c1"># {"user": "&lt;UUID&gt;", "role": "&lt;UUID or name&gt;", "expiration_time": null}</span>
+DELETE<span class="w"> </span>/api/global-user-roles/&lt;grant<span class="w"> </span>UUID&gt;/<span class="w">    </span><span class="c1"># revoke</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>A site-wide role cannot be granted through an organization's or project's add-user action or an
+invitation, and a personal access token cannot be bound to the site scope. What such a role may
+carry, and what each permission opens, is in the
+<a href="../../../developer-guide/guides/waldur-permissions/#site-wide-roles">permission system guide</a>.</p>
 <h2 id="listing-the-available-roles">Listing the available roles</h2>
 <p><code>/api/roles/</code> enumerates the roles a deployment defines, together with the scope each applies to
 and the permissions it carries. Staff can add custom roles alongside the system ones — see
