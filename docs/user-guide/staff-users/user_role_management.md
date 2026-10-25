@@ -50,6 +50,24 @@ For each role, administrators can:
 - Proposal
 - Service provider organization
 - Call managing organization
+- Site-wide
+
+### Site-wide roles
+
+A site-wide role's permissions apply on every object, without making the holder staff or support:
+an order desk with **List order** and **Approve order**, for example, sees and approves every
+order in every organization.
+
+- Choose **Site-wide** as the type. The three organization team permissions under
+  **Team members** (create, update and delete permission customer) are greyed out: held on every
+  organization, they would let the holder make themselves owner of any of them.
+- Grant the role from the user's page: **Support → Users → user → Roles and permissions → Add**,
+  scope type **Site-wide**. There is no scope to pick. The grant is listed with scope
+  **Entire site** and is revoked from the same row.
+
+Only staff create and grant site-wide roles. A deployment can also define them with
+`scope: global` in `custom-roles.yaml`. What each permission opens is described in
+[site-wide roles](../../developer-guide/guides/waldur-permissions.md#site-wide-roles).
 
 ## Permission configuration
 
