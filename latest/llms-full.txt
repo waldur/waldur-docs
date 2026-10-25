@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-25T03:03:56.244841Z
+Generated: 2026-10-25T20:47:12.321893Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -73120,7 +73120,6 @@ first paint, so the entry graph is kept deliberately small:
 - SVG files processed through SVGR 8.1.0 plugin for React components
 - Images and static assets in `src/images/`
 - Font files managed through Vite's asset pipeline
-- Markdown content processed through vite-plugin-markdown
 - Monaco Editor 0.52.2 for code editing capabilities
 - Sass 1.85.0 for SCSS preprocessing
 
@@ -73717,7 +73716,7 @@ When `pending={true}`:
 
 > [!CAUTION]
 > **Never wrap button icons in `.svg-icon`**.
-> Legacy Metronic stylesheets define `.svg-icon { fill: #A1A5B7 !important; }`. This rule beats `currentColor` and turns crisp white icons on primary buttons into a muddy gray. Always pass bare Phosphor icons directly to `iconNode`.
+> `.svg-icon` has been retired (#530) and is prohibited by ESLint (`no-retired-bootstrap-utility`). Always pass bare Phosphor icons directly to `iconNode`.
 
 ---
 
@@ -74188,7 +74187,7 @@ yarn info eslint prettier stylelint husky version
 #### Dependency Management
 
 - `yarn deps:unused` - Find unused dependencies and exports with Knip
-- `yarn deps:circular` - Check for circular dependencies with Madge
+- `yarn deps:circular` - Check for import cycles with oxlint `import/no-cycle` (config: `.oxlintrc.cycles.json`; `@/` imports are resolved). Every static import counts, including `import type` / `export type` and a plain import of a type; only a dynamic `import()` does not, since lazy pages and dialogs are split off that way. oxlint reports each import that closes a cycle rather than the whole chain: follow the reported import lines from file to file to see it.
 
 ### Tooling Standards
 
@@ -74202,9 +74201,9 @@ yarn info eslint prettier stylelint husky version
 ### Code Quality & Analysis
 
 - **Knip** for unused dependency detection
-- **Madge** for circular dependency analysis
+- **oxlint `import/no-cycle`** for circular dependency analysis
 - **Lint-staged** for pre-commit code formatting
-- **PostCSS** with autoprefixer and cssnano for CSS optimization
+- **CSS**: SCSS compiled by Sass, Tailwind CSS v4 through `@tailwindcss/vite` (which adds vendor prefixes itself), and Vite's minification in production builds. There is no PostCSS configuration.
 
 ### Modern Development Practices
 
@@ -75795,8 +75794,7 @@ green, whatever the tenant configured. So:
 - Never pass a CSS variable into a Sass colour function (`tint-color`, `shade-color`, `mix`,
   `rgba($x, …)`): they need a compile-time colour. That is why the static `$component-active-bg` (the default green, which Bootstrap tints) stays a literal.
 - `src/styles/bootstrap/_variables.scss` already points the Bootstrap outputs that would otherwise paint the
-  static green at the runtime brand: the active list-group row and the range thumb. `.svg-icon-primary`
-  is `var(--brand-color)`, so it follows the brand too.
+  static green at the runtime brand: the active list-group row and the range thumb.
 
 ## Font size
 
@@ -76147,7 +76145,7 @@ For detailed testing standards and strategy, see [Testing Standards & Strategy](
 ### Dependency Management
 
 - `yarn deps:unused` - Find unused dependencies and exports with Knip
-- `yarn deps:circular` - Check for circular dependencies with Madge
+- `yarn deps:circular` - Check for import cycles with oxlint `import/no-cycle` (config: `.oxlintrc.cycles.json`; `@/` imports are resolved). Every static import counts, including `import type` / `export type` and a plain import of a type; only a dynamic `import()` does not, since lazy pages and dialogs are split off that way. oxlint reports each import that closes a cycle rather than the whole chain: follow the reported import lines from file to file to see it.
 
 #### Version Management
 
@@ -76200,9 +76198,9 @@ yarn info vite version
 ### Code Quality & Analysis
 
 - **Knip** for unused dependency detection
-- **Madge** for circular dependency analysis
+- **oxlint `import/no-cycle`** for circular dependency analysis
 - **Lint-staged** for pre-commit code formatting
-- **PostCSS** with autoprefixer and cssnano for CSS optimization
+- **CSS**: SCSS compiled by Sass, Tailwind CSS v4 through `@tailwindcss/vite` (which adds vendor prefixes itself), and Vite's minification in production builds. There is no PostCSS configuration.
 
 ### Modern Development Practices
 
@@ -76221,7 +76219,6 @@ yarn info vite version
 - SVG files processed through SVGR plugin for React components
 - Images and static assets in `src/images/`
 - Font files managed through Vite's asset pipeline
-- Markdown content processed through vite-plugin-markdown
 - Monaco Editor for code editing capabilities
 - Sass for SCSS preprocessing
 
@@ -76229,7 +76226,7 @@ yarn info vite version
 
 #### Check current versions
 
-`yarn info @svgr/rollup-plugin vite-plugin-markdown monaco-editor sass version`
+`yarn info @svgr/rollup-plugin monaco-editor sass version`
 
 ## Environment Variables
 
@@ -81813,7 +81810,7 @@ Waldur Homeport operates on two active UI component patterns:
 | **Table pagination**          | `TablePagination`                                           | `waldur-ui`                  | `--pagination-*` tokens; `bordered={false}` under a non-table list; desktop/mobile layouts                                                                                                                                                                                                                                         | `react-bootstrap` `Pagination`, `page-link` markup                                            |
 | **Table Actions**             | `ActionsMenu`                                               | `@/table`                    | `Menu` in the actions look, with the kebab / labeled / Add toggles                                                                                                                                                                                                                                                                 | `react-bootstrap` `DropdownButton`                                                            |
 | **Header Chrome Menu**        | `Menu`                                                      | `waldur-ui`                  | `Menu` in the nav look; `openOnHover="desktop"` for hover triggers                                                                                                                                                                                                                                                                 | N/A                                                                                           |
-| **Header icon button**        | `IconButton`                                                | `waldur-ui`                  | 40px, rem-sized icon (`iconSize` `md` 1.54rem / `lg` 1.85rem), `--btn-secondary-bg` fill on hover, keyboard focus and `aria-expanded`; `indicator` for a custom dot. Pixel-matched to the legacy button, geometry pinned by `e2e-visual/top-bar-geometry.spec.ts`; the ring is on `:focus-visible` only, the one deliberate change | `.btn-nav-item` + `.svg-icon` markup                                                          |
+| **Header icon button**        | `IconButton`                                                | `waldur-ui`                  | 40px, rem-sized icon (`iconSize` `md` 1.54rem / `lg` 1.85rem), `--btn-secondary-bg` fill on hover, keyboard focus and `aria-expanded`; `indicator` for a custom dot. Pixel-matched to the legacy button, geometry pinned by `e2e-visual/top-bar-geometry.spec.ts`; the ring is on `:focus-visible` only, the one deliberate change | `.btn-nav-item` markup                                                                        |
 | **App header bar**            | `TopBar`                                                    | `waldur-ui`                  | `left` / `center` / `right` slots; 55px / 15px padding, 65px / 32px from `lg`, `border-secondary` rule, `bg-primary`. `AppHeader` adds the fixed position, sidebar offset, `z-header` (lifted over open drawers) and `print:hidden`. Geometry pinned by `e2e-visual/top-bar-geometry.spec.ts`                                      | Metronic `.header` + `.container-fluid` (`layout/_header.scss`)                               |
 | **Page container**            | `PAGE_CONTAINER_CLASSNAME` / `PAGE_CONTAINER_XXL_CLASSNAME` | `@/navigation/pageContainer` | Full width, centred, 15px side padding, 32px from `lg`; the XXL variant caps at 1320px from `2xl`. Print drops its padding, margin and background. In `cn()` with `p-[0px] lg:p-[0px]` to remove the padding (full-page views)                                                                                                     | Bootstrap `.container-fluid` / `.container-xxl` with Metronic's padding (`layout/_main.scss`) |
 | **Breadcrumbs**               | `BreadcrumbTrail`                                           | `waldur-ui`                  | Router-agnostic trail (a crumb's `to` links through the provider's `renderLink`), set per page with `useBreadcrumbs`; overflow collapse, middle truncation, switcher dropdowns; `Breadcrumb*` primitives below it. See [breadcrumbs.md](breadcrumbs.md)                                                                            | `react-bootstrap` `Breadcrumb` / `BreadcrumbItem`, `.breadcrumb*` markup                      |
@@ -82237,7 +82234,7 @@ Bootstrap's spacing utilities are `!important`, so a Bootstrap class on a panel 
 - **`ActionItem`**: a `Menu.Item` with an icon, tooltip and staff indicator, or a `BaseButton` with `as`. It hides itself when `isActionVisible` says so: an action switched off for the resource's offering (`actionId` + `resource`), or one that fails the enclosing `ActionList`'s filter (`query`, `hideDisabled`, `hideNonImportant`; `hideGroupName` hides `ActionGroup` captions). `ActionList` is in `src/marketplace/resources/actions/ActionList.tsx`.
 - **Highlighted rows**: hover, focus, Radix `[data-highlighted]` and `.active` share one style; disabled rows (`data-disabled`, `:disabled` or `.disabled`) are skipped.
 - **Isolated Row Testing**: `inActionsMenu(children)` (`src/test/harness.tsx`) wraps action rows in an open `Menu` with `<Menu.Content look="actions">`, so they render as real menu items in Vitest without a table harness.
-- **Toggle buttons use `buttonVariants()`, not `BaseButton`**: `TableDropdownToggle` / `AddDropdownToggle` in this file render a raw `<button>` carrying `buttonVariants()` classes. The toggle is a `group/toggle`, and `ButtonCaret` flips while it is `data-state="open"`. Their icons are sized with the Phosphor `size` prop (16.25px `sm`, 19.5px otherwise) rather than a `.svg-icon` wrapper. Standalone dropdown buttons use `Menu.TriggerButton` which wraps `BaseButton`.
+- **Toggle buttons use `buttonVariants()`, not `BaseButton`**: `TableDropdownToggle` / `AddDropdownToggle` in this file render a raw `<button>` carrying `buttonVariants()` classes. The toggle is a `group/toggle`, and `ButtonCaret` flips while it is `data-state="open"`. Their icons are sized with the Phosphor `size` prop (16.25px `sm`, 19.5px otherwise). Standalone dropdown buttons use `Menu.TriggerButton` which wraps `BaseButton`.
 - **Unavailable offerings**: the page wraps itself in `ActionsUnavailable`, and every action menu inside shows its toggle disabled with the reason in a tooltip. This replaced a `data-actions-toggle` attribute and a `.disabled-view` rule that hid the toggles.
 
 ---
@@ -82320,7 +82317,7 @@ Implemented in `packages/eslint-plugin-waldur` and enabled as `waldur-custom/*` 
 | `no-bootstrap-border-with-tailwind-color` | `error`  | No Bootstrap `border` / `border-top` / … next to a Tailwind border colour (Bootstrap's `!important` colour wins). Autofixes to `border-[1px]` when the same string sets a base colour.                                                                                                                                                                                                                                                                                                                     |
 | `no-bootstrap-layout-utility`             | `error`  | Retires Bootstrap layout, display, flexbox, sizing and text-truncate utilities (`d-block`, `d-flex`, `d-none`, `flex-column`, `w-100`, `mw-100`, `text-truncate`, responsive variants) in favor of Tailwind standard classes (`block`, `flex`, `hidden`, `flex-col`, `w-full`, `max-w-full`, `truncate`). Autofixes across the codebase, except `w`/`h`/`min-w`/`min-h` × `25`/`50`/`75`/`100`, which Tailwind also defines as spacing steps: those get a suggestion per reading (`w-1/2` or `w-[200px]`). |
 | `no-raw-status-ramp`                      | `error`  | State colours come from `--status-*`, not raw `success-N` / `warning-N` / `error-N` utilities. Deliberate exceptions carry an `eslint-disable` with the reason.                                                                                                                                                                                                                                                                                                                                            |
-| `no-retired-bootstrap-utility`            | `error`  | Bootstrap utilities the Metronic build no longer generates (never used: `vh-100`, `align-content-*`, `mx-n*`, `ls-*`; or used only at the base size, so their breakpoint variants `px-lg-3`, `min-h-md-100px`, `svg-icon-lg-3` are dropped) compile to nothing; names the Tailwind replacement.                                                                                                                                                                                                            |
+| `no-retired-bootstrap-utility`            | `error`  | Bootstrap utilities the Metronic build no longer generates (never used: `vh-100`, `align-content-*`, `mx-n*`, `ls-*`; breakpoint variants `px-lg-3`, `min-h-md-100px`; or retired utilities `svg-icon*`) compile to nothing; names the Tailwind replacement.                                                                                                                                                                                                            |
 | `require-font-size-scale`                 | `error`  | Font size follows the pinned scale (`text-xs` … `text-4xl`). Autofixes retired Bootstrap `fs-*` classes (`fs-6` -> `text-sm`, `fs-7`/`8` -> `text-xs`, etc.) and arbitrary `text-[14px]`. Flags inline `style={{ fontSize }}`.                                                                                                                                                                                                                                                                             |
 | `require-weight-scale`                    | `error`  | Font weight is `font-light` … `font-bold`. Reports Bootstrap `fw-*` (autofixed to the same weight: `fw-bold` was 500, so `font-medium`), off-scale steps, `font-[N]` and inline `fontWeight`.                                                                                                                                                                                                                                                                                                              |
 | `require-dark-pair`                       | `error`  | A physical colour (ramp step, white/black, hex, raw `var(--brand-N)`) needs a `dark:` counterpart in its class list, or a semantic utility. Solid fills and white text on them pass.                                                                                                                                                                                                                                                                                                                       |
@@ -113230,7 +113227,6 @@ td:nth-child(4) {
 | `delete_error_message` | `Custom Signal (post_transition)` | `waldur_aws.Instance` | Delete error message if instance state changed from erred |
 | `delete_error_message` | `Custom Signal (post_transition)` | `waldur_aws.Volume` | Delete error message if instance state changed from erred |
 | `delete_error_message` | `Custom Signal (post_transition)` | `waldur_digitalocean.Droplet` | Delete error message if instance state changed from erred |
-| `delete_error_message` | `Custom Signal (post_transition)` | `google.GoogleCalendar` | Delete error message if instance state changed from erred |
 | `delete_error_message` | `Custom Signal (post_transition)` | `waldur_openportal.Allocation` | Delete error message if instance state changed from erred |
 | `delete_error_message` | `Custom Signal (post_transition)` | `waldur_openportal.RemoteAllocation` | Delete error message if instance state changed from erred |
 | `delete_error_message` | `Custom Signal (post_transition)` | `openstack.Tenant` | Delete error message if instance state changed from erred |
@@ -113580,10 +113576,6 @@ td:nth-child(4) {
 | `add_call_managing_organization_uuid` | `Custom Signal (pre_serializer_fields)` | `CustomerSerializer` | Add a call managing organization UUID field to the serializer. |
 | `add_customer_credit` | `Custom Signal (pre_serializer_fields)` | `CustomerSerializer` | Add a customer credit field to the serializer. |
 | `add_customer_unallocated_credit` | `Custom Signal (pre_serializer_fields)` | `CustomerSerializer` | Add a customer unallocated credit field to the serializer. |
-| `add_google_calendar_info` | `Custom Signal (pre_serializer_fields)` | `ProviderOfferingDetailsSerializer` | Add a Google Calendar info field to the serializer. |
-| `add_google_calendar_info` | `Custom Signal (pre_serializer_fields)` | `PublicOfferingDetailsSerializer` | Add a Google Calendar info field to the serializer. |
-| `add_google_calendar_link` | `Custom Signal (pre_serializer_fields)` | `ProviderOfferingDetailsSerializer` | Add a Google Calendar link field to the serializer. |
-| `add_google_calendar_link` | `Custom Signal (pre_serializer_fields)` | `PublicOfferingDetailsSerializer` | Add a Google Calendar link field to the serializer. |
 | `add_has_active_helpdesk` | `Custom Signal (pre_serializer_fields)` | `CustomerSerializer` | Add a flag telling whether the customer's provider has an active helpdesk. |
 | `add_has_affiliate_links` | `Custom Signal (pre_serializer_fields)` | `CustomerSerializer` | Add a flag telling whether the organization is an affiliate on any link. |
 | `add_has_metrics` | `Custom Signal (pre_serializer_fields)` | `ProjectSerializer` | The project Metrics tab is shown only where this is true. |
@@ -113913,7 +113905,6 @@ td:nth-child(4) {
 | `update_daily_quotas` | `Django Signal (post_save)` | `quotas.QuotaUsage` | No description |
 | `update_estimate_when_invoice_is_created` | `Django Signal (post_save)` | `invoices.Invoice` | Update price estimates when new invoice is created for customer. |
 | `update_floating_ip_external_addresses` | `Django Signal (post_save)` | `openstack.FloatingIP` | No description |
-| `update_google_calendar_name_if_offering_name_has_been_changed` | `Django Signal (post_save)` | `marketplace.Offering` | No description |
 | `update_instances_ip_external_addresses` | `Django Signal (post_save)` | `marketplace.Offering` | No description |
 | `update_invoice_item_on_project_name_update` | `Django Signal (post_save)` | `structure.Project` | No description |
 | `update_maintenance_announcement_on_offering_change` | `Django Signal (post_save)` | `marketplace.MaintenanceAnnouncementOffering` | Update AdminAnnouncement when affected offerings change. |
@@ -114009,15 +114000,15 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 769
+Total unique handlers found: 763
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_auth_social**: 2 handlers
 - **waldur_autoprovisioning**: 2 handlers
-- **waldur_core**: 352 handlers
+- **waldur_core**: 351 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 354 handlers
+- **waldur_mastermind**: 349 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 14 handlers
 - **waldur_openstack_replication**: 1 handlers
