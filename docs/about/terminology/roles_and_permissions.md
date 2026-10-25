@@ -16,6 +16,8 @@ The most common types of Waldur installations include:
 
 An account in Waldur belonging to a person or a robot. A user can have roles in Organizations and Projects.
 Some users - mostly affiliated with Waldur operator - can have global roles, e.g. support or staff.
+A deployment can also define site-wide roles: a chosen set of permissions, such as listing and
+approving every order, that applies on every object without making the holder staff or support.
 
 ### Organization
 
@@ -119,11 +121,16 @@ Operators see these names in the administration interface and API payloads.
 Every role exposes the same attributes:
 
 - **Name** — unique identifier.
-- **Scope** — context in which the role is applicable (Organization, Project, Call, Offering, Service Provider, Proposal, Call managing organization).
+- **Scope** — context in which the role is applicable (Organization, Project, Call, Offering, Service Provider, Proposal, Call managing organization, or Site-wide).
 - **Description** — brief explanation of the role's purpose.
 - **Active** — whether the role is currently available for assignment.
 
 A user can hold one or more roles within any of those scopes simultaneously.
+
+No site-wide role ships by default. Staff create one in **User roles** with the type
+**Site-wide**, or a deployment defines it with `scope: global` in `custom-roles.yaml`, and staff
+grant it from a user's **Roles and permissions** tab; see
+[site-wide roles](../../developer-guide/guides/waldur-permissions.md#site-wide-roles).
 
 ### Managing roles in the administration interface
 

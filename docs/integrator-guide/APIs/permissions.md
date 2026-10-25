@@ -28,7 +28,7 @@ still active.
 | `uuid` | Identifier of the grant itself |
 | `user_uuid`, `user_username`, `user_name`, `user_email`, `user_slug` | The user holding the role |
 | `role_name`, `role_description`, `role_uuid` | The role granted, e.g. `CUSTOMER.OWNER` |
-| `scope_type` | `customer`, `project`, `offering`, `call`, `proposal`, … |
+| `scope_type` | `customer`, `project`, `offering`, `call`, `proposal`, `global`, … |
 | `scope_uuid`, `scope_name` | The object the role applies to |
 | `scope_is_removed` | Whether the scope has since been soft-deleted |
 | `created`, `expiration_time` | When the role was granted, and when it lapses (`null` = no expiry) |
@@ -99,6 +99,24 @@ X-Result-Count: 1
 
 The total number of matches is returned in the `X-Result-Count` header, and `Link` carries the
 pagination cursors.
+
+## Site-wide grants
+
+A deployment can define site-wide roles, whose permissions apply on every object rather than on
+one organization or project. A grant of one appears in `/api/user-permissions/` with
+`scope_type` `global`. Staff list, grant and revoke them at
+`/api/global-user-roles/`:
+
+```bash
+GET /api/global-user-roles/                    # active grants
+POST /api/global-user-roles/                   # {"user": "<UUID>", "role": "<UUID or name>", "expiration_time": null}
+DELETE /api/global-user-roles/<grant UUID>/    # revoke
+```
+
+A site-wide role cannot be granted through an organization's or project's add-user action or an
+invitation, and a personal access token cannot be bound to the site scope. What such a role may
+carry, and what each permission opens, is in the
+[permission system guide](../../developer-guide/guides/waldur-permissions.md#site-wide-roles).
 
 ## Listing the available roles
 
