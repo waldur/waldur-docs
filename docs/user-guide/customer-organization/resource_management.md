@@ -283,6 +283,14 @@ are grouped by plan, each group with its period and subtotal.
 
 ![Invoice lines of a resource grouped by plan after a switch](../img/plan-billing-mode-invoice.png)
 
+## Resource actions
+
+Operations on an existing resource are all reached from its **Actions** menu —
+in a table from the **⋮** button on the row, on the resource page from the
+**Actions** button. See
+[Resource actions](../end-users/resource-actions.md) for how the menu is grouped
+and how to search it.
+
 ## Resource end date update
 
 The termination date can be changed the same way on offerings that enable it —
