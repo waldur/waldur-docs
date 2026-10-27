@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-27T07:39:19.834300Z
+Generated: 2026-10-27T11:29:13.802714Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -20243,6 +20243,7 @@ td:nth-child(4) {
 | `marketplace-metrics-enforce-retention` | `waldur_mastermind.marketplace_metrics.enforce_retention` | 1 day | No description available |
 | `marketplace-metrics-purge-archived` | `waldur_mastermind.marketplace_metrics.purge_archived` | 1 day | No description available |
 | `marketplace-metrics-roll-up` | `waldur_mastermind.marketplace_metrics.roll_up` | 15 minutes | No description available |
+| `marketplace-openstack.collect-instance-metrics` | `waldur_mastermind.marketplace_openstack.collect_instance_metrics` | 1 minute | Poll the running instances whose turn it is this minute.<br><br>Runs every minute; each instance comes up once per its offering's polling<br>interval, or per the faster one asked for on it, see metrics.is_due. Only<br>a few columns of each resource are read: this runs for every instance of<br>every provider that collects metrics, every minute. |
 | `marketplace-openstack.create-resources-for-lost-instances-and-volumes` | `waldur_mastermind.marketplace_openstack.create_resources_for_lost_instances_and_volumes` | 6 hours | Heal marketplace state for every tenant that has orphan OpenStack<br>instances or volumes.<br><br>Previously this task called create_marketplace_resource_for_imported_resources<br>directly, which silently no-ops when the per-tenant Instance/Volume offering<br>is missing. That left orphan VMs invisible in the marketplace UI even after<br>the periodic task ran. Routing through self_heal_tenant_marketplace_model<br>recreates archived/missing per-tenant offerings first, then backfills the<br>orphan resources — so tenants no longer need a manual "Synchronise" click<br>after the offering-side state drifts. |
 | `marketplace-openstack.refresh-instance-backend-metadata` | `waldur_mastermind.marketplace_openstack.refresh_instance_backend_metadata` | 1 day | Refresh metadata for OpenStack instances from backend to ensure marketplace resources have up-to-date information. |
 | `marketplace-openstack.terminate-child-resources-of-terminated-tenants` | `waldur_mastermind.marketplace_openstack.terminate_child_resources_of_terminated_tenants` | 1 day | Reconcile Instance/Volume marketplace resources orphaned under a terminated tenant.<br><br>When a tenant's marketplace Resource is force-terminated without the backend<br>teardown completing (e.g. a staff ``force_destroy`` on an unreachable/erred<br>site, ``marketplace/utils.py`` ``process_order``), the per-tenant<br>Instance/Volume child resources are left non-terminated even though their<br>parent tenant is gone. A terminated tenant can never legitimately have live<br>instances or volumes, so this task marks those child resources TERMINATED to<br>keep the marketplace state consistent.<br><br>Mark-only by design: it does NOT delete plugin rows, release quota, or call<br>the OpenStack backend (which may be unreachable). The child offerings are<br>non-billable, so no invoicing is affected.<br><br>Traceability: for each reconciled resource it records a completed TERMINATE<br>``Order`` (created directly in the DONE state, so no processing/executor and<br>no backend call is triggered) carrying a ``reason`` in its attributes, and<br>routes the state change through ``callbacks.resource_deletion_succeeded`` so<br>the standard ``MARKETPLACE_RESOURCE_TERMINATE_SUCCEEDED`` event appears in the<br>resource's audit log. |
@@ -103477,6 +103478,123 @@ argocd app sync argocd/waldur
 
 ---
 
+### Feedback surveys
+<!-- Source: docs/admin-guide/feedback-surveys.md -->
+
+# Feedback surveys
+
+A feedback survey asks your users a few questions in a prompt shown after they log in, for example a yearly satisfaction survey. The answers stay in Waldur, linked to the user and their organization, and support staff browse them in the feedback logs.
+
+Running a survey takes two steps: build the questionnaire, then create a survey that shows it to an audience during a time window.
+
+## Who can do what
+
+| Role | Can |
+|---|---|
+| Staff | Create, edit and delete surveys and questionnaires, and read all answers |
+| Support | Read surveys and all answers |
+| Other users | Answer the surveys they are asked, and nothing else |
+
+## 1. Build the questionnaire
+
+You write the questions yourself. They are a checklist of the **Feedback survey** type, and a survey asks exactly the questions of the checklist you pick for it.
+
+1. Go to **Administration > Organizations & compliance > Compliance**, tab **Checklists**.
+2. Click **Add**, name the checklist and choose the type **Feedback survey**.
+3. Add questions with **Add question** in the checklist's row menu. Expand the row to list them; each question's row menu edits or deletes it.
+
+[Image: Checklists tab with a feedback questionnaire expanded]
+
+For each question you set:
+
+- **Question**: the text users see, and optional **User guidance** shown with it.
+- **Question type**. Every checklist question type is available. These suit surveys best:
+    - **Rating**: stars. **Max value** sets the number of stars (5 when empty) and **Min value** the lowest rating a user may give.
+    - **Likert scale**: a 3, 5 or 7 point scale with labels for both ends, and optionally "N/A".
+    - **Single select** and **Multi select**: options you define.
+    - **Text area** for free comments.
+- **Is required?**: whether the question must be answered before the user can submit.
+- **Question order**: its position in the prompt.
+- On the **Visibility** tab, a condition on the answer to an earlier question. The question stays hidden until that answer is given.
+
+[Image: Editing a rating question]
+
+Keep the survey short: a handful of questions is answered far more often than a long form.
+
+## 2. Create the survey
+
+Go to **Administration > User interface > Feedback surveys**. Each survey's status shows whether users are being asked:
+
+- **Open**: the survey is active and inside its window.
+- **Scheduled**: the survey is active, and its window has not started yet.
+- **Closed**: the window has ended, or the survey is not active.
+
+[Image: Feedback surveys list]
+
+Click **Add** to create a survey. **Create** stays disabled until the required fields and the audience are filled in, and its tooltip says what is missing.
+
+[Image: Create survey dialog]
+
+| Field | Meaning |
+|---|---|
+| Name | The prompt's title |
+| Intro | Markdown shown above the questions. Tell respondents that staff will see who answered. |
+| Questionnaire | The Feedback survey checklist from step 1. Locked once anyone has been asked. |
+| Starts at, Ends at | The window in which users are asked |
+| Ask all users, Offerings, Organizations | The audience (see below) |
+| Max prompts | How many times one user is asked at most (default 3) |
+| Snooze days | How long the prompt stays hidden after it is shown or postponed (default 3) |
+| Active | Untick to pause the survey without changing its window |
+
+### Audience
+
+- **Ask all users**: every user.
+- **Organizations**: users with a role in one of the organizations, or in one of their projects.
+- **Offerings**: users of organizations that have a resource of one of the offerings.
+- **Organizations and offerings together**: only users of those offerings within those organizations.
+
+Staff and support users are never asked. The survey must target someone: with **Ask all users** off, pick at least one organization or offering.
+
+## What users see
+
+[Image: Feedback prompt]
+
+While the survey is open, a user in its audience sees the prompt after logging in, at most once per browser session. It never blocks navigation and never opens over the profile and terms of service form a user must complete first. If several surveys are open for a user, the one ending soonest is shown. Users can also answer with the keyboard; for a rating, Tab to the stars and choose with the arrow keys.
+
+The prompt has three buttons:
+
+- **Submit** saves the answers, once every required question is answered. The survey is not shown again, and the answer is logged in the event log.
+- **Later**, or closing the prompt, keeps the answers given so far as a draft and asks again after the snooze days. The draft pre-fills the next prompt. An answer that isn't valid, such as a rating below the minimum, is left out of the draft.
+- **Don't ask again** stops this survey for that user.
+
+Showing the prompt also counts it against **Max prompts** and hides it for the snooze days, so several open tabs don't ask the same user repeatedly.
+
+A user who was asked but did not answer becomes **Expired** once the survey ends, or once the last prompt's snooze has passed. Waldur checks this every hour.
+
+## Read the results
+
+Go to **Support > Logs > Feedback logs**, or choose **View results** in a survey's row menu to open the logs filtered to that survey.
+
+[Image: Feedback logs filtered to one survey]
+
+- The cards show the response rate (answered out of asked) and how many requests are answered, pending, dismissed and expired. They follow the filters.
+- Filtered to one survey, a table shows each question's results: how many answered it, the mean of a rating, and the distribution of ratings, scale points and options. Only submitted answers count; drafts do not.
+- Each row is one asked user, with their organization at the time they were first asked. Expand it to read the answers, including a pending user's draft.
+- Filter by survey, state, organization and answered period.
+- **Export** downloads the rows. Filtered to one survey, the export has a column per question; otherwise all answers share one column.
+
+## Things to know
+
+!!! warning
+    Questions have no versions. Editing or deleting a question after users have answered changes or deletes those answers. For a new survey round with different questions, build a new questionnaire instead of editing the old one.
+
+- Answers are not anonymous: staff and support see who answered and their organization. Say so in the intro.
+- Questions are shown in one language; they are not translated.
+- Once anyone has been asked, the survey's questionnaire can no longer be changed; the edit form shows it locked. Its questions can still be edited, with the effect described in the warning above.
+- Deleting a survey deletes all of its answers.
+
+---
+
 ### Grafana and Prometheus Metrics
 <!-- Source: docs/admin-guide/grafana.md -->
 
@@ -114419,6 +114537,7 @@ td:nth-child(4) {
 | `switch_resource_plan_period_when_plan_is_updated` | `Django Signal (post_save)` | `marketplace.Resource` | Switch the resource plan period when a resource's plan is updated. |
 | `sync_component_user_usage_when_allocation_user_usage_is_submitted` | `Django Signal (post_save)` | `waldur_openportal.AllocationUserUsage` | No description |
 | `sync_current_usages_from_component_usage` | `Django Signal (post_save)` | `marketplace.ComponentUsage` | Update resource.current_usages for the saved component. |
+| `sync_instance_metrics` | `Django Signal (post_save)` | `marketplace.Offering` | Keep the tenants' instance and volume offerings in step with the provider. |
 | `sync_limits` | `Django Signal (post_save)` | `marketplace.Resource` | Synchronize resource limits. |
 | `sync_offering_resource_options` | `Django Signal (post_save)` | `marketplace.Offering` | No description |
 | `sync_permission_with_remote` | `Custom Signal (role_granted)` | `—` | No description |
@@ -114576,7 +114695,7 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 768
+Total unique handlers found: 769
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_auth_social**: 2 handlers
@@ -114584,7 +114703,7 @@ Total unique handlers found: 768
 - **waldur_core**: 356 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 349 handlers
+- **waldur_mastermind**: 350 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 14 handlers
 - **waldur_openstack_replication**: 1 handlers
