@@ -1,5 +1,62 @@
 # Changelog
 
+## 8.1.4-rc.4 - 2026-10-27
+
+### Highlights
+
+This release adds site-wide roles. Staff can now define and grant permissions that cover the whole deployment instead of a single organization or project. Table and chart PDF exports are now produced on the server, and OpenStack instance and volume metrics are collected on a schedule. The release also hardens authentication (SAML, logout, Mobile ID), Rancher access control and support-user permissions, and removes the Google Calendar integration.
+
+### What's New
+
+- Staff can create roles with a global, site-wide scope and grant them from the role management and user affiliation screens. `scope_type` filters now match the public scope names.
+- Table and chart PDF exports are now rendered on the server with Typst instead of in the browser.
+- OpenStack instance and volume metrics are read from Nova on a schedule.
+- Staff can cap the API token lifetime that non-staff users may choose, and the token lifetime selector offers only the allowed values.
+- Resource templates in proposal calls support a single-selection mode.
+- The helpdesk is emailed when an organization or project administrator comments on a support request.
+- Staff can set another user's email address directly.
+
+### Security and Access Control
+
+- Logging out now ends the server session and revokes the API token.
+- SAML responses are verified only with identity provider keys from metadata. A deployment's own `SAML_CONFIG` settings are preserved, and unsolicited SAML responses are accepted by default.
+- The Mobile ID client now verifies TLS certificates, applies timeouts and keeps credentials out of logs.
+- Terms of Service acceptance is recorded only when users accept it themselves through the Terms checkbox, and each acceptance is logged.
+- Managing Rancher Keycloak group memberships requires project administrator access, and Rancher catalog changes are limited to staff and project administrators.
+- The Rancher sync binds Keycloak groups only to their own cluster or project, and managed Rancher clusters get public IPs only from their own load balancers.
+- Support users have read-only access to other users' hooks and onboarding records, and staff-only pages are hidden from them.
+- An onboarding verification's company is locked once it is verified or escalated.
+- Register checks go to manual review when the identity was typed in, and the organization creation form tells users so.
+
+### Improvements
+
+- Map location search runs when you press Enter instead of querying Nominatim as you type.
+- Issue comments display better on mobile, with more space between comments.
+- Destroy-dialog warnings for OpenStack tenants and Rancher clusters can now be translated.
+- Dependencies were cleaned up:
+  - The admin JSON editor is now a built-in widget.
+  - django-fsm was replaced by django-fsm-2.
+  - Unused runtime packages were dropped.
+  - react-arborist was replaced by a local read-only tree view.
+- More of the UI moved from legacy Metronic styles to Tailwind, covering avatars, timelines, icons, flex layouts and tables.
+
+### Bug Fixes
+
+- Fixed staff edits to user email addresses. Locked profile fields now depend on the user being edited.
+- Users whose username contains uppercase letters can now be edited.
+- A Jira deletion event deletes a support issue only when Jira reports the issue as not found.
+
+### Removed
+
+- The Google Calendar integration is gone, including its publish, sync and unpublish actions and the calendar link on offerings.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [32 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.4-rc.3...8.1.4-rc.4) - Site-wide roles, server-side PDF export, scheduled OpenStack metrics, authentication, Rancher and onboarding hardening, and removal of Google Calendar.
+- **Waldur Homeport**: [26 commits](https://github.com/waldur/waldur-homeport/compare/8.1.4-rc.3...8.1.4-rc.4) - UI for site-wide roles and token lifetime limits, PDF export through the server, staff-only pages hidden from support users, and continued Tailwind migration.
+
+---
+
 ## 8.1.4-rc.3 - 2026-10-24
 
 ### Highlights
