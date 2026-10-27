@@ -96,11 +96,24 @@ call manager's side of it.
 ### Resource requests
 
 Expand **Resource requests** to choose what you need. On a **template-based**
-call the call manager has predefined resource templates — tick the ones your
-project requires (here, the *GPU Compute Package*) and click **Save**. Each
-template shows its offering, plan and preconfigured attributes.
+call you request resources only through the call manager's resource
+templates; each fixes its offering, plan, amounts and attributes. Depending on
+the call:
+
+- **Several templates** — tick the ones your project requires (here, the
+  *GPU Compute Package*) and click **Save**.
+- **One template** — choose one with its radio button and click **Save**.
+  Choosing another replaces it. The proposal cannot be submitted without one.
 
 ![Resource requests step](../img/applicant-resource-requests.png)
+
+A proposal started from an offering page already requests that offering's
+template, unless several templates use it; then choose one here.
+
+!!! note "Requests that are not from a template"
+    A request whose template was deleted, or that was not made from one, is
+    flagged above the templates. Choose a template and click **Save** to
+    replace it; until then the proposal cannot be submitted.
 
 ### Compliance checklist
 

@@ -140,7 +140,7 @@ Further sub-tabs sit alongside it under **Configuration**:
 - **Project details fields** — what this call asks applicants for (see below)
 - **Applicant data visibility** — which applicant data is exposed during evaluation
 - **Applicant eligibility** — who may submit a proposal at all (see below)
-- **Resource templates** — templates defining valid offering/plan combinations, so proposal creators can only select from those templates. Each template carries a name and offering, predefined attributes and usage limits, and a description.
+- **Resource templates** — what applicants can request, and how many templates (see below)
 
 #### 1a. Project details fields
 
@@ -268,6 +268,33 @@ qualify is refused when the proposal is created, with a message naming the
 restriction that failed. Spell the rules out in the call description or the
 external URL, so nobody writes a proposal they cannot submit.
 
+#### 1c. Resource templates
+
+Under **Configuration → Resource templates**, define what applicants can
+request. A template names one of the call's offerings with a plan, its amounts
+(usage limits) and any preset attributes. Its attributes and subscription
+length are checked against the offering when you save it.
+
+Once a call has a template, templates are the only way to request resources
+in it. Applicants cannot request an offering directly or change a template's
+amounts or attributes, and can request each template at most once. A proposal
+with a request that is not from a template, for example because its template
+was deleted, cannot be submitted until that request is replaced.
+
+The **Template selection** card above the templates sets how many an applicant
+may choose:
+
+| Applicants can request | On the applicant's form | Rule |
+|---|---|---|
+| **Several templates** (default) | a checkbox per template | any combination |
+| **One template** | a radio button per template | exactly one, required to submit |
+
+Use **One template** when the templates are alternatives, such as access
+tiers. It cannot be set while a draft proposal holds several requests.
+
+Editing a template updates the requests made from it on **draft** proposals;
+submitted proposals keep their amounts.
+
 #### 2. Offerings configuration
 
 Define available resources:
@@ -347,7 +374,7 @@ Applicants follow these steps to request resources through an active call:
 3. Fill in the required fields.
       -     The project duration is not asked for. It is the call's fixed duration when the Call manager set one, otherwise the longest subscription chosen on the resource requests, and is shown read-only (see [How long a granted project runs](#how-long-a-granted-project-runs)).
 4. Select required **offerings and allocations**.
-      -     When there is predefined resource templates, proposal creators now select resources based on predefined templates configured by the Call manager. These templates include specific offering and plan combinations, predefined attributes and resource limits.
+      -     When the call has resource templates, applicants choose from them instead (see [1c. Resource templates](#1c-resource-templates)).
 5. Add **team members** (optional).
 6. Upload required documentation.
       -     When an offering requires a purchase order, supply its reference or document on the resource request. The request can be saved without one, but the proposal cannot be submitted until it is there — see [Purchase orders in calls](purchase-orders.md).
