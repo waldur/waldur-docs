@@ -70,8 +70,10 @@ sync-external-docs:
     # Configure git for commits
     - git config --global user.name "$GITLAB_USER_NAME"
     - git config --global user.email "$GITLAB_USER_EMAIL"
-    # Configure authentication for pushing
-    - git remote set-url origin https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git
+    # Push as the group bot (GITLAB_TOKEN, a Maintainer): master accepts pushes
+    # from Maintainers only, and CI_JOB_TOKEN would push as whoever triggered
+    # the pipeline.
+    - git remote set-url origin https://gitlab-ci-token:${GITLAB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git
   script:
     # Run the sync
     - python scripts/sync-external-docs.py
@@ -97,7 +99,7 @@ sync-external-docs:
       Automated sync from CI/CD pipeline.
       Pipeline: $CI_PIPELINE_URL"
     # Build what the sync just produced, before it reaches master. The push
-    # below uses CI_JOB_TOKEN, which by design starts no pipeline, so
+    # below is made with `-o ci.skip`, so it starts no pipeline and
     # "Test mkdocs" never sees this commit — an upstream page that links to a
     # path outside the synced subtree would otherwise land on master unbuilt and
     # fail the next unrelated merge request instead of failing here.
@@ -127,7 +129,7 @@ sync-external-docs:
     # over a timestamp.
     - |
       for attempt in 1 2 3; do
-        if git push origin HEAD:$CI_COMMIT_REF_NAME; then
+        if git push -o ci.skip origin HEAD:$CI_COMMIT_REF_NAME; then
           echo "✅ External documentation synchronized and committed"
           exit 0
         fi
