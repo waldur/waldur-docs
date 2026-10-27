@@ -34,3 +34,29 @@ To allocate credit to a project, click **Add**. A dialog opens with these fields
 
 When a project's credit is spent, further usage of its resources is invoiced according to the
 pricing plan.
+
+## Cost policies a credit affects
+
+Expand a project credit's row to see its settings, including whether it **pays earlier invoices**, and
+**Cost policies this credit affects**: the project's cost policies that account for credit, and the
+organization's cost policies, with their period, limit and status. Each policy's actions menu has
+**Details** and, for those who may fix it, **Fix…**, as in
+[the cost policy list](cost-and-usage-policies.md#details-of-a-cost-policy).
+
+![Cost policies a project credit affects](../img/credit-project-cost-policies.png)
+
+## Earlier invoices
+
+Credit pays the month it is used in. Cost of a closed month that the credit did not cover stays on
+that month's invoice, and adding credit later does not pay it. A cost policy with the period
+**Total** keeps counting that cost, so it can stay over its limit however much credit is added.
+
+To see that cost, open the project, select the **Edit** tab, then **Credit management**. The
+**Earlier invoices** table lists, for each closed month, its cost that credit could pay, how much
+credit paid, and what is not covered.
+
+![Earlier invoices on the project's credit tab](../img/project-credit-earlier-invoices.png)
+
+Only staff can let the credit pay that cost; the **Pay earlier invoices**, **Earlier invoices
+from**, **Earlier invoices until** and **Write the compensation on** rows show how they set it up.
+See [Paying earlier invoices](../staff-users/credit-management-staff.md#paying-earlier-invoices).
