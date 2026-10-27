@@ -66,9 +66,15 @@ differ sharply:
 
 !!! note
     A row marked *policy* is an estimate, and says so. A cost policy dated **today** is not an
-    estimate: the threshold has been reached and the policy is triggered. Note that a cost policy
-    does not fire on cost alone — the credit balance must also have fallen to the policy's limit —
-    so a project can be over its cap and still not be firing.
+    estimate: the threshold has been reached and the policy is triggered. A policy with the period
+    **Total** also counts earlier months that credit did not cover, so it can stay triggered while
+    the credit balance still has money left: credit added now pays only the current month.
+
+A triggered policy's row has **Details**, which explains what the policy counts and what resets it,
+and, for those who may fix it, **Fix…**, which lists what would bring the cost back under
+the limit. See [Details of a cost policy](cost-and-usage-policies.md#details-of-a-cost-policy).
+
+![A triggered cost policy in What happens next](../img/project-credit-horizon-policy.png)
 
 Where a policy that pauses or terminates resources has reached its threshold, the credit rows say so
 rather than claiming resources keep running.
