@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-27T12:25:07.402208Z
+Generated: 2026-10-27T13:25:04.690591Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -61692,6 +61692,48 @@ graph TB
 }
 ```
 
+### Template Rules
+
+Once a call has at least one resource template, templates are the only way to
+request resources in it. `RequestedResourceSerializer` enforces this when a
+request is created or changed:
+
+- A direct request (`requested_offering_uuid`) is refused.
+- A request made from a template (`call_resource_template_uuid`) takes the
+  template's `limits` and `attributes`; different values are refused on create,
+  and changing them later is refused. The template's offering must be accepted
+  by the provider.
+- A template can be requested at most once per proposal.
+
+`Call.resource_template_selection_mode` sets how many templates a proposal may
+hold:
+
+| Mode | Rule |
+|------|------|
+| `multiple` (default) | any combination of the call's templates |
+| `single` | exactly one: a second request is refused, and a proposal cannot be submitted without one |
+
+Switching a call to `single` is refused while a draft proposal holds several
+requests. Requests are created under a lock on the call row, which the switch
+takes too, so neither can slip in between the other's check and its write.
+
+Saving a template validates its attributes against the offering's options and
+its prepaid duration against the offering's terms. Editing a template updates
+the requests made from it on **draft** proposals; submitted proposals keep the
+values they were submitted with. `utils.template_request_values()` defines the
+values a template request carries, for creation, this sync and the submit check.
+
+`Proposal.resource_template_error()` reports what breaks these rules, and both
+`can_submit` and the submit action use it (submit checks again under the
+proposal lock): requests not made from a template, templates whose offering is
+no longer accepted, duplicates, the `single` mode count, and requests whose
+values no longer match their template. This catches drafts from before the
+rules, requests whose template was deleted, and calls that gained templates
+after a draft was started.
+
+`is_required` is stored on a template but not enforced: a proposal can be
+submitted without a template marked as required.
+
 ## Review System Architecture
 
 ### Conflict of Interest Detection
@@ -88695,6 +88737,108 @@ plan you selected.
 
 ---
 
+### Metrics of OpenStack virtual machines and volumes
+<!-- Source: docs/user-guide/customer-organization/openstack-instance-metrics.md -->
+
+# Metrics of OpenStack virtual machines and volumes
+
+When your OpenStack provider has turned on instance metrics, Waldur reads your
+virtual machines' CPU, memory, network and disk figures from OpenStack, and
+each virtual machine and volume gets a **Metrics** tab. The figures also add
+up on the project's [Metrics tab](project-metrics.md).
+
+## The Metrics tab
+
+Open the virtual machine or volume and select **Metrics**.
+
+[Image: The Metrics tab of a virtual machine, over 24 hours]
+
+Each card is one metric. Its figure is this month's so far: the total for
+traffic, disk and CPU time, the latest level for CPU and memory utilization.
+The question mark next to a metric's name says how the figure is computed.
+
+Next to the **Metrics** title:
+
+- **The question mark** says how often the virtual machine is read, when it
+  was last read and when it is read next.
+
+    [Image: When the virtual machine is read]
+
+- **Refresh** shows Waldur's latest figures. It doesn't read the virtual
+  machine; **Update now** does.
+
+## Choosing a period
+
+**6 hours**, **24 hours**, **7 days** or **90 days** — the chart's span. 90
+days, one bar per day, is the default.
+
+The shorter spans are for looking closely, for example while you investigate
+a problem:
+
+| Span | One bar per |
+|---|---|
+| 6 hours | 5 minutes |
+| 24 hours | 15 minutes |
+| 7 days | hour |
+
+Over these spans, traffic and disk figures are rates — kB/s or MB/s, and
+**IOPS**, I/O operations per second — averaged over each bar. Each read
+covers the time since the one before, so with reads every few hours the bars
+between two reads are even: the read tells how much was done, not when. For
+detail, ask for faster updates. CPU and memory utilization are lines through
+the reads.
+
+Over 90 days, the bars are each day's totals: bytes and I/O operations, not
+rates.
+
+## Reading sooner
+
+The **Actions** menu reads the virtual machine sooner for people who manage
+it: organization owners, and project managers and administrators. Everyone
+else sees only **Project goals** there.
+
+[Image: The Actions menu of the Metrics tab]
+
+- **Update now** reads the virtual machine at once; the figures follow within
+  a minute. It can be used once every 5 minutes, and not while the virtual
+  machine is stopped.
+- **Faster updates…** reads it more often for a while: every 5, 15 or 60
+  minutes, for 1, 6 or 24 hours. Only intervals faster than the provider's
+  usual one are offered. Afterwards it is read at the usual interval again.
+  The tab switches to the last 6 hours, to show the detail.
+
+    [Image: Asking for faster updates]
+
+- **Back to usual updates** ends faster updates before their time.
+- **Project goals** opens the project's Metrics tab, where goals are set.
+
+A virtual machine is read only while it runs. When it is stopped, the
+question mark says so, and **Update now** and **Faster updates…** are
+unavailable.
+
+## Volumes
+
+A volume is read with the virtual machine it is attached to. Its Metrics tab
+shows the volume's own throughput and I/O operations, and the question mark
+names the virtual machine. **Update now** and **Faster updates…** on a volume
+read that virtual machine, its other volumes included. A detached volume is
+not read.
+
+[Image: The Metrics tab of a volume, over 24 hours]
+
+!!! tip "Disk or volume throughput?"
+    A virtual machine's **Disk throughput** and **Disk I/O operations** cover
+    all its disks; a volume's cover that volume only. For a virtual machine
+    that boots from a volume and has no other disks, both count the same
+    bytes.
+
+## Related pages
+
+- [Project metrics](project-metrics.md)
+- [OpenStack instance metrics for service providers](../service-provider-organization/openstack-instance-metrics.md)
+
+---
+
 ### IPv6 in OpenStack tenants
 <!-- Source: docs/user-guide/customer-organization/openstack-ipv6.md -->
 
@@ -89201,7 +89345,8 @@ Each card is one metric:
   higher is better a rise is green; where lower is better, such as a response
   time, a rise is red. Metrics with no preferred direction show a rise in green.
   The badge appears only when both periods have a figure.
-- **The goal**, if one is set — green when the figure meets it.
+- **The goal**, if one is set — a badge next to the card's menu, green when
+  the figure meets it.
 - **The chart** — one point per day (in UTC), from the first day with data, up
   to 90 days back. Counts are bars; levels are a line, with the goal drawn across
   it. Days without data are left empty. When the metric carries attributes, the
@@ -89257,8 +89402,14 @@ average.
 
 Select a resource to open its **Metrics** tab. It shows the resource's own
 figures for the current month, the change from the same days of last month,
-the daily chart and the breakdown by attribute. A resource has no goal of its own: goals
-apply to the project's combined figure.
+the chart and the breakdown by attribute. The chart covers 90 days, a bar per
+day; **6 hours**, **24 hours** and **7 days** show finer detail where the
+service reports often. A resource has no goal of its own: goals apply to the
+project's combined figure.
+
+OpenStack virtual machines and volumes are read by Waldur itself, on a
+schedule; their Metrics tab also says when, and can ask for a read sooner.
+See [Metrics of OpenStack virtual machines and volumes](openstack-instance-metrics.md).
 
 ## Setting the project's goal
 
@@ -89267,9 +89418,9 @@ project's combined figure. A resource's own Metrics tab has no goals.
 
 The service may set a default goal for every project. Users who may edit the
 project, such as project managers and organization owners, can set the
-project's own goal instead: choose **Set goal** under the card's figure, or
-click the goal badge to change it. **Set project goal** (or
-**Edit project goal**) is also the first item of the card's menu.
+project's own goal instead: choose **Set project goal** (or
+**Edit project goal**) in the card's menu, or click the goal badge next to
+the menu.
 
 !!! tip "Where are goals set?"
     - **A project's goal** — on the project's **Metrics** tab, from the card.
@@ -89291,6 +89442,7 @@ goal, if there is one.
 ## Related pages
 
 - [Custom metrics for service providers](../service-provider-organization/custom-metrics.md)
+- [Metrics of OpenStack virtual machines and volumes](openstack-instance-metrics.md)
 - [Custom metrics catalogue](../staff-users/custom-metrics-catalogue.md)
 
 ---
@@ -92996,6 +93148,9 @@ a breakdown and a goal.
 As a service provider you choose which metrics an offering reports, and your
 service (or its site agent, or an OpenTelemetry Collector) sends the numbers.
 
+For OpenStack, Waldur reads the virtual machines' figures itself; see
+[OpenStack instance metrics](openstack-instance-metrics.md).
+
 ## Where to find it
 
 Open the offering, switch to **Edit**, and choose **Integration → Metrics**.
@@ -93170,6 +93325,7 @@ service:
 - [Custom metrics catalogue](../staff-users/custom-metrics-catalogue.md)
 - [Project metrics](../customer-organization/project-metrics.md)
 - [Reporting usage](reporting-usage.md)
+- [OpenStack instance metrics](openstack-instance-metrics.md)
 
 ---
 
@@ -94635,6 +94791,108 @@ convergence behaviour above is visible in the reconcile log.
 For the full chain — pool-derived names, the directory, a Keycloak token claim
 and FirecREST acting on two clusters under one identity — see
 [POSIX identity with OpenLDAP and FirecREST](firecrest-posix-identity.md).
+
+---
+
+### OpenStack instance metrics
+<!-- Source: docs/user-guide/service-provider-organization/openstack-instance-metrics.md -->
+
+# OpenStack instance metrics
+
+Waldur can read the usage figures of the virtual machines in your OpenStack
+offering — CPU, memory, network and disk — and show them on each virtual
+machine's and volume's **Metrics** tab and on the project's **Metrics** tab.
+Waldur reads them from Nova itself: there is nothing to install in your cloud
+and nothing to report, unlike the [custom metrics](custom-metrics.md) other
+services send.
+
+## Turning it on
+
+Open the OpenStack offering, switch to **Edit**, choose
+**Integration → Provisioning configuration**, and open the
+**Instance metrics** tab.
+
+[Image: Instance metrics settings of an OpenStack offering]
+
+- **Collect instance metrics** — off by default. When on, Waldur reads the
+  running virtual machines in every tenant of this offering.
+- **Metrics shown** — which metrics projects see. Empty shows all of them.
+- **Polling interval** — how often each virtual machine is read, from 5 to
+  1440 minutes; every 6 hours when empty.
+
+The settings apply to every tenant of the offering, those created later
+included.
+
+## The metrics
+
+| Metric | Shown on | What it is |
+|---|---|---|
+| CPU utilization | Virtual machine | Share of the virtual machine's vCPUs in use between two reads |
+| CPU time | Virtual machine | CPU time its vCPUs consumed |
+| Memory utilization | Virtual machine | Share of the guest's memory in use, reclaimable cache left out |
+| Network traffic | Virtual machine | Bytes received and transmitted on its ports |
+| Disk throughput | Virtual machine | Bytes read from and written to all its disks |
+| Disk I/O operations | Virtual machine | Read and write requests to all its disks |
+| Volume throughput | Volume | Bytes read from and written to the volume |
+| Volume I/O operations | Volume | Read and write requests to the volume |
+
+Network, disk and volume figures are split into receive and transmit, or read
+and write. A volume's figures come from the virtual machine it is attached to,
+and are read with it.
+
+Removing a metric from **Metrics shown** archives it: projects no longer see
+it, and its data is kept for a grace period (30 days by default) before it is
+deleted. Showing it again within that period brings its history back.
+
+## Which virtual machines are read
+
+A virtual machine is read when it is running and its resource is in a working
+state, and when both its tenant's offering and your OpenStack offering are
+**Active** or **Paused**. Virtual machines of draft, archived or unavailable
+offerings are not read, and neither are those whose service settings are
+inactive or in error.
+
+Each read is one call to Nova's diagnostics, plus one to list the attached
+volumes when volume metrics are shown. Reads are spread evenly over the
+polling interval. With the default interval of 6 hours, 1,000 running virtual
+machines make about 8,000 calls a day.
+
+A call that takes longer than 30 seconds is given up. When Nova fails five
+reads in a row, Waldur stops reading your offering's virtual machines for 10
+minutes. A stopped or deleted server, or one whose hypervisor keeps no
+diagnostics, doesn't count as a failure.
+
+People who manage a virtual machine can have it read sooner: once, or more
+often for up to 24 hours, at intervals faster than yours. See
+[Metrics of OpenStack virtual machines and volumes](../customer-organization/openstack-instance-metrics.md).
+
+## Requirements
+
+- **Admin credentials.** Nova shows a server's diagnostics to admins only, so
+  the offering's service settings must use an admin account.
+- **Nova API microversion 2.47 or later, on libvirt.** Waldur asks for the
+  2.47 form of the diagnostics, which names each disk and port; that is what
+  ties a disk's figures to its volume.
+- **Memory statistics in the guest.** Memory utilization needs the guest's
+  balloon driver to report its statistics, which Nova's libvirt driver turns
+  on with `mem_stats_period_seconds` (10 seconds by default). Without them the
+  memory card stays empty; the other metrics are not affected.
+
+Figures are recorded as what each disk and port added since the previous read.
+When a virtual machine restarts, migrates, or has a volume attached anew, its
+counters start from zero; Waldur notices that and counts from there, so
+nothing is counted twice. The first read of a virtual machine that has been
+running for longer than one polling interval is a starting point, not counted,
+so turning metrics on doesn't put earlier activity into one moment.
+
+Raw readings are kept for 14 days, hourly figures for 14 days and daily
+figures for 400 days.
+
+## Related pages
+
+- [Metrics of OpenStack virtual machines and volumes](../customer-organization/openstack-instance-metrics.md)
+- [Project metrics](../customer-organization/project-metrics.md)
+- [Custom metrics](custom-metrics.md)
 
 ---
 
