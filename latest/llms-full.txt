@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-27T03:04:09.704499Z
+Generated: 2026-10-27T07:39:19.834300Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -10048,6 +10048,7 @@ Default value:
 
 ```python
 WALDUR_AUTH_SAML2 = {'ALLOW_TO_SELECT_IDENTITY_PROVIDER': True,
+ 'ALLOW_UNSOLICITED': True,
  'ATTRIBUTE_MAP_DIR': '/etc/waldur/saml2/attributemaps',
  'AUTHN_REQUESTS_SIGNED': 'true',
  'CATEGORIES': ['http://www.geant.net/uri/dataprotection-code-of-conduct/v1'],
@@ -10086,6 +10087,12 @@ WALDUR_AUTH_SAML2 = {'ALLOW_TO_SELECT_IDENTITY_PROVIDER': True,
 #### ALLOW_TO_SELECT_IDENTITY_PROVIDER
 
 **Type:** bool
+
+#### ALLOW_UNSOLICITED
+
+**Type:** bool
+
+Accept responses that do not answer a request found in the session. Needed for logins started in Waldur when the identity provider is on another site: browsers do not send the SameSite=Lax session cookie with its cross-site POST.
 
 #### ATTRIBUTE_MAP_DIR
 
@@ -12536,6 +12543,12 @@ If true, OIDC complete view returns access token instead of Waldur token
 **Type:** secret_field
 
 Rotating OAuth2 refresh token for remote eduTEAMS API access. Automatically updated by the periodic token rotation task. If empty, falls back to REMOTE_EDUTEAMS_REFRESH_TOKEN from Django settings.
+
+#### API_TOKEN_MAX_LIFETIME_MINUTES
+
+**Type:** int
+
+Maximum API token lifetime, in minutes, that a non-staff user can choose. 0 means no limit, which also allows tokens that never expire. Staff can choose any lifetime. A lifetime chosen before the limit was set is kept until the user changes it.
 
 ### Invitation settings
 
@@ -17598,7 +17611,7 @@ Notification about a new comment in the issue. The recipient is issue caller.
 
 ### support.notification_comment_added_staff
 
-Notification to the assignee, or to all staff and support users when the ticket is unassigned, about a comment the issue caller added. Sent only by the built-in service desk — the Atlassian, Zammad and SMAX backends notify their own agents.
+Notification to the assignee, or to all staff and support users when the ticket is unassigned, about a comment added by the issue caller or by another user who is not staff or support, such as an organization owner or a project admin. Sent only by the built-in service desk — the Atlassian, Zammad and SMAX backends notify their own agents.
 
 #### Templates
 
@@ -17706,7 +17719,7 @@ Notification about an update in the issue comment. The recipient is issue caller
 
 ### support.notification_comment_updated_staff
 
-Notification to the assignee, or to all staff and support users when the ticket is unassigned, that the issue caller has edited one of their comments. Sent only by the built-in service desk.
+Notification to the assignee, or to all staff and support users when the ticket is unassigned, that the issue caller, or another user who is not staff or support, has edited one of their comments. Sent only by the built-in service desk.
 
 #### Templates
 
@@ -72437,7 +72450,8 @@ Guides for working on Waldur HomePort. Start with [development-setup.md](develop
 | [menu-navigation.md](menu-navigation.md)                                 | Sidebar menu structure and state-based routing                                                                                               |
 | [sidebar.md](sidebar.md)                                                 | Sidebar navigation architecture, design tokens, components, and recipes                                                                      |
 | [tailwind-shadcn-migration-notes.md](tailwind-shadcn-migration-notes.md) | Bootstrap → Tailwind/shadcn migration: cascade layers, `!important` collisions, token extraction, lint rules, visual-parity tests            |
-| [e2e-locators.md](e2e-locators.md)                                       | How waldur-integration-testing locates menus, tabs and filters (roles and test ids), and what replaced the old class names                   |
+| [class-names-and-data-attributes.md](class-names-and-data-attributes.md) | Native state and ARIA first, then when to use a class, `data-slot`, a state attribute or `data-testid`; examples; removing a hook safely     |
+| [e2e-locators.md](e2e-locators.md)                                       | How waldur-integration-testing finds HomePort elements: every role, test id and slot it relies on                                            |
 | [menus.md](menus.md)                                                     | Menus, dropdowns and popovers: which component to use, recipes, rules, how the looks work, testing                                           |
 | [modals.md](modals.md)                                                   | Modals: `openDialog`, `ModalDialog`, `ModalShell`, the parts, sizes and options, `data-slot` styling hooks, testing                          |
 
@@ -74242,6 +74256,223 @@ import { BaseButton } from 'waldur-ui';
 
 ---
 
+### Class Names and Data Attributes
+<!-- Source: docs/developer-guide/ui/class-names-and-data-attributes.md -->
+
+# Class Names and Data Attributes
+
+What goes on an element, and why: native HTML attributes and ARIA for what users perceive, classes for styling, and `data-*` attributes (`data-slot`, a state attribute such as `data-state` or `data-variant`, or `data-testid`) for everything else.
+
+## Short version
+
+- **State users should perceive is a native attribute or ARIA.** Use `disabled`, `checked`, `open`, `aria-expanded`, `aria-current`, `aria-invalid` and so on, and style from that attribute (`disabled:`, `aria-expanded:`). A `data-*` attribute never stands in for it.
+- **A class styles something.** Tailwind utilities, a class a stylesheet defines, or a third-party library's class. Nothing else.
+- **A `data-*` attribute marks what has no meaning for assistive technology.** It names a component's part (`data-slot`), carries a visual state or variant (`data-state`, `data-variant`, `data-error`), or gives a test something to find (`data-testid`).
+- **A test or a script finds an element by its role and name first**, by a `data-*` attribute when it has none, and never by a class.
+
+## Why
+
+Tailwind and Bootstrap ignore a class they do not know, so a class that styles nothing renders as nothing. No build, type check or browser warns about it. Such a class is either a typo or a hook, and nothing on the page tells you which one:
+
+- **Hooks hidden in class names break silently.** An unstyled class looks dead, so a styling change removes it. If the waldur-integration-testing suite selected it, that suite fails while nothing in HomePort does, because the reader lives in another repository.
+- **A class can be styled from elsewhere.** A parent's arbitrary variant (`[&_.x]:text-warning`) styles a class that no stylesheet names. The class looks unused in its own file, and removing it silently drops the styling.
+- **Lint enforces it.** `waldur-custom/no-unknown-class` fails on any class that styles nothing (see "Unknown class guard" in [code-quality.md](code-quality.md)). A marker class has to be either an attribute or an explicit, commented exception.
+
+An attribute says what it is for in its own name. A styling refactor leaves it alone. It can carry a value (`data-variant="success"`), Tailwind styles it directly (`data-[state=open]:`), and Radix and waldur-ui already render it.
+
+## Decision table
+
+| You need to…                                            | Use                                                       | Example                                                                                |
+| :------------------------------------------------------ | :-------------------------------------------------------- | :------------------------------------------------------------------------------------- |
+| Style an element                                        | Tailwind utilities in `className`                         | `className="flex items-center gap-2 text-secondary"`                                   |
+| Expose state users should perceive                      | a native attribute, or ARIA when there is none            | `disabled`, `checked`, `aria-expanded={open}`, `aria-current="page"`, `aria-invalid`   |
+| Style by that state                                     | Tailwind's native-state and `aria-*` variants             | `disabled:opacity-50`, `aria-expanded:bg-tertiary`, `aria-[current=page]:text-brand`   |
+| Use styles a stylesheet already defines                 | that class                                                | `className="card-bordered"`, `className="team-chat"`, `className="form-table"`         |
+| Let a caller style a component                          | a `className` prop, merged with `cn()`                    | `<Tag className="me-1">`                                                               |
+| Name a part of a component, for its parents or tests    | `data-slot`                                               | `data-slot="modal-body"`, `data-slot="menu-item-icon"`, `data-slot="filter-field"`     |
+| Expose a state or variant with no accessibility meaning | `data-state`, `data-variant`, `data-size`, a boolean flag | `data-state="open"`, `data-variant={variant}`, `data-error={invalid ? '' : undefined}` |
+| Style by that state                                     | Tailwind `data-[…]:` variants                             | `data-[state=open]:animate-…`, `group-data-[state=open]:rotate-180`                    |
+| Style a child by its part or state, from the parent     | `[&_[data-…]]:` on the parent                             | `[&_[data-error]]:text-warning`, `[&_[data-slot=filter-field]]:pt-0`                   |
+| Find an element from app code (`querySelector`, `:has`) | `data-slot` (or an `id`)                                  | `[data-slot="table-filters-menu"] #filter-item-…`                                      |
+| Find an element in a test                               | its role and accessible name                              | `getByRole('button', { name: 'Set filters' })`, `get_by_role("dialog", name=…)`        |
+| … when it has no role or name that identifies it        | `data-testid`                                             | `data-testid="page-toolbar"`, `data-testid="team-chat-conversation"`                   |
+| Find a third-party widget's parts (react-select)        | the library's own classes, allow-listed                   | `.metronic-select__menu` (`UNKNOWN_CLASS_HOOKS` in `eslint.config.js`)                 |
+
+## Native state and ARIA first
+
+Before reaching for any attribute, ask whether a screen-reader user should know the fact it expresses. If so, it belongs in HTML or ARIA. In order of preference:
+
+1. **Semantic HTML and native attributes:** `<button>`, `<nav>`, `<dialog>`, `disabled`, `checked`, `open`, `required`, `hidden`. The browser, assistive technology and CSS all understand them as they are.
+2. **ARIA, where HTML has no equivalent:** `role`, `aria-label`, `aria-expanded`, `aria-selected`, `aria-current`, `aria-pressed`, `aria-invalid`, `aria-describedby`.
+3. **`data-*`, for what has no meaning for assistive technology:** a component's parts, visual variants, hooks for app code, test ids.
+
+**Style from the attribute that carries the meaning**, so what users see and what assistive technology announces cannot drift apart. Tailwind has a variant for each: `disabled:`, `checked:`, `open:`, `required:`, `invalid:` (native validity), `aria-expanded:`, `aria-selected:`, `aria-disabled:`, `aria-invalid:`, `aria-[current=page]:`, and `group-aria-expanded:` / `peer-disabled:` for neighbours. A named `aria-*:` variant matches only the value `"true"` (`aria-invalid:` is `[aria-invalid="true"]`), so render `true`, not `"yes"`; for other values use the bracket form, as in `aria-[current=page]:`.
+
+```tsx
+// Input: one attribute is both the announced state and the styling hook.
+<input
+  aria-invalid={invalid ? true : undefined}
+  className="border-primary aria-invalid:border-[var(--input-invalid-border)]"
+/>
+
+// Pagination: the current page is announced and highlighted by the same attribute.
+<a
+  aria-current={item.isActive ? 'page' : undefined}
+  className="aria-[current=page]:text-[var(--pagination-text-current)]"
+/>
+
+// Calendar's month picker: the open state comes from aria-expanded.
+<button aria-expanded={open} className="hover:bg-tertiary aria-expanded:bg-tertiary" />
+```
+
+Rules:
+
+- **Never add ARIA just to get a hook.** ARIA changes what assistive technology announces. A role or state that is not true misleads users, and no ARIA is better than wrong ARIA. For a styling or test hook, use `data-*`.
+- **Do not mirror ARIA in `data-*`.** Style and test against `aria-expanded`, not a `data-expanded` you keep in sync with it. Radix is the one exception: it sets `data-state="open"` alongside `aria-expanded`, and `data-[state=…]:` is fine for its components, especially for states ARIA cannot express, such as a closing animation.
+- **Tests check the ARIA attribute**, not its `data-*` twin: `expect(trigger).toHaveAttribute('aria-expanded', 'true')`.
+- **A visual marker still needs an accessible counterpart.** `FormSteps`' `data-error` only colours a step's title; `aria-invalid` would be wrong on a navigation link. The error must also reach assistive technology some other way, such as an icon with an accessible name, or text linked with `aria-describedby`.
+
+## Class names
+
+Use a class only when something styles it:
+
+- **Tailwind utilities.** Use them for most styling. See [design-tokens.md](design-tokens.md) for colours and font weights.
+- **Stylesheet classes.** A class a `.scss` or `.css` file defines, such as `.team-chat`, `.form-table` or `.card-bordered`. One also counts when it only applies inside a parent (`.card .small`), or when a parent's arbitrary variant styles it (`[&_.x]:`).
+- **Third-party classes.** Classes defined by a library stylesheet the app imports, such as Leaflet's `leaflet-*` (`import 'leaflet/dist/leaflet.css'`).
+- **A `className` prop.** It lets the caller add its own utilities. Merge it with `cn()`, last, so it can override.
+
+Do not:
+
+- invent a class as a marker (`is-active`, `has-error`, `my-thing-wrapper`). Use an attribute.
+- keep a class "in case something uses it". Find out ([Before you remove or rename](#before-you-remove-or-rename)), then keep it as an attribute or delete it.
+- select by a class in tests or app code. A class can be renamed in a styling change that never looks at tests.
+
+```tsx
+// Wrong: `bookings-panel` styles nothing; it is a marker in disguise.
+<Card className="card-bordered bookings-panel">
+
+// Right: only the styling class. If something needs to find the card,
+// give it a role and name, or a data attribute.
+<Card className="card-bordered">
+```
+
+## `data-slot`: a component's parts
+
+`data-slot` names a part of a component, so that parents, stylesheets, app code and tests can reach that part without knowing its markup. waldur-ui components set it on their parts: the modal parts (`modal-dialog`, `modal-body`, `modal-footer`; see [modals.md](modals.md)), `menu-item-icon` / `-label` / `-trailing`, `featured-icon`, `tag`, `toast` and `date-picker-input`.
+
+Guidelines:
+
+- **The component sets it, not its callers.** It is part of the component's API: renaming it is a breaking change for anything that selects it.
+- **Name it in kebab-case after the component.** For example `menu-item-label`, not `label`, so slots from nested components never collide.
+- **Use one slot per element.** For a variant or a state, add a separate attribute (`data-size`, `data-variant`) rather than a second slot.
+- **Hand-written copies carry the slot too.** `InvoicePayButton` and `DropdownLink` write out `MenuItem`'s icon and label spans, because `Menu.Item` renders no slots under `asChild`. They set the same `data-slot`s.
+
+Styling and finding a slot:
+
+```tsx
+// A parent styles a child part (Tailwind arbitrary variant).
+<div className="p-6 [&_[data-slot=filter-field]]:pt-0">…</div>
+```
+
+```scss
+// A stylesheet scopes into a dialog by its own class and a slot.
+[data-slot='modal-dialog'].role-dialog {
+  [data-slot='modal-body'] {
+    padding: 0;
+  }
+}
+```
+
+```ts
+// App code finds a part (TableBody's inline-filter check).
+document.querySelector(
+  '#kt_content_container [data-slot="table-filters-menu"] #filter-item-' + key,
+);
+```
+
+## State and variant attributes
+
+For state that assistive technology should know, use the native attribute or ARIA ([above](#native-state-and-aria-first)). Any other state or variant a component exposes is a `data-*` attribute, not a class it toggles. Radix sets several on its own (`data-state="open"`, `data-side`, `data-disabled`, `data-swipe`), and waldur-ui follows the same pattern (`data-variant`, `data-tone`, `data-size`).
+
+- **Values are lowercase words:** `data-state="open"`, `data-variant="success"`.
+- **A boolean flag is present or absent.** Render `''` for true and `undefined` for false (`data-error={invalid ? '' : undefined}`), never `"false"`: `[data-error]` matches any value, including `"false"`.
+- **Style it with Tailwind's data variants.** On the element itself: `data-[state=open]:…`, `data-[selected]:…`. From an ancestor marked `group`: `group-data-[state=open]:…`. From the parent onto a child: `[&_[data-error]]:…`.
+
+```tsx
+// FormSteps: a step title marks itself while its section is invalid…
+const title = (
+  <div data-error={hasErrors ? '' : undefined} className="flex items-center">
+    {step.label}
+  </div>
+);
+
+// …and ScrollSpyNav's inactive link colours whatever is marked.
+const SCROLLSPY_NAV_LINK_INACTIVE =
+  'text-quaternary hover:text-brand [&_[data-error]]:text-warning';
+```
+
+```tsx
+// Toast: a part, its variant, and the state Radix sets, all as attributes.
+<RadixToast.Root
+  data-slot="toast"
+  data-variant={variant}
+  className="data-[state=open]:animate-[waldur-toast-enter_.2s_ease-out]"
+/>
+```
+
+## `data-testid`: for tests only
+
+First find an element the way a user would: by its role and accessible name (`getByRole`, `getByLabelText`; see [testing.md](testing.md)). An icon-only button already has a name, because `BaseButton` uses its tooltip as the `aria-label`. Add a `data-testid` only when the element has no role or name that identifies it, such as a layout region, a container, or one of several similar elements.
+
+- **Name what it is, not how it looks:** `page-toolbar`, `app-footer`, `provider-offering`, `team-chat-conversation`, `badge-right-icon`.
+- **Never style by a test id.** If a stylesheet or app code needs the element, give it a `data-slot`.
+- **Hooks the E2E suite uses are a contract with another repository.** List each one in [e2e-locators.md](e2e-locators.md) and leave a comment where it is rendered:
+
+  ```tsx
+  <div
+    // The waldur-integration-testing suite selects the page tabs by this
+    // (docs/e2e-locators.md).
+    data-testid="page-toolbar"
+    className="flex items-center h-[55px] …"
+  >
+  ```
+
+- **Unit tests may use slots and state attributes for structure** (`[data-slot="modal-body"]`, `toHaveAttribute('data-error')`). That is how `Toast.test.tsx` checks the E2E hook, and how `FormSteps.test.tsx` checks the error marker.
+
+## Before you remove or rename
+
+A class or attribute can have readers that no unit test covers. Before removing or renaming one, look for each kind:
+
+- **Stylesheets:** `.name` in `.scss`/`.css`, including nested BEM (`&--modifier`, `&__part`).
+- **Arbitrary variants:** `[&_.name]`, `has-[.name]`, `group-[.name]` and `[&_[data-slot=name]]` in class strings.
+- **App code:** `querySelector`, `closest`, `matches`, `classList`, `:has(…)`.
+- **Tests and stories:** `toHaveClass`, `querySelector`, `getByTestId`, play functions; `e2e/` and `e2e-visual/`.
+- **The integration suite:** waldur-integration-testing's `tests/**/*.py`, especially `tests/components/homeport_hooks.py`.
+- **Git history:** `git log -G'\.name\b' -- '*.scss' '*.css'` shows whether the name was ever styled.
+
+A hook another repository reads moves in three steps, because each repository's CI runs against the other's current `main`/`develop`:
+
+1. HomePort renders the new hook beside the old one.
+2. The other repository selects the new hook, keeping the old one as a fallback (`:is([data-testid="x"], .x)`).
+3. HomePort drops the old hook. The other repository drops its fallback once the HomePort image it runs against includes step 3.
+
+## Exceptions
+
+Some classes have to stay as hooks even though they style nothing, for example react-select's `metronic-select__*`, which the library generates and the E2E suite reads. List such a class as a pattern in `UNKNOWN_CLASS_HOOKS` in `eslint.config.js`, with a comment saying who reads it. Keep that list short: every entry is a contract with no type check behind it.
+
+## Checklist
+
+- [ ] Every class I added styles something: a Tailwind utility, a stylesheet class, or a third-party class.
+- [ ] State users should perceive is a native attribute or ARIA, and is styled from that attribute (`disabled:`, `aria-*:`).
+- [ ] I added no ARIA that is not true, and no `data-*` attribute that mirrors one.
+- [ ] Every marker I added is a `data-*` attribute: `data-slot` for parts, `data-state`/`data-variant`/a boolean flag for state, `data-testid` only for tests.
+- [ ] Tests find elements by role and name first.
+- [ ] Nothing selects or styles by `data-testid` except tests.
+- [ ] Any hook the integration suite reads is listed in [e2e-locators.md](e2e-locators.md) and commented where it is rendered.
+- [ ] Before removing a class or attribute, I checked the readers listed above, the integration suite included.
+
+---
+
 ### Code Quality Standards
 <!-- Source: docs/developer-guide/ui/code-quality.md -->
 
@@ -74371,6 +74602,38 @@ Dynamic references (`state={variable}`, `router.stateService.go(name)`, computed
 - **Per-line**: append `// state-check: ignore` to the line containing the literal. Use this for fixture data or constants where the literal value is intentionally not a real state name.
 - **Global allowlist** (in the test file): for values that are intentionally not in the registry but legitimately appear in the codebase (e.g., the `'404'` fallback used inside `useSref(state || '404', ...)` in `src/core/Link.tsx`). Keep this set small and add a comment explaining each entry.
 - **Known-broken set** (in the test file): for pre-existing broken references that require product knowledge to fix. Do not add new entries — fix the reference instead. When the last call site for an entry is gone, remove the entry.
+
+## Unknown class guard
+
+Tailwind and Bootstrap both ignore a class they do not know, so a typo (`felx`, `text-teritary`, `md:hiden`) or a class whose stylesheet was retired renders as nothing, with no warning from the build, the type checker or the browser. `waldur-custom/no-unknown-class` reports every class that styles nothing.
+
+A class is known when either:
+
+- **Tailwind generates CSS for it.** The rule asks the same Tailwind design system the build loads from `src/tailwind.css`, so variants, arbitrary values, `!`, opacity modifiers, `@theme` tokens and `@utility` definitions are judged exactly as the build judges them. There is no hand-kept list of utilities.
+- **A stylesheet defines it.** Every `.scss` (compiled with Sass) and `.css` file under `src/`, `packages/` and `apps/`, plus the `node_modules` stylesheets the source imports, contributes its class selectors. A class counts as defined if it appears in any selector, including one that only applies inside a parent (`.card .small`).
+- **An arbitrary variant styles it.** A class selected inside a Tailwind arbitrary variant in any source file (`[&_.x]:`, `has-[.x]:`, `group-[.x]:`) counts as defined, since that variant styles it. These are read from the source on every recheck, not cached; the lint plugin's own files are skipped.
+
+The rule reads class positions only:
+
+- `className` and any `*ClassName` attribute or property;
+- the arguments of `cn`/`clsx`/`classNames`/`cx`/`twMerge`;
+- `cva` bases and variant values;
+- variables named `*class`, `*classes` or `*className`, in any case (`activeClass`, `BASE_CLASSNAME`).
+
+A `const` used in one of those positions is followed to its value in the same file: `className={BASE}` checks `BASE`, `cn(SIZES[size])` checks every value of `SIZES`, `TONE.danger` checks that entry. Imports, parameters and `let` are not followed. A token glued to a `${…}` in a template literal is a fragment and is skipped. The message names the nearest real class when there is one (`Did you mean "flex"?`).
+
+Implementation: `packages/eslint-plugin-waldur/lib/class-oracle.js`, reached from the synchronous rule through a `synckit` worker. The rule finds the repository root from its own location, so ESLint can run from any directory. Compiled stylesheet classes are cached in `node_modules/.cache/eslint-plugin-waldur/`, keyed by every stylesheet's path, size and mtime and by `yarn.lock`; a long-lived ESLint server (the editor's) picks up stylesheet changes within a few seconds.
+
+### Existing violations
+
+Existing violations are listed per file in `unknown-classes.baseline.json`. A listed class is not reported in its file; any other unknown class is, whatever else the change does. A listed class the file no longer has (fixed, removed, or now defined by a stylesheet) is reported as stale, so the list only shrinks.
+
+- After fixing listed classes, rewrite the list: `yarn lint:classes:baseline`.
+- Never add entries for new code. Fix the class instead.
+
+### Classes that deliberately style nothing
+
+A class used only as a hook (for a test or a third-party script) should be a `data-*` attribute instead (`data-slot`, `data-testid`); [class-names-and-data-attributes.md](class-names-and-data-attributes.md) says which one. Where it cannot be, list a pattern in the rule's `allow` option in `eslint.config.js`, so each exception is a visible decision. `UNKNOWN_CLASS_HOOKS` there lists the classes the end-to-end suite in `waldur-integration-testing` selects on, now only react-select's `metronic-select__*`; remove one only together with its selector there. Test files (`*.test.ts(x)`) are exempt because they pass made-up classes to check that a prop is forwarded.
 
 ---
 
@@ -76640,51 +76903,49 @@ When multiple valid approaches exist, choose based on:
 
 # E2E Locators
 
-How the waldur-integration-testing Playwright suite finds HomePort's menus, tabs and filters: by roles, accessible names and `data-testid`, not by CSS classes.
+How the waldur-integration-testing Playwright suite finds HomePort's elements: by roles, accessible names, `data-testid` and `data-slot`, never by CSS classes. The suite keeps these selectors in `tests/components/homeport_hooks.py`. For when to add which attribute, see [class-names-and-data-attributes.md](class-names-and-data-attributes.md).
 
-## History
+Removing or renaming a hook below breaks that suite without failing anything in HomePort. Move one in three steps, as the "Before you remove or rename" section of [class-names-and-data-attributes.md](class-names-and-data-attributes.md) describes.
 
-The suite used to locate these by Metronic menu and Bootstrap dropdown class names. When that CSS was deleted (see the Legacy Menu CSS Retirement section in [tailwind-shadcn-migration-notes.md](tailwind-shadcn-migration-notes.md)), HomePort kept rendering the class names, unstyled, while the suite moved over:
+## Hooks
 
-1. HomePort rendered both the legacy classes and the new hooks (waldur/waldur-homeport!7711).
-2. The suite switched to the new hooks with the legacy class as a fallback (waldur/waldur-integration-testing!172).
-3. HomePort stopped rendering the legacy classes.
+| Element                                    | Hook                                                                                                       |
+| :----------------------------------------- | :--------------------------------------------------------------------------------------------------------- |
+| Page tabs row, with its actions            | `[data-testid="page-toolbar"]`                                                                             |
+| Page tab row (navigation)                  | `get_by_role("navigation", name="Page tabs")`                                                              |
+| A page tab                                 | `get_by_role("link", name=…)` or `get_by_role("button", name=…)` inside the page toolbar                   |
+| Tab with a submenu                         | its button has `aria-haspopup="menu"`                                                                      |
+| Tab submenu                                | `get_by_role("menu")`                                                                                      |
+| Filter bar under the page tabs             | `[data-testid="filter-bar"]`                                                                               |
+| Clear button on a filter badge             | `[data-testid="badge-right-icon"] button`                                                                  |
+| App footer                                 | `[data-testid="app-footer"]`                                                                               |
+| A footer link                              | `get_by_role("link", name=…)` inside the app footer                                                        |
+| Open action menu                           | `[data-testid="actions-menu"]`, or `get_by_role("menu")`                                                   |
+| Action menu row                            | `[data-testid="action-item"]`, or `get_by_role("menuitem")` (every row has the role, inside a menu or not) |
+| Action menu toggle                         | `[data-testid="actions-toggle"]`; the icon-only kebab is also `get_by_role("button", name="Actions")`      |
+| Table filter toggle                        | `get_by_role("button", name="Set filters")`                                                                |
+| "Add filter" menu                          | `get_by_role("dialog", name="Add filter")`                                                                 |
+| A filter in that menu                      | `get_by_role("button", name=<filter title>)` inside the dialog                                             |
+| A filter's field                           | `[data-slot="filter-field"]`                                                                               |
+| Router tab bar (page hero, table sub-tabs) | `nav[aria-label="Tabs"]` (`TAB_BAR`)                                                                       |
+| A router tab                               | `get_by_role("link", name=…)`, or `"button"` for a disabled tab (`tab_item()`)                             |
+| In-page section tabs                       | `[role="tablist"]` with `get_by_role("tab", name=…)` (`SECTION_TABS`)                                      |
+| A dialog                                   | `get_by_role("dialog")`, filtered by name or text; its parts are `[data-slot="modal-body"]` and so on      |
+| A dialog's close button                    | `get_by_role("button", name="Close")` inside the dialog                                                    |
+| Invite dialog's role picker (one row)      | `[data-testid="role-project-select"]`, then `get_by_role("combobox", name="Role for <email>")`             |
+| A role picker option                       | `get_by_role("option", name=…)`, on the page, not scoped to the row                                        |
+| Sign-in callback error                     | the `"Login failed"` heading and its parent                                                                |
+| Provider offering page body                | `[data-testid="provider-offering"]`                                                                        |
+| Team chat: the open conversation           | `[data-testid="team-chat-conversation"]`                                                                   |
+| A toast                                    | `[data-slot="toast"][data-variant="{status}"]`                                                             |
+| A date field                               | `[data-slot="date-picker-input"]` (`DATE_INPUT`)                                                           |
+| A select's parts (react-select)            | `.metronic-select__*`, allow-listed in `UNKNOWN_CLASS_HOOKS` in `eslint.config.js`                         |
 
-Left to do: the suite can drop the legacy half of each selector in `tests/components/homeport_hooks.py`, plus the two page-tab fallbacks (`SecondaryToolbar.tab_items()` and `BaseResourcePage`'s toolbar), once the HomePort image it runs against includes step 3. Until then the fallbacks are harmless: they match nothing on new builds and still match older ones.
+## Notes
 
-Removing a hook below breaks that suite without failing anything in HomePort, as removing the legacy classes too early did in integration pipeline 138738.
+A router tab bar's `aria-label` defaults to "Tabs"; keep that default (or update `TAB_BAR`) when labelling a bar.
 
-The page chrome is at step 1: the page tabs row, the filter bar under it and the footer render both their legacy class (`toolbar`, `extra-toolbar`, `footer`, unstyled since waldur/waldur-homeport!7967 moved the layout to Tailwind) and a `data-testid`. Dropping the classes with that MR broke integration pipelines 145810 and 145953. Delete them only once the suite selects the test ids.
-
-## Mapping
-
-| Old selector                                           | New hook                                                                                                     | Before !7711?           |
-| :----------------------------------------------------- | :----------------------------------------------------------------------------------------------------------- | :---------------------- |
-| `.dropdown-menu:visible`, `.dropdown-menu.show`        | `[data-testid="actions-menu"]`, or `get_by_role("menu")`                                                     | role yes, test id no    |
-| `.dropdown-item`                                       | `[data-testid="action-item"]` (also `get_by_role("menuitem")`: every row has the role, inside a menu or not) | role partly, test id no |
-| `.dropdown-toggle`                                     | `[data-testid="actions-toggle"]`; the icon-only kebab is also `get_by_role("button", name="Actions")`        | no                      |
-| `.menu.menu-row` (page tab row)                        | `get_by_role("navigation", name="Page tabs")`                                                                | no                      |
-| `.toolbar` (page tabs row with its actions)            | `[data-testid="page-toolbar"]`                                                                               | no                      |
-| `.extra-toolbar` (filter bar under the page tabs)      | `[data-testid="filter-bar"]`                                                                                 | no                      |
-| `.footer` (app footer)                                 | `[data-testid="app-footer"]`                                                                                 | no                      |
-| `.toolbar .menu-item` (a page tab)                     | `get_by_role("link", name=…)` or `get_by_role("button", name=…)` inside `.toolbar`                           | yes                     |
-| `.menu-arrow` (tab with a submenu)                     | the tab's button has `aria-haspopup="menu"`                                                                  | yes                     |
-| `.menu-sub:visible` (tab submenu)                      | `get_by_role("menu")`                                                                                        | yes                     |
-| `.footer .menu-title`                                  | `get_by_role("link", name=…)` inside `.footer`                                                               | yes                     |
-| `.table-filters-menu:not(.column-filter)`              | `get_by_role("dialog", name="Add filter")`                                                                   | yes                     |
-| `#filter-item-<name> .menu-link`                       | `get_by_role("button", name=<filter title>)` inside that dialog                                              | yes                     |
-| `.menu-content.filter-field`                           | `.filter-field`                                                                                              | yes                     |
-| `[data-kt-menu-trigger='click']` (role picker trigger) | `[data-testid="role-project-select"]`, then `get_by_role("combobox", name="Role for <email>")`               | no                      |
-| `.role-project-select-popup .menu-item`                | `get_by_role("option", name=…)`, not scoped to the row                                                       | no                      |
-| `.nav-tabs` / `.nav-line-tabs` (router tab bar)        | `nav[aria-label="Tabs"]` (`TAB_BAR` in `homeport_hooks.py`); a page hero, table sub-tabs or reporting        | no                      |
-| `get_by_role("tab")` in a router tab bar               | `get_by_role("link", name=…)`, or `"button"` for a disabled tab (`tab_item()`)                               | no                      |
-| `.card-body .nav-tabs` (in-page section tabs)          | `[role="tablist"]` with `get_by_role("tab", name=…)` (`SECTION_TABS`)                                        | yes                     |
-| `.modal.show`, `.modal-content` (a dialog)             | `get_by_role("dialog")`, filtered by name or text; its parts are `[data-slot="modal-body"]` and so on        | yes                     |
-| `.btn-close` (a dialog's close button)                 | `get_by_role("button", name="Close")` inside the dialog                                                      | yes                     |
-
-Tab bars moved to waldur-ui's `TabNav` / `Tabs` in waldur/waldur-homeport!7825; the suite matches both markups since waldur/waldur-integration-testing!193. A router tab bar's `aria-label` defaults to "Tabs"; keep that default (or update `TAB_BAR`) when labelling a bar.
-
-The role picker is two selects since waldur/waldur-homeport!7762: Role, then Project for a project-level role (`name="Project for <email>"`). Each is named after its row's email, or `Role for row <n>` while the email is empty. Their menus are portalled to `<body>`, so look up options on the page, not inside the row.
+The role picker is two selects: Role, then Project for a project-level role (`name="Project for <email>"`). Each is named after its row's email, or `Role for row <n>` while the email is empty. Their menus are portalled to `<body>`, so look up options on the page, not inside the row.
 
 ---
 
@@ -82035,9 +82296,10 @@ At Metronic's forced root font size of `13px` (and `12px` on mobile):
    (`border border-brand`, `border border-transparent hover:border-secondary`) never paints.
    Give every state an explicit colour: `border-[1px] border-secondary`, then `border-brand`
    when selected. Enforced (with autofix) by `no-bootstrap-border-with-tailwind-color`.
-3. **Layout & Display Utilities**: Legacy Bootstrap layout classes are retired in favor of native Tailwind equivalents:
+3. **Layout & Display Utilities**: Legacy Bootstrap layout classes are retired in favor of native Tailwind equivalents, and Bootstrap no longer generates `display` or `flex` utilities (`src/styles/bootstrap/_utilities.scss`):
    - Display: `d-flex` → `flex`, `d-block` → `block`, `d-none` → `hidden`, `d-inline` → `inline`, `d-inline-block` → `inline-block`, `d-inline-flex` → `inline-flex`, `d-grid` → `grid`, and responsive breakpoints (`d-md-none` → `md:hidden`, `d-lg-block` → `lg:block`, `d-sm-flex` → `sm:flex`).
    - Flexbox: `flex-column` → `flex-col`, `align-items-*` → `items-*`, `align-self-*` → `self-*`, `justify-content-*` → `justify-*`, `flex-grow-1` → `grow`, `flex-shrink-0` → `shrink-0`.
+   - Flex helpers (Metronic `_flex.scss`): `flex-center` → `flex items-center justify-center`, `flex-root` → `flex-1`, `flex-equal` → `flex-1`, `flex-column-fluid` → `flex-auto`, `flex-column-auto` → `flex-none`, `flex-lg-row-fluid` → `lg:flex-auto lg:min-w-0`, `flex-sm-column-auto` → `sm:flex-none`.
    - Sizing & Text: `w-100` → `w-full`, `h-100` → `h-full`, `mw-100` → `max-w-full`, `mh-100` → `max-h-full`, `text-truncate` → `truncate`.
    - Enforced (with automated autofix) by `waldur-custom/no-bootstrap-layout-utility`.
 
@@ -82448,27 +82710,27 @@ Implemented in `packages/eslint-plugin-waldur` and enabled as `waldur-custom/*` 
 
 #### Visual patterns
 
-| Rule Name                                 | Severity | Enforced Pattern                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| :---------------------------------------- | :------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `enforce-badge-icon-patterns`             | `error`  | Enforces 12px icon sizing inside `Badge` components.                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| `enforce-badge-props-consistency`         | `error`  | Validates `variant`, `tone` and `shape` prop combinations on `Badge`.                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| `no-manual-icon-colors-in-badges`         | `error`  | Prevents manual colour classes on icons rendered inside `Badge`.                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| `enforce-badge-right-icon-pattern`        | `error`  | Standardizes right-side action icon styling in badges.                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| `enforce-featured-icon`                   | `error`  | Requires `FeaturedIcon` (with `tone`/`size`) for highlighted icon emblems.                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| `enforce-phosphor-icon-weight`            | `error`  | Consistent `weight` prop on Phosphor icons.                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| `enforce-border-radius-tokens`            | `error`  | Enforces pinned Tailwind border radius tokens (`rounded-none` … `rounded-modal`, `rounded-full`). Autofixes retired Bootstrap `rounded-0`, `rounded-pill`, `rounded-circle`, arbitrary matching pixel classes (`rounded-[6px]` -> `rounded-md`), and flags inline `style={{ borderRadius }}`.                                                                                                                                                                                                              |
-| `no-bootstrap-tabs`                       | `error`  | `Tabs` / `TabNav` from `waldur-ui`; no react-bootstrap `Tab`/`Tabs`/`Nav` or `nav-*` classes.                                                                                                                                                                                                                                                                                                                                                                                                              |
-| `no-bootstrap-breadcrumb`                 | `error`  | `Breadcrumb` from `waldur-ui` (or `@/navigation/header/breadcrumb`); no react-bootstrap `Breadcrumb` / `BreadcrumbItem` or legacy `breadcrumb*` classes.                                                                                                                                                                                                                                                                                                                                                   |
-| `no-bootstrap-form-check`                 | `error`  | `Checkbox` / `Radio` / `Switch` from `waldur-ui`; no `FormCheck`, `Form.Check` or `form-check*` / `form-switch*` classes.                                                                                                                                                                                                                                                                                                                                                                                  |
-| `no-bootstrap-progress`                   | `error`  | `Progress` from `waldur-ui`; no react-bootstrap `ProgressBar` or `progress` / `progress-bar*` classes.                                                                                                                                                                                                                                                                                                                                                                                                     |
-| `no-bootstrap-border-with-tailwind-color` | `error`  | No Bootstrap `border` / `border-top` / … next to a Tailwind border colour (Bootstrap's `!important` colour wins). Autofixes to `border-[1px]` when the same string sets a base colour.                                                                                                                                                                                                                                                                                                                     |
-| `no-bootstrap-layout-utility`             | `error`  | Retires Bootstrap layout, display, flexbox, sizing and text-truncate utilities (`d-block`, `d-flex`, `d-none`, `flex-column`, `w-100`, `mw-100`, `text-truncate`, responsive variants) in favor of Tailwind standard classes (`block`, `flex`, `hidden`, `flex-col`, `w-full`, `max-w-full`, `truncate`). Autofixes across the codebase, except `w`/`h`/`min-w`/`min-h` × `25`/`50`/`75`/`100`, which Tailwind also defines as spacing steps: those get a suggestion per reading (`w-1/2` or `w-[200px]`). |
-| `no-raw-status-ramp`                      | `error`  | State colours come from `--status-*`, not raw `success-N` / `warning-N` / `error-N` utilities. Deliberate exceptions carry an `eslint-disable` with the reason.                                                                                                                                                                                                                                                                                                                                            |
-| `no-retired-bootstrap-utility`            | `error`  | Bootstrap utilities the Metronic build no longer generates (never used: `vh-100`, `align-content-*`, `mx-n*`, `ls-*`; breakpoint variants `px-lg-3`, `min-h-md-100px`; or retired utilities `svg-icon*`) compile to nothing; names the Tailwind replacement.                                                                                                                                                                                                            |
-| `require-font-size-scale`                 | `error`  | Font size follows the pinned scale (`text-xs` … `text-4xl`). Autofixes retired Bootstrap `fs-*` classes (`fs-6` -> `text-sm`, `fs-7`/`8` -> `text-xs`, etc.) and arbitrary `text-[14px]`. Flags inline `style={{ fontSize }}`.                                                                                                                                                                                                                                                                             |
-| `require-weight-scale`                    | `error`  | Font weight is `font-light` … `font-bold`. Reports Bootstrap `fw-*` (autofixed to the same weight: `fw-bold` was 500, so `font-medium`), off-scale steps, `font-[N]` and inline `fontWeight`.                                                                                                                                                                                                                                                                                                              |
-| `require-dark-pair`                       | `error`  | A physical colour (ramp step, white/black, hex, raw `var(--brand-N)`) needs a `dark:` counterpart in its class list, or a semantic utility. Solid fills and white text on them pass.                                                                                                                                                                                                                                                                                                                       |
-| `no-bootstrap-css-vars`                   | `error`  | No `--bs-*` reads in TS/TSX; use the design token (table in [design-tokens.md](design-tokens.md)).                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Rule Name                                 | Severity | Enforced Pattern                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| :---------------------------------------- | :------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enforce-badge-icon-patterns`             | `error`  | Enforces 12px icon sizing inside `Badge` components.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `enforce-badge-props-consistency`         | `error`  | Validates `variant`, `tone` and `shape` prop combinations on `Badge`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `no-manual-icon-colors-in-badges`         | `error`  | Prevents manual colour classes on icons rendered inside `Badge`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `enforce-badge-right-icon-pattern`        | `error`  | Standardizes right-side action icon styling in badges.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `enforce-featured-icon`                   | `error`  | Requires `FeaturedIcon` (with `tone`/`size`) for highlighted icon emblems.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `enforce-phosphor-icon-weight`            | `error`  | Consistent `weight` prop on Phosphor icons.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `enforce-border-radius-tokens`            | `error`  | Enforces pinned Tailwind border radius tokens (`rounded-none` … `rounded-modal`, `rounded-full`). Autofixes retired Bootstrap `rounded-0`, `rounded-pill`, `rounded-circle`, arbitrary matching pixel classes (`rounded-[6px]` -> `rounded-md`), and flags inline `style={{ borderRadius }}`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `no-bootstrap-tabs`                       | `error`  | `Tabs` / `TabNav` from `waldur-ui`; no react-bootstrap `Tab`/`Tabs`/`Nav` or `nav-*` classes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `no-bootstrap-breadcrumb`                 | `error`  | `Breadcrumb` from `waldur-ui` (or `@/navigation/header/breadcrumb`); no react-bootstrap `Breadcrumb` / `BreadcrumbItem` or legacy `breadcrumb*` classes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `no-bootstrap-form-check`                 | `error`  | `Checkbox` / `Radio` / `Switch` from `waldur-ui`; no `FormCheck`, `Form.Check` or `form-check*` / `form-switch*` classes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `no-bootstrap-progress`                   | `error`  | `Progress` from `waldur-ui`; no react-bootstrap `ProgressBar` or `progress` / `progress-bar*` classes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `no-bootstrap-border-with-tailwind-color` | `error`  | No Bootstrap `border` / `border-top` / … next to a Tailwind border colour (Bootstrap's `!important` colour wins). Autofixes to `border-[1px]` when the same string sets a base colour.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `no-bootstrap-layout-utility`             | `error`  | Retires Bootstrap layout, display, flexbox, Metronic flex helpers, sizing and text-truncate utilities (`d-block`, `d-flex`, `d-none`, `flex-column`, `flex-center`, `flex-root`, `flex-equal`, `flex-column-fluid`, `flex-column-auto`, `flex-lg-row-fluid`, `flex-sm-column-auto`, `w-100`, `mw-100`, `text-truncate`, responsive variants) in favor of Tailwind standard classes (`block`, `flex`, `hidden`, `flex-col`, `items-center justify-center`, `flex-1`, `flex-auto`, `flex-none`, `lg:flex-auto lg:min-w-0`, `sm:flex-none`, `w-full`, `max-w-full`, `truncate`). Autofixes across the codebase, except `w`/`h`/`min-w`/`min-h` × `25`/`50`/`75`/`100`, which Tailwind also defines as spacing steps: those get a suggestion per reading (`w-1/2` or `w-[200px]`). |
+| `no-raw-status-ramp`                      | `error`  | State colours come from `--status-*`, not raw `success-N` / `warning-N` / `error-N` utilities. Deliberate exceptions carry an `eslint-disable` with the reason.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `no-retired-bootstrap-utility`            | `error`  | Bootstrap utilities the Metronic build no longer generates (never used: `vh-100`, `align-content-*`, `mx-n*`, `ls-*`; breakpoint variants `px-lg-3`, `min-h-md-100px`; or retired utilities `svg-icon*`) compile to nothing; names the Tailwind replacement.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `require-font-size-scale`                 | `error`  | Font size follows the pinned scale (`text-xs` … `text-4xl`). Autofixes retired Bootstrap `fs-*` classes (`fs-6` -> `text-sm`, `fs-7`/`8` -> `text-xs`, etc.) and arbitrary `text-[14px]`. Flags inline `style={{ fontSize }}`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `require-weight-scale`                    | `error`  | Font weight is `font-light` … `font-bold`. Reports Bootstrap `fw-*` (autofixed to the same weight: `fw-bold` was 500, so `font-medium`), off-scale steps, `font-[N]` and inline `fontWeight`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `require-dark-pair`                       | `error`  | A physical colour (ramp step, white/black, hex, raw `var(--brand-N)`) needs a `dark:` counterpart in its class list, or a semantic utility. Solid fills and white text on them pass.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `no-bootstrap-css-vars`                   | `error`  | No `--bs-*` reads in TS/TSX; use the design token (table in [design-tokens.md](design-tokens.md)).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 
 #### Code hygiene
 
@@ -82639,7 +82901,7 @@ Unit tests are used for testing React components and utilities. They are written
 - **Utilities**:
   - [@testing-library/react](https://testing-library.com/docs/react-testing-library/intro/)
   - [@testing-library/user-event](https://testing-library.com/docs/user-event/intro/)
-- **Goal**: Verify behavior, not implementation. Use semantic queries like `screen.getByRole` or `screen.getByLabelText` over test IDs or DOM-based queries (`querySelector`) whenever possible.
+- **Goal**: Verify behavior, not implementation. Use semantic queries like `screen.getByRole` or `screen.getByLabelText` over test IDs or DOM-based queries (`querySelector`) whenever possible. When an element has no role or name to find it by, see [class-names-and-data-attributes.md](class-names-and-data-attributes.md) for `data-testid` versus `data-slot`; never select by a class.
 - **Accessibility**: Integrate automated accessibility checks using `axe-core` within RTL tests where appropriate.
 - **Isolation**: Reset mocks between tests to prevent state leakage.
 
@@ -113186,6 +113448,7 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
 
 - terms_of_service_consent_granted
 - terms_of_service_consent_revoked
+- user_terms_of_service_accepted
 
 ## Users
 
@@ -128801,7 +129064,7 @@ Staff can edit and delete any comment. The author of a comment can edit or delet
 
 The `update_is_available` and `destroy_is_available` fields of a comment tell the requesting user whether they can edit or delete it, taking all of the above into account.
 
-When the caller of a ticket edits their own public comment, the assignee is notified (or all staff and support users while the ticket is unassigned) through `support.notification_comment_updated_staff`, with the previous and the edited text. An edit by anyone else notifies the caller through `support.notification_comment_updated`. Deleting a comment notifies nobody.
+A public comment by the caller of a ticket, or by anyone else who is neither staff nor support (an organization owner, or a project admin or manager), notifies the assignee, or all staff and support users while the ticket is unassigned, through `support.notification_comment_added_staff`. An edit of such a comment by its author notifies them through `support.notification_comment_updated_staff`, with the previous and the edited text. Staff correcting someone else's comment does not, since the helpdesk made that edit itself. A comment or edit by anyone other than the caller also notifies the caller, through `support.notification_comment_added` or `support.notification_comment_updated`. Nobody gets two emails about one comment, even a caller who is staff, and deleting a comment notifies nobody.
 
 ### 3. Attachment Management
 
