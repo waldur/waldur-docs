@@ -8,6 +8,9 @@ a breakdown and a goal.
 As a service provider you choose which metrics an offering reports, and your
 service (or its site agent, or an OpenTelemetry Collector) sends the numbers.
 
+For OpenStack, Waldur reads the virtual machines' figures itself; see
+[OpenStack instance metrics](openstack-instance-metrics.md).
+
 ## Where to find it
 
 Open the offering, switch to **Edit**, and choose **Integration → Metrics**.
@@ -182,3 +185,4 @@ service:
 - [Custom metrics catalogue](../staff-users/custom-metrics-catalogue.md)
 - [Project metrics](../customer-organization/project-metrics.md)
 - [Reporting usage](reporting-usage.md)
+- [OpenStack instance metrics](openstack-instance-metrics.md)

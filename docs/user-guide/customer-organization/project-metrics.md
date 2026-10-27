@@ -26,7 +26,8 @@ Each card is one metric:
   higher is better a rise is green; where lower is better, such as a response
   time, a rise is red. Metrics with no preferred direction show a rise in green.
   The badge appears only when both periods have a figure.
-- **The goal**, if one is set — green when the figure meets it.
+- **The goal**, if one is set — a badge next to the card's menu, green when
+  the figure meets it.
 - **The chart** — one point per day (in UTC), from the first day with data, up
   to 90 days back. Counts are bars; levels are a line, with the goal drawn across
   it. Days without data are left empty. When the metric carries attributes, the
@@ -82,8 +83,14 @@ average.
 
 Select a resource to open its **Metrics** tab. It shows the resource's own
 figures for the current month, the change from the same days of last month,
-the daily chart and the breakdown by attribute. A resource has no goal of its own: goals
-apply to the project's combined figure.
+the chart and the breakdown by attribute. The chart covers 90 days, a bar per
+day; **6 hours**, **24 hours** and **7 days** show finer detail where the
+service reports often. A resource has no goal of its own: goals apply to the
+project's combined figure.
+
+OpenStack virtual machines and volumes are read by Waldur itself, on a
+schedule; their Metrics tab also says when, and can ask for a read sooner.
+See [Metrics of OpenStack virtual machines and volumes](openstack-instance-metrics.md).
 
 ## Setting the project's goal
 
@@ -92,9 +99,9 @@ project's combined figure. A resource's own Metrics tab has no goals.
 
 The service may set a default goal for every project. Users who may edit the
 project, such as project managers and organization owners, can set the
-project's own goal instead: choose **Set goal** under the card's figure, or
-click the goal badge to change it. **Set project goal** (or
-**Edit project goal**) is also the first item of the card's menu.
+project's own goal instead: choose **Set project goal** (or
+**Edit project goal**) in the card's menu, or click the goal badge next to
+the menu.
 
 !!! tip "Where are goals set?"
     - **A project's goal** — on the project's **Metrics** tab, from the card.
@@ -116,4 +123,5 @@ goal, if there is one.
 ## Related pages
 
 - [Custom metrics for service providers](../service-provider-organization/custom-metrics.md)
+- [Metrics of OpenStack virtual machines and volumes](openstack-instance-metrics.md)
 - [Custom metrics catalogue](../staff-users/custom-metrics-catalogue.md)
