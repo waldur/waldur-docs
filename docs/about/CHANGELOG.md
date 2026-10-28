@@ -1,5 +1,48 @@
 # Changelog
 
+## 8.1.4-rc.5 - 2026-10-28
+
+### Highlights
+
+This release tightens calls for proposals. Archived calls stop accepting applications, and calls now enforce their resource templates and required offering options before a proposal can be submitted or awarded. Staff can pay a project's earlier invoices from its credit, cost policies explain why they are over their limit, and credit-aware policies now trigger on the correct amount. Customers can be asked for feedback through surveys shown after login, and OpenStack tenants can use networks shared with every project from the moment the tenant is created.
+
+### What's New
+
+- Staff can create feedback surveys that customers are asked to answer after they log in, and can review the answers in the feedback logs.
+- Staff can pay a project's earlier invoices from its credit, with a preview of the invoices that will be covered.
+- Cost policies have a details view that explains why a policy is over its limit, which resources it affects and how to resolve it.
+- The resource metrics tab shows OpenStack instance and volume metrics, along with how often they are updated.
+
+### Improvements
+
+- Calls that have resource templates require applicants to use them. Call managers can limit a call to one template, and applicants then pick a single template when they add a proposal.
+- Proposals must fill in the options an offering requires before they can be submitted or awarded. The chosen options appear in the review, the proposal PDF and the award.
+- Archived calls refuse new proposals, are left out of the open calls list and are shown as closed to applications.
+- Networks that a provider shares with every project are treated as shared with each OpenStack tenant, starting when the tenant is created. The VM creation form fills the first network with a tenant subnet and marks subnets that the provider shares.
+- Webhook certificate errors now list every cause of the failure, including untrusted certificates. The configuration guide and the Helm documentation explain how to trust a private CA through a mounted trust bundle.
+- Only the metric roll-ups that new data points affect are recomputed.
+- Applied table filters show their values as tags.
+- Frequently used forms track only the fields they need, which reduces unnecessary re-rendering.
+- More of the UI moved from Bootstrap to Tailwind. This covers spacing, layout and flex utilities, and the Arrow administration tables.
+- dnspython, msgpack and qs were updated to fix published security advisories.
+
+### Bug Fixes
+
+- Credit-aware cost policies now trigger on the cost left after credit is applied, not on the remaining credit balance.
+- A VM's network interfaces now come up in the same order as its requested ports.
+- A call's slug template stays locked when an API request clears it.
+- Validating a call that already exists no longer crashes.
+- The science domain selector now appears on proposals whose call asks for it.
+- Gaps between stacked elements display correctly again. For example, the hypervisor summary charts no longer touch each other.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [15 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.4-rc.4...8.1.4-rc.5) - Feedback surveys, paying earlier invoices from project credit, credit-aware cost policy fix, stricter call and proposal checks, OpenStack shared network handling and clearer webhook certificate errors.
+- **Waldur Homeport**: [19 commits](https://github.com/waldur/waldur-homeport/compare/8.1.4-rc.4...8.1.4-rc.5) - Feedback survey UI, cost policy explanations, required options and templates in proposals, OpenStack metrics display and continued Tailwind migration.
+- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.1.4-rc.4...8.1.4-rc.5) - Documentation on trusting a private CA through a mounted trust bundle.
+
+---
+
 ## 8.1.4-rc.4 - 2026-10-27
 
 ### Highlights
