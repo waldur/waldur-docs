@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-27T22:18:35.982559Z
+Generated: 2026-10-28T03:04:04.550131Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -1713,6 +1713,8 @@ Outline:
 - [IP whitelisting](ip-whitelisting.md)
 
 - [Proxy setup](proxy-setup.md)
+
+- [Trusting a private CA](trusted-ca-certificates.md)
 
 - [Host aliasing](host-aliasing.md)
 
@@ -5606,6 +5608,136 @@ In case, when you want to use own certificate, you need to:
     with your `tls.crt` and `tls.key` files. By default it is set to `tls`
 
 3. After that, `waldur` release is ready for installation
+
+---
+
+### Trusting a private CA
+<!-- Source: docs/admin-guide/deployment/helm/docs/trusted-ca-certificates.md -->
+
+# Trusting a private CA
+
+Waldur verifies the TLS certificate of the HTTPS servers it connects to, such
+as webhook listeners (event consumer webhooks) and service provider APIs. By
+default only public CAs are trusted. When such a server has a certificate
+issued by a private or corporate CA, add that CA to a trust bundle and point
+the Waldur containers at it.
+
+The bundle **replaces** the default trust store, so it must hold the public
+CAs as well as yours. Otherwise every connection to a server with a public
+certificate fails.
+
+## 1. Build the bundle
+
+Start from the public CAs shipped in the running Waldur image, so the bundle
+matches what Waldur trusts today, and append your CA certificate (PEM):
+
+```bash
+kubectl exec -n <namespace> deploy/waldur-mastermind-worker -- \
+  python -c "import certifi; print(open(certifi.where()).read(), end='')" > ca-bundle.pem
+cat my-private-ca.pem >> ca-bundle.pem
+grep -c 'BEGIN CERTIFICATE' ca-bundle.pem   # well over 100, not 1
+```
+
+Several private CAs can be appended one after another. Rebuild the bundle now
+and then, for example on upgrades, so that it picks up changes to the public
+CAs.
+
+## 2. Store it in the cluster
+
+```bash
+kubectl create configmap waldur-ca-bundle --from-file=ca-bundle.pem -n <namespace>
+```
+
+## 3. Mount it into the Waldur pods
+
+Add the bundle to the API, worker and beat pods (and the Matrix bot, if it
+calls such a server) in your values file, and point both trust-store
+variables at it: `REQUESTS_CA_BUNDLE` is read by the HTTP client Waldur uses
+for webhooks and most integrations, `SSL_CERT_FILE` by the others.
+
+```yaml
+api:
+  extraVolumes: &ca-bundle-volumes
+    - name: ca-bundle
+      configMap:
+        name: waldur-ca-bundle
+  extraVolumeMounts: &ca-bundle-mounts
+    - name: ca-bundle
+      mountPath: /etc/waldur-ca
+      readOnly: true
+  extraEnvVars: &ca-bundle-env
+    - name: REQUESTS_CA_BUNDLE
+      value: /etc/waldur-ca/ca-bundle.pem
+    - name: SSL_CERT_FILE
+      value: /etc/waldur-ca/ca-bundle.pem
+worker:
+  extraVolumes: *ca-bundle-volumes
+  extraVolumeMounts: *ca-bundle-mounts
+  extraEnvVars: *ca-bundle-env
+beat:
+  extraVolumes: *ca-bundle-volumes
+  extraVolumeMounts: *ca-bundle-mounts
+  extraEnvVars: *ca-bundle-env
+```
+
+If your values file already has `api`, `worker` or `beat` sections, add the
+keys to them rather than repeating the sections. Apply it with
+`helm upgrade`. The worker delivers webhooks, so it is the pod that matters
+for event consumer webhooks.
+
+To replace the bundle later, recreate the ConfigMap and restart the pods:
+
+```bash
+kubectl create configmap waldur-ca-bundle --from-file=ca-bundle.pem \
+  -n <namespace> --dry-run=client -o yaml | kubectl apply -f -
+kubectl rollout restart -n <namespace> deployment/waldur-mastermind-api \
+  deployment/waldur-mastermind-worker deployment/waldur-mastermind-beat
+```
+
+## Certificate requirements
+
+Waldur runs on Python 3.13, which checks certificates strictly. A CA
+certificate in the bundle needs the `CA:TRUE` basic constraint and the
+`keyCertSign` key usage. A server certificate needs a subject alternative
+name for the host it is reached by and, unless it is self-signed, an
+authority key identifier. Certificates from most CAs have these; ones made
+by hand with old tooling sometimes do not, and then fail with
+`TLS certificate verification failed.` even though their CA is in the
+bundle. A self-signed server certificate can itself be added to the bundle.
+
+Webhook listeners must also be on a public address: Waldur refuses private
+and loopback addresses for webhooks, whatever the bundle holds.
+
+## Checking it
+
+A webhook consumer whose listener is not trusted shows the error
+`TLS certificate verification failed.` in its status tooltip. Once the
+bundle is in place, the next delivery attempt succeeds. If the variables
+point at a file that is not there, every verified connection fails instead,
+and webhooks show `Request failed: OSError.`
+
+From a worker pod, the same check by hand:
+
+```bash
+kubectl exec -n <namespace> deploy/waldur-mastermind-worker -- \
+  python -c "import requests; print(requests.head('https://listener.example.com').status_code)"
+```
+
+## Scope
+
+The bundle applies to the pods it is mounted in, for every connection they
+verify with the default trust store, not only webhooks: add only CAs you
+trust for all of them. Integrations configured with their own CA
+certificate, such as an OpenStack offering's certificate, keep using that
+one.
+
+## Turning verification off
+
+The mastermind setting `VERIFY_WEBHOOK_REQUESTS = False` turns certificate
+verification off for every webhook; the chart has no value for it.
+Anyone who can intercept the connection can then read the events, which
+carry names and email addresses, and the credentials in webhook URLs. Prefer
+adding the CA to the bundle.
 
 ---
 
@@ -11228,7 +11360,7 @@ Represents the name of a default language.
 
 **Type:** bool, **default value:** True
 
-When webook is processed, requests verifies SSL certificates for HTTPS requests, just like a web browser.
+Verify the TLS certificate of webhook destinations, including event consumer webhooks. Certificates are checked against the public CAs, or against the bundle in REQUESTS_CA_BUNDLE, which is how a private CA is added. Turned off, no webhook is verified.
 
 ## Dynamic options
 
@@ -20232,6 +20364,7 @@ td:nth-child(4) {
 | `delete-old-verifications` | `waldur_core.onboarding.delete_old_verifications` | 1 day | This task runs daily to delete verifications that are in FAILED or EXPIRED<br>status and were last modified more than 30 days ago. |
 | `delete-stale-event-subscriptions` | `waldur_core.logging.delete_stale_event_subscriptions` | 1 day | No description available |
 | `delete-stale-user-revisions` | `waldur_core.delete_stale_user_revisions` | Cron: `0 3 * * * (m/h/dM/MY/d)` | Prune reversion history for users.<br><br>Every audited change to a user opens a revision, and federated deployments<br>sync users on every login, so core.User is the fastest-growing versioned<br>table. USER_REVISION_KEEP_MINIMUM guarantees each user keeps a usable trail<br>however old it is: without it, a quiet account would eventually lose its<br>history entirely.<br><br>Note that a revision is deleted whole, taking every version it holds with<br>it. Revisions written by the per-user signal handler hold exactly one user,<br>but an admin bulk action writes one revision covering all users it touched -<br>those are pruned together, which is fine as they share an age. |
+| `expire-feedback-requests` | `waldur_mastermind.feedback.expire_requests` | 1 hour | No description available |
 | `expire-stale-verifications` | `waldur_core.onboarding.expire_stale_verifications` | 1 hour | This task runs hourly to check for verifications that have passed their<br>expiration date while still in PENDING or ESCALATED status. |
 | `expired-reviews-should-be-cancelled` | `waldur_mastermind.proposal.expired_reviews_should_be_cancelled` | 1 hour | Cancel reviews that have expired. |
 | `mark-expired-assignment-batches` | `waldur_mastermind.proposal.mark_expired_assignment_batches` | 15 minutes | Mark assignment batches as EXPIRED when their deadline passes. |
@@ -20242,7 +20375,8 @@ td:nth-child(4) {
 | `mark_resources_as_erred_after_timeout` | `waldur_mastermind.marketplace.mark_resources_as_erred_after_timeout` | 2 hours | Mark stale orders and their resources as erred if they have been executing for more than 2 hours. |
 | `marketplace-metrics-enforce-retention` | `waldur_mastermind.marketplace_metrics.enforce_retention` | 1 day | No description available |
 | `marketplace-metrics-purge-archived` | `waldur_mastermind.marketplace_metrics.purge_archived` | 1 day | No description available |
-| `marketplace-metrics-roll-up` | `waldur_mastermind.marketplace_metrics.roll_up` | 15 minutes | No description available |
+| `marketplace-metrics-roll-up` | `waldur_mastermind.marketplace_metrics.roll_up` | 15 minutes | Recompute the roll-up buckets of points received since the last run. |
+| `marketplace-metrics-roll-up-window` | `waldur_mastermind.marketplace_metrics.roll_up_window` | 1 day | Recompute the whole window, in case a run left a bucket behind. |
 | `marketplace-openstack.collect-instance-metrics` | `waldur_mastermind.marketplace_openstack.collect_instance_metrics` | 1 minute | Poll the running instances whose turn it is this minute.<br><br>Runs every minute; each instance comes up once per its offering's polling<br>interval, or per the faster one asked for on it, see metrics.is_due. Only<br>a few columns of each resource are read: this runs for every instance of<br>every provider that collects metrics, every minute. |
 | `marketplace-openstack.create-resources-for-lost-instances-and-volumes` | `waldur_mastermind.marketplace_openstack.create_resources_for_lost_instances_and_volumes` | 6 hours | Heal marketplace state for every tenant that has orphan OpenStack<br>instances or volumes.<br><br>Previously this task called create_marketplace_resource_for_imported_resources<br>directly, which silently no-ops when the per-tenant Instance/Volume offering<br>is missing. That left orphan VMs invisible in the marketplace UI even after<br>the periodic task ran. Routing through self_heal_tenant_marketplace_model<br>recreates archived/missing per-tenant offerings first, then backfills the<br>orphan resources — so tenants no longer need a manual "Synchronise" click<br>after the offering-side state drifts. |
 | `marketplace-openstack.refresh-instance-backend-metadata` | `waldur_mastermind.marketplace_openstack.refresh_instance_backend_metadata` | 1 day | Refresh metadata for OpenStack instances from backend to ensure marketplace resources have up-to-date information. |
@@ -64756,7 +64890,9 @@ Waldur supports a two-level credit system: **CustomerCredit** (organization-wide
 | `grace_coefficient` | Decimal (0-100) | Percentage discount on minimal consumption |
 | `apply_as_minimal_consumption` | Boolean | Whether to enforce minimal consumption |
 
-**ProjectCredit** is a sub-allocation of the customer credit. The sum of all project credit values cannot exceed the customer credit value.
+**ProjectCredit** is a sub-allocation of the customer credit. A new or raised allocation is refused when the allocations together would exceed the customer credit value. Usage draws the customer credit down while the allocations stay as they are, so later on the allocations can exceed it; `ProjectCredit.spendable_value` caps what each can draw.
+
+ProjectCredit also has three staff-only fields, described in [Paying earlier invoices](#paying-earlier-invoices): `pay_earlier_invoices`, `earlier_invoices_from` and `earlier_invoices_until`.
 
 Every change to either balance is recorded in the [credit ledger](../credit-ledger.md), which is what makes the drawdown below observable after the fact: the minimal-consumption tail writes no invoice item, so the ledger is the only place it is visible.
 
@@ -64781,6 +64917,8 @@ sequenceDiagram
     MC->>MC: save() (write compensation items + update credits)
     MC->>MC: update_linear_expected_consumption()
     MC->>DB: Update expected_consumption for LINEAR credits
+
+    T->>DB: pay_earlier_invoices_at_month_end(invoice)
 ```
 
 #### Compensation Calculation
@@ -64885,6 +65023,32 @@ sequenceDiagram
 
 When a grace period is used, the effective date for zeroing credits is always the 1st of the current month (not the actual finalization date). This ensures credits with `end_date` on the 1st are still applied to the previous month's invoice before being zeroed.
 
+#### Paying earlier invoices
+
+The compensation run only pays the month it closes. Cost that no credit covered stays uncovered, and a period-Total cost policy keeps counting it however much credit is added later. With `ProjectCredit.pay_earlier_invoices` on, what is left of the allocation also pays that cost (`src/waldur_mastermind/invoices/settlement.py`). Only staff may set it, because it changes what the organization was billed; owners editing the rest of the allocation get a validation error if they change it.
+
+- **What it pays.** Closed (`created` or `paid`) invoices of the project, oldest month first. `earlier_invoices_from` and `earlier_invoices_until` optionally bound the months, inclusive, each named by its first day.
+- **When it pays.**
+    - Whenever the credit is saved through the API with the option on: when staff turn it on, and when the allocation is raised later. It pays from what is left after this month's usage so far: the live balance the cost policies use, the lower of the allocation's and the organization credit's.
+    - At month end, in `process_invoice_credits`, after the closing month's own compensation, from what that left.
+- **How it pays.**
+    - It writes a credit compensation named `Credit compensation for YYYY-MM. <item>`, with `compensated_period` set to the first day of the month it pays.
+    - `earlier_invoices_compensate_in` (staff-only) picks the invoice it goes on. With `current_month` (the default) that is the open (or closing) invoice, and earlier invoices stay as they were issued; the invoice it is written on can go below zero. With `incurred_month` it is the paid month's own invoice, which changes the total of an invoice already issued, and possibly paid.
+    - Each invoice written on gets its own draw, ledgered as `historical_compensation` with that invoice as its reference and its month as `billing_period`.
+- **What a month still needs** (`earlier_months`):
+    - the project's items on that month's invoice, on offerings the credit covers, before tax;
+    - less what paid them: compensations and volume discounts on the invoice, payments made later, and staff refunds of its items (`create_compensation`) on later invoices.
+    - Items are taken by their `project`, not their resource's current project, so a moved resource does not bring its history along.
+    - Compensations are netted by sign rather than by their `credit` link, which a deleted organization credit leaves empty.
+- **Written once.**
+    - `clear_compensations` leaves payments alone, and the month's remainder is worked out from what stands. A second save, a month-end run after a mid-month payment, or the two open invoices of a grace period therefore pay nothing twice.
+    - Both writers lock the organization credit's row.
+    - Turning the option off stops further payments. It does not reverse the ones made, which takes a staff credit adjustment.
+- **Paying on request.** `POST /api/project-credits/<uuid>/pay_earlier_invoices/` (staff) pays now, turns on `pay_earlier_invoices` and stores `compensate_in` when given. With `dry_run` it returns the compensations it would write (month paid, invoice written on, resource, cost item, amount) and the project and organization credit before and after, and writes nothing. Both run the same plan (`settlement.plan`), so a preview and the payment that follows it agree.
+- **Explaining it.** `GET /api/project-credits/<uuid>/earlier_invoices/` lists every closed month with its `cost`, `covered` and `uncovered`, and `in_period` for the months the credit pays. It also gives the total `uncovered` (what a Total policy counts), `uncovered_in_period`, and `payable_now`, the part the credit would pay now. Staff, support, owners and roles with `CUSTOMER.VIEW_ACCOUNTING` see it, and so do the project's own roles while the organization displays billing info in projects, as they then see the project's invoice items. `in_period` follows the credit's own bounds, which can be previewed with others.
+
+A payment counts in the month it pays everywhere cost is shown by month: `invoices.utils.month_q` / `annotate_cost_month` are used by the cost policies, the project costs chart, costs for a period and the price estimates. Counted by its invoice's month instead, a payment would take the current month below zero. `consumption_last_month` leaves payments out, since a one-off payment is not a burn rate. `rebill_historical_usage` counts them as credit already drawn for the month.
+
 #### Credit Events
 
 | Event | Trigger |
@@ -64901,39 +65065,33 @@ When a grace period is used, the effective date for zeroing credits is always th
 
 #### Cost Policies and Compensation
 
-`waldur_mastermind.policy`'s `ProjectEstimatedCostPolicy` and `CustomerEstimatedCostPolicy` (`src/waldur_mastermind/policy/models.py`) net cost against credit in two independent steps inside `evaluate()` (`EstimatedCostPolicyMixin._credit_gates`), not one combined comparison. `is_triggered()` is `evaluate().triggered`; see [Decision record](#decision-record) for what else an evaluation reports.
+`waldur_mastermind.policy`'s `ProjectEstimatedCostPolicy` and `CustomerEstimatedCostPolicy` (`src/waldur_mastermind/policy/models.py`) fire when their cost after credit is over `limit_cost`, inside `evaluate()` (`EstimatedCostPolicyMixin._credit_gates`). `is_triggered()` is `evaluate().triggered`; see [Decision record](#decision-record) for what else an evaluation reports.
 
 ```mermaid
 graph TD
-    A[New invoice item / credit change] --> B{Gate 1:<br>cost this window<br>net of compensation<br>> limit_cost?}
+    A[New invoice item / credit change] --> B{cost this window<br>net of compensation<br>> limit_cost?}
     B -->|No| Z[Policy stays clear]
-    B -->|Yes| C{use_credit configured?}
-    C -->|No| F[Policy fires]
-    C -->|Yes| D{Gate 2:<br>live credit balance<br><= limit_cost?}
-    D -->|No, balance healthy| Z
-    D -->|Yes, balance depleted| F
+    B -->|Yes| F[Policy fires]
 ```
 
-**Gate 1** sums every `InvoiceItem` for the project/customer across the policy's rolling window (1/3/12 months, or all months for Total) via `EstimatedCostPolicyMixin._evaluated_cost` -- cost items and compensation items together, unfiltered by type, since a compensation item is just a negative-priced row on the same invoice. For a month whose invoice has already been finalized -- including one `rebill_historical_usage` has just corrected -- this sum is entirely real, persisted data. There's no simulation involved in reading it. It opens when that net cost is strictly greater than `limit_cost`.
+The cost sums every `InvoiceItem` for the project/customer across the policy's rolling window (1/3/12 months, or all months for Total) via `EstimatedCostPolicyMixin._evaluated_cost` -- cost items and compensation items together, unfiltered by type, since a compensation item is just a negative-priced row on the same invoice. A payment of an earlier invoice (see [Paying earlier invoices](#paying-earlier-invoices)) is counted in the month it pays, not in the month of the invoice it is written on, so it lowers a Total policy's cost and leaves a Month policy's alone. For a month whose invoice has already been finalized -- including one `rebill_historical_usage` has just corrected -- this sum is entirely real, persisted data. There's no simulation involved in reading it. The policy fires when that net cost is strictly greater than `limit_cost`.
 
-On top of that sum, the evaluation additionally subtracts the credit the customer's *current, still-mutable* invoice will still draw (`_pending_compensation`). That comes from a `MonthlyCompensation(customer, restore_written=True)` simulation, re-run in memory on every evaluation and never saved (it refuses to `save()`). It has no bearing on any past month already reflected in the sum above.
+On top of that sum, the evaluation additionally subtracts the credit the customer's *current, still-mutable* invoice will still draw (`_pending_compensation`). That comes from a `MonthlyCompensation(customer, restore_written=True)` simulation, re-run in memory on every evaluation and never saved (it refuses to `save()`). It has no bearing on any past month already reflected in the sum above. The simulation works in credit units, before tax, while a compensation item carries its invoice's tax like the cost it offsets, so the pending draw is taxed at the current invoice's rate before it comes off; otherwise a project its credit fully covers would show the tax as cost all month.
 
-**Gate 2** compares the **live** credit balance, not the stored `CustomerCredit.value` / `ProjectCredit.value`. The stored value only falls when the month's compensations are written at the month-end run, so mid-month it still contains everything this month's usage has already consumed; comparing it held every credit-funded policy back until the 1st. The live balance comes from the same simulation (`_live_credit_balance()`):
+How much credit is left is **not** compared with `limit_cost`. Until #784 a second gate held a credit-aware policy back while the live balance stayed above the limit. With period Total, once earlier uncovered cost was above the limit, that gate alone decided, so `limit_cost` worked as a minimum remaining credit and a policy with a larger limit fired before one with a smaller limit.
+
+The **live** credit balance is still computed, from the same simulation (`_live_credit_balance()`), for the resource-creation check and the ETA projection:
 
 ```text
 live balance = stored value + restored − usage draw
 ```
 
-- `restored` is what this month's applies already took (staff can apply compensations mid-month), read from the credit ledger: this billing period's `compensation`, `minimal_draw` and `rollback` rows, per organization credit and project allocation. `restore_written=True` adds it back to the simulation's in-memory credits first, so the month is simulated from its opening balance; re-simulating from a stored value an apply had already lowered would cap the draw there. The ledger is used, not the invoice items, because the minimal-consumption floor writes no item and is only partly taken when the credit left is smaller than it.
+- `restored` is what this month's applies already took (staff can apply compensations mid-month), read from the credit ledger: this billing period's `compensation`, `minimal_draw` and `rollback` rows, per organization credit and project allocation. `restore_written=True` adds it back to the simulation's in-memory credits first, so the month is simulated from its opening balance; re-simulating from a stored value an apply had already lowered would cap the draw there. The ledger is used, not the invoice items, because the minimal-consumption floor writes no item and is only partly taken when the credit left is smaller than it. A `historical_compensation` row is not added back: a payment of an earlier invoice is not one of the month's draws, and the stored value it lowered stands.
 - `usage draw` is what the simulation records usage taking off the balance this month (`customer_usage_draw`, `get_project_usage_draw(project)`). Usage only: the minimal-consumption floor is forfeited at month end whatever the usage, so counting it would make a credit with an expected consumption read as spent on day 1.
 
-A project with a `ProjectCredit` is judged on the lower of its live allocation and the organization's live balance, since the allocation can only be drawn while the organization credit funding it lasts (`ProjectCredit.spendable_value`); without one, on the organization's live balance. Gate 2 is only consulted once gate 1 is already open (`use_credit=False` policies skip it and compare gross cost instead). `get_eta_days()` projects from the same live balance, so the ETA agrees with `is_triggered()`.
+A project with a `ProjectCredit` reads the lower of its live allocation and the organization's live balance, since the allocation can only be drawn while the organization credit funding it lasts (`ProjectCredit.spendable_value`); without one, the organization's live balance. `use_credit=False` policies compare gross cost instead.
 
-The two gates read genuinely different facts -- gate 1 is a net invoiced position over a window, gate 2 is the remaining reserve -- so they can disagree for ordinary reasons. This window's net cost can be high because credit only partially covered it, correctly, if the pool was scarce at finalization time; or because a later correction's compensation update didn't fully rebalance against a sibling sharing the same credit, since `rebill_historical_usage`'s own correction is a simplified 1:1 update to the one resource being fixed, not a full cheapest-first re-run across every resource sharing that credit (see its `sibling_compensations` warning). Either way, the real balance behind it can still have plenty of untouched headroom for other resources or future spend. The policy fires only when both independently say the account is over budget.
-
-With period Total and earlier uncovered cost already above `limit_cost`, gate 1 stays open permanently and gate 2 alone decides: `limit_cost` then works as a minimum remaining credit.
-
-Verified example, from `scripts/simulate_rebill_historical_usage.py`'s scenario B: a resource billed 500 node-hours (1,425), fully compensated at finalization time from a 3,000 project credit (1,575 left over). A correction raises the reported usage to 3,000 node-hours (8,550) -- the credit correction aborts (7,125 needed, only 1,575 available), so the compensation item stays at its old value. Gate 1 for that project: 8,550 − 1,425 = 7,125, against a `limit_cost` of 3,000 -- opens. Gate 2: the live project credit balance -- with no usage in the current month, the stored 1,575 -- is also below 3,000 -- opens too.
+Verified example, from `scripts/simulate_rebill_historical_usage.py`'s scenario B: a resource billed 500 node-hours (1,425), fully compensated at finalization time from a 3,000 project credit (1,575 left over). A correction raises the reported usage to 3,000 node-hours (8,550) -- the credit correction aborts (7,125 needed, only 1,575 available), so the compensation item stays at its old value. The cost for that project: 8,550 − 1,425 = 7,125, against a `limit_cost` of 3,000 -- the policy fires.
 
 ##### Decision record
 
@@ -64946,34 +65104,32 @@ Verified example, from `scripts/simulate_rebill_historical_usage.py`'s scenario 
 | `evaluated_cost` | The cost compared against `limit_cost`, net of `credit_deduction` |
 | `credit_deduction` | The credit the current month will still draw that is not yet written as compensation items (`_pending_compensation`); compensation already written is part of the window's invoice total |
 | `limit_cost`, `period`, `use_credit` | The policy settings it was judged on |
-| `credit_value_compared` | The live balance gate 2 compared (after the new resource's draw, in a creation check), or empty when gate 2 did not run |
+| `credit_value_compared` | Always empty since #784, which removed the credit-balance comparison; kept so the API field keeps its shape. Events leave it out, as they do every empty value |
 
 | Gate | Fires | When |
 |------|-------|------|
-| `cost_below_limit` | No | Gate 1: the cost net of credit is at or below `limit_cost` |
-| `held_by_project_credit` | No | Cost over the limit, but the project allocation's live balance -- the lower of the two -- is above it |
-| `held_by_customer_credit` | No | Cost over the limit, but the organization credit's live balance -- the lower of the two, or the only credit -- is above it |
-| `credit_exhausted` | Yes | A credit applies and the live balance compared is at or below `limit_cost`. A project allocation whose organization credit does not exist compares 0: it cannot be drawn |
+| `cost_below_limit` | No | The cost net of credit is at or below `limit_cost` |
+| `cost_over_limit` | Yes | A credit applies and the cost net of credit is over `limit_cost` |
 | `no_credit` | Yes | Cost over the limit and no credit applies: no credit exists, or an offering policy, which spans many customers |
 | `credit_ignored` | Yes | Cost over the limit on a project policy with `use_credit=False` |
 
-For a project with a `ProjectCredit`, the gate names whichever live balance is lower and therefore binding; the organization credit is named on a tie and when it does not exist (`_live_credit_balance_with_source`).
+`held_by_project_credit`, `held_by_customer_credit` and `credit_exhausted` came from the removed credit-balance gate. They are no longer produced, but stay in `PolicyGateEnum` for the clients that still handle them, and in the context of older events.
 
 The decision of the policy's own evaluation is kept on the instance as `policy.decision`. The immediate actions and resets that an evaluation runs -- from `utils._evaluate_policies` and from the policy serializer's `save()` -- run on that instance, and `_get_cost_policy_context` (`policy_actions.py`) adds the decision's fields to the action's event context: `triggered`, `gate`, `evaluated_cost`, `credit_deduction`, `limit_cost`, `period`, `use_credit`, `credit_value_compared`. A `request_*` event therefore shows the figures that fired it, and a `reset_*` event the figures that reset it, rather than balances re-read afterwards. The older `credit_balance` / `project_credit_balance` keys -- stored balances read at the time of the event -- stay for compatibility. The "A policy %s has fired / has not fired" log lines carry the same fields. Actions run without a preceding evaluation of the instance -- threshold actions from the invoice-item handler, resets when a policy is deleted -- carry only the older keys.
 
-The resource-creation check (`_check_project_policies` / `_check_customer_policies` in `policy/handlers.py`) calls `would_trigger(cost, offering)`, which is `evaluate(cost, offering).triggered` (that hypothetical decision is not kept as `policy.decision`): the same gates with the new resource's cost added, its credit draw taken off the live balance and, for an organization policy, off gate 1 only beyond what the minimal-consumption tail already absorbs (`_deduction_increase`). When the credit absorbs the whole added cost, gate 1 closes again and the decision reads `cost_below_limit`, with the balance left after the draw in `credit_value_compared`. Offering policies are not evaluated this way -- their cost spans many customers and applies only to some -- so `evaluate()` with an added cost raises for them, and `_check_offering_policies` keeps its own check.
+The resource-creation check (`_check_project_policies` / `_check_customer_policies` in `policy/handlers.py`) calls `would_trigger(cost, offering)`, which is `evaluate(cost, offering).triggered` (that hypothetical decision is not kept as `policy.decision`): the same comparison with the new resource's cost added, less what the live credit balance can still pay for it (`_added_cost_draw`). When the credit absorbs the whole added cost, the decision reads `cost_below_limit`. Offering policies are not evaluated this way -- their cost spans many customers and applies only to some -- so `evaluate()` with an added cost raises for them, and `_check_offering_policies` keeps its own check.
 
 The kept decision is a snapshot: it stays on the instance until the next own evaluation replaces it, so code that runs an action later on the same instance should evaluate first.
 
 ##### Trigger status in the API
 
-The cost-policy endpoints (`marketplace-project-estimated-cost-policies`, `-customer-`, `-offering-`) serve the current decision as `trigger_status`, so a client can say why a policy over its limit is not firing without re-deriving the gates:
+The cost-policy endpoints (`marketplace-project-estimated-cost-policies`, `-customer-`, `-offering-`) serve the current decision as `trigger_status`, so a client can say whether and why a policy fires without re-deriving the check:
 
 ```json
 "trigger_status": {
-  "gate": "held_by_project_credit",
-  "triggered": false,
-  "credit_value_compared": "2850.00"
+  "gate": "cost_over_limit",
+  "triggered": true,
+  "credit_value_compared": null
 }
 ```
 
@@ -64981,7 +65137,23 @@ The cost-policy endpoints (`marketplace-project-estimated-cost-policies`, `-cust
 
 The API sends no sentence: `gate` is the `PolicyGateEnum` in the schema, and clients word the explanation themselves, in the user's language, from `gate`, `current_cost`, `limit_cost` and `credit_value_compared`.
 
-Project policies are listed by project roles too, so the organization's figures follow the rule `ProjectCreditSerializer` applies: staff, support, organization owners and roles with `CUSTOMER.VIEW_ACCOUNTING` see them; for anyone else `customer_credit` is left out, and `credit_value_compared` is null when the balance compared is the organization's (`PolicyDecision.credit_source`). The gate itself stays visible. Project credit stays visible to project roles, as on `ProjectCredit`.
+Project policies are listed by project roles too, so the organization's figures follow the rule `ProjectCreditSerializer` applies: staff, support, organization owners and roles with `CUSTOMER.VIEW_ACCOUNTING` see them; for anyone else `customer_credit` is left out. The gate itself stays visible. Project credit stays visible to project roles, as on `ProjectCredit`.
+
+##### Cost breakdown in the API
+
+The same endpoints serve `cost_breakdown`, the parts `current_cost` is made of, from `get_cost_breakdown()`:
+
+```text
+current_cost = cost_before_credit − credit_drawn − credit_pending
+```
+
+| Field | Meaning |
+|-------|---------|
+| `cost_before_credit` | The invoiced cost within the policy's period before any credit, tax included |
+| `credit_drawn` | Credit compensation already written on the period's invoices |
+| `credit_pending` | Credit the current month will still draw that is not written yet (`_pending_compensation`); 0 for a policy that does not take credit into account, which still counts the compensation already written: that shows in `credit_drawn` |
+
+The period's items are split by `credit__isnull`, the discriminator `_pending_compensation` uses, so the parts add up to `current_cost` exactly. It shares the response's `MonthlyCompensation` with `current_cost`, and a `?field=` selection without `cost_breakdown` skips it.
 
 ##### What started an evaluation, and who
 
@@ -65089,6 +65261,7 @@ For TOTAL period components, the system:
 | `src/waldur_mastermind/invoices/tasks.py` | `create_monthly_invoices` | Monthly invoice creation task |
 | `src/waldur_mastermind/invoices/tasks.py` | `finalize_previous_invoices` | Deferred invoice finalization (grace period) |
 | `src/waldur_mastermind/invoices/compensations.py` | `MonthlyCompensation` | Credit-based compensation logic |
+| `src/waldur_mastermind/invoices/settlement.py` | `pay_earlier_invoices`, `earlier_months` | A project credit paying earlier, uncovered invoices |
 | `src/waldur_mastermind/marketplace/enums.py` | `BillingTypes`, `LimitPeriods` | Billing type and period enums |
 | `src/waldur_mastermind/policy/models.py` | `ProjectEstimatedCostPolicy`, `CustomerEstimatedCostPolicy` | Cost Policy gate logic, consumes `MonthlyCompensation` as a projection |
 
@@ -72467,13 +72640,14 @@ Guides for working on Waldur HomePort. Start with [development-setup.md](develop
 
 ## Getting started
 
-| Guide                                              | Covers                                                                                 |
-| -------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| [development-setup.md](development-setup.md)       | Environment setup, essential commands, build tooling, browser debugging, i18n commands |
-| [development-workflow.md](development-workflow.md) | Planning, TDD, problem-solving approach                                                |
-| [architecture.md](architecture.md)                 | Redux store, UI-Router routing, component organization                                 |
-| [code-quality.md](code-quality.md)                 | Linting, formatting, TypeScript checks                                                 |
-| [testing.md](testing.md)                           | Vitest unit testing and E2E standards                                                  |
+| Guide                                              | Covers                                                                                        |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| [development-setup.md](development-setup.md)       | Environment setup, essential commands, build tooling, browser debugging, i18n commands        |
+| [development-workflow.md](development-workflow.md) | Planning, TDD, problem-solving approach                                                       |
+| [architecture.md](architecture.md)                 | Redux store, UI-Router routing, component organization                                        |
+| [code-quality.md](code-quality.md)                 | Linting, formatting, TypeScript checks                                                        |
+| [testing.md](testing.md)                           | Vitest unit testing and E2E standards                                                         |
+| [visual-testing.md](visual-testing.md)             | Visual regression: Storybook comparison, parity and geometry specs, CI screenshots, reporting |
 
 ## UI patterns
 
@@ -72488,6 +72662,7 @@ Guides for working on Waldur HomePort. Start with [development-setup.md](develop
 | [tables.md](tables.md)                                                   | `useTable`, columns, filters, row actions, export                                                                                            |
 | [forms.md](forms.md)                                                     | React Final Form, `*Group` / `*EditField` / `*Filter` patterns, `TabbedSection`                                                              |
 | [filter-migration-guide.md](table/filter-migration-guide.md)             | Generated table filters from the OpenAPI schema                                                                                              |
+| [migration-guide.md](table/migration-guide.md)                           | Migrating hand-rolled tables: choosing `Table`, `SimpleTable`, a form grid or a label/value block                                            |
 | [theme.md](theme.md)                                                     | Dark mode and theming: semantic utilities, theme-aware tokens, third-party components                                                        |
 | [design-tokens.md](design-tokens.md)                                     | Colour ramps, semantic roles (text scale, surfaces, borders, status matrix, brand), the Tailwind bridge, Bootstrap colour collisions, guards |
 | [menu-navigation.md](menu-navigation.md)                                 | Sidebar menu structure and state-based routing                                                                                               |
@@ -76307,6 +76482,42 @@ One scale, the five weights `fonts.css` loads (Inter 300–700), declared in
   element, drop the weight from the rule, or, if the rule is right for everything else it
   matches, use the important modifier on that element (`font-normal!`) with a comment.
 
+## Spacing
+
+One scale: Tailwind's, with `--spacing` pinned to `4px` in `primitives/spacing.css`, so
+`gap-3` is 12px and `mb-1.5` is 6px at any root font size.
+
+Bootstrap generates no margin, padding or gap utility (#477). Its `.m*-*`, `.p*-*` and `.gap-*`
+used Tailwind's names (`mb-4`, `p-3`, `gap-2`) for its own steps (`$spacers`, rem against the
+13px root, with an irregular step 4) and were `!important`, so every spacing class rendered
+Bootstrap's value. `scripts/codemods/bootstrap-spacing.mjs` rewrote each use to the nearest half
+Tailwind step (`SPACER_TO_TAILWIND` in `packages/eslint-plugin-waldur/rules/bootstrap-spacing.js`):
+
+| Bootstrap step | At 13px root | Tailwind | Bootstrap step | At 13px root | Tailwind |
+| -------------- | ------------ | -------- | -------------- | ------------ | -------- |
+| `1`            | 3.25px       | `1`      | `8`            | 24px         | `6`      |
+| `2`            | 6.5px        | `1.5`    | `9`            | 29.25px      | `7.5`    |
+| `3`            | 9.75px       | `2.5`    | `10`           | 32.5px       | `8`      |
+| `4`            | 12px         | `3`      | `12`           | 39px         | `10`     |
+| `5`            | 16.25px      | `4`      | `15`           | 48.75px      | `12`     |
+| `6`            | 20px         | `5`      | `20`           | 65px         | `16`     |
+| `7`            | 22px         | `5.5`    | `8px`          | 8px          | `2`      |
+
+- **Write Tailwind's step**: `mb-3` is 12px. A step from older code or a Bootstrap-era design
+  note is not the same size under the same name: Bootstrap's `mb-4` is Tailwind's `mb-3`.
+- **No Bootstrap-only spellings**: `mb-md-4` is `md:mb-3`, `mt-n2` is `-mt-1.5`, `gap-8px` is
+  `gap-2`. `no-retired-bootstrap-utility` reports them with the class to use.
+- **No arbitrary `[6.5px]`** to reproduce a Bootstrap step: use the nearest Tailwind step.
+- **No runtime class names.** Tailwind generates only the names it finds in source, so
+  `` `mb-${space}` `` styles nothing. Look the class up in a map of literals, as `FormGroup`'s
+  `space` does (`SPACE_CLASSES` in `waldur-form`; `space` is a Tailwind step).
+- **Mobile:** below `md` the root drops to 12px, so Bootstrap's rem steps shrank by about 8% there;
+  Tailwind's px steps do not. Spacing follows the tokens: the difference is at most about 2.5px.
+- **A spacing class now loses where Bootstrap's `!important` used to win**: to an unlayered
+  stylesheet rule on the same element (a component `.scss` imported from TSX) and to an inline
+  `style`. Set the spacing in one place.
+- `$spacers` is left only for the grid gutters (`.g-*`), which go with `Row`/`Col` (#475).
+
 ## Corner radius
 
 All corner radius steps are pinned to physical pixels in `primitives/radius.css` (`@theme static`)
@@ -76551,7 +76762,9 @@ each theme, with the design tokens and the `dark-theme` / `light-theme` override
 change that keeps the rendered colour (a token in place of an SCSS gray of the same value)
 reports nothing.
 For the CSS side, compile `src/tailwind.css` with `@tailwindcss/node` and diff the emitted
-`--color-*` declarations.
+`--color-*` declarations. To see the rendered result, screenshot every Storybook story on both
+commits in both themes with `scripts/theme-snapshots.mjs` (see
+[visual-testing.md](visual-testing.md) → "Storybook comparison").
 
 Metronic stylesheets consume CSS custom properties directly (`var(--text-primary)`,
 `var(--bg-primary)`, `var(--border-primary)`, etc.), ensuring identical token resolution
@@ -76593,7 +76806,7 @@ For detailed testing standards and strategy, see [Testing Standards & Strategy](
 
 - `yarn test` - Run unit tests with Vitest
 - `yarn test:e2e` - Run Playwright E2E tests
-- `yarn test:visual` - Run Playwright visual regression tests
+- `yarn test:visual` - Run every Playwright project, including the visual specs (see [visual-testing.md](visual-testing.md))
 
 ### Dependency Management
 
@@ -78999,7 +79212,7 @@ For an element that must look like a row without being one (a custom picker row)
 
 - **Default alignment.** Radix's `align` defaults to `center`. Menus that grew from a trigger's start edge must say `align="start"`.
 - **Which side.** `ActionsMenu` (and `ActionsDropdown`) open to the left, aligned to the start; pass `side="bottom"` for a menu under a toolbar or "Add" button. `Menu` panels default to `side="bottom"`. A submenu's side is chosen by Radix (right, flipping left near the edge); only its `align` is yours.
-- **Bootstrap `!important` utilities.** In the main app, Bootstrap spacing classes (`py-4`, `p-0`, `mb-2`) are `!important` and beat Tailwind spacing. The menu surfaces reset their own spacing with `m-[0px] p-[0px]`, not `m-0`/`p-0`, for that reason. Prefer one system per property on a panel.
+- **Spacing on a panel.** The menu surfaces reset their own margin and padding (`m-[0px] p-[0px]`); a `py-*` or `my-*` in the panel's `className` replaces it.
 - **tailwind-merge and `text-anchor`.** `cn()` reads `text-anchor` and `text-primary` as two colours and drops the first. Put such classes on the `asChild` child, where Radix's Slot joins class names without merging (`ResourceAccessButton.tsx`).
 - **`Link` and plain strings.** The app's `Link` gives a bare string child the `text-anchor` link style, which replaces the row colour. `NavMenuLink` wraps the label in a `<span>` for this reason; do the same if you compose `Link` yourself.
 - **Hover-opened menus and clicks.** A click on a trigger that hover already opened would close it twice over (trigger toggle, outside press). `openOnHover` handles this; don't wire hover by hand.
@@ -81415,6 +81628,404 @@ export const ChecklistsTable = ({ portal, ...props }) => {
 
 ---
 
+### Migrating Hand-Rolled Tables
+<!-- Source: docs/developer-guide/ui/table/migration-guide.md -->
+
+# Migrating Hand-Rolled Tables
+
+How to move a react-bootstrap `<Table>` or raw `<table>` off Bootstrap's table
+classes, and how to pick what it becomes. Tracked in #563 (part of epic #442);
+the end goal is #502: deleting the Bootstrap/Metronic `.table-*` rules and the
+`bootstrap/scss/tables` import.
+
+Not every table should become `@/table/Table`. That goal only needs "no
+Bootstrap table classes", and a short read-only list gains nothing from a fetch
+cycle, a Redux table store and five props to switch its chrome off. Pick the
+target by what the table **is**, not by the fact that it is a `<table>`.
+
+---
+
+## Decision tree
+
+```text
+Is it a list of records (one row per item, same columns)?
+├─ No — label/value pairs about one thing ............ 1. Label/value block
+├─ No — a grid of form inputs ........................ 2. Form grid
+└─ Yes
+   ├─ Does ANY of these hold?
+   │    • the rows come from a paginated list endpoint (it takes page /
+   │      page_size), so the server has to page them
+   │    • users need to search, sort or filter the rows
+   │    • it needs selection, expandable rows or a menu of row actions
+   │    • it needs export, or an empty state with a call to action (NoResult)
+   │  └─ Yes ............................................. 3. @/table/Table
+   └─ No: every row is already in memory and is only read
+      (dialog summary, preview, reference list, review step, docs table)
+                                                       ... 4. SimpleTable
+```
+
+**Row count alone is not a reason to use `Table`.** If the rows are already
+in memory (one detail or aggregate response, a form value, static data),
+paging them in the browser adds clicks and a fetch cycle but saves nothing:
+render them with `SimpleTable`, and if the list can be long, cap its height
+with a scroll container. Page in the browser
+(`createClientPaginatedFetcher`) only when a list in memory runs to hundreds
+of rows _and_ needs `Table`'s other features.
+
+Conversely, a list read with a hook that calls a **paginated** endpoint
+without `page`/`page_size` silently shows only the backend's first page.
+That is the clearest case for `Table` with `createFetcher`: the server pages,
+and the table shows every page.
+
+A single button that is the purpose of each row (Link, Select, Retry) is a
+column, not a row action, and can stay in `SimpleTable`. Use `Table`'s 3-dots
+menu when a row has several actions or ones that are secondary to reading it.
+
+`SimpleTable` takes the same `Column<T>` definitions as `Table`, so moving a
+list from 4 to 3 later is a component swap plus `useTable`, not a rewrite.
+
+---
+
+## 1. Label/value block
+
+A details panel, an expandable-row summary or a "Connection" card: each row is
+one label and one value about a single object. This is not tabular data.
+
+There are exactly two ways to write one; do not hand-roll a third (a `<dl>`
+grid, a local `DetailRow` / `InfoRow`, a borderless `<table>`). Choose by what
+the rows do, not by where the block sits:
+
+```text
+Can the user act on a row (an edit button, an inline control, an action)?
+├─ Yes .................................................... FormTable
+└─ No: read-only
+   ├─ Must every property show, even when it has no value
+   │  (a settings or configuration overview, where "not set" is information)?
+   │  └─ Yes ............................................... FormTable
+   └─ No: a summary that leaves out what is empty ......... Field
+      (always Field in an expandable row, inside ExpandableContainer asTable)
+```
+
+|                  | `FormTable` + `FormTable.Item`                                                               | `Field` (+ `ExpandableContainer asTable`)                             |
+| :--------------- | :------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------- |
+| For              | Editable details and settings panels; read-only configuration overviews                      | Read-only summaries: expanded rows, detail dialogs, preview cards     |
+| Empty value      | Row stays; pass `renderFieldOrDash(value)` so it reads as a dash                             | Row is left out; pass the raw value                                   |
+| Row actions      | `actions` column; `*EditField` adds the edit button                                          | None                                                                  |
+| Controls in rows | Label is a `<label>` pointing at the row's control; `required`, `description`, `warnTooltip` | Not for controls                                                      |
+| Extras           | `FormTable.Card` (title, refresh, toolbar), grouped rows, `detailsMode`                      | `hasCopy`, help `tooltip`, colon and long-label tooltip added for you |
+| In the app today | 118 files; 67 with edit or row actions; one in an expandable row                             | 128 files; 52 in expandable rows                                      |
+
+When a block is half and half (read-only rows plus one editable row), it is
+`FormTable`: a single panel should not mix both components.
+
+**`FormTable`**, a page's settings panel with every property shown:
+
+```tsx
+import FormTable from '@/form/FormTable';
+
+<FormTable>
+  <FormTable.Item
+    label={translate('Partner Name')}
+    value={renderFieldOrDash(settings.partner_name)}
+  />
+  <FormTable.Item
+    label={translate('Sync Enabled')}
+    value={settings.sync_enabled ? translate('Yes') : translate('No')}
+  />
+</FormTable>;
+```
+
+With editable rows, use the `*EditField` exports inside an
+`EditFieldProvider` instead of `FormTable.Item` (`docs/forms.md` → Edit Field
+Architecture). References: `src/administration/arrow/settings/ArrowSettingsCard.tsx`
+(read-only overview), `src/customer/details/CustomerDetailsPanel.tsx`
+(editable).
+
+**`Field`**, a read-only summary; in an expandable row, wrapped so labels and
+values line up in columns:
+
+```tsx
+import { Field } from '@/resource/summary';
+import { ExpandableContainer } from '@/table/ExpandableContainer';
+
+const RecordDetail = ({ row }) => (
+  <ExpandableContainer asTable>
+    <Field label={translate('Resource')} value={row.resource_name} />
+    <Field label={translate('Created')} value={formatDateTime(row.created)} />
+    <Field
+      label={translate('Final (Sell)')}
+      value={row.final_sell ? defaultCurrency(row.final_sell) : null}
+      valueClass="font-medium"
+    />
+  </ExpandableContainer>
+);
+```
+
+In a dialog or card, list the `Field`s directly. References:
+`ConsumptionRecordDetail` in
+`src/administration/arrow/consumption/ConsumptionRecordsList.tsx` (expandable
+row), the header of
+`src/administration/arrow/mappings/CustomerBillingSummaryDialog.tsx` (dialog).
+
+What `Field` does for you, so callers do not repeat it:
+
+- **Empty values:** a row whose value is `undefined`, `null`, `''` or `false`
+  is left out. Pass the raw value; do not add `renderFieldOrDash` or a dash
+  fallback. `0` is a value and is shown, so pass counts as numbers rather than
+  wrapping them in `String(...)`. The one exception is a property whose
+  absence is itself information (a final amount not confirmed yet): pass
+  `DASH_ESCAPE_CODE` for it, with a comment, so the row stays.
+- **Labels:** a string label gets its colon, and a long one a tooltip; do not
+  add `:` to the translation.
+- **Extras:** `hasCopy` for a copy button, `tooltip` for a help icon,
+  `valueClass` / `labelClass` for emphasis or a fixed label width.
+
+`FormTable` itself is still built on react-bootstrap's `Table` and is used in
+over a hundred places; rebuilding it on waldur-ui is one change that clears all
+of them, so do not migrate its call sites one by one.
+
+## 2. Form grid
+
+One row per item with inputs in the cells: a price editor, quota limits, a
+mapping step in a wizard. `@/table/Table` fights this shape: it pages rows
+(hiding ones that are being edited or carry a validation error), reserves a
+min-height and sizes columns for a page of data.
+
+Build it from waldur-ui's primitives and add the file to the rule's
+`ALLOWED_FILES` in
+`packages/eslint-plugin-waldur/rules/no-hand-rolled-table.js` with a one-line
+reason, as `PricesTable.tsx` already is:
+
+```tsx
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from 'waldur-ui';
+
+<Table>
+  <TableHeader>
+    <TableRow>
+      <TableHead>{translate('Component')}</TableHead>
+      <TableHead>{translate('Limit')}</TableHead>
+    </TableRow>
+  </TableHeader>
+  <TableBody>
+    {components.map((component) => (
+      <TableRow key={component.type}>
+        <TableCell>{component.name}</TableCell>
+        <TableCell>
+          <Field name={`limits.${component.type}`} component={NumberField} />
+        </TableCell>
+      </TableRow>
+    ))}
+  </TableBody>
+</Table>;
+```
+
+Do not reach for the primitives for anything else: they are hand-rolling with
+nicer parts, and the lint rule does not see them yet.
+
+## 3. `@/table/Table`
+
+A list that needs the server to page it, or needs search, sorting, filters,
+selection, expandable rows or a menu of row actions. Follow the other table
+guides; the parts specific to migrating:
+
+- **Server data:** `createFetcher(sdkFunction)` with a memoized `filter`, as
+  in [fetching.md](./fetching.md). This replaces a `useQuery` hook that read
+  the list endpoint itself; drop the hook if nothing else uses it.
+
+  ```tsx
+  const filter = useMemo(
+    () => ({ resource_uuid: resource.uuid }),
+    [resource.uuid],
+  );
+  const tableProps = useTable({
+    table: `arrow-consumption-history-${resource.uuid}`,
+    fetchData: createFetcher(adminArrowConsumptionRecordsList),
+    filter,
+  });
+  ```
+
+  Reference:
+  `src/administration/arrow/resources/ViewConsumptionHistoryDialog.tsx`.
+
+- **Rows already in memory that still need `Table`** (hundreds of rows with
+  search or sorting): `createClientPaginatedFetcher(rows)`. The fetcher closes
+  over the rows and `useTable` does not key its query on them, so refetch when
+  they change, or the table keeps its first (often empty) result:
+
+  ```tsx
+  const tableProps = useTable({
+    table: `my-local-list-${scopeUuid}`,
+    fetchData: createClientPaginatedFetcher(rows),
+  });
+  useEffect(() => {
+    tableProps.fetch();
+  }, [rows]);
+  ```
+
+- **The `table` id is global.** A table rendered once per row, per dialog or per
+  scope needs the scope's uuid in its id (`arrow-consumption-lines-${uuid}`), or
+  two copies share one store entry.
+- **Nested in a dialog, tab or expandable row:** drop the chrome the parent
+  already provides:
+
+  ```tsx
+  <Table
+    {...tableProps}
+    columns={columns}
+    verboseName={translate('billing lines')}
+    hideTitle
+    hasActionBar={false}
+    placeholderHasRetry={false}
+    minHeight="auto"
+  />
+  ```
+
+- **Several or secondary buttons in a row** become row actions
+  (`ActionsDropdown` + `ActionItem`, see [row-actions.md](./row-actions.md)).
+- **Tests** that render the list need a table store:
+
+  ```tsx
+  import { Provider } from 'react-redux';
+
+  import { createTablesStore } from '@/table/store';
+
+  renderWithProviders(
+    <Provider store={createTablesStore()}>
+      <DrawerProvider>
+        <MyList />
+      </DrawerProvider>
+    </Provider>,
+  );
+  ```
+
+  Rows arrive asynchronously: use `findBy*`, not `getBy*`.
+
+## 4. `SimpleTable`
+
+A list already in memory, with the main table's look and none of its
+fetching, paging, sorting or filters. No store, no id, no fetch cycle, and new
+rows show on the next render with no refetch; tests render it without
+providers.
+
+```tsx
+import { SimpleTable } from '@/table/SimpleTable';
+import { Column } from '@/table/types';
+
+const columns: Column<ExportType>[] = [
+  { title: translate('Export type'), render: ({ row }) => <>{row.name}</> },
+  {
+    title: translate('Fields'),
+    render: ({ row }) => <>{row.required_fields_found}</>,
+    className: 'text-end',
+    headerClassName: 'text-end',
+  },
+];
+
+<SimpleTable columns={columns} rows={exportTypes} rowKey="reference" />;
+```
+
+It renders only the header when `rows` is empty, so keep the caller's own empty
+message (`rows.length === 0 ? <p>…</p> : <SimpleTable … />`). It has no footer
+row: put a total in the surrounding card header or below the table.
+
+- **A list that can be long** keeps every row and caps its height instead of
+  paging (the header scrolls with the rows):
+
+  ```tsx
+  <div className="max-h-[300px] overflow-y-auto">
+    <SimpleTable columns={columns} rows={licenses} />
+  </div>
+  ```
+
+- **A button that is the point of the row** is a column:
+
+  ```tsx
+  {
+    title: translate('Action'),
+    headerClassName: 'text-end',
+    className: 'text-end',
+    render: ({ row }) => (
+      <BaseButton label={translate('Link')} onClick={() => link(row)} />
+    ),
+  }
+  ```
+
+References: `src/administration/arrow/mappings/SuggestedMatches.tsx`
+(button column), `src/administration/arrow/mappings/ArrowLicensesList.tsx`
+(capped height).
+
+---
+
+## Behaviour changes to call out
+
+Migrating is not a pure restyle. List each of these in the MR when it happens:
+
+| Change                                                                 | Why it matters                                                     |
+| :--------------------------------------------------------------------- | :----------------------------------------------------------------- |
+| A capped list (`slice(0, 10)` + "Showing 10 of N") now shows every row | Cap the height with a scroll container if it can be long           |
+| A list read from a paginated endpoint now pages on the server          | It showed only the first page before; now it shows every row       |
+| A `<tfoot>` total is dropped                                           | `Table` and `SimpleTable` have no footer row; show the total above |
+| A row button moves into the 3-dots menu                                | One more click; tests that clicked the button must open the menu   |
+| A form grid gains a pager                                              | Rows being edited can be paged out of view; use a form grid (2)    |
+| An empty table now shows `NoResult`                                    | Check the caller does not also render its own empty message        |
+
+---
+
+## Working a batch
+
+One MR per area (Arrow, Matrix, marketplace policies, proposals, reporting,
+OpenStack), as #563 proposes.
+
+1. **Inventory the area.** The issue's grep misses react-bootstrap's `Table`, so
+   search for both:
+
+   ```bash
+   grep -rlE "<table|from 'react-bootstrap'" src/<area> --include=*.tsx | xargs grep -lE "<table|\bTable\b"
+   ```
+
+2. **Classify every site** with the decision tree and write the table into the
+   MR description: file, shape, target (1–4), behaviour changes.
+3. **Migrate.** Keep translations, cell content and badges as they are; change
+   the container, not the content.
+4. **Verify:** `yarn tsgo --noEmit`, `yarn lint:check`, targeted `vitest` for
+   the area, and before/after screenshots of each dialog or page touched.
+5. **Confirm the area is clean:** no `<table`, react-bootstrap `Table` or
+   `table-*` class left in it outside files on the rule's allowed list.
+
+---
+
+## Framework work before the remaining batches
+
+These remove the workarounds above; each one is cheaper to do once than to
+repeat across the remaining batches.
+
+- **In-memory rows in `useTable`:** accept the rows directly and refetch when
+  they change, so the `useEffect` refetch and the hand-scoped id go away.
+- **An embedded preset** for `Table`: one prop in place of `hideTitle`,
+  `hasActionBar={false}`, `placeholderHasRetry={false}` and `minHeight="auto"`.
+- **`SimpleTable`:** an empty message and an optional footer row for totals.
+- **`FormTable` rebuilt on waldur-ui**, and `Field` moved off react-bootstrap's
+  `Row`/`Col` into the table module next to `SimpleTable`, since it is the
+  app's general property list rather than a resource-summary part.
+- **The hand-rolled property lists outside Arrow** moved to `Field`: local
+  `ClusterInfoRow` (`RabbitMQClusterOverview.tsx`) and `DetailRow`
+  (`InvitationDetailsCard.tsx`), and the `<dl>` blocks in
+  `TicketDraftCard.tsx`, `RuleTestMatchDialog.tsx`,
+  `MergeCheckDetailsDialog.tsx` and `ResourceLimitDetails.tsx`.
+- **`no-hand-rolled-table`:** also flag waldur-ui's `Table` primitives outside
+  the allowed files, and promote the rule to `error` one directory at a time as
+  each batch lands, so a finished area cannot regress.
+- **A `renderWithProviders` option** that supplies the table store.
+
+---
+
 ### Table Component: Row Actions & Selection
 <!-- Source: docs/developer-guide/ui/table/row-actions.md -->
 
@@ -81773,6 +82384,10 @@ To make table integration rules, properties, and layouts easier to navigate, the
 | **[Pillar 6: Visual Customizations](./table/visual-customizations.md)** | Grid layouts (`gridItem` + `gridSize` + `gridSpace`), custom empty placeholders, header titles, styling class triggers, and standalone mode.                                    |
 | **[Pillar 7: Layout Wrappers & Portals](./table/layout-wrappers.md)**   | Rendering multiple tables within tabs (`TableWithTabs`) and forwarding rendering portals (`portal`).                                                                            |
 | **[Pillar 8: Form Integration](./table/form-integration.md)**           | Embedding tables as input fields in `react-final-form` (`fieldType`, `fieldName`, `rowValidate`).                                                                               |
+
+Replacing a react-bootstrap `<Table>` or raw `<table>`? Start with the
+**[Migration guide](./table/migration-guide.md)**: it decides whether the list
+becomes `Table`, `SimpleTable`, a form grid or a label/value block.
 
 ---
 
@@ -82309,11 +82924,9 @@ In production bundles, Vite's CSS minifier removes the explicit `@layer theme, b
 
 CSS Cascade Layers do **not** outrank `!important`. Bootstrap 5's utility API emits utilities with `!important` by default. Because Tailwind and Bootstrap share identical utility names, collisions occur on shared class strings:
 
-| Colliding Class           | Bootstrap Rule (`!important`)                          | Tailwind Expected Rule               | Rendered on App Pages |
-| :------------------------ | :----------------------------------------------------- | :----------------------------------- | :-------------------- |
-| `.border`                 | `border: 1px solid var(--bs-border-color) !important;` | `border-width: 1px;`                 | **Bootstrap**         |
-| `.p-1` through `.p-5`     | `padding: $spacers[N] !important;`                     | `padding: calc(var(--spacing) * N);` | **Bootstrap**         |
-| `.gap-1` through `.gap-5` | `gap: $spacers[N] !important;`                         | `gap: calc(var(--spacing) * N);`     | **Bootstrap**         |
+| Colliding Class | Bootstrap Rule (`!important`)                          | Tailwind Expected Rule | Rendered on App Pages |
+| :-------------- | :----------------------------------------------------- | :--------------------- | :-------------------- |
+| `.border`       | `border: 1px solid var(--bs-border-color) !important;` | `border-width: 1px;`   | **Bootstrap**         |
 
 No colour class collides any more: Bootstrap emits no `text-`/`bg-`/`border-` colour utility at
 all (nor `.border-top`/`-bottom`/`-start`/`-end`, which set a colour), so every colour class is
@@ -82322,28 +82935,30 @@ Tailwind's, follows the design tokens and takes `dark:`/`hover:` variants. Boots
 way. See
 [design-tokens.md § Bootstrap colour utilities](design-tokens.md).
 
-#### Spacing Anomaly
+#### Spacing Anomaly (resolved, #477)
 
-Bootstrap defines `$spacers: (0: 0, 1: $spacer * .25, 2: $spacer * .5, 3: $spacer * .75, 4: $spacer * 0.154 * 6, 5: $spacer * 1.25)`.
-At Metronic's forced root font size of `13px` (and `12px` on mobile):
-
-- `p-1`, `p-2`, `p-3`, `p-5` render at `0.25rem × N` (`3.25px`, `6.5px`, `9.75px`, `16.25px`).
-- `p-4` renders at `0.924rem` (`12.012px` on desktop, `11.088px` on mobile), whereas Tailwind's `p-4` expects `16px`.
-- Steps above 20 fall through to Tailwind because Bootstrap's `$spacers` map stops at 20.
+Bootstrap's `$spacers` were rem against the forced `13px` root (`12px` on mobile), with an
+irregular step 4 (`0.924rem`, 12px), and its `.m*-*`, `.p*-*` and `.gap-*` utilities were
+`!important` under Tailwind's names, so `p-4` rendered 12px instead of Tailwind's 16px. Bootstrap
+no longer generates any spacing utility: every use was rewritten to the nearest Tailwind step
+(`p-4` → `p-3`), and spacing classes are Tailwind's 4px scale. See
+[design-tokens.md](design-tokens.md) → "Spacing". `$spacers` stays only for the grid
+gutters (`.g-*`, `.gx-*`, `.gy-*`), which go with `Row`/`Col` (#475).
 
 #### Practical Workaround Rules
 
-1. **Exact Pixel Sizing**: For spacing or padding that must match design tokens precisely, use Tailwind arbitrary values: `p-[12px]`, `gap-[8px]`, `px-[16px]`.
-2. **Structural Borders**: Use `border-[1px]` instead of the bare `.border` utility. Bootstrap's
+1. **Structural Borders**: Use `border-[1px]` instead of the bare `.border` utility. Bootstrap's
    `.border` also sets the colour with `!important`, so any Tailwind border colour next to it
    (`border border-brand`, `border border-transparent hover:border-secondary`) never paints.
    Give every state an explicit colour: `border-[1px] border-secondary`, then `border-brand`
    when selected. Enforced (with autofix) by `no-bootstrap-border-with-tailwind-color`.
-3. **Layout & Display Utilities**: Legacy Bootstrap layout classes are retired in favor of native Tailwind equivalents, and Bootstrap no longer generates `display` or `flex` utilities (`src/styles/bootstrap/_utilities.scss`):
+2. **Layout & Display Utilities**: Legacy Bootstrap layout classes are retired in favor of native Tailwind equivalents, and Bootstrap no longer generates `display`, `flex`, flex-alignment (`justify-content`, `align-items`, `align-self`) or `order` utilities (`src/styles/bootstrap/_utilities.scss`):
    - Display: `d-flex` → `flex`, `d-block` → `block`, `d-none` → `hidden`, `d-inline` → `inline`, `d-inline-block` → `inline-block`, `d-inline-flex` → `inline-flex`, `d-grid` → `grid`, and responsive breakpoints (`d-md-none` → `md:hidden`, `d-lg-block` → `lg:block`, `d-sm-flex` → `sm:flex`).
-   - Flexbox: `flex-column` → `flex-col`, `align-items-*` → `items-*`, `align-self-*` → `self-*`, `justify-content-*` → `justify-*`, `flex-grow-1` → `grow`, `flex-shrink-0` → `shrink-0`.
+   - Flexbox: `flex-column` → `flex-col`, `align-items-*` → `items-*`, `align-self-*` → `self-*`, `justify-content-*` → `justify-*`, `flex-grow-1` → `grow`, `flex-shrink-0` → `shrink-0`, `order-sm-2` → `sm:order-2` (`order-0`…`5`, `order-first` and `order-last` keep their names).
    - Flex helpers (Metronic `_flex.scss`): `flex-center` → `flex items-center justify-center`, `flex-root` → `flex-1`, `flex-equal` → `flex-1`, `flex-column-fluid` → `flex-auto`, `flex-column-auto` → `flex-none`, `flex-lg-row-fluid` → `lg:flex-auto lg:min-w-0`, `flex-sm-column-auto` → `sm:flex-none`.
    - Sizing & Text: `w-100` → `w-full`, `h-100` → `h-full`, `mw-100` → `max-w-full`, `mh-100` → `max-h-full`, `text-truncate` → `truncate`.
+   - Shared names (#478): Bootstrap no longer generates text alignment, white-space, overflow, opacity, vertical alignment, visibility, the position offsets, `shadow-none` or `rounded-0`, so `text-center`, `overflow-hidden`, `opacity-50`, `align-middle`, `invisible`, `top-0` and the like are Tailwind's. Bootstrap's were `!important`, so a variant beside one (`opacity-50 hover:opacity-75`) now applies, and an unlayered component rule now beats one. Bootstrap-only spellings: `text-nowrap` → `whitespace-nowrap` and `text-wrap` → `whitespace-normal` (Tailwind's set the newer `text-wrap` property), `text-md-center` → `md:text-center`, and the percentage offsets `start-50` → `start-1/2`, `top-100` → `top-full` (Tailwind reads `start-50` as 200px, so these are reported without an autofix).
+   - Bootstrap-only names (#478): `position-relative` → `relative` (`position-md-sticky` → `md:sticky`), `text-uppercase`/`-capitalize`/`-lowercase` → `uppercase`/…, `fst-italic` → `italic`, `fst-normal` → `not-italic`, `font-monospace` → `font-mono`, `text-break` → `wrap-anywhere` (Bootstrap's `word-break: break-word` lets a long word shrink a flex item or table cell, which `break-words` does not), `text-decoration-underline`/`-none`/`-line-through` → `underline`/`no-underline`/`line-through`, `user-select-none` → `select-none`, `pe-none` → `pointer-events-none`, `translate-middle` → `-translate-1/2` (`-x`/`-y` alike), `z-index-1` → `z-1` (`z-index-n1` → `-z-1`), `rounded-top`/`-end`/`-bottom`/`-start` → `rounded-t-lg`/`rounded-e-lg`/…. Bootstrap no longer generates any of them, nor `rounded-pill`/`rounded-circle` (`rounded-full`, via `enforce-border-radius-tokens`).
    - Enforced (with automated autofix) by `waldur-custom/no-bootstrap-layout-utility`.
 
 ---
@@ -82670,9 +83285,9 @@ Every menu and menu-like popover is built from one set of parts in `waldur-ui` (
 
 Radix's `Slot` clones trigger elements and attaches positioning refs and event handlers. **Every intermediate trigger component in an `asChild` hierarchy must be wrapped in `forwardRef` and spread `...props`**, or clicks will silently fail.
 
-#### Bootstrap utilities on panels
+#### Spacing and colour classes on panels
 
-Bootstrap's spacing utilities are `!important`, so a Bootstrap class on a panel (`py-4`, `p-0`) beats any Tailwind spacing. The surfaces reset their own margin and padding with arbitrary values (`m-[0px] p-[0px]`) rather than `m-0`/`p-0` for that reason: Bootstrap's `.p-0` would otherwise cancel a caller's Tailwind `py-*`. Tailwind-merge also reads `text-anchor` and `text-primary` as two colours and drops the first; put such classes on the `asChild` child (Slot joins class names without merging them) rather than on the row (see `ResourceAccessButton.tsx`).
+The surfaces reset their own margin and padding (`m-[0px] p-[0px]`); a caller's `py-*` or `my-*` replaces it. Tailwind-merge also reads `text-anchor` and `text-primary` as two colours and drops the first; put such classes on the `asChild` child (Slot joins class names without merging them) rather than on the row (see `ResourceAccessButton.tsx`).
 
 ---
 
@@ -82814,7 +83429,9 @@ The former `enforce-button-variants` rule was deleted: the variant list lives in
 `yarn test:e2e:visual` runs `e2e-visual/*.spec.ts` through Playwright (project `visual`, against the app on :8001 and Storybook on :6006).
 
 - **`focus-ring.spec.ts`**: asserts that keyboard focus produces a _visible_ indicator with at least 3:1 contrast (WCAG 2.4.7 and 1.4.11), in light and dark. Its fixtures are built from `buttonVariants()` on the `actions-basebutton--playground` story's stylesheet and cover the places a ring was once suppressed: elevation utilities (`shadow-sm`), an unlayered page stylesheet setting a `box-shadow`, a menu row (`navMenuRowClassName()`) and `nav-line-tabs`. The `primary` case is a recorded contrast gap (`test.fail()`): a brand ring on a brand-filled button is about 1.6:1. `.btn-no-focus` is deliberately not a fixture — see the pseudo-states pitfall.
-- **`stat-card-parity.spec.ts`**, **`charts.spec.ts`**, **`wizards.spec.ts`**: parity and screenshot checks for other components; `visualParityHarness.ts` holds the shared pixel-diff and chromaticity helpers.
+- **`card-parity.spec.ts`**, **`stat-card-parity.spec.ts`**: old-vs-new parity on one Storybook page through `visualParityHarness.ts`; **`top-bar-geometry.spec.ts`**: the header's measured geometry; **`charts.spec.ts`**, **`wizards.spec.ts`**: page screenshots in the signed-in app.
+
+How each works, how to write one, and how to compare a branch with `develop` (including the Storybook comparison of every story with `scripts/theme-snapshots.mjs`) is in [visual-testing.md](visual-testing.md).
 
 Run one spec with `yarn playwright test focus-ring --project=visual --workers=1` (a filter, not a path; passing a path is read as a project name). Playwright executes specs in Node, so a spec may import `packages/ui/src/Button` directly but not the `waldur-ui` barrel, whose modules touch `document` at import time.
 
@@ -83333,6 +83950,10 @@ E2E and visual regression tests are implemented using [Playwright](https://playw
 
 - **Location**: `e2e/` (Workflows) and `e2e-visual/` (Visual Regression).
 - **Focus**: Critical user journeys and visual consistency across themes.
+- **Visual regression**: [visual-testing.md](visual-testing.md) covers which tool answers which
+  question: the Storybook comparison of every story against `develop` (`scripts/theme-snapshots.mjs`),
+  parity and geometry specs, page screenshots, the integration-testing screenshots and what to
+  report in a merge request. None of the visual checks run in CI.
 
 ---
 
@@ -83342,7 +83963,7 @@ E2E and visual regression tests are implemented using [Playwright](https://playw
 | :----------------- | :---------------------------- |
 | `yarn test`        | Run unit tests with Vitest    |
 | `yarn test:e2e`    | Run E2E tests with Playwright |
-| `yarn test:visual` | Run visual regression tests   |
+| `yarn test:visual` | Run every Playwright project  |
 
 ---
 
@@ -85407,6 +86028,243 @@ const mutation = useManagedMutation({
   }
 });
 ```
+
+---
+
+### Visual Regression Testing
+<!-- Source: docs/developer-guide/ui/visual-testing.md -->
+
+# Visual Regression Testing
+
+How to check that a change moves no pixel it shouldn't, and how to show the pixels it does move.
+Read this before refactoring CSS, design tokens, a shared component's markup or the Bootstrap
+stylesheet, and before writing "no visual change" in a merge request.
+
+Unit tests and lint do not see rendering. A class Tailwind does not generate, an unlayered
+stylesheet that now outranks a utility, a cascade-layer `!important` that used to win: each
+passes every other check and still changes the page.
+
+## Which tool answers which question
+
+| Question                                                               | Tool                                                                   | Needs                       |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------------- | --------------------------- |
+| Did my branch change how any story renders, compared with `develop`?   | [Storybook comparison](#storybook-comparison-every-story-base-vs-head) | Two Storybook builds        |
+| Does the new component render like the old one it replaces?            | [Parity specs](#parity-specs-old-and-new-side-by-side)                 | Storybook on :6006          |
+| Is a migrated layout still the size it was measured to be?             | [Geometry specs](#geometry-specs-pinned-measurements)                  | Storybook on :6006          |
+| Do real pages with data still look the same?                           | [Page screenshots](#page-screenshots-with-local-baselines)             | App on :8001 with a backend |
+| How do the busy screens look before and after, with real data?         | [Integration-testing screenshots](#integration-testing-screenshots)    | The MR's CI pipeline        |
+| Does a keyboard focus ring stay visible?                               | `e2e-visual/focus-ring.spec.ts`                                        | Storybook on :6006          |
+| Did a SCSS refactor change a resolved colour, or what Bootstrap emits? | [Stylesheet checks](#stylesheet-checks-no-browser)                     | Nothing                     |
+
+For a refactor that should change nothing (tokens, SCSS moves, component internals), run the
+Storybook comparison: it covers every story in both themes and needs no backend. For a change that moves
+pixels on purpose (spacing, padding, a new token value), run it too, and attach the largest
+differences to the merge request.
+
+## Ground rules
+
+- **Storybook renders with the app's stylesheet.** The theme decorator in `.storybook/preview.tsx`
+  calls `loadTheme()`, which injects the compiled Bootstrap/Metronic stylesheet and sets
+  `data-theme`. A story therefore shows the same cascade the app does, including Bootstrap's
+  `!important` utilities. Every tool here waits for that stylesheet (a `link` whose URL matches
+  `/style[-.]/`) before capturing; a capture taken earlier shows unstyled markup.
+- **Freeze before capturing.** Wait for `document.fonts.ready` (a capture in the fallback font
+  differs on every text pixel), and inject
+  `*, *::before, *::after { transition: none !important; animation: none !important; }`.
+  `gotoParity()` and `theme-snapshots.mjs` do both.
+- **Both themes.** Capture light and dark: a token change is often right in one and wrong in the
+  other. Storybook takes the theme as a URL global:
+  `iframe.html?id=<story-id>&viewMode=story&globals=theme:dark`.
+- **Pixels for colour, boxes for geometry.** A pixel diff is the right check for a colour or a
+  missing element. For spacing and size, measure `boundingBox()` instead: a 1px shift changes every
+  pixel after it, so a pixel ratio cannot tell "everything moved 1px" from "one thing moved 20px".
+  The parity harness checks dimensions first for this reason.
+- **The root font size is 13px (12px below `md`).** rem values differ between the two, so measure
+  at both viewports when a layout is rem-based (`top-bar-geometry.spec.ts` does).
+- **Storybook is not the app for focus and hover.** `storybook-addon-pseudo-states` rewrites
+  `:focus-visible` and `:hover` selectors (see
+  [tailwind-shadcn-migration-notes.md](tailwind-shadcn-migration-notes.md) → "Testing Gotchas &
+  Pitfalls" → "Storybook rewrites pseudo-classes").
+  Confirm focus and hover results against the dev server on :8001.
+- **Never bulk-accept a baseline.** Look at every changed image, and state in the merge request
+  what changed and by how much.
+
+## Storybook comparison: every story, base vs head
+
+`scripts/theme-snapshots.mjs` screenshots every story of a static Storybook build in light and
+dark, then pixel-diffs two such captures. Build the base branch and your branch, capture each, and
+compare. It serves the build itself; nothing else needs to be running.
+
+```bash
+# Base build, in a separate worktree so your checkout stays on your branch
+git worktree add ../homeport-base origin/develop
+(cd ../homeport-base && yarn install --immutable && yarn build-storybook)
+
+# Head build
+yarn build-storybook
+
+node scripts/theme-snapshots.mjs capture ../homeport-base/storybook-static /tmp/vt/base
+node scripts/theme-snapshots.mjs capture storybook-static /tmp/vt/head
+node scripts/theme-snapshots.mjs compare /tmp/vt/base /tmp/vt/head /tmp/vt/report
+```
+
+- `capture <storybook-static> <out-dir> [--filter <regex>] [--font <family>]` writes
+  `<story-id>.<theme>.png`, full page, at a 1280×900 viewport. `--filter` matches story ids
+  (`--filter '^actions-'`). `--font` forces one font family everywhere, for comparing two builds
+  that load different web fonts: the text then cannot differ, so colour changes stand out.
+- `compare <base-dir> <head-dir> <report-dir>` writes `report.json` (every pair: `same`,
+  `changed` with `changedPixels`, `ratio` and `sizeChanged`, or `missing in head` / `new in head`)
+  and, for each changed pair, a `base | head | changed pixels in red` PNG. It prints the changed
+  pairs sorted by ratio and exits 1 when anything differs.
+- The per-pixel threshold is 0.05: antialiasing passes, a one-step colour ramp change does not.
+- `compare` pairs any two directories of PNGs by file name, so it also diffs the
+  [integration-testing screenshots](#integration-testing-screenshots).
+
+**Reading the report.** For a change that should be invisible, the expected result is
+`0 changed` in both themes; open every changed sheet. For an intended change, start with the
+largest ratios and every `size changed` entry (the page got taller or shorter), check that each is
+the change you meant, and name the stories you checked in the merge request. A ratio says how much
+of the page changed, not by how much: a 1px shift near the top of a story changes most of it.
+
+## Parity specs: old and new side by side
+
+A parity spec renders the old implementation and its replacement on one Storybook page and diffs
+the two live renders against each other, in the same browser and run, so there is no committed
+baseline to go stale. `e2e-visual/visualParityHarness.ts` provides the machinery;
+`card-parity.spec.ts` and `stat-card-parity.spec.ts` use it.
+
+1. **The story** (`src/core/CardParity.stories.tsx`, title `Migration/Card Parity`) renders each
+   case twice, wrapped in `data-pair="<case>" data-role="old"` and `data-role="new"`, at the same
+   fixed width.
+2. **The spec** creates a harness and runs each case in both themes:
+
+   ```typescript
+   const { gotoParity, expectPixelParity } = createParityHarness({
+     storyId: 'migration-card-parity--default',
+     diffDir: path.join(__dirname, '../test-results/card-parity-diffs'),
+     thresholds: {
+       maxDimensionSlackPx: 1.0,
+       diffRatioThreshold: 0.06,
+       pixelmatchThreshold: 0.25,
+       foregroundDistanceThreshold: 30,
+       chromaticityTolerance: 3,
+     },
+   });
+
+   // In each test, after `await gotoParity(page, theme)`:
+   await expectPixelParity(
+     page.locator(`[data-pair="${caseId}"][data-role="old"]`),
+     page.locator(`[data-pair="${caseId}"][data-role="new"]`),
+     `${theme}-${caseId}`,
+   );
+   ```
+
+3. **The checks**, in order: dimensions (`boundingBox()`, within `maxDimensionSlackPx`), the
+   pixelmatch ratio (`diffRatioThreshold`), and dominant-colour chromaticity
+   (`chromaticityTolerance`), which catches a wrong hue on a small, text-heavy element that a ratio
+   would pass. A failing case writes `<name>-old.png`, `-new.png` and `-diff.png` to `diffDir`.
+4. **Thresholds are measured, not borrowed.** Run the spec, record the largest ratio and
+   chromaticity across all cases and both themes, and set each threshold a little above that
+   noise. Write the measurement in a comment next to the threshold, as `stat-card-parity.spec.ts`
+   does. `expectBufferParity()` takes two captured buffers, for cases that need an interaction
+   (hover, focus) between the old and the new capture.
+
+## Geometry specs: pinned measurements
+
+Once the old implementation is gone there is nothing left to render beside the new one, so a
+geometry spec pins the numbers instead. `top-bar-geometry.spec.ts` renders the
+`navigation-topbar--app-header-layout` story at a desktop and a mobile viewport, in both themes,
+and asserts each element's `boundingBox()` against values measured on the legacy header, within
+0.3px. Use this pattern for a layout whose measurements must survive a refactor: find elements by
+`data-testid`, and record where each expected number came from.
+
+## Page screenshots with local baselines
+
+`charts.spec.ts` and `wizards.spec.ts` sign in to the app on :8001 as `staff` / `demo`, open real
+pages and dialogs and call `toHaveScreenshot()` (project `visual`, `maxDiffPixelRatio: 0.01`).
+They need a backend with that user, and their baselines (`e2e-visual/snapshots/`) are
+git-ignored: each machine keeps its own. To compare two branches with them, write the baselines on
+the base and run against them on the head:
+
+```bash
+git switch develop
+yarn playwright test charts wizards --project=visual --workers=1 --update-snapshots
+git switch my-branch
+yarn playwright test charts wizards --project=visual --workers=1
+```
+
+(`yarn test:visual` and `yarn test:visual:update` run every Playwright project, including `e2e`.)
+
+Playwright writes the expected, actual and diff images of each failure to `test-results/`.
+
+## Integration-testing screenshots
+
+`waldur-integration-testing` drives a full Waldur stack in Playwright. Its tests call
+`take_screenshot("<name>")` on a page or component, which saves `docs/screenshots/<name>.png`, and
+every E2E job keeps `docs/screenshots/` as an artifact for a week. These are the only screenshots
+of real pages with data that need no local backend.
+
+- **The head:** a HomePort merge request that changes runtime files triggers the suite downstream
+  ("Trigger integration tests") with the MR's image. `Select E2E suites`
+  (`scripts/select-e2e-suites.mjs`) narrows it to the areas the change can affect, so an MR may run
+  fewer jobs than `develop` does.
+- **The base:** the downstream pipeline triggered from `develop`, which runs every suite against
+  `:latest`. Use one at or after your branch's merge base.
+- **Comparing:** download each job's artifacts from both downstream pipelines, put each side's
+  PNGs in one directory, and run
+  `node scripts/theme-snapshots.mjs compare <base-dir> <head-dir> <report-dir>`. Pairs exist only
+  for jobs that ran on both sides; the rest show as `missing in head` or `new in head`.
+- **Expect noise.** Data differs between runs (dates, generated names, row counts), so a pixel
+  ratio ranks the screenshots rather than passing or failing them. Look at the side-by-side sheets.
+- `tests/test_docs_screenshots.py` defines `generate_documentation_screenshots`, which is not named
+  `test_*`, so pytest does not collect it and its screenshots are not produced in CI.
+
+## Stylesheet checks (no browser)
+
+- **`node scripts/color-diff.mjs save|compare <snapshot.json>`** records the colour every
+  declaration of the compiled Bootstrap stylesheet resolves to, in light and dark, and reports each
+  one that changed. Use it for SCSS colour-variable refactors; see
+  [design-tokens.md](design-tokens.md) → "Verifying a refactor changes nothing".
+- **`yarn styles:usage compare`** (`scripts/bootstrap-css-usage.mjs`, runs in CI) fails when the
+  compiled Bootstrap stylesheet gains an unused class or its selectors are added or reordered, and
+  prints the selector diff. After an intended change, run `yarn styles:usage save` and commit the
+  baseline. See [development-setup.md](development-setup.md).
+- **`src/tailwindBootstrapColors.test.ts`** compiles both stylesheets and checks that Bootstrap
+  emits no colour utility that would collide with Tailwind's.
+
+## What CI runs
+
+| Job                         | What it catches                                                                                                                            |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Run Storybook tests         | A story that fails to render or whose play function fails (`yarn test:storybook`). No pixel comparison; `allow_failure` on merge requests. |
+| `yarn styles:usage compare` | Added or reordered selectors and new unused classes in the Bootstrap stylesheet.                                                           |
+| Trigger integration tests   | The downstream E2E suite, with its `docs/screenshots/` artifacts.                                                                          |
+
+The `e2e-visual` specs and `theme-snapshots.mjs` do not run in CI. Run the ones that fit the change
+locally and put the result in the merge request.
+
+## Reporting a visual change in a merge request
+
+- Which tools ran, against which base commit, and in which themes and viewports.
+- For an intended change: the largest difference observed (in pixels for geometry, as a ratio for
+  pixel diffs), and side-by-side images of the busiest affected screens.
+- For a change meant to be invisible: "0 changed" from the Storybook comparison, or the stories that did
+  change and why that is acceptable.
+- What was not checked, and why (no backend, a suite that did not run).
+
+## Commands
+
+| Command                                                         | What it does                                                                |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `yarn build-storybook`                                          | Static Storybook in `storybook-static/`, the input of `theme-snapshots.mjs` |
+| `node scripts/theme-snapshots.mjs capture …` / `compare …`      | Storybook comparison                                                        |
+| `yarn test:e2e:visual`                                          | Every `e2e-visual` spec (project `visual`, one worker)                      |
+| `yarn playwright test card-parity --project=visual --workers=1` | One spec; the argument is a filter, and a path is read as a project name    |
+| `yarn test:visual:update`                                       | Rewrite the local `toHaveScreenshot()` baselines (every project)            |
+
+`playwright.config.ts` starts the app (`yarn start`, :8001) and Storybook (`yarn storybook --ci`,
+:6006), and outside CI reuses ones already running. A spec may import `packages/ui/src/...`
+modules directly, but not the `waldur-ui` barrel, whose modules touch `document` at import time.
 
 ---
 
@@ -113352,6 +114210,11 @@ payloads are exactly those of a queue consumer; only the last hop differs.
   undelivered remainder with exponential backoff (10 s doubling, capped at
   10 min, 8 retries), after which the remainder is dropped and logged. Error
   text never contains the URL, since requests' exception messages embed it.
+  The listener's certificate is verified against the deployment's trust
+  bundle: the public CAs, or the file in `REQUESTS_CA_BUNDLE` for a private
+  CA. `VERIFY_WEBHOOK_REQUESTS` false turns verification off for every
+  webhook. An untrusted certificate is recorded as
+  `TLS certificate verification failed.`
 - **Guarantees** — delivery is **at-least-once with no ordering across events**:
   every event is its own task and retries independently, so a revoke can arrive
   before the grant it follows. Every message carries `emitted_at`, and every
@@ -114016,6 +114879,7 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
 - event_consumer_registered_with_broad_credential
 - event_consumer_resync_requested
 - event_consumer_webhook_updated
+- feedback_survey_answered
 - freeipa_profile_created
 - freeipa_profile_deleted
 - freeipa_profile_disabled
@@ -117056,7 +117920,9 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`ScopeInvitationMixin`](#scopeinvitationmixin) | `waldur_core.users.models` | Mixin for invitations scoped to a Customer with a system Role |
 | [`CheckExtensionMixin`](#checkextensionmixin) | `waldur_freeipa.views` | Raise exception if extension is disabled |
 | [`LLMConfigurationMixin`](#llmconfigurationmixin) | `waldur_mastermind.chat.views` | Validates that AI Assistant is enabled, the user has the required role, and t... |
+| [`FeedbackTestMixin`](#feedbacktestmixin) | `waldur_mastermind.feedback.tests.test_feedback` | No description available |
 | [`PeriodMixin`](#periodmixin) | `waldur_mastermind.invoices.models` | Make subclasses preserve the alters_data attribute on overridden methods |
+| [`SettlementTestMixin`](#settlementtestmixin) | `waldur_mastermind.invoices.tests.test_earlier_invoices_settlement` | No description available |
 | [`ConnectedResourceMixin`](#connectedresourcemixin) | `waldur_mastermind.marketplace.admin` | Protects object from modification if there are connected resources |
 | [`ParentInlineMixin`](#parentinlinemixin) | `waldur_mastermind.marketplace.admin` | Mixin to get parent object from request in Django admin inline views |
 | [`OfferingFilterMixin`](#offeringfiltermixin) | `waldur_mastermind.marketplace.filters` | Mixin to provide common offering-related filters |
@@ -118333,6 +119199,12 @@ AI_ASSISTANT_ENABLED_ROLES controls which user roles can access the feature.
 
 **Base classes:** `ConstanceCheckExtensionMixin`
 
+### FeedbackTestMixin
+
+**Module:** `waldur_mastermind.feedback.tests.test_feedback`
+
+**Description:** No description available.
+
 ### PeriodMixin
 
 **Module:** `waldur_mastermind.invoices.models`
@@ -118342,6 +119214,12 @@ AI_ASSISTANT_ENABLED_ROLES controls which user roles can access the feature.
 Make subclasses preserve the alters_data attribute on overridden methods.
 
 **Base classes:** `Model`
+
+### SettlementTestMixin
+
+**Module:** `waldur_mastermind.invoices.tests.test_earlier_invoices_settlement`
+
+**Description:** No description available.
 
 ### ConnectedResourceMixin
 
