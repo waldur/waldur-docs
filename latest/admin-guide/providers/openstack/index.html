@@ -22910,6 +22910,24 @@ policy:</p>
 <p>Waldur picks such a share up on the tenant's next pull, even though the owning project is not
 a Waldur tenant. The share is discovered from the RBAC policy itself — Neutron does not return
 networks shared with a project when an admin lists that project's networks.</p>
+<p>A network shared with every project at once reaches every Waldur tenant of the provider the
+same way, with no policy per project. That is a policy with <code>--target-project '*'</code>, which is
+also what <code>openstack network create --share</code> and <code>openstack network set --share</code> create:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>openstack<span class="w"> </span>network<span class="w"> </span>rbac<span class="w"> </span>create<span class="w"> </span>--type<span class="w"> </span>network<span class="w"> </span>--action<span class="w"> </span>access_as_shared<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--target-project<span class="w"> </span><span class="s1">'*'</span><span class="w"> </span>&lt;network&gt;
+</code></pre></div></td></tr></tbody></table></div>
+<p>A tenant ordered through Waldur pulls its shares while it is being created, so such a network
+can be used for the tenant's first VM. Each tenant has its own record of the share, and a policy
+naming a tenant takes the place of the wildcard for that tenant.</p>
+<div class="admonition tip">
+<p class="admonition-title">Public IPv6 on a provider network</p>
+<p>When the shared network carries a public IPv6 subnet, a VM gets a public address by having a
+port on that subnet. Order the tenant's own subnet first and the provider's IPv6 subnet
+second: the first port is the VM's first interface, the one it reaches DHCP and the metadata
+service on (and so receives its SSH key). If the network is also the external network, its
+IPv4 floating-IP subnet is listed as well; VMs belong on the IPv6 subnet.</p>
+</div>
 <p><strong>How it appears.</strong> Waldur records the owning project as an <em>unmanaged</em> tenant
 (<code>is_managed: false</code>) in a project named <code>&lt;provider&gt; provider networks</code>, under the provider's
 organization. Waldur only reads it: it holds no credentials for it, never provisions, bills,
@@ -22938,13 +22956,13 @@ Networks and Subnets tabs and can be used like the tenant's own:</p>
 </ul>
 <p><strong>When the share ends.</strong> Revoking the policy (Neutron refuses while the tenant still has ports on
 the network) removes the network from Waldur on the tenant's next pull; deleting the tenant does
-the same at once. Once a project shares nothing with any Waldur tenant, its unmanaged tenant is
-removed as well. Only Waldur's records are removed — the network stays in the cloud.</p>
+the same at once. Revoking a wildcard share does the same for each tenant on its next pull. Once
+a project shares nothing with any Waldur tenant, its unmanaged tenant is removed as well. Only
+Waldur's records are removed — the network stays in the cloud.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Wildcard shares (<code>--target-project '*'</code>, i.e. networks created with <code>--share</code>) and
-<code>access_as_external</code> policies targeted at single projects are not imported this way. External
-networks are configured on the offering instead (see above).</p>
+<p><code>access_as_external</code> policies, wildcard or targeted at single projects, are not imported this
+way. External networks are configured on the offering instead (see above).</p>
 </div>
 
 

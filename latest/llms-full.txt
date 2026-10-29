@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-29T03:03:55.474332Z
+Generated: 2026-10-29T06:33:34.038528Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -29793,6 +29793,26 @@ Waldur picks such a share up on the tenant's next pull, even though the owning p
 a Waldur tenant. The share is discovered from the RBAC policy itself — Neutron does not return
 networks shared with a project when an admin lists that project's networks.
 
+A network shared with every project at once reaches every Waldur tenant of the provider the
+same way, with no policy per project. That is a policy with `--target-project '*'`, which is
+also what `openstack network create --share` and `openstack network set --share` create:
+
+```bash
+openstack network rbac create --type network --action access_as_shared \
+  --target-project '*' <network>
+```
+
+A tenant ordered through Waldur pulls its shares while it is being created, so such a network
+can be used for the tenant's first VM. Each tenant has its own record of the share, and a policy
+naming a tenant takes the place of the wildcard for that tenant.
+
+!!! tip "Public IPv6 on a provider network"
+    When the shared network carries a public IPv6 subnet, a VM gets a public address by having a
+    port on that subnet. Order the tenant's own subnet first and the provider's IPv6 subnet
+    second: the first port is the VM's first interface, the one it reaches DHCP and the metadata
+    service on (and so receives its SSH key). If the network is also the external network, its
+    IPv4 floating-IP subnet is listed as well; VMs belong on the IPv6 subnet.
+
 **How it appears.** Waldur records the owning project as an *unmanaged* tenant
 (`is_managed: false`) in a project named `<provider> provider networks`, under the provider's
 organization. Waldur only reads it: it holds no credentials for it, never provisions, bills,
@@ -29823,13 +29843,13 @@ Two things stay with the network's owner:
 
 **When the share ends.** Revoking the policy (Neutron refuses while the tenant still has ports on
 the network) removes the network from Waldur on the tenant's next pull; deleting the tenant does
-the same at once. Once a project shares nothing with any Waldur tenant, its unmanaged tenant is
-removed as well. Only Waldur's records are removed — the network stays in the cloud.
+the same at once. Revoking a wildcard share does the same for each tenant on its next pull. Once
+a project shares nothing with any Waldur tenant, its unmanaged tenant is removed as well. Only
+Waldur's records are removed — the network stays in the cloud.
 
 !!! note
-    Wildcard shares (`--target-project '*'`, i.e. networks created with `--share`) and
-    `access_as_external` policies targeted at single projects are not imported this way. External
-    networks are configured on the offering instead (see above).
+    `access_as_external` policies, wildcard or targeted at single projects, are not imported this
+    way. External networks are configured on the offering instead (see above).
 
 ---
 
@@ -55936,7 +55956,7 @@ For explicit structured fields (e.g. for log aggregation queries), use `extra`:
 logger.info("Order created", extra={"order_uuid": str(order.uuid)})
 ```
 
-The `event_logger` (see below) automatically includes `event_type` and `event_context` in logs.
+The `event_logger` (see below) automatically includes `event_type` and `event_context` in logs, and marks event records with `"is_event": true`.
 
 ### Customizing logging
 
@@ -76510,10 +76530,7 @@ Tailwind step (`SPACER_TO_TAILWIND` in `packages/eslint-plugin-waldur/rules/boot
 - **No arbitrary `[6.5px]`** to reproduce a Bootstrap step: use the nearest Tailwind step.
 - **No runtime class names.** Tailwind generates only the names it finds in source, so
   `` `mb-${space}` `` styles nothing. Look the class up in a map of literals, as `FormGroup`'s
-  `space` does (`SPACE_CLASSES` in `waldur-form`; `space` is a Tailwind step). react-bootstrap's
-  `Stack` builds one from its `gap` prop (`gap={4}` renders `gap-4`, Tailwind's 16px, and
-  `gap={10}` rendered no gap), so write the gap in `className` instead: `className="gap-3"`
-  (`no-bootstrap-stack-gap`, which autofixes).
+  `space` does (`SPACE_CLASSES` in `waldur-form`; `space` is a Tailwind step).
 - **Mobile:** below `md` the root drops to 12px, so Bootstrap's rem steps shrank by about 8% there;
   Tailwind's px steps do not. Spacing follows the tokens: the difference is at most about 2.5px.
 - **A spacing class now loses where Bootstrap's `!important` used to win**: to an unlayered
@@ -77195,6 +77212,11 @@ Removing or renaming a hook below breaks that suite without failing anything in 
 | A role picker option                       | `get_by_role("option", name=…)`, on the page, not scoped to the row                                        |
 | Sign-in callback error                     | the `"Login failed"` heading and its parent                                                                |
 | Provider offering page body                | `[data-testid="provider-offering"]`                                                                        |
+| Marketplace dialog: category listing       | `[data-testid="category-listing"]`                                                                         |
+| Marketplace dialog: category item          | `[data-testid="category-item"]`                                                                            |
+| Marketplace dialog: category group         | `[data-testid="category-group"]`                                                                           |
+| Marketplace dialog: offering listing       | `[data-testid="offering-listing"]`                                                                         |
+| Marketplace dialog: offering item          | `[data-testid="offering-item"]`                                                                            |
 | Team chat: the open conversation           | `[data-testid="team-chat-conversation"]`                                                                   |
 | A toast                                    | `[data-slot="toast"][data-variant="{status}"]`                                                             |
 | A date field                               | `[data-slot="date-picker-input"]` (`DATE_INPUT`)                                                           |
@@ -82237,8 +82259,7 @@ Apply standard CSS class strings to target table wrapper elements:
 Tables can alternate between lists and grid cards. In grid mode, data is displayed as cards in a responsive grid layout.
 
 - **`gridItem`**: React component class used to render each grid cell card.
-- **`gridSize`**: Responsive grid column sizes config object (e.g. `gridSize={{ sm: 6, md: 4 }}`).
-- **`gridSpace`**: Spacing level (0 to 6) between cards, mapped to the Bootstrap row gutter class `g-{gridSpace}` (defaults to `6`).
+- **`gridClassName`**: Tailwind classes for the grid container, which is `grid grid-cols-1 gap-5` by default: columns per breakpoint (e.g. `"sm:grid-cols-2 md:grid-cols-3"`) and, optionally, a gap that replaces `gap-5` (e.g. `"gap-0"`). Write the classes literally so Tailwind generates them.
 - **`gridFixedWidth`**: Boolean. When enabled, renders grid items inside a fixed CSS Grid container (`className="grid-fixed-width"`) with a fixed card size instead of responsive columns.
 - **`initialMode`**: Default display mode on load (`'table'` or `'grid'`, defaults to `'table'`).
 
@@ -82260,8 +82281,7 @@ export const GridList = () => {
     <Table
       {...tableProps}
       gridItem={GridListItem}
-      gridSize={{ sm: 6, md: 4 }}
-      gridSpace={4}
+      gridClassName="sm:grid-cols-2 md:grid-cols-3 gap-3"
       initialMode="grid"
     />
   );
@@ -82384,7 +82404,7 @@ To make table integration rules, properties, and layouts easier to navigate, the
 | **[Pillar 3: Column Setup & Configuration](./table/column-setup.md)**   | Column parameters (width, alignment, copying, ellipsis, click blocking), sorting, optional columns, and key fetching.                                                           |
 | **[Pillar 4: Row Actions & Selection](./table/row-actions.md)**         | 3-dots action menus (`ActionsDropdown` + `ActionItem`), row expansion (`isRowExpandable`), multi-select, and bulk toolbars.                                                     |
 | **[Pillar 5: Filters & URL Sync](./table/filters.md)**                  | OpenAPI generated filters, Redux caching, syncing to URL query formatting (`uuid::name`), and cell inline filtering.                                                            |
-| **[Pillar 6: Visual Customizations](./table/visual-customizations.md)** | Grid layouts (`gridItem` + `gridSize` + `gridSpace`), custom empty placeholders, header titles, styling class triggers, and standalone mode.                                    |
+| **[Pillar 6: Visual Customizations](./table/visual-customizations.md)** | Grid layouts (`gridItem` + `gridClassName`), custom empty placeholders, header titles, styling class triggers, and standalone mode.                                    |
 | **[Pillar 7: Layout Wrappers & Portals](./table/layout-wrappers.md)**   | Rendering multiple tables within tabs (`TableWithTabs`) and forwarding rendering portals (`portal`).                                                                            |
 | **[Pillar 8: Form Integration](./table/form-integration.md)**           | Embedding tables as input fields in `react-final-form` (`fieldType`, `fieldName`, `rowValidate`).                                                                               |
 
@@ -82815,6 +82835,7 @@ Current architecture and implementation guidance for Tailwind CSS v4, shadcn UI,
    - [Root Font-Size & Fractional Rem Scaling](#root-font-size-fractional-rem-scaling)
    - [The Preflight Reset Shim](#the-preflight-reset-shim)
    - [Grid Breakpoint Synchronization](#grid-breakpoint-synchronization)
+   - [Grid Layouts](#grid-layouts)
    - [Design Tokens & Color Systems](#design-tokens-color-systems)
    - [Brand Color Token Bridge](#brand-color-token-bridge)
    - [Dark Mode Mechanics](#dark-mode-mechanics)
@@ -82884,6 +82905,10 @@ Waldur Homeport operates on two active UI component patterns:
 | **Page container**            | `PAGE_CONTAINER_CLASSNAME` / `PAGE_CONTAINER_XXL_CLASSNAME` | `@/navigation/pageContainer` | Full width, centred, 15px side padding, 32px from `lg`; the XXL variant caps at 1320px from `2xl`. Print drops its padding, margin and background. In `cn()` with `p-[0px] lg:p-[0px]` to remove the padding (full-page views)                                                                                                     | Bootstrap `.container-fluid` / `.container-xxl` with Metronic's padding (`layout/_main.scss`) |
 | **Breadcrumbs**               | `BreadcrumbTrail`                                           | `waldur-ui`                  | Router-agnostic trail (a crumb's `to` links through the provider's `renderLink`), set per page with `useBreadcrumbs`; overflow collapse, middle truncation, switcher dropdowns; `Breadcrumb*` primitives below it. See [breadcrumbs.md](breadcrumbs.md)                                                                            | `react-bootstrap` `Breadcrumb` / `BreadcrumbItem`, `.breadcrumb*` markup                      |
 | **Slide-Over Drawer**         | `DrawerRoot`                                                | `@/drawer`                   | Radix Dialog with CSS keyframe transitions                                                                                                                                                                                                                                                                                         | N/A                                                                                           |
+| **Stack / Flex layout**       | Native `<div>` with `flex` / `gap-*`                        | N/A                          | Semantic flex containers with Tailwind spacing and alignment utilities                                                                                                                                                                                                                                                             | `react-bootstrap` `Stack`, `hstack` / `vstack` classes                                        |
+| **Spinner / Loading**         | `LoadingSpinner` / `StepLoading`                            | `waldur-ui` / `@/wizard`     | Pure Tailwind SVG spinner with accessible `aria-label`; `StepLoading` for wizard step discovery                                                                                                                                                                                                                                    | `react-bootstrap` `Spinner`, `.spinner-*` classes                                             |
+| **List group**                | Tailwind `<nav>` / `<ul>`, `FormTable`                      | `waldur-ui` / `@/form`       | Semantic markup with Tailwind borders/padding, or `FormTable detailsMode` for key-value lists                                                                                                                                                                                                                                      | `react-bootstrap` `ListGroup`, `ListGroupItem`, `.list-group*` classes                        |
+| **Form**                      | Native `<form>`                                             | N/A                          | Native HTML form element with standard event handling                                                                                                                                                                                                                                                                              | `react-bootstrap` `Form`                                                                      |
 
 The breadcrumb trail has no Bootstrap or Metronic styles left, the phone breadcrumb bar included (see [breadcrumbs.md](breadcrumbs.md)).
 
@@ -83029,6 +83054,27 @@ Using `revert` respects user-agent specifics (e.g. `audio:not([controls]) { disp
 ```
 
 This guarantees `lg` resolves to `992px` identically across Tailwind `lg:` variants, Bootstrap `.d-lg-*` classes, SCSS `@include media-breakpoint-up(lg)`, and TSX `useMediaQuery()` hooks.
+
+### Grid Layouts
+
+Bootstrap's grid (`bootstrap/scss/grid` and `containers`) is not compiled, and neither are Metronic's `.table.g*-*` cell gutters. Layouts are Tailwind grid or flex; `no-bootstrap-grid` reports react-bootstrap's `Row`/`Col`/`ColProps` and any `row`, `col*`, `offset-*`, `row-cols-*` or `g*-*` class.
+
+| Bootstrap                                  | Tailwind                                                                          |
+| ------------------------------------------ | --------------------------------------------------------------------------------- |
+| `<Row>` + `<Col md={6}>` children          | `grid grid-cols-1 md:grid-cols-2 gap-x-5` + plain `div`s                          |
+| `<Col md={8}>` next to `<Col md={4}>`      | `grid grid-cols-1 md:grid-cols-12` + `md:col-span-8` / `md:col-span-4`            |
+| `<Col>` / `.col` (equal share)             | `grid grid-cols-1 sm:grid-cols-N gap-*` for fixed columns, or `flex gap-*` with `flex-1` children |
+| `<Col xs="auto">`                          | `flex flex-wrap` parent, `flex-none` child                                        |
+| default row gutter (1.5rem across, 0 down) | `gap-x-5`                                                                         |
+| `g-N` / `gx-N` / `gy-N`                    | `gap-*` from the table below                                                      |
+| `.table.gy-N` (cell padding)               | `table-row-py-X` or `<Table density="...">` primitives                            |
+| `.table.gx-N` (space between columns)      | `table-col-gap-X` (keeps the first/last cells' edge padding)                      |
+
+Prefer standard CSS grid (`grid grid-cols-1 sm:grid-cols-2`, `sm:grid-cols-3`) for fixed column layouts so they stack cleanly on mobile. For dynamic or auto-sizing row items, use flexbox with standard utilities (`flex-1`, `flex-none`, `shrink-0`). Avoid literal translations of Bootstrap's `.col` CSS (`*:flex-[1_0_0%] *:max-w-full`).
+
+Gutter steps are `$spacer` (1rem = 13px) multiples, mapped to the nearest 4px step: `0`→`0`, `1`→`1`, `2`→`1.5`, `3`→`2.5`, `4`→`3`, `5`→`4`, `6`→`5`, `7`→`5.5`, `8`→`6.5`, `9`→`7.5`, `10`→`8`.
+
+A grid's `gap` replaces the gutter padding, so a column's content now lines up with the parent's padding instead of overhanging it by half a gutter. `TableView` and `FormTable` keep their cell padding as `.table.table-list` / `.table.form-table` in `src/styles/bootstrap/components/_tables.scss`, in the bootstrap layer, so the first/last-cell rules in `src/styles/bootstrap/custom/_table.scss` still win.
 
 ---
 
@@ -83337,6 +83383,11 @@ Configured in `eslint.config.js` via `no-restricted-imports` (`RESTRICTED_IMPORT
 | `DropdownButton`                                      | `ActionsDropdown`                                                                      |
 | `Accordion`, `AccordionContext`, `useAccordionButton` | `Accordion` or `Collapsible` from `waldur-ui`                                          |
 | `Pagination`, `PageItem`                              | `TablePagination` (or `Pagination` for page numbers alone) from `waldur-ui`            |
+| `Stack`                                               | Flex `div` with Tailwind utilities                                                     |
+| `Spinner`                                             | `LoadingSpinner` from `waldur-ui` (or `StepLoading` from `@/wizard` in wizards)        |
+| `ListGroup`, `ListGroupItem`                          | Tailwind lists or specific UI primitives (such as `FormTable`)                         |
+| `Collapse`                                            | `Collapsible` from `waldur-ui`                                                         |
+| `Form`                                                | Native `<form>`                                                                        |
 
 Two Radix packages are restricted too, everywhere except `packages/ui` (where `Menu` / `MenuPopover` wrap them):
 
@@ -83380,6 +83431,7 @@ Implemented in `packages/eslint-plugin-waldur` and enabled as `waldur-custom/*` 
 | `enforce-featured-icon`                   | `error`  | Requires `FeaturedIcon` (with `tone`/`size`) for highlighted icon emblems.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `enforce-phosphor-icon-weight`            | `error`  | Consistent `weight` prop on Phosphor icons.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `enforce-border-radius-tokens`            | `error`  | Enforces pinned Tailwind border radius tokens (`rounded-none` … `rounded-modal`, `rounded-full`). Autofixes retired Bootstrap `rounded-0`, `rounded-pill`, `rounded-circle`, arbitrary matching pixel classes (`rounded-[6px]` -> `rounded-md`), and flags inline `style={{ borderRadius }}`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `no-bootstrap-grid`                       | `error`  | Tailwind grid/flex layouts; no react-bootstrap `Row`/`Col`/`ColProps`, nor `row`, `col*`, `offset-*`, `row-cols-*`, `g*-*` classes (see [Grid Layouts](#grid-layouts)).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `no-bootstrap-tabs`                       | `error`  | `Tabs` / `TabNav` from `waldur-ui`; no react-bootstrap `Tab`/`Tabs`/`Nav` or `nav-*` classes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `no-bootstrap-breadcrumb`                 | `error`  | `Breadcrumb` from `waldur-ui` (or `@/navigation/header/breadcrumb`); no react-bootstrap `Breadcrumb` / `BreadcrumbItem` or legacy `breadcrumb*` classes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `no-bootstrap-form-check`                 | `error`  | `Checkbox` / `Radio` / `Switch` from `waldur-ui`; no `FormCheck`, `Form.Check` or `form-check*` / `form-switch*` classes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
@@ -86111,10 +86163,15 @@ node scripts/theme-snapshots.mjs capture storybook-static /tmp/vt/head
 node scripts/theme-snapshots.mjs compare /tmp/vt/base /tmp/vt/head /tmp/vt/report
 ```
 
-- `capture <storybook-static> <out-dir> [--filter <regex>] [--font <family>]` writes
-  `<story-id>.<theme>.png`, full page, at a 1280×900 viewport. `--filter` matches story ids
+- `capture <storybook-static> <out-dir> [--filter <regex>] [--font <family>] [--widths <px,…>] [--themes <light,dark>]`
+  writes `<story-id>.<theme>.png`, full page, at a 1280×900 viewport. `--filter` matches story ids
   (`--filter '^actions-'`). `--font` forces one font family everywhere, for comparing two builds
   that load different web fonts: the text then cannot differ, so colour changes stand out.
+- `--widths` captures each story once per viewport width instead, as
+  `<story-id>.<theme>.w<px>.png`. Use it for any layout change: `576,768,992,1200` are the `sm`,
+  `md`, `lg` and `xl` breakpoints, and a width below `sm` (`375`) is a phone. A layout that
+  breaks only at one breakpoint (a column that stops wrapping, a row squeezed on a phone) looks
+  fine at 1280px. `--themes light` skips the dark captures when the change cannot touch colour.
 - `compare <base-dir> <head-dir> <report-dir>` writes `report.json` (every pair: `same`,
   `changed` with `changedPixels`, `ratio` and `sizeChanged`, or `missing in head` / `new in head`)
   and, for each changed pair, a `base | head | changed pixels in red` PNG. It prints the changed
