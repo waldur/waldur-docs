@@ -163,6 +163,26 @@ Waldur picks such a share up on the tenant's next pull, even though the owning p
 a Waldur tenant. The share is discovered from the RBAC policy itself — Neutron does not return
 networks shared with a project when an admin lists that project's networks.
 
+A network shared with every project at once reaches every Waldur tenant of the provider the
+same way, with no policy per project. That is a policy with `--target-project '*'`, which is
+also what `openstack network create --share` and `openstack network set --share` create:
+
+```bash
+openstack network rbac create --type network --action access_as_shared \
+  --target-project '*' <network>
+```
+
+A tenant ordered through Waldur pulls its shares while it is being created, so such a network
+can be used for the tenant's first VM. Each tenant has its own record of the share, and a policy
+naming a tenant takes the place of the wildcard for that tenant.
+
+!!! tip "Public IPv6 on a provider network"
+    When the shared network carries a public IPv6 subnet, a VM gets a public address by having a
+    port on that subnet. Order the tenant's own subnet first and the provider's IPv6 subnet
+    second: the first port is the VM's first interface, the one it reaches DHCP and the metadata
+    service on (and so receives its SSH key). If the network is also the external network, its
+    IPv4 floating-IP subnet is listed as well; VMs belong on the IPv6 subnet.
+
 **How it appears.** Waldur records the owning project as an *unmanaged* tenant
 (`is_managed: false`) in a project named `<provider> provider networks`, under the provider's
 organization. Waldur only reads it: it holds no credentials for it, never provisions, bills,
@@ -193,10 +213,10 @@ Two things stay with the network's owner:
 
 **When the share ends.** Revoking the policy (Neutron refuses while the tenant still has ports on
 the network) removes the network from Waldur on the tenant's next pull; deleting the tenant does
-the same at once. Once a project shares nothing with any Waldur tenant, its unmanaged tenant is
-removed as well. Only Waldur's records are removed — the network stays in the cloud.
+the same at once. Revoking a wildcard share does the same for each tenant on its next pull. Once
+a project shares nothing with any Waldur tenant, its unmanaged tenant is removed as well. Only
+Waldur's records are removed — the network stays in the cloud.
 
 !!! note
-    Wildcard shares (`--target-project '*'`, i.e. networks created with `--share`) and
-    `access_as_external` policies targeted at single projects are not imported this way. External
-    networks are configured on the offering instead (see above).
+    `access_as_external` policies, wildcard or targeted at single projects, are not imported this
+    way. External networks are configured on the offering instead (see above).
