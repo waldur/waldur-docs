@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-10-30T03:04:02.455959Z
+Generated: 2026-10-31T03:04:19.242337Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -852,6 +852,33 @@ written before the switch keep decrypting with no fallback entry needed.
 
 - RabbitMQ clustering supported
 - External message broker option
+
+### Passive standby site
+
+On a standby site whose database is a read-only replica (for example a
+CloudNativePG replica cluster), stop the components that write to the database
+and turn them back on at failover:
+
+```yaml
+replicaCount:
+  api: 0
+  worker: 0
+  beat: 0       # beat is a singleton: only 0 or 1
+  homeport: 1   # homeport does not touch the database and can stay up
+waldur:
+  initdbEnabled: false  # skips the whitelabeling PostSync Job; also disables beat's migrations
+```
+
+At failover, set the replica counts and `waldur.initdbEnabled: true` back together.
+
+Caveats:
+
+- `waldur.initdbEnabled: false` fails to render when Matrix chat is enabled with `matrixChat.setup.enabled`.
+- An HPA does not scale a deployment up from 0, so it stays inactive while its deployment is at 0.
+- The CronJobs keep running and have no switch:
+  - The cleanup CronJob's deletes fail against the replica. Its Job still reports Complete, so the errors appear only in the pod log.
+  - With `SAML2` in `waldur.authMethods`, the hourly metadata sync fails whenever the fetched metadata differs from what the replica holds.
+- With Matrix chat enabled, the Matrix bot (always 1 replica) takes a database lease when it starts.
 
 ## Tuning and Extension Hooks
 
@@ -13942,6 +13969,12 @@ Maximum audit events a single personal access token may generate per hour, count
 
 Serve the remote MCP endpoint (/mcp) from the `waldur mcp_server` process, so AI agent clients can act as the signed-in user.
 
+#### MCP_RESOURCE_URLS
+
+**Type:** str
+
+Public URL(s) of the MCP endpoint, space-separated (e.g. https://api.example.com/mcp). OAuth tokens are issued only for these resources, and for the first one when a client names none; while empty, no OAuth token is issued.
+
 ### Site Agent Logs
 
 #### SITE_AGENT_LOG_MAX_ROWS_PER_IDENTITY
@@ -20392,6 +20425,7 @@ td:nth-child(4) {
 | `notify_reviewer_on_round_start` | `waldur_mastermind.proposal.notify_reviewer_on_round_start` | 1 day | No description available |
 | `openstack-delete-expired-backups` | `openstack.DeleteExpiredBackups` | 10 minutes | Delete expired OpenStack backup resources that have reached their retention period. |
 | `openstack-delete-expired-snapshots` | `openstack.DeleteExpiredSnapshots` | 10 minutes | Delete expired OpenStack snapshot resources that have reached their retention period. |
+| `openstack-pull-networks-of-unmanaged-owners` | `openstack.pull_networks_of_unmanaged_owners` | 2 hours | Refresh networks that unmanaged OpenStack projects share with tenants.<br><br>Once per cloud, for every cloud with such a network. The cloud's pull of<br>its resources is not enough: it skips clouds without a live offering, whose<br>tenants are still pulled and still see these networks. |
 | `openstack-tenant-properties-list-pull-task` | `openstack.tenant_properties_list_pull_task` | 1 day | Pull OpenStack tenant properties like flavors, images, and volume types from backend. |
 | `openstack-tenant-pull-quotas` | `openstack.TenantPullQuotas` | 12 hours | Pull quota limits and usage information for all OpenStack tenants. |
 | `openstack-tenant-resources-list-pull-task` | `openstack.tenant_resources_list_pull_task` | 1 hour | Pull OpenStack tenant resources like instances, volumes, and snapshots from backend. |
@@ -20478,6 +20512,8 @@ td:nth-child(4) {
 | `waldur-matrix-chat-periodic-history-export` | `waldur_mastermind.matrix_chat.periodic_history_export` | Cron: `0 2 * * * (m/h/dM/MY/d)` | Periodically export history for all active rooms. |
 | `waldur-matrix-chat-prune-web-devices` | `waldur_mastermind.matrix_chat.prune_all_web_devices` | Cron: `45 3 * * * (m/h/dM/MY/d)` | Prune the idle web devices of every user who may still have one, daily.<br><br>Pruning on session start never reaches users who do not come back, and a<br>homeserver without access_token_ttl leaves their tokens valid for a week.<br>Users with no web device left are not asked about. |
 | `waldur-matrix-chat-scrub-expired-temporary-passwords` | `waldur_mastermind.matrix_chat.scrub_expired_temporary_passwords` | Cron: `*/10 * * * * (m/h/dM/MY/d)` | Replace any reset password whose scrub task was lost or kept failing. |
+| `waldur-mcp-clear-expired-cimd-applications` | `waldur_mastermind.mcp.clear_expired_cimd_applications` | 1 day | No description available |
+| `waldur-mcp-clear-expired-oauth-tokens` | `waldur_mastermind.mcp.clear_expired_oauth_tokens` | 1 day | No description available |
 | `waldur-openportal-mark-stale-remote-projects` | `waldur_openportal.mark_stale_remote_projects` | 1 hour | Mark RemoteProjects as STALE when we have not received any contact<br>from the remote portal for more than STALE_THRESHOLD_HOURS hours.<br><br>This covers two cases:<br> - last_contact_time is set but is older than the threshold<br> - last_contact_time is null and the project was created more than<br> the threshold ago (i.e. we never heard back after creation)<br><br>A STALE project transitions back to ACTIVE automatically when<br>touch_last_contact() is called (e.g. on a successful usage or<br>storage report fetch). |
 | `waldur-openportal-refresh-remote-projects` | `waldur_openportal.refresh_remote_projects` | 6 hours | Refresh the details of all RemoteProjects from the remote portal.<br>This is called periodically in case we miss the updates that<br>come from push notifications |
 | `waldur-openportal-send-notifications` | `waldur_openportal.send_notifications` | 47 minutes | This task is called to send notifications to all users associated<br>with any OpenPortal allocations. |
@@ -68073,7 +68109,7 @@ SLURM Quality of Service (QoS) profiles let a provider describe the scheduling p
 
 QoS is grounded in SLURM's native model, where a QoS is a **cluster-scoped** entity that carries its own limits — it is *not* owned by a partition:
 
-- **`SlurmOfferingQoS`** — an offering-scoped QoS profile: `name` plus limits (`max_nodes`, `min_nodes`, `default_time`, `max_time`, `grace_time`, `priority`, `grp_tres`, `max_tres_per_job`, `max_tres_per_node`, `max_tres_per_user`, `min_tres_per_job`, `flags`). QoS names cannot be all digits — they would collide with SLURM's numeric QoS id namespace.
+- **`SlurmOfferingQoS`** — an offering-scoped QoS profile: `name` plus limits (`max_nodes`, `min_nodes`, `default_time`, `max_time`, `grace_time`, `priority`, `grp_tres`, `max_tres_per_job`, `max_tres_per_node`, `max_tres_per_user`, `min_tres_per_job`, `max_tres_mins_per_job`, `flags`). The TRES fields take SLURM's comma-separated `<tres>=<count>` format (`cpu=512,mem=64G,gres/gpu=8`); `max_tres_mins_per_job` is `MaxTRESMinsPerJob` (sacctmgr also accepts `MaxTRESMinsPJ` and `MaxTRESMins`), so `node=4320` caps a job at 72 node-hours. QoS names cannot be all digits — they would collide with SLURM's numeric QoS id namespace.
 - **`SlurmPartitionQoS`** — the per-partition allow-list gate (SLURM `AllowQos`). A partition with no allow-list entries permits *all* of the offering's QoS (SLURM `AllowQos=ALL`). Exactly one entry may be marked the default (which seeds SLURM `DefaultQOS`); the absence of a default models a mandatory `--qos`.
 
 The catalog is exposed on the offering payload as `qos_profiles`, and each partition's allow-list as `qos_options`. The deprecated single `qos` string on `OfferingPartition` is superseded by this catalog and backfilled into it.
@@ -72308,9 +72344,9 @@ backends. Detail endpoints inherit the same narrowing because DRF's
 |---|---|
 | `structure.Customer` | `customer` |
 | `structure.Project` | `customer`, `project` |
-| `marketplace.Offering` | `customer`, `offering` |
-| `marketplace.Resource` | `customer`, `project`, `offering`, `resource` |
-| `marketplace.ResourceProject` | `customer`, `project`, `offering`, `resource`, `resource_project` |
+| `marketplace.Offering` | `customer`, `offering`, `service_provider` |
+| `marketplace.Resource` | `customer` (the consumer's), `project`, `offering`, `resource`, `service_provider` |
+| `marketplace.ResourceProject` | `customer` (the consumer's), `project`, `offering`, `resource`, `resource_project`, `service_provider` |
 | `marketplace.ServiceProvider` | `customer`, `service_provider` |
 | `proposal.CallManagingOrganisation` | `customer`, `call_organizer` |
 | `proposal.Call` | `call` (no ancestor inheritance) |
@@ -72319,6 +72355,18 @@ backends. Detail endpoints inherit the same narrowing because DRF's
 Endpoints whose model does not appear above (e.g. `/api/marketplace-orders/`,
 `/api/invoices/`) currently pass through unfiltered. Add a builder via
 `register_pat_filter` in `pat_filtering.py` to extend coverage.
+
+**Lists nested under a parent**: the rules only follow an object's own
+ancestors, so they would empty a list of one parent's children that belong
+to other organizations. An example is a service provider's consumers under
+`/api/marketplace-service-providers/{uuid}/`: `projects/`, `customers/`,
+`customer_projects/` and `user_customers/`. Such a view names its parent in
+`get_pat_binding_parent()`. When the PAT's binding covers that parent
+(`_pat_entity_check`), the filter returns the view's queryset unchanged;
+otherwise the model's rule applies as usual. Define it only on a view whose
+`get_queryset` already limits the queryset to the parent's children. The
+service provider views share it through `ServiceProviderConsumersMixin` in
+`marketplace/views.py`.
 
 **Codepath limit**: the install only wraps `GenericAPIView.filter_queryset`.
 Views that bypass that codepath — `APIView` subclasses, custom actions
@@ -76290,15 +76338,18 @@ Every colour that signals a state — badges, banners, alerts, health indicators
 errors, destructive menu items, status dots, focus rings on an invalid control — reads one
 matrix:
 
-| Slot      | success / warning | danger        | Use                                      |
-| --------- | ----------------- | ------------- | ---------------------------------------- |
-| `-bg`     | 50 / 900          | 50 / 900      | Tinted surface (pill, banner, row)       |
-| `-border` | 300 / 400         | 300 / 400     | Subtle border, neutral or tinted surface |
-| `-solid`  | 600 / 500         | 600 / 500     | Saturated fill or ring                   |
-| `-fg`     | 700 / 400         | 700 / **300** | Text, icons and dots                     |
+| Slot         | success / warning | danger        | Use                                      |
+| ------------ | ----------------- | ------------- | ---------------------------------------- |
+| `-bg`        | 50 / 900          | 50 / 900      | Tinted surface (pill, banner, row)       |
+| `-bg-strong` | 100 / 900         | 100 / 900     | Tint on one small shape (diagram node)   |
+| `-border`    | 300 / 400         | 300 / 400     | Subtle border, neutral or tinted surface |
+| `-solid`     | 600 / 500         | 600 / 500     | Saturated fill or ring                   |
+| `-fg`        | 700 / 400         | 700 / **300** | Text, icons and dots                     |
 
-as `--status-{success,warning,danger}-{bg,border,solid,fg}`, plus `-bg` and `-fg` only for
-`info` (50 / 900 and 600 / 300) and `neutral`. Steps refer to the intent's ramp (`danger` reads `error-*`).
+as `--status-{success,warning,danger}-{bg,bg-strong,border,solid,fg}`, plus `-bg`, `-bg-strong`
+and `-fg` only for `info` (50 / 900, 200 / 900 and 600 / 300) and `neutral`. `-bg-strong` has no
+utility: it is for Mermaid node fills (`style A fill:var(--status-success-bg-strong)`), where the
+50-step `-bg` nearly vanishes against plain nodes. Steps refer to the intent's ramp (`danger` reads `error-*`).
 
 Each slot has a Tailwind utility (`tailwind/theme.css`), named like Bootstrap 5.3's:
 
@@ -76590,13 +76641,15 @@ to prevent fractional `rem` compression under Waldur's forced 13px root font siz
 | Bootstrap emits no `fw-*`; Tailwind exactly the scale   | `src/tailwindBootstrapColors.test.ts`                                       |
 | Every physical colour has a `dark:` counterpart         | `waldur-custom/require-dark-pair`                                           |
 | No `--bs-*` reads                                       | `waldur-custom/no-bootstrap-css-vars`, stylelint                            |
+| Hard-coded colours (hex, `rgb()`, named) only go down   | `no-literal-color` (ESLint and stylelint), `yarn colors:check`              |
 
 **Duplicate roles.** Two semantic tokens with the same value in both themes are one role with
 two names until shown otherwise. The audit fails on any such group not listed in
 `DUPLICATE_BASELINE`, and on a listed group that is no longer a duplicate (prune it). Either
 merge the tokens, or add the group with the reason the roles must stay separate — today: a
 surface and a hairline that share gray-100, a surface and a drawn line at gray-200, the brand
-border/icon/focus ring, and the strong divider and `--text-quinary`.
+border/icon/focus ring, the strong divider and `--text-quinary`, and the card hairline and the
+neutral diagram-node tint (`--border-secondary`, `--status-neutral-bg-strong`).
 
 **Dark pairs.** A ramp step, `white`/`black`, a hex or a raw `var(--color-*-N)` /
 `var(--brand-N)` is the same colour in both themes. `require-dark-pair` reports one that has no
@@ -76606,6 +76659,31 @@ the message names (`bg-primary`, `bg-brand-subtle`, `text-brand`, `text-danger`,
 physical step only with its dark mirror (`ring-brand-50 dark:ring-brand-900`). A solid fill
 (`bg-*` at 400 or stronger) and white or black text on one read the same in both themes and
 pass. Tests are exempt: they assert class names, nothing renders.
+
+**Hard-coded colours.** A hex value, an `rgb()`/`hsl()` call or a named colour in a string,
+a style object, an SVG attribute, chart options or a stylesheet is the same colour in both
+themes and ignores the brand. `scripts/color-literals.mjs` counts them per file against
+`scripts/color-literals.baseline.json`, and `yarn colors:check` (in CI) fails when a file gains
+one, and when a file loses one until `yarn colors:save` lowers its count. `yarn colors:report
+[path…]` lists each literal with the ramp step it equals (`=`) or is closest to (`≈`). Replace
+one with a utility, `getChartThemeColors()` for canvas charts, or `currentColor` plus a `text-*`
+class for SVG.
+The chart roles (`src/dashboard/chartColors.ts`) cover the usual needs: `success`, `notice`
+(warning-400), `warning`, `danger` and `progress` (blue-500) for states; `muted`, `neutral` and
+`track` for secondary series, `neutralStrong` for its paired series and `remaining` for the
+unused part of a gauge; `text`, `textSecondary` and `textQuaternary` for labels; `infoFg`/`infoBg`
+for an accent chip; `shadow(alpha)` for a canvas shadow; `getCategoricalColors(n)` (up to 16)
+for series. Chart tooltips use the card surface (`src/echarts/themes.ts`), so tooltip HTML takes
+the text utilities (`class="text-quaternary"`). A shadow or darkening tint in a stylesheet is
+`color-mix(in srgb, var(--shadow-color) 8%, transparent)` (`semantic/elevation.css`). Files where the literal is the point are listed with
+their reason in `ALLOWED`: token sources and the boot splash, the login-page layout artwork,
+masks, output rendered outside the app's stylesheet (PDF, email preview, data-URI images,
+off-screen exports) and third-party or generated colours. Tests, stories and mocks are skipped.
+`waldur-custom/no-literal-color` (ESLint, scripts) and `waldur/no-literal-color` (stylelint,
+stylesheets) run the same detector against the same baseline, so the editor flags a literal as
+soon as a file has more than its count, each with its nearest ramp step. The detector and `ALLOWED` are in `packages/design-tokens/scripts/color-literals.mjs`. A short all-digit hex counts only where a
+colour goes (first in its string, after `:`, `,`, a function's `(`, a length or a border style),
+so an issue number such as `(#455)` in a message is not one.
 
 ## Reading a token in code
 
@@ -86118,11 +86196,12 @@ differences to the merge request.
 
 ## Ground rules
 
-- **Storybook renders with the app's stylesheet.** The theme decorator in `.storybook/preview.tsx`
-  calls `loadTheme()`, which injects the compiled Bootstrap/Metronic stylesheet and sets
-  `data-theme`. A story therefore shows the same cascade the app does, including Bootstrap's
-  `!important` utilities. Every tool here waits for that stylesheet (a `link` whose URL matches
-  `/style[-.]/`) before capturing; a capture taken earlier shows unstyled markup.
+- **Storybook renders with the app's stylesheet.** `.storybook/preview.tsx` imports
+  `src/tailwind.css` and then `src/styles/bootstrap/index.scss`, in the same order as
+  `src/index.tsx`, and its theme decorator calls `applyTheme()` to set `data-theme`. A story
+  therefore shows the same cascade the app does, including Bootstrap's `!important` utilities.
+  The stylesheets load before the story renders, so every tool here waits only for `data-theme`
+  before capturing.
 - **Freeze before capturing.** Wait for `document.fonts.ready` (a capture in the fallback font
   differs on every text pixel), and inject
   `*, *::before, *::after { transition: none !important; animation: none !important; }`.
@@ -115801,6 +115880,7 @@ td:nth-child(4) {
 | `mark_synced_fields_as_read_only` | `Custom Signal (pre_serializer_fields)` | `OfferingOptionsUpdateSerializer` | No description |
 | `mark_synced_fields_as_read_only` | `Custom Signal (pre_serializer_fields)` | `OfferingOverviewUpdateSerializer` | No description |
 | `maybe_auto_approve_order_for_project` | `Django Signal (post_save)` | `marketplace.Order` | Auto-approve a newly created PENDING_CONSUMER order if the project has |
+| `move_tenant_offerings_with_it` | `Django Signal (post_save)` | `openstack.Tenant` | A tenant's own instance and volume offerings go where it goes. |
 | `notify_about_project_details_update` | `Django Signal (post_save)` | `marketplace_remote.ProjectUpdateRequest` | No description |
 | `notify_about_request_based_item_creation` | `Django Signal (post_save)` | `support.Issue` | No description |
 | `notify_about_resource_end_date_change_request` | `Django Signal (post_save)` | `marketplace.ResourceEndDateChangeRequest` | Email approvers about a new request, and the requester about the verdict. |
@@ -115854,6 +115934,7 @@ td:nth-child(4) {
 | `resource_options_have_been_changed` | `Django Signal (post_save)` | `marketplace.Resource` | Handle script execution when marketplace resource options are changed. |
 | `resource_state_has_been_changed` | `Django Signal (post_save)` | `marketplace.Resource` | Handle resource state changes. |
 | `revoke_api_keys_of_deleted_user` | `Django Signal (pre_delete)` | `core.User` | Withdraw the API keys assigned to a user before the account is deleted. |
+| `revoke_oauth_tokens_on_deactivation` | `Django Signal (post_save)` | `core.User` | Delete a user's OAuth sessions when the user is deactivated. |
 | `revoke_roles_on_offering_deletion` | `Django Signal (pre_delete)` | `marketplace.Offering` | Revoke active user roles bound to an offering before it is deleted. |
 | `run_reset_actions_upon_cost_policy_deletion` | `Django Signal (pre_delete)` | `policy.ProjectEstimatedCostPolicy` | Execute reset actions when a cost policy is deleted. |
 | `schedule_component_usage_billing` | `Django Signal (post_save)` | `marketplace.ComponentUsage` | Thin post_save handler — schedules the async billing+policy task on commit. |
@@ -116004,6 +116085,7 @@ td:nth-child(4) {
 | `log_server_group_cleaned` | `Django Signal (post_delete)` | `openstack.ServerGroup` | Log server group cleanup. |
 | `log_subnet_cleaned` | `Django Signal (post_delete)` | `openstack.SubNet` | Log subnet cleanup. |
 | `log_tenant_quota_update` | `Django Signal (post_save)` | `quotas.QuotaLimit` | Log tenant quota updates. |
+| `move_tenant_objects_with_it` | `Django Signal (post_save)` | `openstack.Tenant` | A tenant's networks, ports, routers and the rest go where it goes. |
 | `remove_ssh_key_from_all_tenants_on_it_deletion` | `Django Signal (pre_delete)` | `core.SshPublicKey` | Delete key from all tenants that are accessible for user on key deletion. |
 | `remove_ssh_key_from_tenants` | `Custom Signal (role_revoked)` | `—` | Delete user ssh keys from tenants that he does not have access now. |
 
@@ -116050,7 +116132,7 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 769
+Total unique handlers found: 772
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_auth_social**: 2 handlers
@@ -116058,9 +116140,9 @@ Total unique handlers found: 769
 - **waldur_core**: 356 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 350 handlers
+- **waldur_mastermind**: 352 handlers
 - **waldur_openportal**: 10 handlers
-- **waldur_openstack**: 14 handlers
+- **waldur_openstack**: 15 handlers
 - **waldur_openstack_replication**: 1 handlers
 - **waldur_rancher**: 12 handlers
 - **waldur_sram**: 6 handlers
@@ -118000,11 +118082,13 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`ConnectedResourceDetailsMixin`](#connectedresourcedetailsmixin) | `waldur_mastermind.marketplace.views` | Mixin to provide resource details action for connected resources |
 | [`OfferingUsageMixin`](#offeringusagemixin) | `waldur_mastermind.marketplace.views` | Shared logic for customer/project per-offering usage ViewSets |
 | [`PublicViewsetMixin`](#publicviewsetmixin) | `waldur_mastermind.marketplace.views` | Mixin to allow anonymous access to offerings when configured |
+| [`ServiceProviderConsumersMixin`](#serviceproviderconsumersmixin) | `waldur_mastermind.marketplace.views` | A list of a service provider's consumers, nested under the provider |
 | [`TenantMixin`](#tenantmixin) | `waldur_mastermind.marketplace_openstack.processors` | No description available |
 | [`SelectiveDNSMockMixin`](#selectivednsmockmixin) | `waldur_mastermind.marketplace_remote.tests.dns_utils` | Mixin class that provides selective DNS mocking for test classes |
 | [`ContainerExecutorMixin`](#containerexecutormixin) | `waldur_mastermind.marketplace_script.utils` | Mixin to execute scripts in containers for marketplace script processing |
 | [`AppserviceErrorCountMixin`](#appserviceerrorcountmixin) | `waldur_mastermind.matrix_chat.views` | Counts the view's 4xx and 5xx answers for the webhook_errors diagnostic |
 | [`MatrixEnabledWriteGuardMixin`](#matrixenabledwriteguardmixin) | `waldur_mastermind.matrix_chat.views` | Reject mutating requests while the Matrix integration is disabled |
+| [`OAuthTestMixin`](#oauthtestmixin) | `waldur_mastermind.mcp.tests.test_oauth` | No description available |
 | [`EstimatedCostPolicyMixin`](#estimatedcostpolicymixin) | `waldur_mastermind.policy.models` | Make subclasses preserve the alters_data attribute on overridden methods |
 | [`OfferingPolicySerializerMixin`](#offeringpolicyserializermixin) | `waldur_mastermind.policy.serializers` | This mixin provides several extensions to stock Serializer class:  1 |
 | [`PolicyEventsMixin`](#policyeventsmixin) | `waldur_mastermind.policy.views` | Log policy changes made through the API |
@@ -119454,6 +119538,20 @@ Subclasses provide:
 
 Mixin to allow anonymous access to offerings when configured.
 
+### ServiceProviderConsumersMixin
+
+**Module:** `waldur_mastermind.marketplace.views`
+
+**Description:**
+
+A list of a service provider's consumers, nested under the provider.
+
+The provider is looked up and its permission checked once per request.
+A scoped PAT's binding is matched against the provider as well
+(``get_pat_binding_parent``), not against each listed object: the
+consumers belong to other organizations, which no binding of the
+provider's reaches.
+
 ### TenantMixin
 
 **Module:** `waldur_mastermind.marketplace_openstack.processors`
@@ -119505,6 +119603,12 @@ Reads stay open so the rooms list remains viewable, but a write would only
 enqueue a Celery task against a non-existent homeserver: the row is left
 stranded in a transient state (creating/disabling) that never resolves. The
 frontend hides these actions; this is the backstop for direct or stale calls.
+
+### OAuthTestMixin
+
+**Module:** `waldur_mastermind.mcp.tests.test_oauth`
+
+**Description:** No description available.
 
 ### EstimatedCostPolicyMixin
 
