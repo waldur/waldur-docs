@@ -35,7 +35,7 @@ the action, which is what happens when the limit is reached.
 
 When exactly one project is selected, the policy can optionally be limited to a single resource. Use the "Limit to resource" field to pick a resource: only that resource's cost is then measured against the limit, and the policy's actions (for example pausing, downscaling or scheduled termination) apply only to that resource. Leaving the field empty keeps the policy scoped to the whole project. Blocking the creation of new resources is not available for resource-scoped policies, since that action is project-wide.
 
-By default, the policy accounts for any available project or organization credit — credit is subtracted before the limit is enforced, so a project whose credit covers its cost does not trigger the policy. Disable "Account for available credit" to enforce the limit against the raw invoice cost, regardless of credit balance.
+By default, the policy accounts for any available project or organization credit — credit is subtracted before the limit is enforced, so a project whose credit covers its cost does not trigger the policy. Disable "Account for available credit" to enforce the limit against the raw invoice cost, regardless of credit balance. The policy then counts the full cost of every month in its period, including what credit has paid, and neither adding credit nor paying earlier invoices lowers it.
 
 The policy fires when the cost after credit is over its limit; how much credit is still left does not matter. The credit that counts includes what this month's usage will draw before the month is billed, so the policy acts as soon as usage outgrows the credit — it does not wait for the month-end billing run.
 
@@ -43,7 +43,7 @@ With the period set to **Total**, the cost after credit also includes every earl
 
 ### What a cost policy is doing now
 
-The **Action triggered** column shows one status per policy: what its latest evaluation found. **Current cost** is the figure the policy compares with its threshold: the cost in the policy's period, less what credit pays. The organization's credit, as its balance at the start of the month, is shown once under the list title.
+The **Action triggered** column shows one status per policy: what its latest evaluation found. **Current cost** is the figure the policy compares with its threshold: the cost in the policy's period, less what credit pays. With "Account for available credit" off, it is the full cost. The organization's credit, as its balance at the start of the month, is shown once under the list title.
     ![Cost policy statuses](../img/Cost_policy_status_list.png)
 
 | Status | Meaning |
@@ -92,6 +92,8 @@ The months are shown to whoever may see the project's costs: staff, support, org
 | **Raise the limit** | Always. Opens the policy for editing. | Whoever may edit the policy |
 
 Options the user cannot take are not listed. Organization owners can fix the policies of their projects; organization cost policies only staff can fix.
+
+A policy with "Account for available credit" off is not lowered by credit, so **Fix…** leaves out **Add project credit** and **Pay earlier invoices from the project credit**. Its details show the full cost, without the credit figures.
 
 ![Fix cost policy, as an organization owner](../img/cost-policy-fix-owner.png)
 
@@ -142,7 +144,7 @@ The credit pays 2 900 of this month's 3 000, so the cost after credit is 7 701.6
 |---|---|---|
 | `triggered` | Whether the policy fired: `true` means its actions ran, `false` means it did not fire or was reset | `true` |
 | `gate` | Which check decided; see the next table | `cost_over_limit` |
-| `evaluated_cost` | The cost after credit that was compared with the limit: the invoices of the policy's period, with the credit already applied to them, minus `credit_deduction` | `7801.67` |
+| `evaluated_cost` | The cost after credit that was compared with the limit: the invoices of the policy's period, with the credit already applied to them, minus `credit_deduction`. With "Account for available credit" off, it is the full cost | `7801.67` |
 | `credit_deduction` | Credit that this month's usage will use but that is not on the invoice yet. Credit is applied to an invoice when the month is billed; until then the policy subtracts it here. Credit already applied, for example in earlier months, is part of the invoices' totals and is not counted again | `2900.00` |
 | `credit_value_compared` | Not recorded: the credit left is no longer compared with the limit. Events recorded by earlier versions carry the credit left that was compared | — |
 | `limit_cost` | The policy's limit | `100` |
