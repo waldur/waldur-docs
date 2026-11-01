@@ -22841,11 +22841,11 @@ for this month, and a table shows its cost so far. Then enter the estimated cost
 the action, which is what happens when the limit is reached.</p>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/cost-policy-project-new.png" data-desc-position="bottom"><img alt="New project cost policy" src="../../img/cost-policy-project-new.png"></a></p>
 <p>When exactly one project is selected, the policy can optionally be limited to a single resource. Use the "Limit to resource" field to pick a resource: only that resource's cost is then measured against the limit, and the policy's actions (for example pausing, downscaling or scheduled termination) apply only to that resource. Leaving the field empty keeps the policy scoped to the whole project. Blocking the creation of new resources is not available for resource-scoped policies, since that action is project-wide.</p>
-<p>By default, the policy accounts for any available project or organization credit — credit is subtracted before the limit is enforced, so a project whose credit covers its cost does not trigger the policy. Disable "Account for available credit" to enforce the limit against the raw invoice cost, regardless of credit balance.</p>
+<p>By default, the policy accounts for any available project or organization credit — credit is subtracted before the limit is enforced, so a project whose credit covers its cost does not trigger the policy. Disable "Account for available credit" to enforce the limit against the raw invoice cost, regardless of credit balance. The policy then counts the full cost of every month in its period, including what credit has paid, and neither adding credit nor paying earlier invoices lowers it.</p>
 <p>The policy fires when the cost after credit is over its limit; how much credit is still left does not matter. The credit that counts includes what this month's usage will draw before the month is billed, so the policy acts as soon as usage outgrows the credit — it does not wait for the month-end billing run.</p>
 <p>With the period set to <strong>Total</strong>, the cost after credit also includes every earlier month that credit did not fully cover. Credit added now pays only the current month and later, so a top-up does not reset a Total policy whose earlier uncovered cost is over the limit by itself. That cost goes away only when it is paid: staff can let the project credit <a href="#paying-earlier-invoices">pay earlier invoices</a>. Otherwise, change the period to one month, which stops counting earlier months, or raise the limit. To cap a single month's spend, use a monthly period.</p>
 <h3 id="what-a-cost-policy-is-doing-now">What a cost policy is doing now</h3>
-<p>The <strong>Action triggered</strong> column shows one status per policy: what its latest evaluation found. <strong>Current cost</strong> is the figure the policy compares with its threshold: the cost in the policy's period, less what credit pays. The organization's credit, as its balance at the start of the month, is shown once under the list title.
+<p>The <strong>Action triggered</strong> column shows one status per policy: what its latest evaluation found. <strong>Current cost</strong> is the figure the policy compares with its threshold: the cost in the policy's period, less what credit pays. With "Account for available credit" off, it is the full cost. The organization's credit, as its balance at the start of the month, is shown once under the list title.
     <a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/Cost_policy_status_list.png" data-desc-position="bottom"><img alt="Cost policy statuses" src="../../img/Cost_policy_status_list.png"></a></p>
 <table>
 <thead>
@@ -22925,6 +22925,7 @@ the action, which is what happens when the limit is reached.</p>
 </tbody>
 </table>
 <p>Options the user cannot take are not listed. Organization owners can fix the policies of their projects; organization cost policies only staff can fix.</p>
+<p>A policy with "Account for available credit" off is not lowered by credit, so <strong>Fix…</strong> leaves out <strong>Add project credit</strong> and <strong>Pay earlier invoices from the project credit</strong>. Its details show the full cost, without the credit figures.</p>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/cost-policy-fix-owner.png" data-desc-position="bottom"><img alt="Fix cost policy, as an organization owner" src="../../img/cost-policy-fix-owner.png"></a></p>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/cost-policy-fix.png" data-desc-position="bottom"><img alt="Fix cost policy, as staff" src="../../img/cost-policy-fix.png"></a></p>
 <h3 id="paying-earlier-invoices">Paying earlier invoices</h3>
@@ -22977,7 +22978,7 @@ the action, which is what happens when the limit is reached.</p>
 </tr>
 <tr>
 <td><code>evaluated_cost</code></td>
-<td>The cost after credit that was compared with the limit: the invoices of the policy's period, with the credit already applied to them, minus <code>credit_deduction</code></td>
+<td>The cost after credit that was compared with the limit: the invoices of the policy's period, with the credit already applied to them, minus <code>credit_deduction</code>. With "Account for available credit" off, it is the full cost</td>
 <td><code>7801.67</code></td>
 </tr>
 <tr>
