@@ -1,5 +1,68 @@
 # Changelog
 
+## 8.1.4-rc.6 - 2026-11-02
+
+### Highlights
+
+This release tightens access control across the API. Changes to projects and to OpenStack networks, routers, load balancers and ports are now limited to people who manage them. Personal access tokens now respect their scopes and bindings everywhere. MCP clients can now sign in through a built-in OAuth server, and the chat assistant has more tools. Credit and cost policy calculations are more accurate, and OpenStack is more reliable: load balancers are removed when a tenant is terminated, and volume resizes and snapshot deletions are safer.
+
+### What's New
+
+- MCP clients can now sign in through a built-in OAuth server. The chat assistant gets new tools for resources, projects, orders and invoices, and every chat tool now has MCP metadata and output schemas.
+- Administrators can find global settings and administration pages from the top-bar search.
+- Resources now record when they were terminated, and the termination date appears in resource details.
+- SLURM QoS profiles support MaxTRESMinsPerJob, and the QoS profile form checks TRES formats.
+- The projects list can show, filter and export project administrators.
+- The background tenant pull imports servers and volumes that were created outside Waldur.
+- The Helm chart can scale the API, worker, beat and Homeport deployments to zero.
+
+### Improvements
+
+- The site-agent offering type is renamed to `Marketplace.SiteAgent`, and the UI accepts both the old and the new value.
+- Resource unlinking runs in the background, and the UI confirms that the unlink has been scheduled.
+- Moving an OpenStack tenant now moves its networks, ports, routers and related objects with it.
+- Tenant pulls do less work: networks shared by unmanaged projects are refreshed once per cloud, and resources and tenants that were never provisioned are skipped.
+- When live resize is off, an attached volume is detached before it is extended. Octavia load balancers are deleted when their tenant is terminated.
+- The port, internal IP and backup restore pickers mark subnets that are shared with a tenant.
+- Proposal summaries are limited to 1000 characters, and the proposal form shows a character count.
+- Celery workers recover when the database server drops their connection. Structured logs keep audit event messages. Failed changelog fetches are cached and logged as warnings.
+- Team chat loads all of a user's Matrix rooms, not just the first page, and the header, timeline and active room always show the same room.
+- Date pickers open their calendar when the input gets focus, and dates can still be typed.
+- Reviewers who belong only to a reviewer pool now see My reviews in the sidebar in marketplace mode. Users with call, proposal or offering roles are no longer told they have no organization.
+- UI modernization continues: react-bootstrap and the Bootstrap grid are replaced with Tailwind layouts, charts now use design tokens, menus have outlines in dark mode, and the Add resource dialog has a refreshed layout.
+- Translations now render call rounds as application rounds and team as work team across locales.
+
+### Security and Access Control
+
+- Every API endpoint now declares who may call it, and the OpenAPI schema describes these declarations.
+- Only people who manage a project can create resources in it through the API, change its networks, routers and load balancers, or upload images to its tenants. Creating a port requires managing the tenant, and the UI offers Create port only to those users.
+- Edits to a network share are refused; sharing it differently means deleting the share and creating a new one. A project's organization can no longer be changed through PATCH or PUT. Users who can only view a LEXIS link can no longer change its HEAppE project.
+- Personal access token changes:
+  - Staff checks require the token's staff scope.
+  - Scopes and bindings now apply to service settings credentials, resource limit reallocation targets and soft-deleted projects.
+  - Tokens bound to a service provider can act on its offerings and list its projects and customers.
+  - Tokens can use a role held above their binding.
+- Provider credentials no longer appear in a per-tenant offering's service attributes. Who sees secret options in a provider's offering list is now decided for each offering.
+- New `INVOICE.LIST` and `PROJECT.UPDATE_METADATA` permissions control access to invoices and project metadata checklists. Each project settings tab, and the Credit edit buttons, appear only to users with the matching permission.
+
+### Bug Fixes
+
+- A replacement credit no longer pays again for costs that a deleted credit already covered.
+- Cost policies that ignore credit no longer include credit compensation, and the UI no longer offers credit fixes for them.
+- Editing a cost policy that has already fired now applies and resets the actions that changed.
+- Snapshot deletion fails immediately when OpenStack refuses it. Deleting a snapshot that was never created skips Cinder.
+- Nationality, organization type and assurance membership restrictions are now saved.
+- Objects that stay in an erred state keep their error message.
+- Chrome page translation no longer crashes the UI, charts are drawn once when they load, and a new resource's tabs appear without a page reload.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [54 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.4-rc.5...8.1.4-rc.6) - endpoint access declarations and tighter permissions, personal access token fixes, MCP OAuth and chat tools, billing and OpenStack fixes
+- **Waldur Homeport**: [46 commits](https://github.com/waldur/waldur-homeport/compare/8.1.4-rc.5...8.1.4-rc.6) - settings search, resource termination date, project administrators column, permission-based project settings, Matrix chat fixes, Tailwind UI migration
+- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.1.4-rc.5...8.1.4-rc.6) - allow scaling the API, worker, beat and Homeport deployments to zero
+
+---
+
 ## 8.1.4-rc.5 - 2026-10-28
 
 ### Highlights
