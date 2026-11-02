@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-02T03:04:09.148116Z
+Generated: 2026-11-02T16:53:08.142840Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -28539,7 +28539,7 @@ The command will output JSON containing all the credentials you need:
 
 ## Create the offering
 
-Create a Site Agent offering (offering type `Marketplace.Slurm`) as described in the
+Create a Site Agent offering (offering type `Marketplace.SiteAgent`) as described in the
 [Site Agent documentation](site-agent/index.md), and note its UUID: the agent is bound to the
 offering by it.
 
@@ -30089,7 +30089,7 @@ waldur_site_agent --mode membership_sync --config-file waldur-site-agent-config.
 
 ### 1. Create the offering
 
-Create an offering of the **site agent** type (`Marketplace.Slurm` in the API). In its integration
+Create an offering of the **site agent** type (`Marketplace.SiteAgent` in the API). In its integration
 settings, turn on **Enable resource projects** (`plugin_options.enable_resource_projects: true`).
 
 **Offering users do not need to be enabled.** The agent takes members from the role grants on resources
@@ -64987,6 +64987,8 @@ sequenceDiagram
 4. Create a negative `InvoiceItem` (compensation) for each deduction
 5. After all items, enforce **minimal consumption** for both customer and project credits
 
+**What a deleted credit paid stands.** `InvoiceItem.credit` is `SET_NULL`, so a deleted organization credit's compensations stay on their invoices naming no credit. `clear_compensations` leaves them, because no balance is left to give them back to, and `creditable_items` takes them off the item they name (`compensation_of_item`), so a credit that replaces the deleted one pays only what is left. `rebill_historical_usage` works the same way. What it paid counts only against the item it paid for: if that item's cost later falls below it, nothing goes back or moves to another item, and the invoice stays below zero by the difference.
+
 ```mermaid
 sequenceDiagram
     participant MC as MonthlyCompensation
@@ -65209,7 +65211,7 @@ current_cost = cost_before_credit − credit_drawn − credit_pending
 | `credit_drawn` | Credit compensation already written on the period's invoices; 0 for a policy that does not take credit into account, which counts the cost credit paid as well |
 | `credit_pending` | Credit the current month will still draw that is not written yet (`_pending_compensation`); 0 for a policy that does not take credit into account |
 
-The period's items are split by `invoices.utils.credit_compensation_q`, the discriminator `_pending_compensation` uses, so the parts add up to `current_cost` exactly. It shares the response's `MonthlyCompensation` with `current_cost`, and a `?field=` selection without `cost_breakdown` skips it.
+The period's items are split by `invoices.utils.credit_compensation_q`, and `_pending_compensation` adds only what is not written yet, so the parts add up to `current_cost` exactly. It shares the response's `MonthlyCompensation` with `current_cost`, and a `?field=` selection without `cost_breakdown` skips it.
 
 ##### What started an evaluation, and who
 
@@ -82737,7 +82739,9 @@ import { TabNav } from 'waldur-ui';
 import { Link } from '@/core/Link';
 
 <TabNav
-  activeKey={state.name}
+  activeKey={
+    state.name === 'project-manage' ? 'project-manage' : 'project.dashboard'
+  }
   listClassName="mb-4"
   items={[
     {
@@ -82755,6 +82759,8 @@ import { Link } from '@/core/Link';
   ]}
 />;
 ```
+
+`activeKey={state.name}` is enough only when every page under the bar is the state of one of its tabs. Here View stands for every project page but Edit, so the key comes from the one state that isn't View's: with `state.name`, neither tab would be active on Resources or Audit logs.
 
 | Item field          | Notes                                                                                                                                                    |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -103558,7 +103564,7 @@ the Celery beat task `send_telemetry` sends, and nothing else:
   "number_of_offerings": 796,
   "types_of_offering": [
     "Marketplace.Basic",
-    "Marketplace.Slurm",
+    "Marketplace.SiteAgent",
     "OpenStack.Tenant",
     "Waldur.RemoteOffering"
   ],
@@ -137043,10 +137049,14 @@ Body:
             "unit": "month"
         }
     ],
-    "type": "Marketplace.Slurm",
+    "type": "Marketplace.SiteAgent",
     "shared": true
 }
 ```
+
+`Marketplace.SiteAgent` is the offering type served by Waldur Site Agent. Its former name,
+`Marketplace.Slurm`, is still accepted as an alias in requests and filters, and is stored and
+returned as `Marketplace.SiteAgent`.
 
 #### Component fields
 
@@ -137073,7 +137083,7 @@ Body (key fields shown):
     "created": "2025-02-04T08:37:14.715810Z",
     "name": "Test Cluster",
     "state": "Draft",
-    "type": "Marketplace.Slurm",
+    "type": "Marketplace.SiteAgent",
     "shared": true,
     "components": [
         {
