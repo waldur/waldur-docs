@@ -55,10 +55,14 @@ Body:
             "unit": "month"
         }
     ],
-    "type": "Marketplace.Slurm",
+    "type": "Marketplace.SiteAgent",
     "shared": true
 }
 ```
+
+`Marketplace.SiteAgent` is the offering type served by Waldur Site Agent. Its former name,
+`Marketplace.Slurm`, is still accepted as an alias in requests and filters, and is stored and
+returned as `Marketplace.SiteAgent`.
 
 #### Component fields
 
@@ -85,7 +89,7 @@ Body (key fields shown):
     "created": "2025-02-04T08:37:14.715810Z",
     "name": "Test Cluster",
     "state": "Draft",
-    "type": "Marketplace.Slurm",
+    "type": "Marketplace.SiteAgent",
     "shared": true,
     "components": [
         {

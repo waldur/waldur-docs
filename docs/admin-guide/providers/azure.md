@@ -115,7 +115,7 @@ The command will output JSON containing all the credentials you need:
 
 ## Create the offering
 
-Create a Site Agent offering (offering type `Marketplace.Slurm`) as described in the
+Create a Site Agent offering (offering type `Marketplace.SiteAgent`) as described in the
 [Site Agent documentation](site-agent/index.md), and note its UUID: the agent is bound to the
 offering by it.
 

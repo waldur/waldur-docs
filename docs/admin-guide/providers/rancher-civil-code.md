@@ -195,7 +195,7 @@ waldur_site_agent --mode membership_sync --config-file waldur-site-agent-config.
 
 ### 1. Create the offering
 
-Create an offering of the **site agent** type (`Marketplace.Slurm` in the API). In its integration
+Create an offering of the **site agent** type (`Marketplace.SiteAgent` in the API). In its integration
 settings, turn on **Enable resource projects** (`plugin_options.enable_resource_projects: true`).
 
 **Offering users do not need to be enabled.** The agent takes members from the role grants on resources

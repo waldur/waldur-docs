@@ -42,7 +42,7 @@ the Celery beat task `send_telemetry` sends, and nothing else:
   "number_of_offerings": 796,
   "types_of_offering": [
     "Marketplace.Basic",
-    "Marketplace.Slurm",
+    "Marketplace.SiteAgent",
     "OpenStack.Tenant",
     "Waldur.RemoteOffering"
   ],
