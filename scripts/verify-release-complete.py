@@ -11,8 +11,9 @@ This runs at the end of a stable tag pipeline and checks what an operator would
 otherwise have to check themselves:
 
   * the OpenAPI schema for the release is committed under docs/API/
-  * the changelog entry exists and links that schema
+  * the changelog entry exists and links that schema and its API changes page
   * the versioned documentation is actually served
+  * the API changes page on api-docs.waldur.com is served
   * every repository that takes part in the release carries the tag
 
 Every check runs before anything is reported, so one invocation lists
@@ -38,6 +39,7 @@ API_DIR = PROJECT_DIR / "docs" / "API"
 
 GITLAB = os.environ.get("CI_SERVER_URL", "https://code.opennodecloud.com") + "/api/v4"
 DOCS_URL = "https://docs.waldur.com"
+API_DOCS_URL = "https://api-docs.waldur.com"
 
 # Repositories tagged as part of a stable release. waldur-docs itself is the
 # pipeline running this, so its tag is a given.
@@ -94,6 +96,14 @@ def http_status(url: str) -> int | None:
         return None
 
 
+def api_changes_url(version: str) -> str:
+    """The release's API changes page; the same URL add-changelog-api-link.py writes."""
+    return (
+        f"{API_DOCS_URL}/{version}/integrator-guide/APIs/api-changes/"
+        f"waldur-openapi-schema-{version}-diff/"
+    )
+
+
 def check_schema_committed(version: str) -> str | None:
     schema = API_DIR / f"waldur-openapi-schema-{version}.yaml"
     if not schema.is_file():
@@ -110,30 +120,55 @@ def check_changelog(version: str) -> str | None:
     text = CHANGELOG.read_text(encoding="utf-8")
     if f"## {version} " not in text and not text.count(f"## {version}\n"):
         return f"CHANGELOG.md has no '## {version}' entry."
-    link = f"../API/waldur-openapi-schema-{version}.yaml"
-    if link not in text:
+    missing = [
+        name
+        for name, link in (
+            ("OpenAPI schema", f"../API/waldur-openapi-schema-{version}.yaml"),
+            ("API changes", api_changes_url(version)),
+        )
+        if link not in text
+    ]
+    if missing:
         return (
-            f"The '## {version}' changelog entry does not link its OpenAPI "
-            "schema — add-changelog-api-link.py did not run."
+            f"The '## {version}' changelog entry does not link its "
+            f"{' or its '.join(missing)} — add-changelog-api-link.py did not run."
         )
     return None
 
 
-def check_docs_published(version: str) -> str | None:
-    # GitHub Pages serves the new version a little after mike pushes gh-pages,
-    # so a single immediate probe can 404 on a release that is fine. Retry
-    # briefly before calling it missing.
+def wait_for_ok(url: str) -> int | None:
+    """GET ``url`` until it returns 200 or the wait runs out; the last status.
+
+    GitHub Pages serves a new version a little after mike pushes gh-pages, so a
+    single immediate probe can 404 on a release that is fine.
+    """
     deadline = time.monotonic() + DOCS_WAIT_SECONDS
-    status = None
     while True:
-        status = http_status(f"{DOCS_URL}/{version}/")
+        status = http_status(url)
         if status == 200 or time.monotonic() >= deadline:
-            break
+            return status
         time.sleep(DOCS_POLL_SECONDS)
+
+
+def check_docs_published(version: str) -> str | None:
+    status = wait_for_ok(f"{DOCS_URL}/{version}/")
     if status != 200:
         return (
             f"{DOCS_URL}/{version}/ returned {status} — the versioned "
             "documentation was never deployed."
+        )
+    return None
+
+
+def check_api_changes_published(version: str) -> str | None:
+    # The changelog links this page before waldur/api-docs has rendered it (see
+    # add-changelog-api-link.py); this is where a missing page is caught.
+    url = api_changes_url(version)
+    status = wait_for_ok(url)
+    if status != 200:
+        return (
+            f"{url} returned {status} — the API changes page was never "
+            "published; check the `Generate and release API docs` trigger."
         )
     return None
 
@@ -168,8 +203,12 @@ def main() -> int:
 
     checks = [
         ("OpenAPI schema committed", lambda: check_schema_committed(version)),
-        ("changelog entry links the schema", lambda: check_changelog(version)),
+        (
+            "changelog entry links the schema and API changes",
+            lambda: check_changelog(version),
+        ),
         ("versioned documentation is served", lambda: check_docs_published(version)),
+        ("API changes page is served", lambda: check_api_changes_published(version)),
     ]
     for repo in TAGGED_REPOS:
         checks.append((f"{repo} tagged", lambda r=repo: check_repo_tag(r, version)))
