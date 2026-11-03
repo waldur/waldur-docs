@@ -195,6 +195,7 @@ Test mkdocs:
     # Fast pre-check with a clear message before the slow full build.
     - python scripts/check-changelog-api-links.py
     - python3 -m unittest scripts/test_generate_enhanced_changelog.py
+    - python3 -m unittest scripts/test_add_changelog_api_link.py
     - *setup_mkdocs_steps
     # Runs after the environment is synced, not with the fast pre-checks above:
     # importing the sync script pulls in PyYAML.
@@ -294,7 +295,9 @@ Generate OpenAPI schema:
         # Add the changelog's schema link in the SAME commit as the schema
         # file. release.sh deliberately leaves it out: until this job runs
         # there is nothing to point at, and a dangling relative link aborts
-        # `mkdocs build --strict` on master and in every open MR.
+        # `mkdocs build --strict` on master and in every open MR. The same run
+        # adds the absolute link to the release's API changes page on
+        # api-docs.waldur.com, which `Verify release completed` checks is served.
         python3 scripts/add-changelog-api-link.py "${CI_COMMIT_TAG}"
         git add docs/API/waldur-openapi-schema-${CI_COMMIT_TAG}.yaml docs/about/CHANGELOG.md
         git diff --cached --quiet && echo "OpenAPI schema already committed" || (git commit -m "Add OpenAPI schema for ${CI_COMMIT_TAG}" && git pull --rebase origin master && git push -o ci.skip origin master)
