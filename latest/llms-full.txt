@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-03T18:06:58.468535Z
+Generated: 2026-11-04T03:04:54.479015Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -69657,7 +69657,7 @@ This class, located in `openapi_inspector.py`, is our custom subclass of `AutoSc
 - **Purpose**: To enrich the generated "operation" object with Waldur-specific metadata and logic.
 - **Edge Cases Handled**:
     1. **HEAD method → `count` operations**: We map `HEAD` to a `_count` operation so clients can read the total via the `x-result-count` header without downloading a body (the generated SDKs expose these as `*Count` methods). This is on by default for **collections** — top-level *and* nested, since `NestedSimpleRouter` mirrors the `head`→`get` mapping of `SortedDefaultRouter`. For **detail views** the inspector returns `None` (a count of a single object is meaningless), *except* for detail-scoped list actions that opt in via the `@count_action` decorator (e.g. `UserRoleMixin.list_users` → `/api/projects/{uuid}/list_users/`). If a list route sets an explicit `@extend_schema(operation_id=…)`, its auto-added HEAD companion would inherit an id ending in `_list` and collide with the GET, so the inspector renames it to a distinct `_count` id. See [Count endpoints](#count-endpoints-count_action-and-head-efficiency) below.
-    2. **Who may call it (`x-permissions`, `x-visibility`)**: every operation says who may call it, as resolved by `waldur_core.core.access.access_for` — the same function the access coverage test uses, so the schema and the guard cannot disagree. It reads the view's permission classes (through `get_permissions()`), the checks `ActionsPermission` picks for the action, the create check of `CreateRequiresProjectAdminMixin`, and the view's `access_declarations`. Every entry must pass; a request acting as staff passes `permission` and `role` entries. Kinds: `permission` (a `permission_factory` check: `permission`, `scopes`), `role` (a shared role check: `roles`, each with the scope it is held `on`, and `via` when the object comes from a request field), `staff`, `staff_or_support`, `public`, `authenticated`, `owned`, `any_of` (`of`), `custom` (a check that does not describe itself, by its docstring's first paragraph), `undescribed` (a check with neither, by name; it does not count as saying who may call the route), and `undeclared` (nothing describes the route yet). A check that needs an object (`permission_factory`, the shared role checks) is left out on routes without one, such as `create` and `list`, where it lets everyone through. List and retrieve operations narrowed by `GenericRoleFilter` also carry `x-visibility: role`; the support issue and comment filters, which also show a ticket to its caller and to the helpdesk it is routed to, say `role_caller_or_helpdesk`; a filter that narrows by a rule of its own says `custom`, and `x-visibility-description` says what it shows, from the filter's docstring.
+    2. **Who may call it (`x-permissions`, `x-visibility`)**: every operation says who may call it, as resolved by `waldur_core.core.access.access_for` — the same function the access coverage test uses, so the schema and the guard cannot disagree. It reads the view's permission classes (through `get_permissions()`), the checks `ActionsPermission` picks for the action, the create check of `CreateRequiresProjectAdminMixin`, and the view's `access_declarations`. Every entry must pass; a request acting as staff passes `permission` and `role` entries. Kinds: `permission` (a `permission_factory` check: `permission`, `scopes`), `role` (a shared role check: `roles`, each with the scope it is held `on`, and `via` when the object comes from a request field), `staff`, `staff_or_support`, `public`, `authenticated`, `owned`, `any_of` (`of`), `custom` (a check that does not describe itself, by its docstring's first paragraph), `undescribed` (a check with neither, by name; it does not count as saying who may call the route), and `undeclared` (nothing describes the route yet). A check that needs an object (`permission_factory`, the shared role checks) is left out on routes without one, such as `create` and `list`, where it lets everyone through. List and retrieve operations narrowed by `GenericRoleFilter` also carry `x-visibility: role`; the support issue and comment filters, which also show a ticket to its caller and to the helpdesk it is routed to, say `role_caller_or_helpdesk`; a filter that narrows by a rule of its own says `custom`, and `x-visibility-description` says what it shows, from the filter's docstring. A view that narrows its queryset in `get_queryset` says `custom` too, with the description given to `@access.shows`. Read actions a view names in `access_filtered_actions` carry the same visibility as its retrieve.
 
     ```yaml
     "/api/projects/{uuid}/":
@@ -69959,25 +69959,35 @@ The process begins in the `waldur-mastermind` pipeline in a job named `Generate 
 
 ### 2. Automated SDK and Tooling Generation
 
-The generated schema artifact immediately triggers a series of parallel jobs, each responsible for generating a specific client SDK or tool. This "schema-first" approach ensures that our client libraries are always perfectly in sync with the API they are meant to consume.
+The SDKs and tools are not generated in this repository. The `waldur-docs` pipeline orchestrates them: each of its `Generate and release …` jobs triggers a downstream pipeline in the generator's own repository, which fetches the schema built by `Generate OpenAPI schema` and regenerates from it. This "schema-first" approach keeps the client libraries in sync with the API they consume.
 
-- `Generate TypeScript SDK`: For Waldur HomePort and other web frontends.
-- `Generate Python SDK`: For scripting, integrations, and internal tools.
-- `Generate Go SDK`: For command-line tools and backend services.
-- `Generate Ansible modules`: Creates Ansible collections for configuration management and automation.
+| `waldur-docs` job | Repository | Produces |
+|---|---|---|
+| `Generate and release TypeScript SDK` | `waldur/js-client` | `waldur-js-client` on npm, used by HomePort |
+| `Generate and release Python SDK` | `waldur/py-client` | `waldur-api-client` on PyPI |
+| `Generate and release Go SDK` | `waldur/go-client` | Go client |
+| `Generate and release Rust SDK` | `waldur/rs-client` | Rust client |
+| `Generate and release Waldur CLI` | `waldur/waldur-cli-generator` | Waldur CLI |
+| `Generate and release Terraform provider` | `waldur/terraform-provider-waldur-generator` | Terraform provider |
+| `Generate and release Ansible collection` | `waldur/ansible-waldur-generator` | Ansible collection |
+| `Generate and release API docs` | `waldur/api-docs` | API reference and API changes pages on [api-docs.waldur.com](https://api-docs.waldur.com/) |
 
 ### 3. Continuous Delivery of SDKs
 
-For development builds (from the `develop` branch), the newly generated SDKs are automatically committed and pushed to the `main` or `develop` branch of their respective GitHub repositories. This provides a continuous delivery pipeline for our API clients, allowing developers to immediately access and test the latest API changes through their preferred language.
+Development builds come from `develop`: the `Build nightly SDK` schedule of `waldur-docs` runs the triggers above, publishing dev versions of the SDKs and the `main` version of the API reference. Each takes the schema from the newest of this repository's last ten `develop` pipelines whose `Generate OpenAPI schema` job passed, even if the rest of that pipeline is still running or later fails. The schedule can also be played on demand when a just-merged endpoint is needed before the next nightly run, once that merge's `Generate OpenAPI schema` job has passed:
+
+```bash
+glab api -X POST projects/waldur%2Fwaldur-docs/pipeline_schedules/25/play
+```
 
 ### 4. Release and Versioning Workflow
 
-For tagged releases, the workflow is more extensive:
+A release is run from the `waldur-docs` pipeline for the release tag. Once it has tagged this repository and the tag's `Generate OpenAPI schema` job has finished:
 
-1. **API Diff Generation**: A job named `Generate OpenAPI schema diff` is triggered. It fetches the schema of the *previous* release from the `waldur-docs` repository and compares it against the newly generated schema using `oasdiff`. It produces a human-readable Markdown file (`openapi-diff.md`) detailing exactly what has changed (endpoints added, fields removed, etc.).
-2. **Documentation Deployment**: The new versioned schema (`waldur-openapi-schema-1.2.3.yaml`) and the diff file are automatically committed to the `waldur-docs` repository. The documentation site is then rebuilt, archiving the new schema and making the API changes visible in the release notes.
-3. **Changelog Integration**: The main `CHANGELOG.md` in the `waldur-docs` repository is automatically updated with links to the new schema file and the API diff page. This provides unparalleled clarity for integrators, showing them precisely what changed in a new release.
-4. **SDK Release**: The tagged version of each SDK is released, often involving bumping the version in configuration files (`pyproject.toml`, `package.json`) and pushing a corresponding version tag to the SDK's repository.
+1. **Versioned schema**: The `waldur-docs` job `Generate OpenAPI schema` commits the schema as `docs/API/waldur-openapi-schema-<version>.yaml` and adds two links to the release's changelog entry: the schema, and the release's API changes page.
+2. **API changes page**: `Generate and release API docs` triggers `waldur/api-docs`, whose `Generate OpenAPI schema diff` job compares the schema with the previous release's using [`oasdiff`](https://github.com/oasdiff/oasdiff). The API changes page it publishes leads with a summary and lists breaking changes first, then warnings, then everything else; the full structural diff, description edits included, is on a linked page. Every release's page is listed under *API changes* on [api-docs.waldur.com](https://api-docs.waldur.com/latest/integrator-guide/APIs/api-changes/).
+3. **SDK release**: The other triggers release the tagged version of each SDK and tool.
+4. **Verification**: `Verify release completed` fails the release if the schema is not committed, the changelog entry lacks either link, or the versioned documentation or API changes page is not served.
 
 This automated, schema-driven workflow provides immense benefits:
 
@@ -72424,6 +72434,11 @@ A route declares access by any of:
     }
     ```
 
+  A mixin declares the actions it adds: a view's declarations add to those of
+  its bases, and its entry for an action replaces theirs. `UserRoleMixin`
+  declares `list_users`, `add_user`, `update_user` and `delete_user` this way,
+  for every view that uses it.
+
   Never declare by adding to `<action>_permissions`: an action's own list
   replaces the view-level `unsafe_methods_permissions`, so it would drop the
   checks the action relied on.
@@ -72435,7 +72450,33 @@ A route declares access by any of:
   `access_visibility = access.CUSTOM_VISIBILITY`, and the first paragraph of
   its docstring says what it shows (`x-visibility: custom` with
   `x-visibility-description`); without a docstring the route counts as
-  undescribed. Other read actions on the same view declare their own access.
+  undescribed.
+- **`@access.shows(...)` on `get_queryset`**, for a view that narrows its
+  queryset itself rather than in a filter backend. It says what list and
+  retrieve show (`x-visibility: custom`), in place of what the filter backends
+  say. It describes `get_queryset` alone. A backend that narrows further
+  says how in a sentence of its own, `access_visibility_note`, which is added
+  to a custom visibility on the routes that run the backend; an action
+  declared with `filter_backends=[]` drops it, as it drops the narrowing. A
+  subclass that overrides `get_queryset` says what its own shows.
+
+    ```python
+    @access.shows("Resources of projects and organizations where the caller holds a role.")
+    def get_queryset(self):
+        return self.queryset.filter_for_service_consumer(self.request.user)
+    ```
+
+- **`access_filtered_actions` on the view**, for other read actions that look
+  their object up with `get_object()` as retrieve does, or list
+  `filter_queryset(get_queryset())` as list does. They share the visibility
+  of list and retrieve. Name no action that reads past the queryset (a
+  `get_queryset()` without `filter_queryset`, a model manager, another
+  view's objects): the schema would call it narrowed when it is not. Any
+  other read action declares its own access.
+
+    ```python
+    access_filtered_actions = ("details", "offering", "plan_periods")
+    ```
 
 ### How to declare an app's routes
 
@@ -72560,8 +72601,9 @@ source either way. A direct `has_permission(request, permission, parent)` keeps
 the binding on `parent`.
 
 Opted in today: the provider's actions on a resource that use
-`OFFERING_SCOPED_SOURCES`, the offering updates behind `can_update_offering`, and
-updating a project.
+`OFFERING_SCOPED_SOURCES`, the offering updates behind `can_update_offering`,
+updating a project, and approving or rejecting a project end date change
+request, which changes the project as updating it does.
 
 ### Restrictions
 
@@ -72605,9 +72647,14 @@ backends. Detail endpoints inherit the same narrowing because DRF's
 | `proposal.Call` | `call` (no ancestor inheritance) |
 | `proposal.Proposal` | `proposal` (no ancestor inheritance) |
 
-Endpoints whose model does not appear above (e.g. `/api/marketplace-orders/`,
+Apps register rules for their own models from `ready()`:
+`structure.AccessSubnet` is reachable from `customer` only, and
+`matrix_chat.MatrixHistoryExport` from the room's `customer` or `project`.
+
+Endpoints whose model has no rule (e.g. `/api/marketplace-orders/`,
 `/api/invoices/`) currently pass through unfiltered. Add a builder via
-`register_pat_filter` in `pat_filtering.py` to extend coverage.
+`register_pat_filter`, in `pat_filtering.py` or the app's `ready()`, to extend
+coverage.
 
 **Lists nested under a parent**: the rules only follow an object's own
 ancestors, so they would empty a list of one parent's children that belong
@@ -76701,11 +76748,10 @@ beats every Tailwind utility, important or not: a class Tailwind also defined (`
 `text-white`) silently painted Bootstrap's compiled colour, theme-inverted in dark mode, and no
 `dark:`/`hover:` variant beside it applied.
 
-**Bootstrap emits no colour utility any more.** `src/styles/bootstrap/_utilities.scss`
-removes `color`, `background-color`, `border-color` and `border-top`/`-end`/`-bottom`/`-start`
-from `$utilities`, and the `border: 0` `.border-0` from its `border` utility. (Its width
-utilities stay: `.border-0` … `.border-5`, `.border-top-0`, … set only `border-width`.) Every colour class is Tailwind's and
-follows the design tokens. (`$theme-colors` is an empty map, so no Bootstrap component emits a contextual colour either.)
+**Bootstrap emits no utility at all any more** (#478): its utility API is not imported, so every
+colour, width and border class is Tailwind's and follows the design tokens. A bare `border`
+sets only the width (Bootstrap's also drew `--border-secondary`), so it always names a colour:
+`border border-secondary` (`waldur-custom/require-border-color`, autofix). (`$theme-colors` is an empty map, so no Bootstrap component emits a contextual colour either.)
 
 Bootstrap's old class names paint nothing now, except those Tailwind defines itself (the status
 utilities). They were migrated as:
@@ -76718,7 +76764,7 @@ utilities). They were migrated as:
 | `text-dark`, `text-body`                           | `text-primary`                                                            |
 | `text-gray`, `text-muted`, `text-reset`            | `text-tertiary`, `text-quaternary`, `text-inherit`                        |
 | `bg-light`, `bg-dark`                              | `bg-tertiary dark:bg-quaternary`, `bg-[var(--bg-primary-solid)]`          |
-| `border-top` / `-bottom` / `-start` / `-end`       | `border-t-[1px] border-t-secondary`, … (`l` / `r` for start / end)        |
+| `border-top` / `-bottom` / `-start` / `-end`       | `border-t border-t-secondary`, … (`l` / `r` for start / end)              |
 | `text-gray-800`/`900`, `border-gray-300`           | `text-primary`, `border-primary`                                          |
 
 `FormText` (waldur-ui) is `text-tertiary`; give it `className="text-quaternary"` for a quieter line, or `text-danger` for an error.
@@ -76730,12 +76776,11 @@ utilities). They were migrated as:
   TypeScript literal type.
 - **`src/tailwindBootstrapColors.test.ts`** compiles the Metronic SCSS and checks it emits no
   `!important` colour class, and that Tailwind defines none of the retired names.
-- **The same trap on borders**: Bootstrap's `.border` is still emitted, and it is
-  `border: 1px solid var(--bs-border-color) !important`, so a Tailwind border colour next to
-  it never paints. Use `border-[1px]` (`border-t-[1px]`, …) for the width and give every state
-  an explicit colour, e.g. `rounded border-[1px] border-secondary` and `border-brand` when
-  selected. The `no-bootstrap-border-with-tailwind-color` lint rule reports the clash and
-  autofixes it when the same string sets a base colour.
+- **Borders name their colour**: `border` (and `border-t`, `border-b-2`, …) sets only the
+  width; without a colour class the line takes `currentColor`. Give every state an explicit
+  colour, e.g. `rounded-lg border border-secondary` and `border-brand` when selected.
+  `waldur-custom/require-border-color` reports a bare `border` without one and autofixes it to
+  `border border-secondary`, the line Bootstrap's retired `.border` drew.
 
 ## The brand colour in SCSS
 
@@ -76866,8 +76911,9 @@ to prevent fractional `rem` compression under Waldur's forced 13px root font siz
 | `--radius-modal` | 20px   | `rounded-modal` | —                                | Sidebar mode-switcher card                      |
 | `--radius-full`  | 9999px | `rounded-full`  | `rounded-pill`, `rounded-circle` | Avatars, pills, circular badges, status dots    |
 
-- **No Bootstrap `rounded-0`, `rounded-pill`, `rounded-circle`.** Bootstrap radius utilities are
-  retired and replaced by Tailwind `rounded-none` and `rounded-full` via `waldur-custom/enforce-border-radius-tokens`.
+- **No Bootstrap `rounded-0`, `rounded-pill`, `rounded-circle`, nor a bare `rounded`.** Bootstrap radius utilities are
+  retired and replaced by Tailwind `rounded-none`, `rounded-full` and, for Bootstrap's 8px `rounded`, `rounded-lg`
+  via `waldur-custom/enforce-border-radius-tokens`. Tailwind's own bare `rounded` is 0.25rem, off the pinned scale.
 - **Why pinned in pixels?** Default Tailwind radii use relative `rem` units (e.g. `rounded-sm` is 0.25rem,
   `rounded-xl` is 0.75rem). Under Waldur's forced 13px root font size, unpinned `rem` tokens shrink
   unintentionally (`rounded-sm` becomes 3.25px, `rounded-xl` becomes 9.75px). Pinning the scale preserves
@@ -76891,7 +76937,7 @@ to prevent fractional `rem` compression under Waldur's forced 13px root font siz
 | Bootstrap emits no colour utility                       | `src/tailwindBootstrapColors.test.ts`                                       |
 | No retired Bootstrap colour class name                  | `waldur-custom/no-bootstrap-color-utility`                                  |
 | Every semantic utility waldur-ui/shell use is declared  | `tailwindTheme.test.ts`                                                     |
-| No Tailwind border colour next to Bootstrap's `.border` | `waldur-custom/no-bootstrap-border-with-tailwind-color` (autofix)           |
+| A bare `border` names its colour                        | `waldur-custom/require-border-color` (autofix)                              |
 | State colours from the status matrix, not raw ramps     | `waldur-custom/no-raw-status-ramp`                                          |
 | A colour token with a utility is written as the utility | `waldur-custom/prefer-token-utility` (autofix; table read from `theme.css`) |
 | Font size on the scale; no `fs-*` or inline size        | `waldur-custom/require-font-size-scale` (autofixes `fs-*`), stylelint       |
@@ -83870,7 +83916,7 @@ Use this instead of `SegmentedControl` whenever each option owns a distinct, lar
 
 ## Gotchas
 
-- **Bootstrap utilities are `!important` and sit in a lower layer, but they still win.** `border`, the width classes `border-0` … `border-5`, `border-top-0`, `border-bottom-0` and similar Bootstrap classes override Tailwind's, because important declarations in an earlier layer beat important ones in a later layer and any normal declaration. When you need a specific border width on a tab strip, use arbitrary values (`border-[1px]`, `border-x-[0px]`), which have no Bootstrap counterpart. `border-0` is fine when you _want_ Bootstrap's behaviour (no border at all).
+- **Border widths are Tailwind's.** Bootstrap generates no utility any more (#478), so `border`, `border-x-0`, `border-b-2` … are Tailwind's pixel widths; write them as steps, not arbitrary values (`no-arbitrary-border-width`), and name the colour next to a bare `border` (`require-border-color`).
 - **Anchor tabs and colour.** Give a `TabNav` item a `link`; don't style a bare `<a>` as a tab.
 - **Card bodies in a tab panel keep their top padding.** `_table.scss` drops the top padding of a table card's body, except inside a tab panel. It keys off `[role="tabpanel"]`, which every `TabsContent` has, so no wrapper class is needed; the older `.tab-content` hook still works where it is set by hand. Use `[role="tabpanel"]` in new CSS.
 - **Tab and search params must be `dynamic` in the route.** A tab bar that keeps its state in the URL (`?tab=…`, `useUrlTab`, `TableWithTabs syncWithUrlKey`) writes it with `router.stateService.go(...)`. If the route does not declare the param `dynamic`, UI-Router exits and re-enters the state on every change, so the whole page remounts on each tab switch (and a `?q=` search box loses focus on every keystroke). Declare it once on the route:
@@ -83969,7 +84015,7 @@ Waldur Homeport operates on two active UI component patterns:
 | UI Element                    | Standard Component                                          | Package                      | Usage & Styling Notes                                                                                                                                                                                                                                                                                                              | Prohibited                                                                                    |
 | :---------------------------- | :---------------------------------------------------------- | :--------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------- |
 | **Alert / Banner**            | `AlertItem`                                                 | `waldur-ui`                  | Pure Tailwind, `--border-secondary`, 5 variants                                                                                                                                                                                                                                                                                    | `react-bootstrap` `Alert`                                                                     |
-| **Badge / Pill**              | `Badge`                                                     | `waldur-ui`                  | 15 variants × 3 tones, structural `border-[1px]`                                                                                                                                                                                                                                                                                   | `react-bootstrap` `Badge`                                                                     |
+| **Badge / Pill**              | `Badge`                                                     | `waldur-ui`                  | 15 variants × 3 tones, structural `border`                                                                                                                                                                                                                                                                                         | `react-bootstrap` `Badge`                                                                     |
 | **Tooltip**                   | `Tooltip`                                                   | `waldur-ui`                  | Radix Tooltip (hover/focus) + Popover (click fallback)                                                                                                                                                                                                                                                                             | `react-bootstrap` `Tooltip`, `OverlayTrigger`                                                 |
 | **Popover**                   | `Popover`, `PopoverContent`                                 | `waldur-ui`                  | Radix Popover with `--card-bg` / `--border-secondary` tokens                                                                                                                                                                                                                                                                       | `react-bootstrap` `Popover`                                                                   |
 | **Button**                    | `BaseButton`                                                | `waldur-ui`                  | 12 variants × 3 sizes, inset `box-shadow` border, outline focus ring, semantic button tokens                                                                                                                                                                                                                                       | `react-bootstrap` `Button`, hand-written `btn` class markup                                   |
@@ -84059,18 +84105,20 @@ gutters (`.g-*`, `.gx-*`, `.gy-*`), which go with `Row`/`Col` (#475).
 
 #### Practical Workaround Rules
 
-1. **Structural Borders**: Use `border-[1px]` instead of the bare `.border` utility. Bootstrap's
-   `.border` also sets the colour with `!important`, so any Tailwind border colour next to it
-   (`border border-brand`, `border border-transparent hover:border-secondary`) never paints.
-   Give every state an explicit colour: `border-[1px] border-secondary`, then `border-brand`
-   when selected. Enforced (with autofix) by `no-bootstrap-border-with-tailwind-color`.
-2. **Layout & Display Utilities**: Legacy Bootstrap layout classes are retired in favor of native Tailwind equivalents, and Bootstrap no longer generates `display`, `flex`, flex-alignment (`justify-content`, `align-items`, `align-self`) or `order` utilities (`src/styles/bootstrap/_utilities.scss`):
+1. **Structural Borders**: Bootstrap generates no utility at all (#478), so `border` is
+   Tailwind's: it sets only the width, and the line takes `currentColor` unless a colour class
+   sits next to it. Bootstrap's `.border` drew `--border-secondary`, so its uses became
+   `border border-secondary`. Give every state an explicit colour: `border border-secondary`,
+   then `border-brand` when selected. Enforced (with autofix) by `require-border-color`.
+   `border-0`, `border-2` and `border-3` are Tailwind's with the same width.
+2. **Layout & Display Utilities**: Legacy Bootstrap layout classes are retired in favor of native Tailwind equivalents, and Bootstrap no longer generates `display`, `flex`, flex-alignment (`justify-content`, `align-items`, `align-self`) or `order` utilities (its utility API is not imported):
    - Display: `d-flex` → `flex`, `d-block` → `block`, `d-none` → `hidden`, `d-inline` → `inline`, `d-inline-block` → `inline-block`, `d-inline-flex` → `inline-flex`, `d-grid` → `grid`, and responsive breakpoints (`d-md-none` → `md:hidden`, `d-lg-block` → `lg:block`, `d-sm-flex` → `sm:flex`).
    - Flexbox: `flex-column` → `flex-col`, `align-items-*` → `items-*`, `align-self-*` → `self-*`, `justify-content-*` → `justify-*`, `flex-grow-1` → `grow`, `flex-shrink-0` → `shrink-0`, `order-sm-2` → `sm:order-2` (`order-0`…`5`, `order-first` and `order-last` keep their names).
    - Flex helpers (Metronic `_flex.scss`): `flex-center` → `flex items-center justify-center`, `flex-root` → `flex-1`, `flex-equal` → `flex-1`, `flex-column-fluid` → `flex-auto`, `flex-column-auto` → `flex-none`, `flex-lg-row-fluid` → `lg:flex-auto lg:min-w-0`, `flex-sm-column-auto` → `sm:flex-none`.
    - Sizing & Text: `w-100` → `w-full`, `h-100` → `h-full`, `mw-100` → `max-w-full`, `mh-100` → `max-h-full`, `text-truncate` → `truncate`.
    - Shared names (#478): Bootstrap no longer generates text alignment, white-space, overflow, opacity, vertical alignment, visibility, the position offsets, `shadow-none` or `rounded-0`, so `text-center`, `overflow-hidden`, `opacity-50`, `align-middle`, `invisible`, `top-0` and the like are Tailwind's. Bootstrap's were `!important`, so a variant beside one (`opacity-50 hover:opacity-75`) now applies, and an unlayered component rule now beats one. Bootstrap-only spellings: `text-nowrap` → `whitespace-nowrap` and `text-wrap` → `whitespace-normal` (Tailwind's set the newer `text-wrap` property), `text-md-center` → `md:text-center`, and the percentage offsets `start-50` → `start-1/2`, `top-100` → `top-full` (Tailwind reads `start-50` as 200px, so these are reported without an autofix).
    - Bootstrap-only names (#478): `position-relative` → `relative` (`position-md-sticky` → `md:sticky`), `text-uppercase`/`-capitalize`/`-lowercase` → `uppercase`/…, `fst-italic` → `italic`, `fst-normal` → `not-italic`, `font-monospace` → `font-mono`, `text-break` → `wrap-anywhere` (Bootstrap's `word-break: break-word` lets a long word shrink a flex item or table cell, which `break-words` does not), `text-decoration-underline`/`-none`/`-line-through` → `underline`/`no-underline`/`line-through`, `user-select-none` → `select-none`, `pe-none` → `pointer-events-none`, `translate-middle` → `-translate-1/2` (`-x`/`-y` alike), `z-index-1` → `z-1` (`z-index-n1` → `-z-1`), `rounded-top`/`-end`/`-bottom`/`-start` → `rounded-t-lg`/`rounded-e-lg`/…. Bootstrap no longer generates any of them, nor `rounded-pill`/`rounded-circle` (`rounded-full`, via `enforce-border-radius-tokens`).
+   - Shadows and radii (#503): Bootstrap no longer generates its `shadow` or `rounded` utilities, whose `!important` `.shadow-sm` and `.rounded` rendered differently in a micro-app without its stylesheet. Bare `rounded` (Bootstrap's 8px) is `rounded-lg`, autofixed by `enforce-border-radius-tokens`; `shadow-sm` on a raised surface is `shadow-raised` (`--raised-shadow`, `semantic/elevation.css`); a menu or floating panel uses its own token (`shadow-[var(--menu-shadow)]`, `shadow-[var(--drawer-floating-shadow)]`). Tailwind's own `rounded` (0.25rem) and `shadow-sm` are off the token scales.
    - Enforced (with automated autofix) by `waldur-custom/no-bootstrap-layout-utility`.
 
 ---
@@ -84143,16 +84191,16 @@ This guarantees `lg` resolves to `992px` identically across Tailwind `lg:` varia
 
 Bootstrap's grid (`bootstrap/scss/grid` and `containers`) is not compiled, and neither are Metronic's `.table.g*-*` cell gutters. Layouts are Tailwind grid or flex; `no-bootstrap-grid` reports react-bootstrap's `Row`/`Col`/`ColProps` and any `row`, `col*`, `offset-*`, `row-cols-*` or `g*-*` class.
 
-| Bootstrap                                  | Tailwind                                                                          |
-| ------------------------------------------ | --------------------------------------------------------------------------------- |
-| `<Row>` + `<Col md={6}>` children          | `grid grid-cols-1 md:grid-cols-2 gap-x-5` + plain `div`s                          |
-| `<Col md={8}>` next to `<Col md={4}>`      | `grid grid-cols-1 md:grid-cols-12` + `md:col-span-8` / `md:col-span-4`            |
+| Bootstrap                                  | Tailwind                                                                                          |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| `<Row>` + `<Col md={6}>` children          | `grid grid-cols-1 md:grid-cols-2 gap-x-5` + plain `div`s                                          |
+| `<Col md={8}>` next to `<Col md={4}>`      | `grid grid-cols-1 md:grid-cols-12` + `md:col-span-8` / `md:col-span-4`                            |
 | `<Col>` / `.col` (equal share)             | `grid grid-cols-1 sm:grid-cols-N gap-*` for fixed columns, or `flex gap-*` with `flex-1` children |
-| `<Col xs="auto">`                          | `flex flex-wrap` parent, `flex-none` child                                        |
-| default row gutter (1.5rem across, 0 down) | `gap-x-5`                                                                         |
-| `g-N` / `gx-N` / `gy-N`                    | `gap-*` from the table below                                                      |
-| `.table.gy-N` (cell padding)               | `table-row-py-X` or `<Table density="...">` primitives                            |
-| `.table.gx-N` (space between columns)      | `table-col-gap-X` (keeps the first/last cells' edge padding)                      |
+| `<Col xs="auto">`                          | `flex flex-wrap` parent, `flex-none` child                                                        |
+| default row gutter (1.5rem across, 0 down) | `gap-x-5`                                                                                         |
+| `g-N` / `gx-N` / `gy-N`                    | `gap-*` from the table below                                                                      |
+| `.table.gy-N` (cell padding)               | `table-row-py-X` or `<Table density="...">` primitives                                            |
+| `.table.gx-N` (space between columns)      | `table-col-gap-X` (keeps the first/last cells' edge padding)                                      |
 
 Prefer standard CSS grid (`grid grid-cols-1 sm:grid-cols-2`, `sm:grid-cols-3`) for fixed column layouts so they stack cleanly on mobile. For dynamic or auto-sizing row items, use flexbox with standard utilities (`flex-1`, `flex-none`, `shrink-0`). Avoid literal translations of Bootstrap's `.col` CSS (`*:flex-[1_0_0%] *:max-w-full`).
 
@@ -84251,7 +84299,7 @@ Waldur does **not** toggle dark mode via a `.dark` HTML class. Instead:
 `packages/ui/src/Badge/` (exported from `waldur-ui`).
 
 - **Variants & Tones**: 15 semantic variants (`primary`, `secondary`, `success`, `warning`, `danger`, `info`, `neutral`, `purple`, `blue`, `indigo`, `moss`, `pink`, `teal`, `orange`, `rose`) × 3 tones (`solid`, `light`, `outline`) × 4 shapes (`rounded`, `pill`, `circle`, `roundless`).
-- **Structural 1px Border**: Uses `border-[1px]` paired with `border-transparent` on solid/light tones to maintain uniform dimensions without subpixel shift across tones.
+- **Structural 1px Border**: Uses `border` paired with `border-transparent` on solid/light tones to maintain uniform dimensions without subpixel shift across tones.
 - **Status tones**: `success`/`warning`/`danger` `solid` and `light` read the status matrix
   (`--status-*-solid`, `--status-*-bg` + `--status-*-fg`), so they match alerts and Progress
   fills. The `outline` tone keeps its own ramp steps (an `eslint-disable` for
@@ -84311,7 +84359,7 @@ Waldur does **not** toggle dark mode via a `.dark` HTML class. Instead:
 - **Unmount vs. `keepMounted`**:
   > [!WARNING]
   > Radix renders `isOpen && children` inside its Content, so a closed panel's children are **unmounted even with `forceMount`**. react-final-form fields inside it unregister and lose their values and validation. For panels holding form fields, use `<Collapsible keepMounted>`: children stay mounted and are only `hidden` while closed. `Accordion` has no such option — none of its intended users hold form fields.
-- **Call sites**: the table filters sidebar (`Accordion type="multiple"`), `AccordionCard` (now in `waldur-ui`; `Collapsible keepMounted`, same props as before; pure Tailwind with rem spacing ported from Metronic's card, and `--card-header-text` / `--card-title-text` / `--card-title-secondary-text` / `--card-header-solid-bg` tokens in `card.css` — measured identical to the Metronic card in light and dark), `CategoriesPanel` (`Collapsible`) and a handful of standalone accordions, which add an outer border via `className` (`rounded-md border-[1px] border-solid border-[var(--border-secondary)]`) — the component itself draws only separators between items.
+- **Call sites**: the table filters sidebar (`Accordion type="multiple"`), `AccordionCard` (now in `waldur-ui`; `Collapsible keepMounted`, same props as before; pure Tailwind with rem spacing ported from Metronic's card, and `--card-header-text` / `--card-title-text` / `--card-title-secondary-text` / `--card-header-solid-bg` tokens in `card.css` — measured identical to the Metronic card in light and dark), `CategoriesPanel` (`Collapsible`) and a handful of standalone accordions, which add an outer border via `className` (`rounded-md border border-solid border-[var(--border-secondary)]`) — the component itself draws only separators between items.
 - **Enforcement**: `Accordion`, `AccordionContext` and `useAccordionButton` from `react-bootstrap` (and `react-bootstrap/Accordion`) are prohibited in `RESTRICTED_IMPORTS`.
 
 ---
@@ -84506,28 +84554,28 @@ Implemented in `packages/eslint-plugin-waldur` and enabled as `waldur-custom/*` 
 
 #### Visual patterns
 
-| Rule Name                                 | Severity | Enforced Pattern                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| :---------------------------------------- | :------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `enforce-badge-icon-patterns`             | `error`  | Enforces 12px icon sizing inside `Badge` components.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| `enforce-badge-props-consistency`         | `error`  | Validates `variant`, `tone` and `shape` prop combinations on `Badge`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| `no-manual-icon-colors-in-badges`         | `error`  | Prevents manual colour classes on icons rendered inside `Badge`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| `enforce-badge-right-icon-pattern`        | `error`  | Standardizes right-side action icon styling in badges.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| `enforce-featured-icon`                   | `error`  | Requires `FeaturedIcon` (with `tone`/`size`) for highlighted icon emblems.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| `enforce-phosphor-icon-weight`            | `error`  | Consistent `weight` prop on Phosphor icons.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| `enforce-border-radius-tokens`            | `error`  | Enforces pinned Tailwind border radius tokens (`rounded-none` … `rounded-modal`, `rounded-full`). Autofixes retired Bootstrap `rounded-0`, `rounded-pill`, `rounded-circle`, arbitrary matching pixel classes (`rounded-[6px]` -> `rounded-md`), and flags inline `style={{ borderRadius }}`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `no-bootstrap-grid`                       | `error`  | Tailwind grid/flex layouts; no react-bootstrap `Row`/`Col`/`ColProps`, nor `row`, `col*`, `offset-*`, `row-cols-*`, `g*-*` classes (see [Grid Layouts](#grid-layouts)).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| `no-bootstrap-tabs`                       | `error`  | `Tabs` / `TabNav` from `waldur-ui`; no react-bootstrap `Tab`/`Tabs`/`Nav` or `nav-*` classes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `no-bootstrap-breadcrumb`                 | `error`  | `Breadcrumb` from `waldur-ui` (or `@/navigation/header/breadcrumb`); no react-bootstrap `Breadcrumb` / `BreadcrumbItem` or legacy `breadcrumb*` classes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| `no-bootstrap-form-check`                 | `error`  | `Checkbox` / `Radio` / `Switch` from `waldur-ui`; no `FormCheck`, `Form.Check` or `form-check*` / `form-switch*` classes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| `no-bootstrap-progress`                   | `error`  | `Progress` from `waldur-ui`; no react-bootstrap `ProgressBar` or `progress` / `progress-bar*` classes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| `no-bootstrap-border-with-tailwind-color` | `error`  | No Bootstrap `border` / `border-top` / … next to a Tailwind border colour (Bootstrap's `!important` colour wins). Autofixes to `border-[1px]` when the same string sets a base colour.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| `no-bootstrap-layout-utility`             | `error`  | Retires Bootstrap layout, display, flexbox, Metronic flex helpers, sizing and text-truncate utilities (`d-block`, `d-flex`, `d-none`, `flex-column`, `flex-center`, `flex-root`, `flex-equal`, `flex-column-fluid`, `flex-column-auto`, `flex-lg-row-fluid`, `flex-sm-column-auto`, `w-100`, `mw-100`, `text-truncate`, responsive variants) in favor of Tailwind standard classes (`block`, `flex`, `hidden`, `flex-col`, `items-center justify-center`, `flex-1`, `flex-auto`, `flex-none`, `lg:flex-auto lg:min-w-0`, `sm:flex-none`, `w-full`, `max-w-full`, `truncate`). Autofixes across the codebase, except `w`/`h`/`min-w`/`min-h` × `25`/`50`/`75`/`100`, which Tailwind also defines as spacing steps: those get a suggestion per reading (`w-1/2` or `w-[200px]`). |
-| `no-raw-status-ramp`                      | `error`  | State colours come from `--status-*`, not raw `success-N` / `warning-N` / `error-N` utilities. Deliberate exceptions carry an `eslint-disable` with the reason.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| `no-retired-bootstrap-utility`            | `error`  | Bootstrap utilities the Metronic build no longer generates (never used: `vh-100`, `align-content-*`, `mx-n*`, `ls-*`; breakpoint variants `px-lg-3`, `min-h-md-100px`; or retired utilities `svg-icon*`) compile to nothing; names the Tailwind replacement.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| `require-font-size-scale`                 | `error`  | Font size follows the pinned scale (`text-xs` … `text-4xl`). Autofixes retired Bootstrap `fs-*` classes (`fs-6` -> `text-sm`, `fs-7`/`8` -> `text-xs`, etc.) and arbitrary `text-[14px]`. Flags inline `style={{ fontSize }}`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| `require-weight-scale`                    | `error`  | Font weight is `font-light` … `font-bold`. Reports Bootstrap `fw-*` (autofixed to the same weight: `fw-bold` was 500, so `font-medium`), off-scale steps, `font-[N]` and inline `fontWeight`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `require-dark-pair`                       | `error`  | A physical colour (ramp step, white/black, hex, raw `var(--brand-N)`) needs a `dark:` counterpart in its class list, or a semantic utility. Solid fills and white text on them pass.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| `no-bootstrap-css-vars`                   | `error`  | No `--bs-*` reads in TS/TSX; use the design token (table in [design-tokens.md](design-tokens.md)).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| Rule Name                          | Severity | Enforced Pattern                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| :--------------------------------- | :------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enforce-badge-icon-patterns`      | `error`  | Enforces 12px icon sizing inside `Badge` components.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `enforce-badge-props-consistency`  | `error`  | Validates `variant`, `tone` and `shape` prop combinations on `Badge`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `no-manual-icon-colors-in-badges`  | `error`  | Prevents manual colour classes on icons rendered inside `Badge`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `enforce-badge-right-icon-pattern` | `error`  | Standardizes right-side action icon styling in badges.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `enforce-featured-icon`            | `error`  | Requires `FeaturedIcon` (with `tone`/`size`) for highlighted icon emblems.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `enforce-phosphor-icon-weight`     | `error`  | Consistent `weight` prop on Phosphor icons.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `enforce-border-radius-tokens`     | `error`  | Enforces pinned Tailwind border radius tokens (`rounded-none` … `rounded-modal`, `rounded-full`). Autofixes retired Bootstrap `rounded-0`, `rounded-pill`, `rounded-circle`, arbitrary matching pixel classes (`rounded-[6px]` -> `rounded-md`), and flags inline `style={{ borderRadius }}`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `no-bootstrap-grid`                | `error`  | Tailwind grid/flex layouts; no react-bootstrap `Row`/`Col`/`ColProps`, nor `row`, `col*`, `offset-*`, `row-cols-*`, `g*-*` classes (see [Grid Layouts](#grid-layouts)).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `no-bootstrap-tabs`                | `error`  | `Tabs` / `TabNav` from `waldur-ui`; no react-bootstrap `Tab`/`Tabs`/`Nav` or `nav-*` classes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `no-bootstrap-breadcrumb`          | `error`  | `Breadcrumb` from `waldur-ui` (or `@/navigation/header/breadcrumb`); no react-bootstrap `Breadcrumb` / `BreadcrumbItem` or legacy `breadcrumb*` classes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `no-bootstrap-form-check`          | `error`  | `Checkbox` / `Radio` / `Switch` from `waldur-ui`; no `FormCheck`, `Form.Check` or `form-check*` / `form-switch*` classes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `no-bootstrap-progress`            | `error`  | `Progress` from `waldur-ui`; no react-bootstrap `ProgressBar` or `progress` / `progress-bar*` classes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `require-border-color`             | `error`  | A bare `border` (Tailwind's, width only) names a border colour; autofixes to `border border-secondary`, the line Bootstrap's retired `.border` drew.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `no-bootstrap-layout-utility`      | `error`  | Retires Bootstrap layout, display, flexbox, Metronic flex helpers, sizing and text-truncate utilities (`d-block`, `d-flex`, `d-none`, `flex-column`, `flex-center`, `flex-root`, `flex-equal`, `flex-column-fluid`, `flex-column-auto`, `flex-lg-row-fluid`, `flex-sm-column-auto`, `w-100`, `mw-100`, `text-truncate`, responsive variants) in favor of Tailwind standard classes (`block`, `flex`, `hidden`, `flex-col`, `items-center justify-center`, `flex-1`, `flex-auto`, `flex-none`, `lg:flex-auto lg:min-w-0`, `sm:flex-none`, `w-full`, `max-w-full`, `truncate`). Autofixes across the codebase, except `w`/`h`/`min-w`/`min-h` × `25`/`50`/`75`/`100`, which Tailwind also defines as spacing steps: those get a suggestion per reading (`w-1/2` or `w-[200px]`). |
+| `no-raw-status-ramp`               | `error`  | State colours come from `--status-*`, not raw `success-N` / `warning-N` / `error-N` utilities. Deliberate exceptions carry an `eslint-disable` with the reason.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `no-retired-bootstrap-utility`     | `error`  | Bootstrap utilities the Metronic build no longer generates (never used: `vh-100`, `align-content-*`, `mx-n*`, `ls-*`; breakpoint variants `px-lg-3`, `min-h-md-100px`; or retired utilities `svg-icon*`) compile to nothing; names the Tailwind replacement.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `require-font-size-scale`          | `error`  | Font size follows the pinned scale (`text-xs` … `text-4xl`). Autofixes retired Bootstrap `fs-*` classes (`fs-6` -> `text-sm`, `fs-7`/`8` -> `text-xs`, etc.) and arbitrary `text-[14px]`. Flags inline `style={{ fontSize }}`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `require-weight-scale`             | `error`  | Font weight is `font-light` … `font-bold`. Reports Bootstrap `fw-*` (autofixed to the same weight: `fw-bold` was 500, so `font-medium`), off-scale steps, `font-[N]` and inline `fontWeight`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `require-dark-pair`                | `error`  | A physical colour (ramp step, white/black, hex, raw `var(--brand-N)`) needs a `dark:` counterpart in its class list, or a semantic utility. Solid fills and white text on them pass.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `no-bootstrap-css-vars`            | `error`  | No `--bs-*` reads in TS/TSX; use the design token (table in [design-tokens.md](design-tokens.md)).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 
 #### Code hygiene
 
@@ -85182,7 +85230,7 @@ follows the theme without a `dark:` twin:
 
 ```tsx
 // Good - semantic utilities, theme-aware
-<div className="bg-secondary rounded-md border-[1px] border-secondary p-4">
+<div className="bg-secondary rounded-md border border-secondary p-4">
   <h6 className="text-primary">Title</h6>
   <p className="text-quaternary">Description</p>
 </div>
@@ -85209,8 +85257,8 @@ status matrix: `bg-warning-subtle text-warning`.
 
 **Bootstrap emits no colour utilities**: its old class names (`text-muted`, `text-success`,
 `bg-light`, …) paint nothing, and every colour class is Tailwind's (`text-muted` →
-`text-quaternary`). Never pair Bootstrap's `border` class with a Tailwind border colour: the
-colour never paints (use `border-[1px]`). See
+`text-quaternary`). Bootstrap's utilities are retired too (#478): `border` is Tailwind's width
+only, so name its colour (`border border-secondary`). See
 [design-tokens.md § Bootstrap colour utilities](design-tokens.md).
 
 ### Pattern 2: useTheme() Hook
@@ -86022,7 +86070,7 @@ highlighted row, a validation message), use the matrix tokens, never a raw ramp 
 // Good - adapts to dark mode, contrast-checked on every surface
 <div className="bg-warning-subtle text-warning">…</div>
 <span className="text-danger">{error}</span>
-<div className="border-[1px] border-danger-subtle">…</div>
+<div className="border border-danger-subtle">…</div>
 
 // Bad - needs a dark: twin, unchecked contrast, drifts from Badge/AlertItem
 <div className="bg-warning-50 text-warning-700 dark:bg-warning-900">…</div>
@@ -111300,17 +111348,21 @@ the old link, not creating a new one.
 ## API
 
 All endpoints live under `/api/customer-affiliates/` and return `404` while
-`AFFILIATES_ENABLED` is off.
+`AFFILIATES_ENABLED` is off. Staff and global support see every link. Anyone
+else sees the links whose affiliate is an organization they hold a role on:
+owner, support or reader alike. A role on its service provider or projects
+does not count, and the referred customer sees none of them. HomePort shows
+the *Affiliate earnings* page to the same people.
 
 | Method & path | Who | Purpose |
 |---------------|-----|---------|
-| `GET /api/customer-affiliates/` | staff, affiliate owners | List links (affiliates see only their own). |
+| `GET /api/customer-affiliates/` | staff, support, affiliate organization roles | List links (affiliates see only their own). |
 | `POST /api/customer-affiliates/` | **staff only** | Create a link. |
-| `GET /api/customer-affiliates/{uuid}/` | staff, affiliate owner | Retrieve a link. |
+| `GET /api/customer-affiliates/{uuid}/` | staff, support, affiliate organization roles | Retrieve a link. |
 | `PATCH/PUT /api/customer-affiliates/{uuid}/` | **staff only** | Update fee terms. |
 | `DELETE /api/customer-affiliates/{uuid}/` | **staff only** | Remove a link and its accruals. |
-| `GET /api/customer-affiliates/{uuid}/accruals/` | staff, affiliate owner | Per-invoice fees (amount + period only). |
-| `GET /api/customer-affiliates/{uuid}/earnings/` | staff, affiliate owner | Lifetime total, per-month series, withdrawable balance. |
+| `GET /api/customer-affiliates/{uuid}/accruals/` | staff, support, affiliate organization roles | Per-invoice fees (amount + period only). |
+| `GET /api/customer-affiliates/{uuid}/earnings/` | staff, support, affiliate organization roles | Lifetime total, per-month series, withdrawable balance, and the fee the current month is expected to earn. |
 
 Validation on create/update:
 
@@ -111340,22 +111392,38 @@ GET /api/customer-affiliates/<uuid>/earnings/
 {
   "total_earned": "30.00000",
   "withdrawable_balance": "30.00000",
-  "per_month": [{"year": 2026, "month": 6, "amount": "30.00000"}]
+  "per_month": [{"year": 2026, "month": 6, "amount": "30.00000"}],
+  "upcoming": {"year": 2026, "month": 7, "amount": "12.40000"}
 }
 ```
+
+`upcoming` is the fee the current month is expected to earn: the accrual rule
+applied to the referred customer's open invoice as it stands. It is computed on
+the invoice's net price after the estimated volume discounts (see
+[Component discounts](component-discounts.md)) and after the credit that month
+close is expected to draw. It changes until the month closes, and becomes an
+accrual only then. A payment of an earlier invoice from credit, which month
+close may also write, is not projected. `upcoming` is `null` when the link is
+not active on the first day of the month, when the referred customer has no
+open invoice, or when the month would earn nothing. Like an accrual, it carries
+the period and amount only.
 
 ## Privacy model
 
 The program is designed so an affiliate **never** sees what the referred
 customer bought:
 
-- Affiliate owners get **read-only** access to their own links, accruals and
-  earnings; they cannot view the referred customer's invoices (those return
-  `404`).
+- Members of the affiliate organization, whatever their role there, get
+  **read-only** access to its links, accruals and earnings. They cannot view
+  the referred customer's invoices (those return `404`).
 - The accrual representation exposes the fee `amount` and the invoice
   `year`/`month` only — never a link or embed of the `Invoice` object.
 - Audit events for earned fees carry the period and amount only, scoped to the
   affiliate organization.
+- The amounts still reveal totals, not contents. An accrual is `fee_percent` of
+  a closed invoice's net price, so it shows that month's total. `upcoming` does
+  the same for the open month, and it follows the running total as the month
+  goes on.
 
 ## Audit events
 
@@ -112356,32 +112424,57 @@ the component's billing type — the discount is supported on all of them:
 | LIMIT | the limit quantity | `price × duration-multiplied quantity` |
 | USAGE | the reported usage for the period | `price × reported usage` |
 
+Each main line records the volume that feeds the formula in
+`details["discount_usage"]` when it is billed. A separate pass
+(`billing_discount.apply_aggregated_volume_discounts`) then builds the discount
+lines for the whole invoice:
+
 ```mermaid
 flowchart TB
-    MAIN["Main component line item created<br/>(FIXED / LIMIT / USAGE / one-time)"]
-    CALL["upsert_component_discount_item(usage, unit_price, quantity)"]
-    EVAL{"discount_formula set<br/>and percent > 0?"}
-    SKIP["No discount line item"]
-    NEG["Create/update negative<br/>discount line item"]
+    ITEMS["Main lines carrying<br/>details.discount_usage"]
+    GROUP["Group by plan component<br/>(per customer or per resource)"]
+    EVAL{"Formula on the group's<br/>summed volume: percent > 0?"}
+    LINES["One negative line per main line<br/>(percent x its charge)"]
+    NONE["No discount lines"]
     ERR["Formula error: log and skip<br/>(billing never blocked)"]
 
-    MAIN --> CALL
-    CALL --> EVAL
-    EVAL -->|no| SKIP
-    EVAL -->|yes| NEG
-    CALL -.->|on FormulaError| ERR
+    ITEMS --> GROUP --> EVAL
+    EVAL -->|yes| LINES
+    EVAL -->|no| NONE
+    EVAL -.->|on FormulaError| ERR
 ```
+
+### Estimated on the open invoice, final at month close
+
+The pass runs at month close, before credit compensation and affiliate fees.
+It also runs on the open invoice, so that the invoice total, the project credit
+forecast (`creditable_cost_this_month`) and the estimated-cost policies show
+what the month will be charged, not the gross figure:
+
+- **When.** Daily, in `update-invoices-total-cost`, and shortly after a resource
+  is created or terminated, or switches plan or limit. Changes are debounced per
+  customer, so a burst of changes is rebuilt once. Usage reports wait for the
+  daily pass: usage only grows a line, so its discount lags behind and never
+  runs ahead.
+- **Marked as estimates.** A line on an open invoice carries
+  `details["is_estimate"] = true` and says "estimated" in its name. It is
+  computed on the volume so far. For a limit component that volume is the limit,
+  so the estimate already equals the final discount. For a usage component the
+  volume grows during the month, so the estimate understates the final discount.
+- **Final at close.** Month close builds the lines once more and drops the
+  marker. The invoice serializer reports the lines' sum as `volume_discounts`, a
+  negative amount like `compensations`, and it is already included in `price`.
 
 Key properties:
 
-- **One shared code path.** All billing types call the same
-  `upsert_component_discount_item` helper, so the discount semantics are
-  identical everywhere.
-- **Idempotent.** The USAGE path re-reports usage repeatedly; the paired
-  discount item is created, updated, or removed to match — never duplicated. If
-  usage later drops below the threshold (percent → 0), the stale discount item
-  is removed.
-- **Never blocks billing.** A broken formula is logged and skipped; the main
+- **Updated in place.** Each line is matched to its main line by
+  `details["discount_of_item"]`. A pass changes only the lines whose amount or
+  label moved, creates the missing ones and removes those that no longer apply,
+  for example when usage drops below a tier. A pass over an unchanged invoice
+  writes nothing and logs nothing.
+- **Serialised per invoice.** A pass locks the invoice row, so the daily pass, a
+  queued refresh and month close never create the same line twice.
+- **Never blocks billing.** A broken formula is logged and skipped. The main
   component line is always billed.
 - **Overage is not discounted.** Prepaid overage top-ups are premium-priced and
   bypass the discount.
@@ -123861,18 +123954,36 @@ or support through must therefore ask the request, not the user:
 - the function permissions `structure_permissions.is_staff` and
   `is_staff_or_support`, which call them
 
-`request.user.is_staff` alone lets a token scoped to, say, `LIST_ORDERS` act as
-full staff. Not yet covered: serializer-level checks and what such a token can
-read, since `filter_queryset_for_user` receives only the user.
+A token that lacks the scope its user's role needs also reads as the user without
+that role. `PATAuthentication` hands such a request a `TokenScopedUser`, a proxy of
+`User` whose `is_staff` and `is_support` read as the token allows:
+
+| Account | Token carries | `is_staff` | `is_support` |
+|---|---|---|---|
+| staff | neither scope | false | false |
+| staff | `SUPPORT.ACCESS` only | false | true |
+| support | neither scope | false | false |
+
+Every check on the user's flags follows the token, without the check changing:
+`filter_queryset_for_user`, `GenericRoleFilter`, serializer `get_fields`, media
+access rules and the staff bypass in `has_permission`. Such a token therefore
+sees and does only what the user's roles allow. `/api/users/me/` reports the
+flags the token acts with.
+
+The proxy never writes the narrowed flags: `save`, `delete` and
+`refresh_from_db` run as a plain `User`, so the database and receivers of `User`
+signals see the account's flags; `save` leaves `is_staff` / `is_support` out; and
+assigning them raises. `account_is_staff` / `account_is_support` read the account's
+flags, which `TokenCarriesUserRole` needs. A task given the user, or its id, loads
+it again and sees the account's flags.
 
 Credentials in `GET /api/service-settings/` are the exception: a token sees them
 only with `STAFF.ACCESS` or, for an organization owner, with
 `OFFERING.UPDATE_INTEGRATION`, the permission guarding the same values on an
 offering. Its bindings must cover the organization in both cases, so a bound
 token never sees the credentials of settings that belong to no organization. A
-staff token carrying `OFFERING.UPDATE_INTEGRATION` but not `STAFF.ACCESS` reads an
-offering's service attributes but not these settings, which need not belong to any
-offering. Any other token gets the redacted options a non-owner sees. Use `check_pat_permission` for a check
+staff token without `STAFF.ACCESS` reads as not staff, so it sees these settings
+only as far as its user's roles reach. Any other token gets the redacted options a non-owner sees. Use `check_pat_permission` for a check
 that decides the role itself and needs only the token's limits on top.
 
 ## Security
@@ -129512,6 +129623,14 @@ Template responses available to operator staff. Same template rendering as `Prov
 |-------|---------|
 | `is_forwarded` | Marks comments copied between parent/child issues |
 
+### New field on Attachment
+
+| Field | Purpose |
+|-------|---------|
+| `is_public` | `False` for a file from an internal note. It is never forwarded, and only staff and whoever attached it see it |
+| `is_forwarded` | Marks attachments copied between parent/child issues |
+| `forwarded_from` | The attachment a copy was made from. Unique per issue, so a file reaches each ticket once |
+
 ## Ticket Routing
 
 ### Flow
@@ -129550,6 +129669,9 @@ sequenceDiagram
 5. Creates a child issue with enriched description (customer, project, resource context)
 6. Calls `create_issue()` on the provider backend
 7. Retries up to 3 times on failure, increments `failed_routing_count`
+8. Once the child is committed, `forward_parent_attachments` copies the parent's attachments to it (see [Attachment Forwarding](#attachment-forwarding))
+
+Manual routing (`route_to_provider`) and `reroute` create the child issue the same way, attachments included.
 
 ## Comment Forwarding
 
@@ -129578,6 +129700,34 @@ sequenceDiagram
 The `is_forwarded` flag prevents infinite loops: forwarded comments are skipped by all signal handlers.
 
 Forwarding happens only when a comment is created, and a copy keeps no link to its original, so editing or deleting a comment does not reach its copies. For that reason the author of a comment cannot edit or delete it once the ticket has a parent or child issue, or when the comment is itself a forwarded copy. Staff still can, but their changes are not forwarded either.
+
+## Attachment Forwarding
+
+Attachments travel between the parent and its child issues the way public comments do.
+
+- **On routing**, manual routing and reroute, `forward_parent_attachments` copies the parent's attachments to the new child once the child is committed. The request that routes the ticket does not wait for the files. On a reroute, the files a previous provider sent back stay on the parent and are not passed to the next provider, just as that provider's comments are not. The withdrawn child's stored files are deleted with it.
+- **After routing**, a file added to the parent is forwarded to its child issues (`forward_attachment_to_child`), and a file added to a child is propagated to the parent (`propagate_attachment_to_parent`). The handler schedules the forwarding whenever a file lands on a ticket that is not itself a child, and the task looks the children up, so a file uploaded while routing is still creating the child is not lost. A file lands when its row is created with it, as an API upload is, or when a later save adds it, which is how the Zammad, SMAX and Atlassian syncs store what they pull in. Other saves cost nothing. For a new file, one query asks whether any helpdesk is active or holds a child of the ticket, and nothing is scheduled if none does.
+- **One copy per ticket.** A copy records its original in `forwarded_from`, and `(issue, forwarded_from)` is unique. Routing and forwarding can race, and a task can run twice or be retried, without making a second copy. Copies are also marked `is_forwarded=True` and are never forwarded again. The flag stays when the original is deleted, which clears `forwarded_from`.
+- **Internal files stay.** A file from an internal note has `is_public=False` and is not forwarded, just as the note is not. The Zammad sync sets it from the article. SMAX and Jira hold attachments on the ticket, not on a comment, and say nothing about their visibility, so files they sync count as public. The attachments API and `/api/media/` show such a file only to staff and to whoever attached it, as the comments API does with internal comments.
+- **Every copy is pushed** to the backend that owns its ticket: the provider's backend for a child, the operator's backend for the parent. Comments copied back to the parent are not pushed, but an attachment has to be. The remote service desks' sync deletes attachments the desk does not hold, so an unpushed copy would disappear from the parent.
+- **Each copy has its own stored file**, so deleting or erasing an attachment leaves its copies readable.
+- **Committed, then pushed.** A copy is committed in `CREATION_SCHEDULED`, with a placeholder `backend_id`, before it is pushed. A push runs in three steps so that no transaction is open while the desk is called. It claims the copy (`CREATING`, counting `push_attempts`) in a short transaction, calls the desk, and records the result in another. The claim is the row's `modified`: the result is recorded only while the row still holds it, and the backend's own save of a copy being pushed writes only `backend_id` and `backend_name`. A claim lapses after twice `CELERY_TASK_TIME_LIMIT`, by which time Celery has killed any push still running. A desk that hands back an id has taken the file. If saving the id fails after that, the copy is recorded as pushed rather than sent again, and becomes `ERRED` if recording fails too. If even that cannot be written, a copy whose desk id reached its row is recognised as pushed on the next attempt. A desk that returns without an id has taken nothing, which counts as a failure. Until it is pushed, a copy is shown only to staff, and the syncs do not delete it as stale.
+- **A file a backend refuses** does not stop the routing. The task retries up to 3 times, a minute apart, and each retry pushes only the copies still waiting. After the last retry, the failure is logged and an `attachment_not_forwarded` entry, naming the waiting copy, is added to the parent's `processing_log`. From then on the periodic `retry_attachment_forwarding` task, every 15 minutes, pushes again the copies left waiting for 15 minutes, and those whose claim has lapsed, at most 100 a run. It does nothing where no ticket was ever routed; a ticket counts as routed by its parent or by its helpdesk, so the copies of a child whose parent was deleted are still pushed. A copy deleted during a run is skipped. After 24 pushes, a copy is given up as `ERRED` and noted with the reason `given_up`. A desk that took the file without Waldur learning so, because the connection dropped before the desk's id was saved or the worker died mid-push, may be sent the file again.
+- **SMAX** uploads a file under its author, and a file with no author, such as the purchase order of a marketplace order, under the ticket's reporter. With neither, it refuses the file.
+
+Each provider helpdesk files the attachments of its tickets under a `backend_name` of its own, `<backend_type>:<helpdesk uuid>`. Every desk numbers attachments from its own sequence, so two providers on Jira, or a provider and the operator, hand out the same ids, while `(backend_name, backend_id)` is unique. That covers copies, uploads, and the files a sync pulls into a provider's ticket. Deleting an attachment of a routed ticket, and asking whether it may be deleted, goes to that helpdesk's backend, and so do changes to its comments. The Zammad and SMAX backends also delete a file an earlier sync filed under the plain name.
+
+The syncs match a desk's attachments to a ticket's by id within that ticket, whatever name they are filed under, and skip an id another ticket already holds. They delete as stale only what the desk filed, under either name. A provider helpdesk with no settings of its own shares the operator's desk, and the operator's sync then syncs the provider's tickets as well, so it must recognise their copies.
+
+### The operator's sync and webhooks
+
+The operator's periodic sync (SMAX, Jira) and its webhooks (SMAX, Jira, Zammad) ask the operator's own server. They leave alone the tickets routed to a provider helpdesk of another type or on another desk, where the same id names another ticket, and the children of a deleted helpdesk. Those tickets are left to the provider's own channel, the provider webhook. A helpdesk shares the operator's desk when `get_backend_for_provider` would connect it to the same one. That means the same backend type and the same `desk_settings`: the API URL, and for SMAX also the tenant, since SMAX ids are per tenant. They are read from the helpdesk's settings through `provider_settings_override`, with the operator's as the fallback, without building a backend. URLs are compared by scheme, host and port, ignoring case and the default port, and by path without a trailing slash; an IPv6 host keeps its brackets. A helpdesk whose settings cannot be read counts as on another desk. Under `provider_settings_override`, a helpdesk that gives none of the connection settings uses the operator's. One that names the operator's URL with its own credentials still shares the desk. The Zammad webhook now also looks only at Zammad tickets (`backend_name`).
+
+### Children of a deleted helpdesk
+
+Deleting a provider helpdesk leaves its child tickets without one, and their desk is no longer known. `get_backend_for_issue` raises for such a ticket instead of falling back to the operator's desk, where its id names another ticket. `find_backend_for_issue` returns None. Files and comments can no longer be added there, and comments can no longer be changed or deleted: the API answers 400, and the availability flags read false. Staff, and only staff, may delete a file there. The delete removes the row and its stored file from Waldur only: no desk is asked, and any copy on the provider's helpdesk stays. The attachment's `delete_is_local_only` says so, so the UI can warn. Nothing is forwarded to or from such a ticket. Copies still on their way to it are marked `ERRED` with the reason `helpdesk_deleted`.
+
+Active agents of the provider helpdesk can list and download the attachments of the tickets routed to them. Like comments, edits and deletions are not forwarded.
 
 ## Escalation
 
@@ -129737,6 +129887,9 @@ Each backend implements `from_settings(settings_dict)` classmethod and `_get_con
 | `route_issue_to_provider` | Issue creation | Route issue to provider helpdesk |
 | `forward_comment_to_child` | Comment on parent | Forward comment to child issues |
 | `propagate_comment_to_parent` | Comment on child | Propagate comment to parent issue |
+| `forward_parent_attachments` | Routing complete | Copy the parent's attachments to the new child |
+| `forward_attachment_to_child` | Attachment on parent | Forward attachment to child issues |
+| `propagate_attachment_to_parent` | Attachment on child | Propagate attachment to parent issue |
 | `notify_provider_new_ticket` | Routing complete | Email provider about new ticket |
 | `notify_provider_customer_comment` | Customer comment | Email provider about comment |
 | `notify_provider_sla_warning` | SLA check | Email provider about SLA warning |
@@ -129764,7 +129917,7 @@ Each backend implements `from_settings(settings_dict)` classmethod and `_get_con
 
 | File | Purpose |
 |------|---------|
-| `support/models.py` | New models and new fields on Issue/Comment |
+| `support/models.py` | New models and new fields on Issue/Comment/Attachment |
 | `support/views.py` | ViewSets for all new endpoints |
 | `support/serializers.py` | Serializers for all new endpoints |
 | `support/filters.py` | Filters for new models |
