@@ -18,19 +18,22 @@ To assign a credit, click **Add**. A dialog opens with these fields.
 2. Select the offerings the credit may be spent on. **Leave this empty to allow all offerings** —
    an empty list means unrestricted, not "none". Cost on any other offering is invoiced
    normally and is never drawn from the credit.
-3. Set the credit value. This is the total value that the organization will be able to spent.
-4. Optionally set an end date. On that date the remaining credit is set to 0. It must be the
-   first day of a month.
+3. Set the credit value. This is the total value that the organization will be able to spend,
+   recorded as granted credit (see below).
+4. Optionally set an end date. It must be the first day of a month. At the first monthly
+   billing run after that date, the remaining granted credit is set to 0, and minimal
+   consumption is no longer charged; prepaid and earned credit (see below) do not expire.
 5. Minimal consumption logic defines, how minimal monthly consumption is calculated:
 
     - Fixed means that it is possible to define minimal monthly value and overall credit will be reduced by the monthly value, even if the usage has been less than minimal consumption.
-    - Linear means that by setting the end date, the total value of the credit will be divided evenly across the period until the end date and the overall value will be reduced monthly by the calculated value even if the consumption is less than the calculated value.
+    - Linear means that by setting the end date, the granted credit will be divided evenly across the period until the end date and the credit will be reduced monthly by the calculated value even if the consumption is less than the calculated value.
 
 6. **Expected consumption** is the monthly amount for the fixed logic. It is only charged as a
    minimum when **Apply as minimal consumption** is on. The **Grace coefficient** lowers that
    minimum by a percentage: with an expected consumption of 1 000 and a grace coefficient of
    10 %, at least 900 is deducted each month. In the month of the end date, the full expected
-   consumption is deducted.
+   consumption is deducted. The minimum is deducted only from granted credit, so it is
+   capped by what is left of it; prepaid and earned credit (see below) are never taken by it.
 7. If all set, click **Create**.
 
 !!! warning
@@ -39,6 +42,73 @@ To assign a credit, click **Add**. A dialog opens with these fields.
     credit simply never covers them. Because that cost is never compensated, it counts
     towards [cost policies](../customer-organization/cost-and-usage-policies.md)
     immediately, while the credit balance still looks untouched.
+
+## Granted, prepaid and earned credit
+
+An organization's credit is one balance, made of three kinds of money:
+
+- **Granted** — credit allocated by staff, as in the dialog above. It is a discount: it
+  expires on the end date and does not count towards an
+  [affiliate fee](affiliate-program.md).
+- **Prepaid** — a customer's prepayment, for example a bank transfer, recorded by staff as a
+  [top-up](#recording-a-prepayment) on the organization's credit. Waldur shows it as **Paid
+  credit**. It is the customer's money: it never expires, and invoices paid from it still earn
+  the affiliate fee.
+- **Earned** — affiliate fees and other earnings. Only this part is withdrawable.
+
+Usage spends granted credit first, then prepaid, then earned. Top-ups and reclassifications
+are recorded in the credit-transaction ledger and the organization's event log with their
+comment. Editing the total credit can lower it by no more than the granted credit left:
+prepaid credit is lowered by reversing a top-up, and earned credit by
+[adjusting the withdrawable balance](affiliate-program.md#adjusting-the-withdrawable-balance).
+
+### Viewing the split
+
+In the **Credits** list, expand an organization's row to see its **Paid credit**,
+**Granted credit** and **Withdrawable balance**. The row's **Actions** menu holds
+**Top up** and **Reclassify as paid credit** next to **Edit**, as in the list at the top of this
+page.
+
+The same figures are on the organization's own page: open the organization, select the
+**Edit** tab, then **Credit management**. Staff have a button next to each figure: **+** next
+to **Paid credit** tops it up, **⇄** next to **Granted credit** reclassifies it, and the
+pencil next to **Withdrawable balance** adjusts it.
+
+![Paid, granted and withdrawable credit of an organization](../img/credit-lots-panel.png)
+
+### Recording a prepayment
+
+Select **Top up** in the row's **Actions** menu, or click **+** next to **Paid credit**. An
+organization without a credit has neither: first create one with the value 0, then top it up.
+
+![Top up credit dialog](../img/credit-top-up.png)
+
+1. **Amount** — the prepayment received. The dialog shows the current paid credit and what it
+   becomes. A negative amount reverses a prepayment recorded by mistake, for example a bounced
+   payment; it cannot be larger than the paid credit.
+2. **Payment reference** — optionally, the bank transfer or payment identifier. It is kept in
+   the credit transaction.
+3. **Comment** — what the prepayment is for.
+
+Click **Top up**. The total credit grows by the amount.
+
+### Marking granted credit as paid
+
+A prepayment recorded earlier as an ordinary grant is granted credit: it expires and earns
+no affiliate fee. To correct it, select **Reclassify as paid credit** in the row's **Actions**
+menu, or click **⇄** next to **Granted credit**. Enter the amount and a comment, then click
+**Reclassify**. The amount moves from granted to paid credit, and the total stays the same.
+
+![Reclassify as paid credit dialog](../img/credit-reclassify.png)
+
+The amount cannot exceed the granted credit left. When none is left, the action is
+disabled.
+
+!!! note
+    Through the API, a top-up is `POST /api/customer-credits/{uuid}/top_up/` and a
+    reclassification is `POST /api/customer-credits/{uuid}/reclassify/`, each with an `amount`
+    and a `comment`; a top-up also takes an optional `payment_reference`. Called with a
+    personal access token, they need the token's **STAFF.ACCESS** scope.
 
 ## Paying earlier invoices
 

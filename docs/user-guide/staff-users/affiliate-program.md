@@ -30,8 +30,9 @@ Each link records:
 
 - **Referred organization** — the organization whose invoices generate the fee.
 - **Affiliate organization** — the organization that earns the fee.
-- **Fee %** — the percentage of each finalized invoice's net price (pre-tax,
-  post-compensation) paid to the affiliate.
+- **Fee %** — the percentage paid to the affiliate of each finalized invoice's
+  net price (pre-tax, after credit compensation), plus the part of that
+  compensation which the referred organization paid from prepaid credit.
 - **Active**, **Start date**, **End date** — control when the link accrues fees.
 - **Total earned** — the lifetime fee accrued through the link.
 
@@ -61,16 +62,21 @@ affiliate's balance.
 ### How fees accrue
 
 When an invoice is finalized at the end of the month, an affiliate fee is
-computed on its net price and added to the affiliate organization's credit
-balance. Accrual is idempotent — re-running finalization never pays a fee
+computed and added to the affiliate organization's credit balance. Credit that
+pays the invoice counts towards the fee only when it was prepaid by the
+referred organization: a prepayment is revenue, while granted credit is a
+discount and lowers the fee. See
+[granted, prepaid and earned credit](credit-management-staff.md#granted-prepaid-and-earned-credit). Accrual is idempotent — re-running finalization never pays a fee
 twice. Fees for a referred organization are only visible to the affiliate as an
 amount and period; the affiliate never sees the referred organization's invoice
 contents.
 
 ## Adjusting the withdrawable balance
 
-The **withdrawable balance** is the part of an organization's credit that came
-from earnings (such as affiliate fees) rather than promotional grants. Staff can
+The **withdrawable balance** is what is left of the part of an organization's
+credit that came from earnings (such as affiliate fees), rather than from
+grants or prepayments. Earnings spent on the organization's own
+usage are no longer withdrawable, and earned credit does not expire. Staff can
 adjust it manually — for example to record a negotiated top-up, a payout or a
 clawback.
 
@@ -87,7 +93,7 @@ the total credit value by the same amount.
 
 !!! note
     A reduction cannot exceed the current withdrawable balance — a payout can
-    only draw down earned credit, never staff-granted promotional credit.
+    only draw down earned credit, never granted credit.
 
 Click **Credit transactions** on the same page to see the full ledger — every
 change to the credit value with its type, amount, comment and date. It is
