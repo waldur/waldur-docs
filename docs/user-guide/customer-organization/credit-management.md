@@ -23,7 +23,9 @@ To allocate credit to a project, click **Add**. A dialog opens with these fields
 2. **Allocate credit** - the amount of credit. The sum of all project credits cannot exceed the
    organization's credit; the dialog shows how much is available.
 3. **End date** - optional. On that date the remaining credit is set to 0. It must be the first
-   day of a month.
+   day of a month. Prepaid and earned credit of the organization outlast its own end date, but
+   a project whose credit has expired cannot draw on them. Give the project credit a new amount
+   and end date, or delete it, for the project to use them.
 4. **Minimal consumption logic**, **Expected consumption**, **Grace coefficient** and **Apply as
    minimal consumption** - how much the credit is reduced each month at least, even if the
    project uses less. They work as for organization credits, see
