@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-04T03:04:54.479015Z
+Generated: 2026-11-04T21:14:27.489565Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -13605,6 +13605,28 @@ Billing export check interval in hours for reconciliation
 
 Number of days to retain SLURM policy evaluation log entries before automatic cleanup.
 
+### HPC workspace
+
+#### FIRECREST_ALLOWED_API_URLS
+
+**Type:** str
+
+FirecREST API URLs that SLURM offerings may connect to, one per line or comma-separated. Waldur forwards a user's identity provider token only to these URLs; an offering pointing elsewhere has no HPC workspace. Append |audience (and optionally |client-scope) to an entry to send a token exchanged for that audience instead of the sign-in token, e.g. https://firecrest.example.org|firecrest.
+
+#### SLURM_MONITOR_ALLOWED_API_URLS
+
+**Type:** str
+
+slurm-monitor API URLs (ending in /api/v2) that SLURM offerings may read job performance from, one per line or comma-separated. Waldur forwards a user's identity provider token only to these URLs. Append |audience (and optionally |client-scope) to an entry to send a token exchanged for that audience instead of the sign-in token.
+
+#### OIDC_TOKEN_MAX_IDLE_DAYS
+
+**Type:** int
+
+**Default value:** 30
+
+Days without a sign-in after which Waldur deletes and revokes a user's stored identity provider refresh token. The user signs in again to use HPC services.
+
 ### Usage Polling
 
 #### USAGE_POLL_RECORD_RETENTION_MONTHS
@@ -20448,6 +20470,7 @@ td:nth-child(4) {
 | `remove_deleted_robot_accounts` | `waldur_mastermind.marketplace.remove_deleted_robot_accounts` | 1 day | Remove robot accounts that are in DELETED state.<br>This task runs daily to clean up robot accounts that have been marked for deletion. |
 | `resend-stuck-invitations` | `waldur_core.users.resend_stuck_invitations` | 1 hour | Reconcile stuck invitations that were never sent due to errors or broker/worker downtime. |
 | `reset-slurm-policy-periods` | `waldur_mastermind.policy.reset_slurm_policies_on_period_boundary` | Cron: `0 1 * * * (m/h/dM/MY/d)` | Re-evaluate paused/downscaled SLURM resources whose current period has no usage.<br><br>Runs daily (idempotent). For each SlurmPeriodicUsagePolicy, checks whether any<br>active resources are still paused or downscaled while having 0% usage in the<br>current period — which means the pause carried over from a previous period and<br>should be cleared.<br><br>This is safe to re-run: if the resource is already unpaused, re-evaluation<br>with 0% usage is a no-op. If Celery beat was down or the queue was flushed,<br>the next successful run catches up automatically. |
+| `retry-attachment-forwarding` | `waldur_mastermind.support.retry_attachment_forwarding` | 15 minutes | Push again the copies the forwarding tasks could not deliver.<br><br>A copy left waiting once a task's retries are spent, because its desk was<br>down for longer, or left claimed by a worker that died mid-push, would<br>otherwise stay hidden and off its desk for good. Each is pushed again<br>until it has had ``MAX_PUSH_ATTEMPTS`` pushes, and is then given up as<br>``ERRED`` and noted on the processing log of the routed ticket. |
 | `revoke_outdated_consents` | `waldur_mastermind.marketplace.revoke_outdated_consents` | 1 day | Revoke consents for users who haven't re-consented within grace period.<br><br>Finds all active ToS with requires_reconsent=True where grace period has expired,<br>and revokes all consents that don't match the current active ToS version. |
 | `sample-table-sizes` | `waldur_core.sample_table_sizes` | Cron: `0 1 * * * (m/h/dM/MY/d)` | Sample all database table sizes and store them for trend analysis.<br>This task runs daily to collect historical data for detecting abnormal growth patterns. |
 | `scim-hourly-entitlement-reconciliation` | `waldur_core.users.scim.sync_recent_entitlements` | 1 hour | No description available |
@@ -20472,7 +20495,7 @@ td:nth-child(4) {
 | `terminate_resources_if_project_end_date_has_been_reached` | `waldur_mastermind.marketplace.terminate_resources_if_project_end_date_has_been_reached` | Cron: `40 1 * * * (m/h/dM/MY/d)` | Terminate resources when their project has reached its end date (including grace period).<br><br>Also pauses resources for projects currently in the grace period,<br>if the offering has supports_pausing=True in plugin_options, and lifts that<br>pause from resources whose project has left the grace period without<br>expiring (its end date was extended or cleared). |
 | `terminate_resources_in_state_erred_without_backend_id_and_failed_terminate_order` | `waldur_mastermind.marketplace.terminate_resources_in_state_erred_without_backend_id_and_failed_terminate_order` | 1 day | Clean up erred site-agent resources that failed both creation and termination. |
 | `update-custom-quotas` | `waldur_core.quotas.update_custom_quotas` | 1 hour | No description available |
-| `update-invoices-total-cost` | `invoices.update_invoices_total_cost` | 1 day | Update cached total cost for current month invoices. |
+| `update-invoices-total-cost` | `invoices.update_invoices_total_cost` | 1 day | Refresh current month invoices: the estimated volume discounts of the<br>open ones first, as they lower the total, then the cached total cost. |
 | `update-software-catalogs` | `marketplace.update_software_catalogs` | Cron: `0 3 * * * (m/h/dM/MY/d)` | Daily task to update all enabled software catalogs.<br><br>Updates EESSI, Spack, and other configured catalogs independently.<br>Each catalog is processed in isolation - if one fails, others continue. |
 | `update-standard-quotas` | `waldur_core.quotas.update_standard_quotas` | 1 day | No description available |
 | `update-user-actions` | `waldur_core.user_actions.update_user_actions` | Cron: `0 */6 * * * (m/h/dM/MY/d)` | Update actions for all providers or specific provider.<br><br>If user_uuid is provided, only update actions for that specific user. |
@@ -20485,10 +20508,10 @@ td:nth-child(4) {
 | `waldur-chat-reset-daily-token-usage` | `waldur_mastermind.chat.reset_daily_token_usage` | Daily (at midnight) | Reset quotas where last reset was on a previous calendar day. |
 | `waldur-chat-reset-monthly-token-usage` | `waldur_mastermind.chat.reset_monthly_token_usage` | Monthly (1st day of month at midnight) | Reset quotas where last reset was in a previous calendar month. |
 | `waldur-chat-reset-weekly-token-usage` | `waldur_mastermind.chat.reset_weekly_token_usage` | Cron: `0 0 * * 1 (m/h/dM/MY/d)` | Reset quotas where last reset was in a previous calendar week (Monday start). |
+| `waldur-cleanup-stale-oauth-tokens` | `waldur_auth_social.cleanup_stale_oauth_tokens` | 1 day | No description available |
 | `waldur-create-invoices` | `invoices.create_monthly_invoices` | Monthly (1st day of month at midnight) | - For every customer change state of the invoices for previous months from "pending" to "billed"<br> and freeze their items (or transition to "pending_finalization" if grace period is configured).<br>- Create new invoice for every customer in current month if not created yet. |
 | `waldur-create-offering-users-for-site-agent-offerings` | `waldur_mastermind.marketplace_site_agent.sync_offering_users` | 1 day | No description available |
 | `waldur-finalize-invoices` | `invoices.finalize_previous_invoices` | Cron: `0 * 1-3 * * (m/h/dM/MY/d)` | Finalize invoices that are in PENDING_FINALIZATION state.<br><br>Runs hourly on the 1st-3rd of each month. Checks whether the configured<br>grace period has elapsed since midnight on the 1st before finalizing.<br>No-op when there are no PENDING_FINALIZATION invoices or when the<br>grace period has not yet elapsed. |
-| `waldur-firecrest-pull-jobs` | `waldur_firecrest.pull_jobs` | 1 hour | Pull SLURM jobs from Firecrest API for all offering users with valid OAuth tokens. |
 | `waldur-freeipa-sync-groups` | `waldur_freeipa.sync_groups` | 10 minutes | This task is used by Celery beat in order to periodically<br>schedule FreeIPA group synchronization. |
 | `waldur-freeipa-sync-names` | `waldur_freeipa.sync_names` | 1 day | Synchronize user names between Waldur and FreeIPA backend. |
 | `waldur-marketplace-calculate-usage` | `waldur_mastermind.marketplace.calculate_usage_for_current_month` | 1 hour | Calculate marketplace resource usage for the current month across all customers and projects. |
@@ -75413,11 +75436,11 @@ import { CloseDialogButton } from '@/modal/CloseDialogButton';
 
 See [modals.md](modals.md) for the whole modal API.
 
-| Component              | Location                           | Description           | Key Features                       |
-| ---------------------- | ---------------------------------- | --------------------- | ---------------------------------- |
-| **ModalDialog**        | `src/modal/ModalDialog.tsx`        | Base modal component  | Header, body, footer, icon support |
-| **ConfirmationDialog** | `waldur-ui`                        | Confirmation modal    | Destructive actions, custom text   |
-| **ActionDialog**       | `src/modal/ActionDialog.tsx`       | Generic action dialog | Form support, validation           |
+| Component              | Location                     | Description           | Key Features                       |
+| ---------------------- | ---------------------------- | --------------------- | ---------------------------------- |
+| **ModalDialog**        | `src/modal/ModalDialog.tsx`  | Base modal component  | Header, body, footer, icon support |
+| **ConfirmationDialog** | `waldur-ui`                  | Confirmation modal    | Destructive actions, custom text   |
+| **ActionDialog**       | `src/modal/ActionDialog.tsx` | Generic action dialog | Form support, validation           |
 
 ### Button Factory Components
 
@@ -75479,15 +75502,16 @@ export const MyEditButton = ({ row, refetch }) => (
 
 ### Data Display Components
 
-| Component                | Location                            | Description           | Key Features                             |
-| ------------------------ | ----------------------------------- | --------------------- | ---------------------------------------- |
-| **Badge**                | `src/core/Badge.tsx`                | Status indicator      | Multiple variants, icon support, tooltip |
-| **StateIndicator**       | `src/core/StateIndicator.tsx`       | Status with animation | Loading animation, color variants        |
-| **BooleanBadge**         | `src/core/BooleanBadge.tsx`         | Boolean indicator     | Yes/No display, true/false states        |
-| **TruncatedText**        | `src/core/TruncatedText.tsx`        | Responsive text       | Automatic truncation, expandable         |
-| **TruncatedDescription** | `src/core/TruncatedDescription.tsx` | Description text      | Read more/less functionality             |
-| **ImagePlaceholder**     | `src/core/ImagePlaceholder.tsx`     | Image fallback        | Automatic sizing, circular option        |
-| **Avatar**               | `packages/ui/src/Avatar/Avatar.tsx` | User avatar           | Profile pictures, initials fallback      |
+| Component                | Location                            | Description           | Key Features                                                                                 |
+| ------------------------ | ----------------------------------- | --------------------- | -------------------------------------------------------------------------------------------- |
+| **Badge**                | `src/core/Badge.tsx`                | Status indicator      | Multiple variants, icon support, tooltip                                                     |
+| **StateIndicator**       | `src/core/StateIndicator.tsx`       | Status with animation | Loading animation, color variants                                                            |
+| **BooleanBadge**         | `src/core/BooleanBadge.tsx`         | Boolean indicator     | Yes/No display, true/false states                                                            |
+| **TruncatedText**        | `src/core/TruncatedText.tsx`        | Responsive text       | Automatic truncation, expandable                                                             |
+| **TruncatedDescription** | `src/core/TruncatedDescription.tsx` | Description text      | Read more/less functionality                                                                 |
+| **ImagePlaceholder**     | `src/core/ImagePlaceholder.tsx`     | Image fallback        | Automatic sizing, circular option                                                            |
+| **Avatar**               | `packages/ui/src/Avatar/Avatar.tsx` | User avatar           | Profile pictures, initials fallback                                                          |
+| **Code** / **Kbd**       | `packages/ui/src/Code/Code.tsx`     | Inline code, keys     | Never a bare `<code>`/`<kbd>` (lint: `no-raw-code-element`); rendered HTML uses `.rich-text` |
 
 ### Loading and State Components
 
@@ -84571,7 +84595,7 @@ Implemented in `packages/eslint-plugin-waldur` and enabled as `waldur-custom/*` 
 | `require-border-color`             | `error`  | A bare `border` (Tailwind's, width only) names a border colour; autofixes to `border border-secondary`, the line Bootstrap's retired `.border` drew.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `no-bootstrap-layout-utility`      | `error`  | Retires Bootstrap layout, display, flexbox, Metronic flex helpers, sizing and text-truncate utilities (`d-block`, `d-flex`, `d-none`, `flex-column`, `flex-center`, `flex-root`, `flex-equal`, `flex-column-fluid`, `flex-column-auto`, `flex-lg-row-fluid`, `flex-sm-column-auto`, `w-100`, `mw-100`, `text-truncate`, responsive variants) in favor of Tailwind standard classes (`block`, `flex`, `hidden`, `flex-col`, `items-center justify-center`, `flex-1`, `flex-auto`, `flex-none`, `lg:flex-auto lg:min-w-0`, `sm:flex-none`, `w-full`, `max-w-full`, `truncate`). Autofixes across the codebase, except `w`/`h`/`min-w`/`min-h` × `25`/`50`/`75`/`100`, which Tailwind also defines as spacing steps: those get a suggestion per reading (`w-1/2` or `w-[200px]`). |
 | `no-raw-status-ramp`               | `error`  | State colours come from `--status-*`, not raw `success-N` / `warning-N` / `error-N` utilities. Deliberate exceptions carry an `eslint-disable` with the reason.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| `no-retired-bootstrap-utility`     | `error`  | Bootstrap utilities the Metronic build no longer generates (never used: `vh-100`, `align-content-*`, `mx-n*`, `ls-*`; breakpoint variants `px-lg-3`, `min-h-md-100px`; or retired utilities `svg-icon*`) compile to nothing; names the Tailwind replacement.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `no-retired-bootstrap-utility`     | `error`  | Bootstrap utilities the Metronic build no longer generates (never used: `vh-100`, `align-content-*`, `mx-n*`, `ls-*`; breakpoint variants `px-lg-3`, `min-h-md-100px`; or retired components `svg-icon*`, `symbol*`, `timeline*`, `separator`, `bullet`, `image-input*`, `scroll-x`/`scroll-y`) compile to nothing; names the Tailwind replacement.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `require-font-size-scale`          | `error`  | Font size follows the pinned scale (`text-xs` … `text-4xl`). Autofixes retired Bootstrap `fs-*` classes (`fs-6` -> `text-sm`, `fs-7`/`8` -> `text-xs`, etc.) and arbitrary `text-[14px]`. Flags inline `style={{ fontSize }}`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | `require-weight-scale`             | `error`  | Font weight is `font-light` … `font-bold`. Reports Bootstrap `fw-*` (autofixed to the same weight: `fw-bold` was 500, so `font-medium`), off-scale steps, `font-[N]` and inline `fontWeight`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `require-dark-pair`                | `error`  | A physical colour (ramp step, white/black, hex, raw `var(--brand-N)`) needs a `dark:` counterpart in its class list, or a semantic utility. Solid fills and white text on them pass.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
@@ -90269,11 +90293,13 @@ percentage, whether the link is active, and the total earned.
 The page shows:
 
 - **Total distributable credit** and **Total credit balance** — summary cards.
-  The distributable credit is the **withdrawable balance**: the part of your
-  credit that came from earnings, as opposed to promotional credit granted by
-  staff.
-- **Affiliate links** — one row per link; expand a row to see its **monthly
-  accruals** (one row per fee, with the invoice period, amount and date).
+  The distributable credit is the **withdrawable balance**: what is left of
+  the part of your credit that came from earnings, as opposed to credit
+  allocated by staff or prepayments. Your organization's usage spends
+  granted and prepaid credit before earnings, and earnings do not expire.
+- **Affiliate links** — one row per link; expand a row to see the fee expected
+  for the current month and the **monthly accruals** (one row per fee, with the
+  invoice period, amount and date).
 - **Credit transactions** — a button that opens the full ledger of how your
   credit changed over time (earned fees, staff adjustments, payouts and more)
   with the type, amount, comment and date of each entry.
@@ -90283,15 +90309,23 @@ The page shows:
     referred organization's name. It never exposes what the referred
     organization purchased.
 
+The **Expected for** line above the accruals is the fee the current month is
+expected to earn. It is estimated from the referred organization's open invoice:
+its price after the estimated volume discounts (see below) and after the
+credit the month is expected to use, except prepaid credit, which still earns
+the fee. It changes as the month goes
+on, and becomes an accrual when the month is closed. The line is not shown when
+the link was not active on the first day of the month, or when the referred
+organization has no open invoice.
+
 Earned fees are added to your organization's credit. The **Adjust withdrawable
 balance** button on this page is available to staff only.
 
 ## Volume discounts on invoices
 
-When your organization qualifies for a volume discount, it is applied when the
-invoice is finalized and appears as a separate discount line paired with each
-discounted component. Open an invoice from **Accounting → Invoices** and expand
-a resource to see the breakdown.
+When your organization qualifies for a volume discount, it appears as a
+separate discount line paired with each discounted component. Open an invoice
+from **Accounting → Invoices** and expand a resource to see the breakdown.
 
 [Image: Volume discount lines on an invoice]
 
@@ -90301,6 +90335,19 @@ under the component it applies to (for example, *↳ Volume discount — CPU Cor
 formula, and the usage the discount was based on. The discount is distributed
 across the individual components, so every project's share of the saving is
 reflected in its own line items.
+
+### Estimated discounts on the open invoice
+
+The current month's invoice shows the discount it is expected to get. Its
+discount lines are marked *estimated*, and the footer shows their sum as
+**Estimated volume discounts**, already included in the expected total.
+
+[Image: Estimated volume discount lines on an open invoice]
+
+The estimate is based on the usage so far. It is updated daily, and shortly
+after a resource is created, terminated, switched to another plan or has its
+limits changed, so it can move into a higher discount tier during the month.
+When the month closes, the invoice is finalized and the lines become final.
 
 !!! tip
     Depending on how the service provider configured the component, a discount
@@ -90737,7 +90784,9 @@ To allocate credit to a project, click **Add**. A dialog opens with these fields
 2. **Allocate credit** - the amount of credit. The sum of all project credits cannot exceed the
    organization's credit; the dialog shows how much is available.
 3. **End date** - optional. On that date the remaining credit is set to 0. It must be the first
-   day of a month.
+   day of a month. Prepaid and earned credit of the organization outlast its own end date, but
+   a project whose credit has expired cannot draw on them. Give the project credit a new amount
+   and end date, or delete it, for the project to use them.
 4. **Minimal consumption logic**, **Expected consumption**, **Grace coefficient** and **Apply as
    minimal consumption** - how much the credit is reduced each month at least, even if the
    project uses less. They work as for organization credits, see
@@ -98410,8 +98459,9 @@ Each link records:
 
 - **Referred organization** — the organization whose invoices generate the fee.
 - **Affiliate organization** — the organization that earns the fee.
-- **Fee %** — the percentage of each finalized invoice's net price (pre-tax,
-  post-compensation) paid to the affiliate.
+- **Fee %** — the percentage paid to the affiliate of each finalized invoice's
+  net price (pre-tax, after credit compensation), plus the part of that
+  compensation which the referred organization paid from prepaid credit.
 - **Active**, **Start date**, **End date** — control when the link accrues fees.
 - **Total earned** — the lifetime fee accrued through the link.
 
@@ -98441,16 +98491,21 @@ affiliate's balance.
 ### How fees accrue
 
 When an invoice is finalized at the end of the month, an affiliate fee is
-computed on its net price and added to the affiliate organization's credit
-balance. Accrual is idempotent — re-running finalization never pays a fee
+computed and added to the affiliate organization's credit balance. Credit that
+pays the invoice counts towards the fee only when it was prepaid by the
+referred organization: a prepayment is revenue, while granted credit is a
+discount and lowers the fee. See
+[granted, prepaid and earned credit](credit-management-staff.md#granted-prepaid-and-earned-credit). Accrual is idempotent — re-running finalization never pays a fee
 twice. Fees for a referred organization are only visible to the affiliate as an
 amount and period; the affiliate never sees the referred organization's invoice
 contents.
 
 ## Adjusting the withdrawable balance
 
-The **withdrawable balance** is the part of an organization's credit that came
-from earnings (such as affiliate fees) rather than promotional grants. Staff can
+The **withdrawable balance** is what is left of the part of an organization's
+credit that came from earnings (such as affiliate fees), rather than from
+grants or prepayments. Earnings spent on the organization's own
+usage are no longer withdrawable, and earned credit does not expire. Staff can
 adjust it manually — for example to record a negotiated top-up, a payout or a
 clawback.
 
@@ -98467,7 +98522,7 @@ the total credit value by the same amount.
 
 !!! note
     A reduction cannot exceed the current withdrawable balance — a payout can
-    only draw down earned credit, never staff-granted promotional credit.
+    only draw down earned credit, never granted credit.
 
 Click **Credit transactions** on the same page to see the full ledger — every
 change to the credit value with its type, amount, comment and date. It is
@@ -98890,19 +98945,22 @@ To assign a credit, click **Add**. A dialog opens with these fields.
 2. Select the offerings the credit may be spent on. **Leave this empty to allow all offerings** —
    an empty list means unrestricted, not "none". Cost on any other offering is invoiced
    normally and is never drawn from the credit.
-3. Set the credit value. This is the total value that the organization will be able to spent.
-4. Optionally set an end date. On that date the remaining credit is set to 0. It must be the
-   first day of a month.
+3. Set the credit value. This is the total value that the organization will be able to spend,
+   recorded as granted credit (see below).
+4. Optionally set an end date. It must be the first day of a month. At the first monthly
+   billing run after that date, the remaining granted credit is set to 0, and minimal
+   consumption is no longer charged; prepaid and earned credit (see below) do not expire.
 5. Minimal consumption logic defines, how minimal monthly consumption is calculated:
 
     - Fixed means that it is possible to define minimal monthly value and overall credit will be reduced by the monthly value, even if the usage has been less than minimal consumption.
-    - Linear means that by setting the end date, the total value of the credit will be divided evenly across the period until the end date and the overall value will be reduced monthly by the calculated value even if the consumption is less than the calculated value.
+    - Linear means that by setting the end date, the granted credit will be divided evenly across the period until the end date and the credit will be reduced monthly by the calculated value even if the consumption is less than the calculated value.
 
 6. **Expected consumption** is the monthly amount for the fixed logic. It is only charged as a
    minimum when **Apply as minimal consumption** is on. The **Grace coefficient** lowers that
    minimum by a percentage: with an expected consumption of 1 000 and a grace coefficient of
    10 %, at least 900 is deducted each month. In the month of the end date, the full expected
-   consumption is deducted.
+   consumption is deducted. The minimum is deducted only from granted credit, so it is
+   capped by what is left of it; prepaid and earned credit (see below) are never taken by it.
 7. If all set, click **Create**.
 
 !!! warning
@@ -98911,6 +98969,73 @@ To assign a credit, click **Add**. A dialog opens with these fields.
     credit simply never covers them. Because that cost is never compensated, it counts
     towards [cost policies](../customer-organization/cost-and-usage-policies.md)
     immediately, while the credit balance still looks untouched.
+
+## Granted, prepaid and earned credit
+
+An organization's credit is one balance, made of three kinds of money:
+
+- **Granted** — credit allocated by staff, as in the dialog above. It is a discount: it
+  expires on the end date and does not count towards an
+  [affiliate fee](affiliate-program.md).
+- **Prepaid** — a customer's prepayment, for example a bank transfer, recorded by staff as a
+  [top-up](#recording-a-prepayment) on the organization's credit. Waldur shows it as **Paid
+  credit**. It is the customer's money: it never expires, and invoices paid from it still earn
+  the affiliate fee.
+- **Earned** — affiliate fees and other earnings. Only this part is withdrawable.
+
+Usage spends granted credit first, then prepaid, then earned. Top-ups and reclassifications
+are recorded in the credit-transaction ledger and the organization's event log with their
+comment. Editing the total credit can lower it by no more than the granted credit left:
+prepaid credit is lowered by reversing a top-up, and earned credit by
+[adjusting the withdrawable balance](affiliate-program.md#adjusting-the-withdrawable-balance).
+
+### Viewing the split
+
+In the **Credits** list, expand an organization's row to see its **Paid credit**,
+**Granted credit** and **Withdrawable balance**. The row's **Actions** menu holds
+**Top up** and **Reclassify as paid credit** next to **Edit**, as in the list at the top of this
+page.
+
+The same figures are on the organization's own page: open the organization, select the
+**Edit** tab, then **Credit management**. Staff have a button next to each figure: **+** next
+to **Paid credit** tops it up, **⇄** next to **Granted credit** reclassifies it, and the
+pencil next to **Withdrawable balance** adjusts it.
+
+[Image: Paid, granted and withdrawable credit of an organization]
+
+### Recording a prepayment
+
+Select **Top up** in the row's **Actions** menu, or click **+** next to **Paid credit**. An
+organization without a credit has neither: first create one with the value 0, then top it up.
+
+[Image: Top up credit dialog]
+
+1. **Amount** — the prepayment received. The dialog shows the current paid credit and what it
+   becomes. A negative amount reverses a prepayment recorded by mistake, for example a bounced
+   payment; it cannot be larger than the paid credit.
+2. **Payment reference** — optionally, the bank transfer or payment identifier. It is kept in
+   the credit transaction.
+3. **Comment** — what the prepayment is for.
+
+Click **Top up**. The total credit grows by the amount.
+
+### Marking granted credit as paid
+
+A prepayment recorded earlier as an ordinary grant is granted credit: it expires and earns
+no affiliate fee. To correct it, select **Reclassify as paid credit** in the row's **Actions**
+menu, or click **⇄** next to **Granted credit**. Enter the amount and a comment, then click
+**Reclassify**. The amount moves from granted to paid credit, and the total stays the same.
+
+[Image: Reclassify as paid credit dialog]
+
+The amount cannot exceed the granted credit left. When none is left, the action is
+disabled.
+
+!!! note
+    Through the API, a top-up is `POST /api/customer-credits/{uuid}/top_up/` and a
+    reclassification is `POST /api/customer-credits/{uuid}/reclassify/`, each with an `amount`
+    and a `comment`; a top-up also takes an optional `payment_reference`. Called with a
+    personal access token, they need the token's **STAFF.ACCESS** scope.
 
 ## Paying earlier invoices
 
@@ -115598,6 +115723,8 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
 - event_consumer_registered_with_broad_credential
 - event_consumer_resync_requested
 - event_consumer_webhook_updated
+- oidc_token_refresh_failed
+- oidc_token_revoked
 - passkey_authentication_failed
 - passkey_authentication_succeeded
 - passkey_registered
@@ -116131,6 +116258,8 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
 - matrix_password_generated
 - matrix_recovery_key_escrowed
 - matrix_recovery_key_viewed
+- oidc_token_refresh_failed
+- oidc_token_revoked
 - passkey_authentication_failed
 - passkey_authentication_succeeded
 - passkey_registered
@@ -116199,6 +116328,8 @@ accepted limitations. For the resource API key lifecycle specifically, see
 | `matrix_chat.MatrixBotIdentity.access_token` | whole value | the Matrix bot's access token for its own device |
 | `matrix_chat.MatrixHistoryExport.data_key` | whole value | key a Matrix history export's files are encrypted under; without it the export is unreadable |
 | `matrix_chat.MatrixTicketDraft.content` | whole value | a pending `!ticket` support ticket draft, which holds a summary of the room's conversation; erased once the draft is sent, cancelled or expires |
+| `waldur_auth_social.IdentityProvider.client_secret` | whole value | the OIDC client secret Waldur signs users in and refreshes tokens with |
+| `waldur_auth_social.OAuthToken.refresh_token` | whole value | refresh token of a user's last OIDC sign-in, kept only while the HPC workspace is enabled; access tokens are not stored |
 | Constance settings of type `secret_field` | whole value | see [Secret settings](#secret-settings) |
 
 Encryption is transparent: values are encrypted at the database-serialization
@@ -116480,7 +116611,6 @@ td:nth-child(4) {
 | `delete_error_message` | `Custom Signal (post_transition)` | `waldur_vmware.VirtualMachine` | Delete error message if instance state changed from erred |
 | `delete_error_message` | `Custom Signal (post_transition)` | `waldur_vmware.Port` | Delete error message if instance state changed from erred |
 | `delete_error_message` | `Custom Signal (post_transition)` | `waldur_vmware.Disk` | Delete error message if instance state changed from erred |
-| `delete_error_message` | `Custom Signal (post_transition)` | `waldur_firecrest.Job` | Delete error message if instance state changed from erred |
 | `delete_error_message` | `Custom Signal (post_transition)` | `support.Issue` | Delete error message if instance state changed from erred |
 | `delete_error_message` | `Custom Signal (post_transition)` | `support.Comment` | Delete error message if instance state changed from erred |
 | `delete_error_message` | `Custom Signal (post_transition)` | `support.Attachment` | Delete error message if instance state changed from erred |
@@ -116523,7 +116653,6 @@ td:nth-child(4) {
 | `delete_service_settings_on_scope_delete` | `Django Signal (pre_delete)` | `waldur_vmware.VirtualMachine` | If VM that contains service settings were deleted - all settings |
 | `delete_service_settings_on_scope_delete` | `Django Signal (pre_delete)` | `waldur_vmware.Port` | If VM that contains service settings were deleted - all settings |
 | `delete_service_settings_on_scope_delete` | `Django Signal (pre_delete)` | `waldur_vmware.Disk` | If VM that contains service settings were deleted - all settings |
-| `delete_service_settings_on_scope_delete` | `Django Signal (pre_delete)` | `waldur_firecrest.Job` | If VM that contains service settings were deleted - all settings |
 | `delete_stale_event_subscriptions` | `Django Signal (post_delete)` | `authtoken.Token` | Delete stale event subscriptions for a user when their token is deleted. |
 | `emit_user_lifecycle` | `Django Signal (post_save)` | `core.User` | No description |
 | `emit_user_lifecycle_delete` | `Django Signal (pre_delete)` | `core.User` | No description |
@@ -116574,7 +116703,6 @@ td:nth-child(4) {
 | `log_resource_action` | `Custom Signal (post_transition)` | `waldur_vmware.VirtualMachine` | Log resource state transitions. |
 | `log_resource_action` | `Custom Signal (post_transition)` | `waldur_vmware.Port` | Log resource state transitions. |
 | `log_resource_action` | `Custom Signal (post_transition)` | `waldur_vmware.Disk` | Log resource state transitions. |
-| `log_resource_action` | `Custom Signal (post_transition)` | `waldur_firecrest.Job` | Log resource state transitions. |
 | `log_resource_creation_scheduled` | `Django Signal (post_save)` | `waldur_aws.Instance` | Log scheduled resource creation. |
 | `log_resource_creation_scheduled` | `Django Signal (post_save)` | `waldur_aws.Volume` | Log scheduled resource creation. |
 | `log_resource_creation_scheduled` | `Django Signal (post_save)` | `waldur_digitalocean.Droplet` | Log scheduled resource creation. |
@@ -116604,7 +116732,6 @@ td:nth-child(4) {
 | `log_resource_creation_scheduled` | `Django Signal (post_save)` | `waldur_vmware.VirtualMachine` | Log scheduled resource creation. |
 | `log_resource_creation_scheduled` | `Django Signal (post_save)` | `waldur_vmware.Port` | Log scheduled resource creation. |
 | `log_resource_creation_scheduled` | `Django Signal (post_save)` | `waldur_vmware.Disk` | Log scheduled resource creation. |
-| `log_resource_creation_scheduled` | `Django Signal (post_save)` | `waldur_firecrest.Job` | Log scheduled resource creation. |
 | `log_resource_deleted` | `Django Signal (pre_delete)` | `waldur_aws.Instance` | Log resource deletion. |
 | `log_resource_deleted` | `Django Signal (pre_delete)` | `waldur_aws.Volume` | Log resource deletion. |
 | `log_resource_deleted` | `Django Signal (pre_delete)` | `waldur_digitalocean.Droplet` | Log resource deletion. |
@@ -116634,7 +116761,6 @@ td:nth-child(4) {
 | `log_resource_deleted` | `Django Signal (pre_delete)` | `waldur_vmware.VirtualMachine` | Log resource deletion. |
 | `log_resource_deleted` | `Django Signal (pre_delete)` | `waldur_vmware.Port` | Log resource deletion. |
 | `log_resource_deleted` | `Django Signal (pre_delete)` | `waldur_vmware.Disk` | Log resource deletion. |
-| `log_resource_deleted` | `Django Signal (pre_delete)` | `waldur_firecrest.Job` | Log resource deletion. |
 | `log_resource_imported` | `Custom Signal (resource_imported)` | `waldur_aws.Instance` | Log resource import. |
 | `log_resource_imported` | `Custom Signal (resource_imported)` | `waldur_aws.Volume` | Log resource import. |
 | `log_resource_imported` | `Custom Signal (resource_imported)` | `waldur_digitalocean.Droplet` | Log resource import. |
@@ -116664,7 +116790,6 @@ td:nth-child(4) {
 | `log_resource_imported` | `Custom Signal (resource_imported)` | `waldur_vmware.VirtualMachine` | Log resource import. |
 | `log_resource_imported` | `Custom Signal (resource_imported)` | `waldur_vmware.Port` | Log resource import. |
 | `log_resource_imported` | `Custom Signal (resource_imported)` | `waldur_vmware.Disk` | Log resource import. |
-| `log_resource_imported` | `Custom Signal (resource_imported)` | `waldur_firecrest.Job` | Log resource import. |
 | `log_role_concealed` | `Django Signal (post_save)` | `permissions.CustomerRoleConcealment` | Log that a role was hidden for an organization. |
 | `log_role_granted` | `Custom Signal (role_granted)` | `—` | Log the event of a user being granted a role. |
 | `log_role_revealed` | `Django Signal (post_delete)` | `permissions.CustomerRoleConcealment` | Log that a concealed role was made available to an organization again. |
@@ -116718,7 +116843,6 @@ td:nth-child(4) {
 | `recalculate_count_quota` | `Django Signal (post_save)` | `waldur_vmware.VirtualMachine` | Recalculate count quota when an instance is created or deleted. |
 | `recalculate_count_quota` | `Django Signal (post_save)` | `waldur_vmware.Port` | Recalculate count quota when an instance is created or deleted. |
 | `recalculate_count_quota` | `Django Signal (post_save)` | `waldur_vmware.Disk` | Recalculate count quota when an instance is created or deleted. |
-| `recalculate_count_quota` | `Django Signal (post_save)` | `waldur_firecrest.Job` | Recalculate count quota when an instance is created or deleted. |
 | `recalculate_count_quota` | `Django Signal (post_save)` | `marketplace.Order` | Recalculate count quota when an instance is created or deleted. |
 | `recalculate_count_quota` | `Django Signal (post_delete)` | `structure.Project` | Recalculate count quota when an instance is created or deleted. |
 | `recalculate_count_quota` | `Django Signal (post_delete)` | `waldur_aws.Instance` | Recalculate count quota when an instance is created or deleted. |
@@ -116750,7 +116874,6 @@ td:nth-child(4) {
 | `recalculate_count_quota` | `Django Signal (post_delete)` | `waldur_vmware.VirtualMachine` | Recalculate count quota when an instance is created or deleted. |
 | `recalculate_count_quota` | `Django Signal (post_delete)` | `waldur_vmware.Port` | Recalculate count quota when an instance is created or deleted. |
 | `recalculate_count_quota` | `Django Signal (post_delete)` | `waldur_vmware.Disk` | Recalculate count quota when an instance is created or deleted. |
-| `recalculate_count_quota` | `Django Signal (post_delete)` | `waldur_firecrest.Job` | Recalculate count quota when an instance is created or deleted. |
 | `recalculate_count_quota` | `Django Signal (post_delete)` | `marketplace.Order` | Recalculate count quota when an instance is created or deleted. |
 | `remove_cached_template` | `Django Signal (pre_delete)` | `core.NotificationTemplate` | Also wired as a pre_delete receiver on NotificationTemplate (see core/apps.py). |
 | `rename_clones_on_customer_slug_change` | `Django Signal (post_save)` | `structure.Customer` | Keep an organization's cloned role names in sync with its slug. |
@@ -116934,6 +117057,7 @@ td:nth-child(4) {
 | `evaluate_usage_limit_on_daily_usage_report` | `Django Signal (post_save)` | `marketplace.ComponentDailyUsage` | Re-evaluate a resource with spending limits when a day's usage changes. |
 | `evaluate_usage_limit_on_resource_limit_change` | `Django Signal (post_save)` | `marketplace.Resource` | Re-evaluate a resource's usage-limit restriction when its limits change. |
 | `evaluate_usage_limit_on_usage_report` | `Django Signal (post_save)` | `marketplace.ComponentUsage` | Pause or downscale a resource when reported usage reaches a component limit. |
+| `forward_attachment_to_children` | `Django Signal (post_save)` | `support.Attachment` | Forward new attachments from parent issues to child issues. |
 | `forward_comment_to_children` | `Django Signal (post_save)` | `support.Comment` | Forward new public comments from parent issues to child issues. |
 | `handle_openstack_tenant_order_creation` | `Django Signal (post_save)` | `marketplace.Order` | No description |
 | `handle_openstack_tenant_order_termination` | `Django Signal (post_save)` | `marketplace.Order` | No description |
@@ -116946,6 +117070,7 @@ td:nth-child(4) {
 | `import_resource_metadata_when_resource_is_created` | `Django Signal (post_save)` | `marketplace.Resource` | Import OpenStack resource metadata when marketplace resource is created |
 | `import_usage_on_tenant_quotas_pulled` | `Custom Signal (tenant_quotas_pulled)` | `openstack.Tenant` | No description |
 | `init_resource_parent` | `Django Signal (post_save)` | `marketplace.Resource` | Initialize the parent resource for a newly created resource. |
+| `lift_slurm_actions_upon_policy_deletion` | `Django Signal (post_delete)` | `policy.SlurmPeriodicUsagePolicy` | Lift the pause and downscale a deleted SLURM policy held. |
 | `limit_update_failed` | `Custom Signal (resource_limit_update_failed)` | `marketplace.Resource` | Handle failed limit updates. |
 | `limit_update_succeeded` | `Custom Signal (resource_limit_update_succeeded)` | `marketplace.Resource` | Handle successful limit updates. |
 | `log_access_subnet_offering_scope_deletion` | `Django Signal (post_delete)` | `marketplace.AccessSubnetOfferingScope` | Log an access subnet losing an offering scope. |
@@ -117014,6 +117139,7 @@ td:nth-child(4) {
 | `process_invoice_item` | `Django Signal (post_save)` | `invoices.InvoiceItem` | Process invoice item changes and update related price estimates. |
 | `project_credit_changed_handler` | `Django Signal (post_save)` | `invoices.ProjectCredit` | No description |
 | `project_estimated_cost_policy_trigger_handler` | `Django Signal (post_save)` | `invoices.InvoiceItem` | Evaluate project cost policies when invoice items are updated. |
+| `propagate_attachment_to_parent` | `Django Signal (post_save)` | `support.Attachment` | Propagate new attachments from child issues back to parent issues. |
 | `propagate_comment_to_parent` | `Django Signal (post_save)` | `support.Comment` | Propagate new public comments from child issues back to parent issues. |
 | `protect_pool_holding_project_group_gids` | `Django Signal (pre_delete)` | `marketplace.PosixIdPool` | Refuse to delete a pool on its own while project groups hold GIDs from it. |
 | `purge_offering_role_groups_on_scope_delete` | `Django Signal (post_delete)` | `marketplace.Resource` | Drop OfferingRoleGroup rows that pointed at a now-deleted scope. |
@@ -117234,15 +117360,15 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 773
+Total unique handlers found: 768
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_auth_social**: 2 handlers
 - **waldur_autoprovisioning**: 2 handlers
-- **waldur_core**: 356 handlers
+- **waldur_core**: 348 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 353 handlers
+- **waldur_mastermind**: 356 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 15 handlers
 - **waldur_openstack_replication**: 1 handlers
@@ -119127,6 +119253,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`TranslatedModelSerializerMixin`](#translatedmodelserializermixin) | `waldur_core.core.serializers` | A `ModelSerializer` is just a regular `Serializer`, except that:  * A set of ... |
 | [`UserEmailPatternsValidatorMixin`](#useremailpatternsvalidatormixin) | `waldur_core.core.serializers` | Provides validate_user_email_patterns for serializers with a user_email_patte... |
 | [`ExtensionTaskMixin`](#extensiontaskmixin) | `waldur_core.core.tasks` | This mixin allows to skip task scheduling if extension is disabled |
+| [`ExportMixin`](#exportmixin) | `waldur_core.core.tests.test_access` | No description available |
 | [`ActionMethodMixin`](#actionmethodmixin) | `waldur_core.core.views` | Implements helper methods for viewset when use separate nested endpoints for ... |
 | [`CheckExtensionMixin`](#checkextensionmixin) | `waldur_core.core.views` | Raise exception if extension is disabled |
 | [`ConstanceCheckExtensionMixin`](#constancecheckextensionmixin) | `waldur_core.core.views` | Raise exception if extension is disabled |
@@ -119183,12 +119310,14 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`ScopeHelperAgreementMixin`](#scopehelperagreementmixin) | `waldur_mastermind.marketplace.tests.test_scope_helpers_by_permission` | Each helper must list exactly the scopes has_permission allows |
 | [`GrantMixin`](#grantmixin) | `waldur_mastermind.marketplace.tests.test_slug_permissions` | No description available |
 | [`SpendingLimitsSetupMixin`](#spendinglimitssetupmixin) | `waldur_mastermind.marketplace.tests.test_spending_limits` | No description available |
+| [`OrderValidationTokenScopeMixin`](#ordervalidationtokenscopemixin) | `waldur_mastermind.marketplace.tests.test_token_scope_order_validation` | A subclass builds the offering and says how the limit refuses an order (``ref... |
 | [`ConnectedOfferingDetailsMixin`](#connectedofferingdetailsmixin) | `waldur_mastermind.marketplace.views` | Mixin to provide offering details action for connected resources |
 | [`ConnectedResourceDetailsMixin`](#connectedresourcedetailsmixin) | `waldur_mastermind.marketplace.views` | Mixin to provide resource details action for connected resources |
 | [`OfferingUsageMixin`](#offeringusagemixin) | `waldur_mastermind.marketplace.views` | Shared logic for customer/project per-offering usage ViewSets |
 | [`PublicViewsetMixin`](#publicviewsetmixin) | `waldur_mastermind.marketplace.views` | Mixin to allow anonymous access to offerings when configured |
 | [`ServiceProviderConsumersMixin`](#serviceproviderconsumersmixin) | `waldur_mastermind.marketplace.views` | A list of a service provider's consumers, nested under the provider |
 | [`TenantMixin`](#tenantmixin) | `waldur_mastermind.marketplace_openstack.processors` | No description available |
+| [`ConcealmentMixin`](#concealmentmixin) | `waldur_mastermind.marketplace_openstack.tests.test_plugin_resource_concealment` | No description available |
 | [`SelectiveDNSMockMixin`](#selectivednsmockmixin) | `waldur_mastermind.marketplace_remote.tests.dns_utils` | Mixin class that provides selective DNS mocking for test classes |
 | [`ContainerExecutorMixin`](#containerexecutormixin) | `waldur_mastermind.marketplace_script.utils` | Mixin to execute scripts in containers for marketplace script processing |
 | [`ResourceGlauthAccessMixin`](#resourceglauthaccessmixin) | `waldur_mastermind.marketplace_site_agent.tests.test_glauth_resource_access` | No description available |
@@ -119197,6 +119326,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`OAuthTestMixin`](#oauthtestmixin) | `waldur_mastermind.mcp.tests.test_oauth` | No description available |
 | [`EstimatedCostPolicyMixin`](#estimatedcostpolicymixin) | `waldur_mastermind.policy.models` | Make subclasses preserve the alters_data attribute on overridden methods |
 | [`OfferingPolicySerializerMixin`](#offeringpolicyserializermixin) | `waldur_mastermind.policy.serializers` | This mixin provides several extensions to stock Serializer class:  1 |
+| [`SlurmFlagTestMixin`](#slurmflagtestmixin) | `waldur_mastermind.policy.tests.test_slurm_flag_keepers` | A resource on an offering that pauses and downscales, with SLURM usage per po... |
 | [`PolicyEventsMixin`](#policyeventsmixin) | `waldur_mastermind.policy.views` | Log policy changes made through the API |
 | [`CallNotArchivedCreateMixin`](#callnotarchivedcreatemixin) | `waldur_mastermind.proposal.serializers` | Provide the ``validate_call_not_archived`` hook used by ``ActionMethodMixin |
 | [`ApplicantIdentityTestMixin`](#applicantidentitytestmixin) | `waldur_mastermind.proposal.tests.test_applicant_identity_paths` | No description available |
@@ -119209,9 +119339,13 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`InvitationAcceptanceMixin`](#invitationacceptancemixin) | `waldur_mastermind.proposal.views` | Mixin providing common logic for accepting/declining reviewer pool invitations |
 | [`BackendNameMixin`](#backendnamemixin) | `waldur_mastermind.support.models` | Make subclasses preserve the alters_data attribute on overridden methods |
 | [`FileMixin`](#filemixin) | `waldur_mastermind.support.models` | Mixin to provide file-related functionality and properties |
+| [`StaffWritableFieldsMixin`](#staffwritablefieldsmixin) | `waldur_mastermind.support.serializers` | Lets staff alone change the fields in ``Meta |
+| [`TicketBackendMixin`](#ticketbackendmixin) | `waldur_mastermind.support.serializers` | Answers availability from the backend that holds each ticket |
 | [`SettingsFileMixin`](#settingsfilemixin) | `waldur_mastermind.support.tests.test_constance_override` | No description available |
 | [`CheckExtensionMixin`](#checkextensionmixin) | `waldur_mastermind.support.views` | Raise exception if extension is disabled |
 | [`UsageMixin`](#usagemixin) | `waldur_openportal.models` | Make subclasses preserve the alters_data attribute on overridden methods |
+| [`TemplateVisibilityMixin`](#templatevisibilitymixin) | `waldur_openportal.tests.test_template_visibility` | No description available |
+| [`InfoVisibilityMixin`](#infovisibilitymixin) | `waldur_openportal.tests.test_userinfo_visibility` | No description available |
 | [`ActionDetailsMixin`](#actiondetailsmixin) | `waldur_openstack.admin` | Encapsulate all admin options and functionality for a given model |
 | [`ImageMetadataMixin`](#imagemetadatamixin) | `waldur_openstack.admin` | Encapsulate all admin options and functionality for a given model |
 | [`MetadataMixin`](#metadatamixin) | `waldur_openstack.admin` | Encapsulate all admin options and functionality for a given model |
@@ -119972,6 +120106,12 @@ Subclasses should implement "is_extension_disabled" method which returns boolean
 
 **Base classes:** `Task`
 
+### ExportMixin
+
+**Module:** `waldur_core.core.tests.test_access`
+
+**Description:** No description available.
+
 ### ActionMethodMixin
 
 **Module:** `waldur_core.core.views`
@@ -120639,6 +120779,15 @@ Each helper must list exactly the scopes has_permission allows.
 
 **Description:** No description available.
 
+### OrderValidationTokenScopeMixin
+
+**Module:** `waldur_mastermind.marketplace.tests.test_token_scope_order_validation`
+
+**Description:**
+
+A subclass builds the offering and says how the limit refuses an order
+(``refused_status``) and whether support is exempt from it, as staff are.
+
 ### ConnectedOfferingDetailsMixin
 
 **Module:** `waldur_mastermind.marketplace.views`
@@ -120696,6 +120845,12 @@ provider's reaches.
 ### TenantMixin
 
 **Module:** `waldur_mastermind.marketplace_openstack.processors`
+
+**Description:** No description available.
+
+### ConcealmentMixin
+
+**Module:** `waldur_mastermind.marketplace_openstack.tests.test_plugin_resource_concealment`
 
 **Description:** No description available.
 
@@ -120864,6 +121019,14 @@ or uses URL name specified in a model of serialized object.
 
 **Base classes:** `AugmentedSerializerMixin`
 
+### SlurmFlagTestMixin
+
+**Module:** `waldur_mastermind.policy.tests.test_slurm_flag_keepers`
+
+**Description:**
+
+A resource on an offering that pauses and downscales, with SLURM usage per policy.
+
 ### PolicyEventsMixin
 
 **Module:** `waldur_mastermind.policy.views`
@@ -120961,6 +121124,34 @@ Make subclasses preserve the alters_data attribute on overridden methods.
 
 Mixin to provide file-related functionality and properties.
 
+### StaffWritableFieldsMixin
+
+**Module:** `waldur_mastermind.support.serializers`
+
+**Description:**
+
+Lets staff alone change the fields in ``Meta.staff_writable_fields``.
+
+Only staff may create the provider helpdesk objects, but an owner of the
+service provider's organization may update them. The fields that creation
+reserves for staff stay reserved on update. Anyone may still read them,
+and send one back as it is, as a form resubmitting what it read does; a
+changed value is refused. A request that cannot be told to be staff's,
+or none at all, is held to that.
+
+### TicketBackendMixin
+
+**Module:** `waldur_mastermind.support.serializers`
+
+**Description:**
+
+Answers availability from the backend that holds each ticket.
+
+A ticket routed to a provider is held by the provider helpdesk's backend,
+which is also where the views send changes to it. One backend is built
+per helpdesk, and the active one reused for the operator's tickets, as a
+list reuses one serializer for every row.
+
 ### SettingsFileMixin
 
 **Module:** `waldur_mastermind.support.tests.test_constance_override`
@@ -120986,6 +121177,18 @@ Raise exception if extension is disabled
 Make subclasses preserve the alters_data attribute on overridden methods.
 
 **Base classes:** `Model`
+
+### TemplateVisibilityMixin
+
+**Module:** `waldur_openportal.tests.test_template_visibility`
+
+**Description:** No description available.
+
+### InfoVisibilityMixin
+
+**Module:** `waldur_openportal.tests.test_userinfo_visibility`
+
+**Description:** No description available.
 
 ### ActionDetailsMixin
 
@@ -121409,20 +121612,24 @@ This maintains backward compatibility with existing single-Homeport deployments.
 
 ### Stored Provider Tokens and Logout
 
-At sign-in, Waldur keeps the provider's access and refresh tokens for the user,
-so it can call services as them later (the HPC workspace calls FirecREST with
-them). They are revoked at the provider and removed when the user logs out, is
-deactivated or is deleted:
+While the HPC workspace is enabled (`FIRECREST_ALLOWED_API_URLS` is set),
+Waldur keeps the refresh token of a user's last sign-in, encrypted, so it can
+call services as them later: the HPC workspace calls FirecREST with access
+tokens minted from it, which stay in the cache, encrypted, until they expire.
+The refresh token is revoked at the provider and removed when the user logs
+out, is deactivated or is deleted, after `OIDC_TOKEN_MAX_IDLE_DAYS` without a
+sign-in, and while the HPC workspace is off (a daily task). One the provider
+refuses to refresh is removed. Each of these emits an `oidc_token_revoked`
+event with the reason.
 
-- **Revocation:** Waldur POSTs the refresh token, or the access token when
-  there is no refresh token, to the provider's `revocation_endpoint`
-  ([RFC 7009](https://www.rfc-editor.org/rfc/rfc7009)), authenticating with
-  the provider's client ID and secret. The endpoint is read from the discovery
-  document and cached for an hour. Keycloak publishes one at
-  `…/protocol/openid-connect/revoke`.
+- **Revocation:** Waldur POSTs the refresh token to the provider's
+  `revocation_endpoint` ([RFC 7009](https://www.rfc-editor.org/rfc/rfc7009)),
+  authenticating with the provider's client ID and secret. The endpoint is
+  read from the discovery document and cached for an hour. Keycloak publishes
+  one at `…/protocol/openid-connect/revoke`.
 - **Best effort:** if the provider has no revocation endpoint, or does not
-  answer, the failure is logged and the logout goes ahead. The stored tokens
-  are removed either way.
+  answer, the failure is logged and the logout goes ahead. The stored token
+  and the cached access tokens are removed either way.
 
 This matters most with `offline_access` in `extra_scope`. An offline refresh
 token outlives the provider's browser session, which is what keeps services

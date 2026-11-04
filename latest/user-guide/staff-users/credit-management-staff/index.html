@@ -4234,6 +4234,56 @@
     <ul class="md-nav__list" data-md-component="toc">
       
         <li class="md-nav__item">
+  <a href="#granted-prepaid-and-earned-credit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Granted, prepaid and earned credit
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Granted, prepaid and earned credit">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#viewing-the-split" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Viewing the split
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recording-a-prepayment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recording a prepayment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#marking-granted-credit-as-paid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Marking granted credit as paid
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#paying-earlier-invoices" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -22594,6 +22644,56 @@
     <ul class="md-nav__list" data-md-component="toc">
       
         <li class="md-nav__item">
+  <a href="#granted-prepaid-and-earned-credit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Granted, prepaid and earned credit
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Granted, prepaid and earned credit">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#viewing-the-split" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Viewing the split
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recording-a-prepayment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recording a prepayment
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#marking-granted-credit-as-paid" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Marking granted credit as paid
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#paying-earlier-invoices" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -22634,14 +22734,16 @@ the credits already assigned; the <strong>Cost policies</strong> tab holds the o
 <li>Select the offerings the credit may be spent on. <strong>Leave this empty to allow all offerings</strong> —
    an empty list means unrestricted, not "none". Cost on any other offering is invoiced
    normally and is never drawn from the credit.</li>
-<li>Set the credit value. This is the total value that the organization will be able to spent.</li>
-<li>Optionally set an end date. On that date the remaining credit is set to 0. It must be the
-   first day of a month.</li>
+<li>Set the credit value. This is the total value that the organization will be able to spend,
+   recorded as granted credit (see below).</li>
+<li>Optionally set an end date. It must be the first day of a month. At the first monthly
+   billing run after that date, the remaining granted credit is set to 0, and minimal
+   consumption is no longer charged; prepaid and earned credit (see below) do not expire.</li>
 <li>
 <p>Minimal consumption logic defines, how minimal monthly consumption is calculated:</p>
 <ul>
 <li>Fixed means that it is possible to define minimal monthly value and overall credit will be reduced by the monthly value, even if the usage has been less than minimal consumption.</li>
-<li>Linear means that by setting the end date, the total value of the credit will be divided evenly across the period until the end date and the overall value will be reduced monthly by the calculated value even if the consumption is less than the calculated value.</li>
+<li>Linear means that by setting the end date, the granted credit will be divided evenly across the period until the end date and the credit will be reduced monthly by the calculated value even if the consumption is less than the calculated value.</li>
 </ul>
 </li>
 <li>
@@ -22649,7 +22751,8 @@ the credits already assigned; the <strong>Cost policies</strong> tab holds the o
    minimum when <strong>Apply as minimal consumption</strong> is on. The <strong>Grace coefficient</strong> lowers that
    minimum by a percentage: with an expected consumption of 1 000 and a grace coefficient of
    10 %, at least 900 is deducted each month. In the month of the end date, the full expected
-   consumption is deducted.</p>
+   consumption is deducted. The minimum is deducted only from granted credit, so it is
+   capped by what is left of it; prepaid and earned credit (see below) are never taken by it.</p>
 </li>
 <li>If all set, click <strong>Create</strong>.</li>
 </ol>
@@ -22660,6 +22763,61 @@ Resources on offerings outside the list are still bought and still invoiced — 
 credit simply never covers them. Because that cost is never compensated, it counts
 towards <a href="../../customer-organization/cost-and-usage-policies/">cost policies</a>
 immediately, while the credit balance still looks untouched.</p>
+</div>
+<h2 id="granted-prepaid-and-earned-credit">Granted, prepaid and earned credit</h2>
+<p>An organization's credit is one balance, made of three kinds of money:</p>
+<ul>
+<li><strong>Granted</strong> — credit allocated by staff, as in the dialog above. It is a discount: it
+  expires on the end date and does not count towards an
+  <a href="../affiliate-program/">affiliate fee</a>.</li>
+<li><strong>Prepaid</strong> — a customer's prepayment, for example a bank transfer, recorded by staff as a
+  <a href="#recording-a-prepayment">top-up</a> on the organization's credit. Waldur shows it as <strong>Paid
+  credit</strong>. It is the customer's money: it never expires, and invoices paid from it still earn
+  the affiliate fee.</li>
+<li><strong>Earned</strong> — affiliate fees and other earnings. Only this part is withdrawable.</li>
+</ul>
+<p>Usage spends granted credit first, then prepaid, then earned. Top-ups and reclassifications
+are recorded in the credit-transaction ledger and the organization's event log with their
+comment. Editing the total credit can lower it by no more than the granted credit left:
+prepaid credit is lowered by reversing a top-up, and earned credit by
+<a href="../affiliate-program/#adjusting-the-withdrawable-balance">adjusting the withdrawable balance</a>.</p>
+<h3 id="viewing-the-split">Viewing the split</h3>
+<p>In the <strong>Credits</strong> list, expand an organization's row to see its <strong>Paid credit</strong>,
+<strong>Granted credit</strong> and <strong>Withdrawable balance</strong>. The row's <strong>Actions</strong> menu holds
+<strong>Top up</strong> and <strong>Reclassify as paid credit</strong> next to <strong>Edit</strong>, as in the list at the top of this
+page.</p>
+<p>The same figures are on the organization's own page: open the organization, select the
+<strong>Edit</strong> tab, then <strong>Credit management</strong>. Staff have a button next to each figure: <strong>+</strong> next
+to <strong>Paid credit</strong> tops it up, <strong>⇄</strong> next to <strong>Granted credit</strong> reclassifies it, and the
+pencil next to <strong>Withdrawable balance</strong> adjusts it.</p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/credit-lots-panel.png" data-desc-position="bottom"><img alt="Paid, granted and withdrawable credit of an organization" src="../../img/credit-lots-panel.png"></a></p>
+<h3 id="recording-a-prepayment">Recording a prepayment</h3>
+<p>Select <strong>Top up</strong> in the row's <strong>Actions</strong> menu, or click <strong>+</strong> next to <strong>Paid credit</strong>. An
+organization without a credit has neither: first create one with the value 0, then top it up.</p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/credit-top-up.png" data-desc-position="bottom"><img alt="Top up credit dialog" src="../../img/credit-top-up.png"></a></p>
+<ol>
+<li><strong>Amount</strong> — the prepayment received. The dialog shows the current paid credit and what it
+   becomes. A negative amount reverses a prepayment recorded by mistake, for example a bounced
+   payment; it cannot be larger than the paid credit.</li>
+<li><strong>Payment reference</strong> — optionally, the bank transfer or payment identifier. It is kept in
+   the credit transaction.</li>
+<li><strong>Comment</strong> — what the prepayment is for.</li>
+</ol>
+<p>Click <strong>Top up</strong>. The total credit grows by the amount.</p>
+<h3 id="marking-granted-credit-as-paid">Marking granted credit as paid</h3>
+<p>A prepayment recorded earlier as an ordinary grant is granted credit: it expires and earns
+no affiliate fee. To correct it, select <strong>Reclassify as paid credit</strong> in the row's <strong>Actions</strong>
+menu, or click <strong>⇄</strong> next to <strong>Granted credit</strong>. Enter the amount and a comment, then click
+<strong>Reclassify</strong>. The amount moves from granted to paid credit, and the total stays the same.</p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/credit-reclassify.png" data-desc-position="bottom"><img alt="Reclassify as paid credit dialog" src="../../img/credit-reclassify.png"></a></p>
+<p>The amount cannot exceed the granted credit left. When none is left, the action is
+disabled.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Through the API, a top-up is <code>POST /api/customer-credits/{uuid}/top_up/</code> and a
+reclassification is <code>POST /api/customer-credits/{uuid}/reclassify/</code>, each with an <code>amount</code>
+and a <code>comment</code>; a top-up also takes an optional <code>payment_reference</code>. Called with a
+personal access token, they need the token's <strong>STAFF.ACCESS</strong> scope.</p>
 </div>
 <h2 id="paying-earlier-invoices">Paying earlier invoices</h2>
 <p>Credit pays the month it is used in, so cost of a closed month that no credit covered stays
