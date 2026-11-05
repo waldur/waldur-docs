@@ -10,7 +10,9 @@ node, in the directory, in the OIDC token and in the job record.
 
 Use it when a provider wants to expose its clusters through
 [FirecREST](https://eth-cscs.github.io/firecrest-v2/) and needs the user that
-FirecREST acts as to be the user Waldur provisioned.
+FirecREST acts as to be the user Waldur provisioned. To then give an offering's
+users jobs, files and insights in Waldur through FirecREST, see
+[HPC workspace with FirecREST](hpc-workspace-firecrest.md).
 
 ## The architecture
 
