@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-05T03:04:23.565629Z
+Generated: 2026-11-05T15:38:17.770142Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -75231,6 +75231,10 @@ Dynamic references (`state={variable}`, `router.stateService.go(name)`, computed
 
 `waldur-custom/prefer-typed-property` reports a `PropertyItem` that formats its value by hand where a typed formatter fits (`propVal.date`, `propVal.currency`, `propVal.boolean`, …), and `renderFieldOrDash` inside one. Existing rows are counted per file and kind in `typed-property.baseline.json`; the counts only shrink, so rewrite them with `yarn lint:properties:baseline` after moving rows, never to let new ones in. See [property-fields.md](property-fields.md).
 
+## Hand-rolled table guard
+
+`waldur-custom/no-hand-rolled-table` reports raw `<table>` markup, which should be `@/table/Table` or `SimpleTable` (see [table/migration-guide.md](table/migration-guide.md)). Existing tables are counted per file in `hand-rolled-table.baseline.json`; the counts only shrink, so rewrite them with `yarn lint:tables:baseline` after migrating some, never to let new ones in. A table that is deliberately not a data table (a `<td>` under test, a story's layout grid) takes `// eslint-disable-next-line waldur-custom/no-hand-rolled-table -- <reason>` and is not counted.
+
 ## Unknown class guard
 
 Tailwind and Bootstrap both ignore a class they do not know, so a typo (`felx`, `text-teritary`, `md:hiden`) or a class whose stylesheet was retired renders as nothing, with no warning from the build, the type checker or the browser. `waldur-custom/no-unknown-class` reports every class that styles nothing.
@@ -82830,8 +82834,22 @@ export const ChecklistsTable = ({ portal, ...props }) => {
 
 How to move a react-bootstrap `<Table>` or raw `<table>` off Bootstrap's table
 classes, and how to pick what it becomes. Tracked in #563 (part of epic #442);
-the end goal is #502: deleting the Bootstrap/Metronic `.table-*` rules and the
-`bootstrap/scss/tables` import.
+the end goal is #502: deleting the Bootstrap/Metronic `.table-*` rules, now
+copied into `src/styles/legacy/_table-base.scss` (Bootstrap's own
+`bootstrap/scss/tables` is no longer imported).
+
+Migrating the hand-rolled tables is only half of that goal. `@/table/Table`
+itself still renders `.table.table-list` (`TableView`), and allow-listed form
+grids may carry `.table` too, so `_table-base.scss` can go only once those
+render their own styles as well. The baseline below counts raw `<table>`
+markup, not `.table` usage: zero there does not yet mean the rules can be
+deleted.
+
+`waldur-custom/no-hand-rolled-table` is an error with a shrinking baseline:
+the raw `<table>`s that predate it are counted per file in
+`hand-rolled-table.baseline.json`. A file may keep that many; one more fails
+lint, and one fewer reports the count as stale. After migrating some, run
+`yarn lint:tables:baseline`; never run it to let a new table in.
 
 Not every table should become `@/table/Table`. That goal only needs "no
 Bootstrap table classes", and a short read-only list gains nothing from a fetch
@@ -83232,8 +83250,8 @@ repeat across the remaining batches.
   `TicketDraftCard.tsx`, `RuleTestMatchDialog.tsx`,
   `MergeCheckDetailsDialog.tsx` and `ResourceLimitDetails.tsx`.
 - **`no-hand-rolled-table`:** also flag waldur-ui's `Table` primitives outside
-  the allowed files, and promote the rule to `error` one directory at a time as
-  each batch lands, so a finished area cannot regress.
+  the allowed files (raw `<table>` is already an error, with the existing ones
+  in `hand-rolled-table.baseline.json`).
 - **A `renderWithProviders` option** that supplies the table store.
 
 ---
@@ -84267,7 +84285,7 @@ Prefer standard CSS grid (`grid grid-cols-1 sm:grid-cols-2`, `sm:grid-cols-3`) f
 
 Gutter steps are `$spacer` (1rem = 13px) multiples, mapped to the nearest 4px step: `0`→`0`, `1`→`1`, `2`→`1.5`, `3`→`2.5`, `4`→`3`, `5`→`4`, `6`→`5`, `7`→`5.5`, `8`→`6.5`, `9`→`7.5`, `10`→`8`.
 
-A grid's `gap` replaces the gutter padding, so a column's content now lines up with the parent's padding instead of overhanging it by half a gutter. `TableView` and `FormTable` keep their cell padding as `.table.table-list` / `.table.form-table` in `src/styles/bootstrap/components/_tables.scss`, in the bootstrap layer, so the first/last-cell rules in `src/styles/legacy/_table.scss` still win.
+A grid's `gap` replaces the gutter padding, so a column's content now lines up with the parent's padding instead of overhanging it by half a gutter. `TableView` and `FormTable` keep their cell padding as `.table.table-list` / `.table.form-table` in `src/styles/legacy/_table-base.scss`, in the bootstrap layer and before `_table.scss`, so the first/last-cell rules in `src/styles/legacy/_table.scss` still win.
 
 ---
 
@@ -84601,17 +84619,17 @@ Implemented in `packages/eslint-plugin-waldur` and enabled as `waldur-custom/*` 
 
 #### Buttons, dialogs and tables
 
-| Rule Name                            | Severity | Enforced Pattern                                                                                                                                    |
-| :----------------------------------- | :------- | :-------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `no-bootstrap-button-markup`         | `error`  | Flags `btn` as a class token on a native `<button>`, `<a>`, `<input>` or `<label>`. No allowlist: use `BaseButton`, or `Link` with `buttonVariant`. |
-| `enforce-disabled-button-tooltip`    | `error`  | A disabled `BaseButton` needs a `tooltip` or `disabledReason` explaining why.                                                                       |
-| `no-edit-button-size-override`       | `error`  | Prevents `size="sm"` on `EditButton`; use `CompactEditButton`.                                                                                      |
-| `enforce-dialog-button-order`        | `error`  | Dismissive actions first, primary submission/approval last (rightmost) in dialog footers.                                                           |
-| `no-hand-rolled-modal-footer`        | `error`  | Prefer `ModalDialog`'s `footer` prop over hand-rolling action buttons inside its children.                                                          |
-| `enforce-actions-dropdown-in-tables` | `warn`   | Steers table row actions toward `ActionsDropdown`.                                                                                                  |
-| `no-hand-rolled-table`               | `warn`   | Prefer `@/table/Table` over `react-bootstrap` `Table` or raw `<table>` markup.                                                                      |
-| `enforce-noresult-with-cta`          | `error`  | `NoResult` empty states need an actionable call-to-action button.                                                                                   |
-| `enforce-render-field-or-dash`       | `error`  | Table cells use `renderFieldOrDash()` for empty values.                                                                                             |
+| Rule Name                            | Severity | Enforced Pattern                                                                                                                                                                                                                              |
+| :----------------------------------- | :------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `no-bootstrap-button-markup`         | `error`  | Flags `btn` as a class token on a native `<button>`, `<a>`, `<input>` or `<label>`. No allowlist: use `BaseButton`, or `Link` with `buttonVariant`.                                                                                           |
+| `enforce-disabled-button-tooltip`    | `error`  | A disabled `BaseButton` needs a `tooltip` or `disabledReason` explaining why.                                                                                                                                                                 |
+| `no-edit-button-size-override`       | `error`  | Prevents `size="sm"` on `EditButton`; use `CompactEditButton`.                                                                                                                                                                                |
+| `enforce-dialog-button-order`        | `error`  | Dismissive actions first, primary submission/approval last (rightmost) in dialog footers.                                                                                                                                                     |
+| `no-hand-rolled-modal-footer`        | `error`  | Prefer `ModalDialog`'s `footer` prop over hand-rolling action buttons inside its children.                                                                                                                                                    |
+| `enforce-actions-dropdown-in-tables` | `warn`   | Steers table row actions toward `ActionsDropdown`.                                                                                                                                                                                            |
+| `no-hand-rolled-table`               | `error`  | Raw `<table>` markup becomes `Table`, `SimpleTable`, `PropertyList` or waldur-ui `Table` primitives (form grids, allow-listed); see [table/migration-guide.md](table/migration-guide.md). Existing tables: `hand-rolled-table.baseline.json`. |
+| `enforce-noresult-with-cta`          | `error`  | `NoResult` empty states need an actionable call-to-action button.                                                                                                                                                                             |
+| `enforce-render-field-or-dash`       | `error`  | Table cells use `renderFieldOrDash()` for empty values.                                                                                                                                                                                       |
 
 #### Visual patterns
 
@@ -84632,8 +84650,8 @@ Implemented in `packages/eslint-plugin-waldur` and enabled as `waldur-custom/*` 
 | `require-border-color`             | `error`  | A bare `border` (Tailwind's, width only) names a border colour; autofixes to `border border-secondary`, the line Bootstrap's retired `.border` drew.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `no-bootstrap-layout-utility`      | `error`  | Retires Bootstrap layout, display, flexbox, Metronic flex helpers, sizing and text-truncate utilities (`d-block`, `d-flex`, `d-none`, `flex-column`, `flex-center`, `flex-root`, `flex-equal`, `flex-column-fluid`, `flex-column-auto`, `flex-lg-row-fluid`, `flex-sm-column-auto`, `w-100`, `mw-100`, `text-truncate`, responsive variants) in favor of Tailwind standard classes (`block`, `flex`, `hidden`, `flex-col`, `items-center justify-center`, `flex-1`, `flex-auto`, `flex-none`, `lg:flex-auto lg:min-w-0`, `sm:flex-none`, `w-full`, `max-w-full`, `truncate`). Autofixes across the codebase, except `w`/`h`/`min-w`/`min-h` × `25`/`50`/`75`/`100`, which Tailwind also defines as spacing steps: those get a suggestion per reading (`w-1/2` or `w-[200px]`). |
 | `no-raw-status-ramp`               | `error`  | State colours come from `--status-*`, not raw `success-N` / `warning-N` / `error-N` utilities. Deliberate exceptions carry an `eslint-disable` with the reason.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| `no-retired-bootstrap-utility`     | `error`  | Bootstrap utilities the Metronic build no longer generates (never used: `vh-100`, `align-content-*`, `mx-n*`, `ls-*`; breakpoint variants `px-lg-3`, `min-h-md-100px`; or retired components `svg-icon*`, `symbol*`, `timeline*`, `separator`, `bullet`, `image-input*`, `scroll-x`/`scroll-y`) compile to nothing; names the Tailwind replacement.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| `require-font-size-scale`          | `error`  | Font size follows the pinned scale (`text-xs` … `text-4xl`). Autofixes retired Bootstrap `fs-*` classes (`fs-6` -> `text-sm`, `fs-7`/`8` -> `text-xs`, etc.). Reports arbitrary px and rem sizes (`text-[14px]`, `text-[1.077rem]`) with the token they equal, without fixing them (the token also sets a line height). Flags inline `style={{ fontSize }}`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `no-retired-bootstrap-utility`     | `error`  | Bootstrap utilities the Metronic build no longer generates (never used: `vh-100`, `align-content-*`, `mx-n*`, `ls-*`; breakpoint variants `px-lg-3`, `min-h-md-100px`; or retired components `svg-icon*`, `symbol*`, `timeline*`, `separator`, `bullet`, `image-input*`, `scroll-x`/`scroll-y`) compile to nothing; names the Tailwind replacement.                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `require-font-size-scale`          | `error`  | Font size follows the pinned scale (`text-xs` … `text-4xl`). Autofixes retired Bootstrap `fs-*` classes (`fs-6` -> `text-sm`, `fs-7`/`8` -> `text-xs`, etc.). Reports arbitrary px and rem sizes (`text-[14px]`, `text-[1.077rem]`) with the token they equal, without fixing them (the token also sets a line height). Flags inline `style={{ fontSize }}`.                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `require-weight-scale`             | `error`  | Font weight is `font-light` … `font-bold`. Reports Bootstrap `fw-*` (autofixed to the same weight: `fw-bold` was 500, so `font-medium`), off-scale steps, `font-[N]` and inline `fontWeight`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `require-dark-pair`                | `error`  | A physical colour (ramp step, white/black, hex, raw `var(--brand-N)`) needs a `dark:` counterpart in its class list, or a semantic utility. Solid fills and white text on them pass.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `no-bootstrap-css-vars`            | `error`  | No `--bs-*` reads in TS/TSX; use the design token (table in [design-tokens.md](design-tokens.md)).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
@@ -95576,7 +95594,9 @@ node, in the directory, in the OIDC token and in the job record.
 
 Use it when a provider wants to expose its clusters through
 [FirecREST](https://eth-cscs.github.io/firecrest-v2/) and needs the user that
-FirecREST acts as to be the user Waldur provisioned.
+FirecREST acts as to be the user Waldur provisioned. To then give an offering's
+users jobs, files and insights in Waldur through FirecREST, see
+[HPC workspace with FirecREST](hpc-workspace-firecrest.md).
 
 ## The architecture
 
@@ -96319,6 +96339,165 @@ it came from. Because each offering runs its own directory and pool, the same
 project can appear under several offerings with different GIDs.
 
 [Image: Consolidated POSIX identities of a user]
+
+---
+
+### HPC workspace with FirecREST
+<!-- Source: docs/user-guide/service-provider-organization/hpc-workspace-firecrest.md -->
+
+# HPC workspace with FirecREST
+
+The HPC workspace lets the members of a SLURM allocation work on the cluster
+from Waldur: submit and cancel jobs, read their output, browse and preview
+files, see the queue and partitions, find software, and review their job
+history and job performance. Waldur does none of this itself. It calls
+[FirecREST v2](https://eth-cscs.github.io/firecrest-v2/) **as the signed-in
+user**, so every job runs, and every file is read, under that person's own
+cluster account.
+
+The workspace is **optional and configured per offering**. An offering without
+FirecREST settings behaves exactly as before; nothing on this page is needed to
+run a SLURM offering through the site agent.
+
+## What users get
+
+When an offering is connected, each of its allocations shows these extra tabs to
+members of the allocation's project:
+
+| Tab | What it does | Comes from |
+|---|---|---|
+| **Jobs** | Submit a batch job, follow its state, read stdout/stderr, cancel it | FirecREST |
+| **Files** | Browse the user's home directory and preview files | FirecREST |
+| **Insights** | Job counts, wait times, CPU/GPU hours and efficiency for up to 7 days | FirecREST job history |
+| **Cluster** | Partitions the provider publishes, with live node and queue state, and planned maintenance | FirecREST + Waldur |
+| **Software** | Modules from the [software catalogs](software-catalogs.md) linked to the offering, as lines to paste into a job | Waldur |
+
+With a [cluster monitor](#job-performance-optional) configured, each finished job
+also gets a **performance** view (GPU, CPU and memory over time) and a
+downloadable PDF report.
+
+Every job operation is scoped to the allocation's SLURM account
+(`resource.backend_id`): a workspace never lists or touches the user's jobs
+under other allocations.
+
+## Before you start
+
+The workspace adds a layer on top of an ordinary site-agent SLURM offering. It
+needs:
+
+- **A SLURM offering managed by the site agent** (offering type
+  `Marketplace.Slurm`), with allocations that already exist on the cluster.
+  An allocation without a backend ID, i.e. not yet created by the agent, shows
+  "The allocation has not been created on the cluster yet."
+- **FirecREST v2** in front of the cluster, reachable from the Waldur backend.
+- **One identity provider for Waldur and FirecREST.** Users must sign in to
+  Waldur through an OIDC identity provider (for example Keycloak) whose tokens
+  FirecREST accepts. Waldur stores the user's access and refresh tokens at sign
+  in and forwards the access token to FirecREST; users who signed in another way
+  (local password, SAML) see "Sign in again to use HPC services".
+- **The same username everywhere.** FirecREST takes the POSIX username from a
+  token claim, and Waldur addresses the user's home directory and jobs by the
+  user's offering username. Both must be the same account on the cluster.
+  [POSIX identity with OpenLDAP and FirecREST](firecrest-posix-identity.md)
+  describes a setup that guarantees this.
+
+Configuration then happens in two places, by two different people.
+
+## 1. Staff: allow the FirecREST endpoint
+
+Waldur sends each user's identity provider token to the FirecREST URL that an
+offering names. So that a service provider cannot point an offering at a server
+of its own and collect those tokens, **only URLs that staff have allowed are
+used**.
+
+In **Administration → Marketplace → Settings → HPC workspace**, set:
+
+| Setting | Value |
+|---|---|
+| `FIRECREST_ALLOWED_API_URLS` | FirecREST API URLs offerings may use, one per line or comma-separated, e.g. `https://firecrest.hpc.example.org` |
+| `SLURM_MONITOR_ALLOWED_API_URLS` | Only if job performance is used: slurm-monitor API URLs ending in `/api/v2` |
+
+An offering whose URL is not on the list simply has no workspace: its
+allocations show no extra tabs, and the API answers "This offering is not
+connected to an allowed FirecREST endpoint."
+
+## 2. Service provider: connect the offering
+
+In **Provider dashboard → Offerings →** *your offering* **→ Integration →
+Advanced → HPC workspace (FirecREST)**, set:
+
+| Field | Plugin option | Value |
+|---|---|---|
+| FirecREST API URL | `firecrest_api_url` | The FirecREST v2 URL, exactly as staff allowed it (a trailing `/` does not matter) |
+| FirecREST system name | `firecrest_system_name` | The cluster's name in FirecREST's systems list (`GET /status/systems`) |
+
+Both are required; with either one empty the offering has no workspace. To turn
+the workspace off again, clear the URL.
+
+The same settings over the API:
+
+```bash
+curl -X POST "$WALDUR/api/marketplace-provider-offerings/$OFFERING_UUID/update_integration/" \
+  -H "Authorization: Token $TOKEN" -H "Content-Type: application/json" \
+  -d '{"plugin_options": {
+        "firecrest_api_url": "https://firecrest.hpc.example.org",
+        "firecrest_system_name": "cluster-a"
+      }}'
+```
+
+### Job performance (optional)
+
+If the cluster runs [Sonar](https://github.com/NordicHPC/sonar) with
+**slurm-monitor**, Waldur can show per-job time series (GPU utilisation and
+memory, CPU, RSS, top processes) and put them into the job's PDF report. In the
+same tab, under **Job performance**, set:
+
+| Field | Plugin option | Value |
+|---|---|---|
+| slurm-monitor API URL | `slurm_monitor_api_url` | The slurm-monitor URL ending in `/api/v2`, allowed by staff in `SLURM_MONITOR_ALLOWED_API_URLS` |
+| slurm-monitor cluster name | `slurm_monitor_cluster_name` | The cluster's name in slurm-monitor (Sonar's cluster name) |
+
+Waldur reads it with the same user token, after checking with FirecREST that the
+job belongs to the allocation. Without a monitor, the PDF report still contains
+the job's accounting data.
+
+### Related settings
+
+These are independent of the workspace but show up in it when set:
+
+- **Partitions** published on the offering are the ones the Cluster tab and the
+  job form offer; FirecREST adds their live state.
+- **Software catalogs** linked to the offering fill the Software tab and the
+  job form's module picker — see [Software catalogs](software-catalogs.md).
+- **Sync maintenance with SLURM reservations** (Integration → Operations →
+  Resource lifecycle) makes planned maintenance hold back jobs on the cluster; the Cluster tab
+  shows the upcoming maintenance and whether the cluster holds its reservation.
+
+## Checking the result
+
+1. Sign in as a member of an allocation's project, through the identity
+   provider FirecREST trusts.
+2. Open the allocation. The **Jobs**, **Files**, **Insights**, **Cluster** and
+   **Software** tabs appear next to the usual ones.
+3. The **Cluster** tab shows the system's health as FirecREST reports it.
+
+If the tabs do not appear or show an error:
+
+| Message | Cause |
+|---|---|
+| No HPC tabs at all | URL or system name empty, URL not on `FIRECREST_ALLOWED_API_URLS`, or the allocation is not in state OK, Updating or Erred |
+| "This offering is not connected to an allowed FirecREST endpoint." | The offering's URL is not on the staff allowlist |
+| "The allocation has not been created on the cluster yet." | The site agent has not created the SLURM account (no backend ID) |
+| "You do not have an account on this cluster yet." | The user has no offering username on this offering yet; it is created once they are a member of the project |
+| "Sign in again to use HPC services." | The user did not sign in through OIDC, or the refresh token has expired |
+| "FirecREST does not serve the system '…'." | `firecrest_system_name` does not match a system in FirecREST |
+
+## A runnable reference
+
+The slurm-emulator repository contains a complete stack (Waldur, Keycloak,
+FirecREST v2, an emulated SLURM cluster, Sonar and slurm-monitor) with an
+offering configured as described here: see `examples/firecrest/waldur/` in
+[slurm-emulator](https://github.com/waldur/slurm-emulator).
 
 ---
 
