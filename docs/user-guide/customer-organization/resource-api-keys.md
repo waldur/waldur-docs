@@ -36,6 +36,10 @@ Open the resource and select the **API keys** tab.
 Each row is one key:
 
 - **Key ID** — the identifier the backend knows the key by.
+- **Description** — a note telling the key apart from the resource's other
+  keys, such as **Production** or **Development**. The column is shown once
+  any key has one, and a long description is cut short there: expand the row
+  to read it in full (see [Describing a key](#describing-a-key)).
 - **Assignee** — the person the key belongs to, or a dash for a key shared by
   the project.
 - **Limits & usage** — how much of a limit the key has used, for the key's own
@@ -125,17 +129,19 @@ enforced, an assignee also cannot rotate a key that has reached one of its
 Organization owners, project managers and project administrators can request
 keys with **Request key**:
 
-1. Optionally choose an **Assignee** — only project members are offered. Leave
+1. Optionally give a **Description**, such as the environment that will use
+   the key (see [Describing a key](#describing-a-key)).
+2. Optionally choose an **Assignee** — only project members are offered. Leave
    it empty for a key shared by the project. The assignee cannot be changed
    later (see [Giving a key to someone else](#giving-a-key-to-someone-else)), and
    a person can be the assignee of only one key of a resource: choosing someone
    who already holds one is refused.
-2. Optionally set **limits** per component and period (see [Limits](#limits)).
+3. Optionally set **limits** per component and period (see [Limits](#limits)).
    Each field shows the highest limit the key may have for that period; leave
    a field empty to let the key use up to the resource limit.
-3. Choose the **Models** the key may call. **All models** is ticked to begin
+4. Choose the **Models** the key may call. **All models** is ticked to begin
    with. Untick it to choose models one by one (see [Models](#models)).
-4. Click **Submit**.
+5. Click **Submit**.
 
 ![Requesting an API key](../img/resource-api-keys-request.png)
 
@@ -145,6 +151,25 @@ The new key appears as **Creating** and turns **OK** once the provider has
 created it. Its key ID is assigned at that point.
 
 ![A requested key waiting to be created](../img/resource-api-keys-requested.png)
+
+## Describing a key
+
+A resource can have several keys, for example one for production and one for
+development, and the key ID alone does not say which is which. Give each key a
+**Description** when requesting it, or choose **Edit description** in its
+**Actions** menu to set, change or clear it later.
+
+Changing the description is not a change to the key itself: nothing is sent
+to the provider's backend, the key's state stays as it is, and anything using
+the key carries on. It can therefore be edited in any state except deleted,
+including while another change is in progress, and also where the provider
+does not manage keys one by one.
+
+The provider can read the description in Waldur, as it can the rest of the
+key's details, so do not put anything secret in it.
+
+Organization owners, project managers and project administrators can edit a
+key's description. Everyone who can see the key sees its description.
 
 ## Changing a key's limits and models
 
