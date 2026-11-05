@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-05T15:38:17.770142Z
+Generated: 2026-11-05T17:28:40.678927Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -10567,6 +10567,7 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'NOTIFICATION_SUBJECT': 'Notifications from Waldur',
  'OECD_FOS_2007_CODE_MANDATORY': False,
  'ONLY_STAFF_CAN_INVITE_USERS': False,
+ 'OUTBOUND_PROXY_CONNECT_BY_HOSTNAME': False,
  'PASSKEY_ALLOWED_ORIGINS': [],
  'PASSKEY_ENFORCED_FOR_STAFF': False,
  'PASSKEY_RP_ID': '',
@@ -10580,14 +10581,30 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'SERVICE_ACCOUNT_TOKEN_URL': '',
  'SERVICE_ACCOUNT_URL': '',
  'SERVICE_ACCOUNT_USE_API': False,
- 'SUBNET_BLACKLIST': ['10.0.0.0/8',
-                      '172.16.0.0/12',
-                      '192.168.0.0/16',
-                      '169.254.0.0/16',
+ 'SUBNET_BLACKLIST': ['0.0.0.0/8',
+                      '10.0.0.0/8',
+                      '100.64.0.0/10',
                       '127.0.0.0/8',
+                      '169.254.0.0/16',
+                      '172.16.0.0/12',
+                      '192.0.0.0/24',
+                      '192.0.2.0/24',
+                      '192.168.0.0/16',
+                      '198.18.0.0/15',
+                      '198.51.100.0/24',
+                      '203.0.113.0/24',
+                      '224.0.0.0/4',
+                      '240.0.0.0/4',
+                      '::/128',
                       '::1/128',
+                      '::ffff:0:0:0/96',
+                      '64:ff9b:1::/48',
+                      '100::/64',
+                      '2001:db8::/32',
                       'fc00::/7',
-                      'fe80::/10'],
+                      'fe80::/10',
+                      'fec0::/10',
+                      'ff00::/8'],
  'SUPPORT_PORTAL_URL': '',
  'TOKEN_LIFETIME': datetime.timedelta(seconds=3600),
  'TRANSLATION_DOMAIN': '',
@@ -10854,6 +10871,12 @@ Field oecd_fos_2007_code must be required for project.
 
 Allow to limit invitation management to staff only.
 
+#### OUTBOUND_PROXY_CONNECT_BY_HOSTNAME
+
+**Type:** bool
+
+When Waldur calls a remote Waldur through an egress proxy, open the CONNECT tunnel by hostname instead of by the checked IP address. Only for proxies that refuse CONNECT to IP addresses: the address check still runs first, but the proxy resolves the name itself, so the proxy's ACL then decides which destinations are reachable. With this on, the address check does not protect against DNS rebinding or internal names; enable it only if the proxy itself denies internal destinations.
+
 #### PASSKEY_ALLOWED_ORIGINS
 
 **Type:** List[str]
@@ -10936,7 +10959,7 @@ Send service account creation and deletion requests to API.
 
 **Type:** List[str]
 
-List of IP ranges that are blocked for the SDK client.
+IP ranges that Waldur refuses to connect to when it calls a remote Waldur (remote offerings, offering import and sync). Every address a host resolves to is checked; IPv4 addresses embedded in IPv6 (IPv4-mapped, NAT64 64:ff9b::/96, 6to4, Teredo) are checked in their IPv4 form, so a range blocks every encoding of its addresses. Remove a range to let Waldur reach a remote Waldur on that network, e.g. 127.0.0.0/8 and ::1/128 for a remote Waldur on localhost during development. The default covers the standard non-routable ranges only; add your own internal ranges, such as publicly routed cloud host endpoints (Azure's 168.63.129.16), network-specific NAT64 prefixes or internal global IPv6. Behind an egress proxy from the environment (http_proxy, https_proxy), Waldur tunnels to the checked address with CONNECT, so the check holds there too. Plain-http remotes and ports other than 443 also use CONNECT; a proxy that only allows CONNECT to SSL ports (squid's default 'http_access deny CONNECT !SSL_ports') refuses them with 'The proxy refused the tunnel' unless it allows CONNECT to those ports.
 
 #### SUPPORT_PORTAL_URL
 
@@ -43220,10 +43243,10 @@ It covers the key's own budget only. Each key still carries the whole resource b
 its siblings' spend or other members' chat; the offering's *Action on usage limit* is what
 holds the resource total.
 
-Limits on `input_tokens` and `output_tokens` have no proxy field, nor have quarter, year and
-total limits. Waldur enforces them, and every key limit, from the per-key usage report: a key
-whose usage reaches its limit is paused, and resumed when it is under the limit again, at the
-latest once the limit's period resets. A total never resets, so a key paused by one resumes only
+Limits on `input_tokens`, `output_tokens` and the three input-split metrics have no proxy
+field, nor have quarter, year and total limits. Waldur enforces them, and every key limit, from the per-key
+usage report: a key whose usage reaches its limit is paused, and resumed when it is under the
+limit again, at the latest once the limit's period resets. A total never resets, so a key paused by one resumes only
 when the limit is raised or cleared.
 
 ### Models
@@ -43729,8 +43752,32 @@ that provisions and revokes people.
 
 ### Usage Reporting Backend (`litellm-usage`)
 
-Read-only. Reports whichever of `input_tokens`, `output_tokens` and `token_cost` the offering
-declares, plus every component `component_metrics` maps onto one of them.
+Read-only. Reports whichever of `input_tokens`, `output_tokens`, `uncached_input_tokens`,
+`cache_read_tokens`, `cache_write_tokens` and `token_cost` the offering declares, plus every
+component `component_metrics` maps onto one of them.
+
+| Metric | LiteLLM field | What it counts |
+|---|---|---|
+| `input_tokens` | `prompt_tokens` | every input token, cached ones included |
+| `output_tokens` | `completion_tokens` | generated tokens |
+| `uncached_input_tokens` | `prompt_tokens` − the two below | input charged at the full input rate; never below 0 |
+| `cache_read_tokens` | `cache_read_input_tokens` | input served from the provider's prompt cache |
+| `cache_write_tokens` | `cache_creation_input_tokens` | input written into the provider's prompt cache |
+| `token_cost` | `spend` | the proxy's per-model USD cost, cache discounts applied |
+
+**Prompt caching.** Providers cache repeated prompt prefixes — OpenAI and Gemini automatically for
+long prompts, Anthropic when the request asks for it — and bill a cached read at a fraction of the
+input rate, a cache write at somewhat more than it. LiteLLM counts both **inside** `prompt_tokens`,
+so the two cache metrics are a part of `input_tokens`, not an addition to it, and
+`uncached_input_tokens` is the rest: 1,000 input tokens of which 600 came from cache report as
+`input_tokens: 1000`, `cache_read_tokens: 600` and `uncached_input_tokens: 400`.
+
+On the recommended [`token_cost` shape](#pricing), caching needs nothing: the proxy's `spend`
+already prices each part at the model's own cache rate, and the cache components are volume
+meters priced at 0 that show customers how much of their input the cache served. Only an offering
+that prices tokens in Waldur needs the split — see
+[Per-token prices with prompt caching](#per-token-prices-with-prompt-caching). A proxy that
+predates the cache fields reports them as 0, and `uncached_input_tokens` as the whole prompt.
 
 `component_metrics` decouples the component name from the metric it reads, which is what lets one
 spend figure be both the cap and the charge — see [Pricing](#pricing).
@@ -43765,6 +43812,10 @@ from the alias and the rows are summed, so rotating a key does not split a tenan
 resource used across several days and several keys is billed for all of it.
 
 ## Pricing
+
+**Prices live in LiteLLM, not in Waldur.** Set each model's prices in the proxy's cost map, bill
+`token_cost` at **1.0** (or a markup), and price every token component at **0**. Price tokens in
+Waldur only when every model on the offering costs the same per token.
 
 Sell inference the way the proxy prices it: per model. This is the shape the
 [configuration example](#composed-offering-both-backends) uses, and the one to start from even
@@ -43854,11 +43905,11 @@ working unchanged:
 > drives `action_on_usage_limit: pause`, and `billing_usage.py` ignores it for invoicing.
 
 Reading `component_metrics`: the **left** side is the component name, which is the offering's own
-and means nothing to the plugin. The **right** side is the metric, and only three values are
-accepted — `input_tokens`, `output_tokens`, and `token_cost`, which is LiteLLM's per-model USD
-spend (its `spend` field). Anything else raises at startup. The mapping *adds* to the name-based
-default: a component called `input_tokens`, `output_tokens` or `token_cost` is metered whether or
-not it appears here. Without the line for `inference_cost`, it reports zero forever.
+and means nothing to the plugin. The **right** side is the metric, and only the six in the
+[metrics table](#usage-reporting-backend-litellm-usage) are accepted — `token_cost` being
+LiteLLM's per-model USD spend (its `spend` field). Anything else raises at startup. The mapping
+*adds* to the name-based default: a component named after a metric is metered whether or not it
+appears here. Without the line for `inference_cost`, it reports zero forever.
 
 **Moving an offering off it.** `inference_cost` is fed from the proxy's spend, so its spending
 limits reach the keys as `token_cost`'s would, and the offering can move without renaming
@@ -43878,7 +43929,35 @@ New offerings start from the single-component shape above.
 - **No cap.** `token_cost` as above with no spending limit periods offered: billing is per
   model, the keys carry no `max_budget`, and `action_on_usage_limit: pause` has nothing to act on.
 - **One rate per token.** Price `input_tokens` and `output_tokens` on the plan. Right only when
-  every model on the offering costs the same per token.
+  every model on the offering costs the same per token, **and** no prompt is served from the
+  cache: `input_tokens` counts cached tokens too, so its rate is charged on every one of them.
+  With caching, use the shape below.
+
+#### Per-token prices with prompt caching
+
+Only for an offering whose models all cost the same per token; otherwise bill `token_cost` at
+**1.0** as above, which already applies each model's cache discount.
+
+A cache read usually costs a fraction of a fresh input token (LiteLLM's
+`cache_read_input_token_cost` against `input_cost_per_token`). An agentic or RAG workload can
+send most of its prompt from the cache, so a single input rate on `input_tokens` over-bills it
+several times over. Declare the split instead and price each part:
+
+```yaml
+    backend_components:
+      uncached_input_tokens: { measured_unit: "tokens", accounting_type: "usage", label: "Input tokens" }
+      cache_read_tokens:     { measured_unit: "tokens", accounting_type: "usage", label: "Cached input tokens" }
+      output_tokens:         { measured_unit: "tokens", accounting_type: "usage", label: "Output tokens" }
+```
+
+| Component | Price |
+|---|---|
+| `uncached_input_tokens` | the model's input price per token |
+| `cache_read_tokens` | the model's cache-read price per token |
+| `output_tokens` | the model's output price per token |
+
+Add `cache_write_tokens` at its own rate if the upstream bills cache writes (Anthropic does;
+vLLM and SGLang do not); without it, cache writes are in neither component and go unbilled.
 
 ## Configuration
 
@@ -72597,6 +72676,26 @@ scoped PAT narrows even staff users. The rules:
   on the service provider of an offering among them. The walk is upward-only:
   a PAT bound to a child entity does **not** authorise actions on its parent.
 
+The shared role checks in `waldur_core.structure.permissions` (`is_owner`,
+`is_administrator`, `is_service_manager`, `is_offering_manager`) apply the
+bindings too, through `check_pat_binding_on_path`. The check walks the object's
+permission path (`customer_path` for the organization roles, `project_path` for
+the project roles) to the scope it tests the role on, and a binding has to name
+the object, an object on that path, or a scope the last one lies under. So an
+owner's token bound to one project passes `is_owner` on that project and on the
+objects whose path runs through it, such as its resources and cost policies,
+and on no other project's, nor on the organization itself. The walk does not
+follow other links up from the object, so a token bound to a consumer project
+does not pass `is_owner` on a provider's project group for that project, while
+one bound to the service provider does. Nor does a token bound to a marketplace
+resource pass `is_administrator` on the backend resource behind it, such as an
+OpenStack instance: that object's path runs to its project and does not pass
+through the marketplace resource.
+
+These checks name no permission, so the token's `scopes` do not limit them yet:
+within its bindings, a token acts with its user's full role on an endpoint
+gated by a role check, whatever permissions it lists.
+
 A binding limits where a token acts and a role says what it may do, so the two
 need not sit on the same object. `has_permission_on_any_source` and
 `permission_factory` check them in up to two steps:
@@ -72686,6 +72785,14 @@ backends. Detail endpoints inherit the same narrowing because DRF's
 Apps register rules for their own models from `ready()`:
 `structure.AccessSubnet` is reachable from `customer` only, and
 `matrix_chat.MatrixHistoryExport` from the room's `customer` or `project`.
+The credit models of `invoices` follow the rule that an organization's money is
+reached from the organization only:
+
+| Model | Reachable from binding type |
+|---|---|
+| `invoices.CustomerCredit` | `customer` |
+| `invoices.ProjectCredit` | `customer`, `project` |
+| `invoices.CreditTransaction` | a row of the organization credit: `customer`; a row of an allocation: `customer`, `project`; a row of a deleted allocation: none |
 
 Endpoints whose model has no rule (e.g. `/api/marketplace-orders/`,
 `/api/invoices/`) currently pass through unfiltered. Add a builder via
@@ -75183,6 +75290,7 @@ yarn info eslint prettier stylelint husky version
 - `yarn format:check` - Check code formatting with Prettier
 - `yarn format:fix` - Auto-format code with Prettier
 - `yarn style:check` - Check SCSS/CSS styles with Stylelint
+- `yarn colors:check` / `yarn rem:check` - Ratchets: hard-coded colours and raw `rem` lengths per file may only go down (`yarn colors:save` / `yarn rem:save` after removing some)
 - `yarn deps:unused` - Check for unused dependencies with Knip
 - `yarn tsgo` - Typescript type check
 
@@ -75234,6 +75342,10 @@ Dynamic references (`state={variable}`, `router.stateService.go(name)`, computed
 ## Hand-rolled table guard
 
 `waldur-custom/no-hand-rolled-table` reports raw `<table>` markup, which should be `@/table/Table` or `SimpleTable` (see [table/migration-guide.md](table/migration-guide.md)). Existing tables are counted per file in `hand-rolled-table.baseline.json`; the counts only shrink, so rewrite them with `yarn lint:tables:baseline` after migrating some, never to let new ones in. A table that is deliberately not a data table (a `<td>` under test, a story's layout grid) takes `// eslint-disable-next-line waldur-custom/no-hand-rolled-table -- <reason>` and is not counted.
+
+## rem length guard
+
+`waldur-custom/no-rem-length` (ESLint: arbitrary classes and inline styles in TS/TSX) and `waldur/no-rem-length` (stylelint) report a raw `rem` length once a file has more than its count in `scripts/rem-literals.baseline.json`, naming the px it is at HomePort's 13px root and the spacing step or `--text-*` token that equals it. `yarn rem:check` runs the same detector over the repository in CI and fails only when a file gains one; after removing some, lower the counts with `yarn rem:save` in the same merge request. See "Root font size" in [design-tokens.md](design-tokens.md).
 
 ## Unknown class guard
 
@@ -76881,6 +76993,9 @@ prevent distortion under Waldur's forced 13px root font size (`html, body { font
   the root and body sizes (`src/tailwind.css`), Bootstrap's partials (`src/styles/bootstrap/`, being
   retired), and the boot splash and boot error screen (`packages/boot-splash/`,
   `src/BootErrorScreen.css`), which paint before the tokens load.
+- **No new rem, in a size or anywhere else.** A rem font size is also a rem length, so
+  `waldur-custom/no-rem-length` and `waldur/no-rem-length` count it against the file's baseline (see
+  [Root font size](#root-font-size)); the message names the `--text-*` token it equals at the 13px root.
 - **Below the scale (10px, 11px).** A handful of badges, card metadata and phone-width labels use 10px
   or 11px (`text-[10px]`/`text-[11px]` in TSX, a commented `stylelint-disable` in SCSS). Whether they
   fold into `text-xs` or get a `text-2xs` step is not decided yet; don't add new ones.
@@ -76956,6 +77071,49 @@ Tailwind step (`SPACER_TO_TAILWIND` in `packages/eslint-plugin-waldur/rules/boot
   stylesheet rule on the same element (a component `.scss` imported from TSX) and to an inline
   `style`. Set the spacing in one place.
 - `$spacers` is left only for the grid gutters (`.g-*`), which go with `Row`/`Col` (#475).
+- **No new rem lengths.** A padding, margin, gap, width or offset in rem follows the root; write
+  px, or the Tailwind step that equals it (`p-3`, not `p-[0.923rem]`; `calc(var(--spacing) * 3)`
+  in a stylesheet). See [Root font size](#root-font-size).
+
+## Root font size
+
+`src/tailwind.css` forces `html, body { font-size: 13px !important }` (12px below `md`). The
+tokens are pinned in px so they ignore it, but about 700 `rem` lengths in stylesheets, arbitrary
+classes and inline styles are still tuned against it. Moving off the forced root takes three
+steps:
+
+1. **Nothing depends on the root.** Convert each rem literal to the px it is at 13px, or to a
+   token that equals it, so no pixel moves. Tailwind's own rem defaults are already done:
+   `primitives/containers.css` pins the `--container-*` widths (`max-w-md` is 364px, as 28rem was
+   at 13px) and clears the unused rem steps (`text-5xl`…`9xl`, `rounded-3xl`/`4xl`, bare
+   `rounded`); `tailwindTheme.test.ts` fails if a Tailwind default is left in rem.
+2. **Root back to the browser default**, with no pixel change, since nothing reads it any more.
+3. **Token scales in rem**, so the UI follows the user's font-size preference.
+
+Two guards hold step 1:
+
+- **The rem ratchet.** `scripts/rem-literals.mjs` counts raw `rem` lengths per file against
+  `scripts/rem-literals.baseline.json`: stylesheet declarations and SCSS variables (outside
+  `packages/design-tokens/src/css/`), mixin arguments, and every string in TS/TSX, so arbitrary
+  classes (`p-[1.85rem]`, `max-w-[calc(100vw-3rem)]`) and inline style values. `yarn rem:check`
+  (in CI) fails when a file gains one. A file that loses one passes with a reminder: run
+  `yarn rem:save` in the same merge request, so the count cannot grow back (step 1 removes rem in
+  many merge requests at once, and failing each until it rewrites the shared baseline would make
+  them conflict on it). `yarn rem:report [path…]` lists each with the px it is at the 13px root
+  and the token that equals it (`=`) or is within 0.07px of it (`≈`): a Tailwind step or
+  `calc(var(--spacing) * N)` for a length, `text-*` or `var(--text-*)` for a font size.
+  **Write the px, or a token marked `=`.** A `≈` token is a sub-pixel change (`1.85rem` is
+  24.05px, step 6 is 24px): take it only when the Storybook comparison shows no difference. `waldur-custom/no-rem-length` (ESLint)
+  and `waldur/no-rem-length` (stylelint) run the same detector against the same baseline, so the
+  editor flags a new rem as soon as a file has more than its count. Not counted: comments, `0rem`,
+  media queries (their rem is the browser's initial font size, not `html`'s; a container query's
+  rem is the root's, so it counts), tests, stories and mocks, and the lint rules' own tables. The detector is
+  `packages/design-tokens/scripts/rem-literals.mjs`.
+- **The root-invariance check.** `scripts/theme-snapshots.mjs root-invariance` captures every story with `html`'s font size forced to 13px and to
+  20px and lists the stories that differ: each one still sizes something in rem. It is not a CI
+  gate yet; step 2 can start when its list is empty. Use `--themes light` to halve the run; see
+  `docs/visual-testing.md` for the command. It also catches what the ratchet cannot see: a rem utility with no
+  literal, and an `em` under a rem font size (body text is `1.077rem`).
 
 ## Corner radius
 
@@ -77011,6 +77169,7 @@ to prevent fractional `rem` compression under Waldur's forced 13px root font siz
 | Every physical colour has a `dark:` counterpart         | `waldur-custom/require-dark-pair`                                                    |
 | No `--bs-*` reads                                       | `waldur-custom/no-bootstrap-css-vars`, stylelint                                     |
 | Hard-coded colours (hex, `rgb()`, named) only go down   | `no-literal-color` (ESLint and stylelint), `yarn colors:check`                       |
+| Raw `rem` lengths only go down                          | `no-rem-length` (ESLint and stylelint), `yarn rem:check`                             |
 
 **Duplicate roles.** Two semantic tokens with the same value in both themes are one role with
 two names until shown otherwise. The audit fails on any such group not listed in
@@ -87389,6 +87548,12 @@ node scripts/theme-snapshots.mjs compare /tmp/vt/base /tmp/vt/head /tmp/vt/repor
   and, for each changed pair, a `base | head | changed pixels in red` PNG. It prints the changed
   pairs sorted by ratio and exits 1 when anything differs.
 - The per-pixel threshold is 0.05: antialiasing passes, a one-step colour ramp change does not.
+- `capture … --root <px>` forces `html`'s font size (the rem root) before each story loads, and
+  `root-invariance <storybook-static> <out-dir> [--roots 13,20]` captures at both roots into
+  `<out-dir>/root-13` and `<out-dir>/root-20` and compares them into `<out-dir>/report`
+  (Storybook's own 1rem canvas padding is pinned to 16px in both). A story
+  that differs still sizes something in rem; see
+  "Root font size" in [design-tokens.md](design-tokens.md).
 - `compare` pairs any two directories of PNGs by file name, so it also diffs the
   [integration-testing screenshots](#integration-testing-screenshots).
 
@@ -87530,6 +87695,7 @@ locally and put the result in the merge request.
 | --------------------------------------------------------------- | --------------------------------------------------------------------------- |
 | `yarn build-storybook`                                          | Static Storybook in `storybook-static/`, the input of `theme-snapshots.mjs` |
 | `node scripts/theme-snapshots.mjs capture …` / `compare …`      | Storybook comparison                                                        |
+| `node scripts/theme-snapshots.mjs root-invariance …`            | Stories that render differently at a 13px and a 20px root                   |
 | `yarn test:e2e:visual`                                          | Every `e2e-visual` spec (project `visual`, one worker)                      |
 | `yarn playwright test card-parity --project=visual --workers=1` | One spec; the argument is a filter, and a path is read as a project name    |
 | `yarn test:visual:update`                                       | Rewrite the local `toHaveScreenshot()` baselines (every project)            |
@@ -92027,6 +92193,10 @@ Open the resource and select the **API keys** tab.
 Each row is one key:
 
 - **Key ID** — the identifier the backend knows the key by.
+- **Description** — a note telling the key apart from the resource's other
+  keys, such as **Production** or **Development**. The column is shown once
+  any key has one, and a long description is cut short there: expand the row
+  to read it in full (see [Describing a key](#describing-a-key)).
 - **Assignee** — the person the key belongs to, or a dash for a key shared by
   the project.
 - **Limits & usage** — how much of a limit the key has used, for the key's own
@@ -92116,17 +92286,19 @@ enforced, an assignee also cannot rotate a key that has reached one of its
 Organization owners, project managers and project administrators can request
 keys with **Request key**:
 
-1. Optionally choose an **Assignee** — only project members are offered. Leave
+1. Optionally give a **Description**, such as the environment that will use
+   the key (see [Describing a key](#describing-a-key)).
+2. Optionally choose an **Assignee** — only project members are offered. Leave
    it empty for a key shared by the project. The assignee cannot be changed
    later (see [Giving a key to someone else](#giving-a-key-to-someone-else)), and
    a person can be the assignee of only one key of a resource: choosing someone
    who already holds one is refused.
-2. Optionally set **limits** per component and period (see [Limits](#limits)).
+3. Optionally set **limits** per component and period (see [Limits](#limits)).
    Each field shows the highest limit the key may have for that period; leave
    a field empty to let the key use up to the resource limit.
-3. Choose the **Models** the key may call. **All models** is ticked to begin
+4. Choose the **Models** the key may call. **All models** is ticked to begin
    with. Untick it to choose models one by one (see [Models](#models)).
-4. Click **Submit**.
+5. Click **Submit**.
 
 [Image: Requesting an API key]
 
@@ -92136,6 +92308,25 @@ The new key appears as **Creating** and turns **OK** once the provider has
 created it. Its key ID is assigned at that point.
 
 [Image: A requested key waiting to be created]
+
+## Describing a key
+
+A resource can have several keys, for example one for production and one for
+development, and the key ID alone does not say which is which. Give each key a
+**Description** when requesting it, or choose **Edit description** in its
+**Actions** menu to set, change or clear it later.
+
+Changing the description is not a change to the key itself: nothing is sent
+to the provider's backend, the key's state stays as it is, and anything using
+the key carries on. It can therefore be edited in any state except deleted,
+including while another change is in progress, and also where the provider
+does not manage keys one by one.
+
+The provider can read the description in Waldur, as it can the rest of the
+key's details, so do not put anything secret in it.
+
+Organization owners, project managers and project administrators can edit a
+key's description. Everyone who can see the key sees its description.
 
 ## Changing a key's limits and models
 
@@ -118460,7 +118651,7 @@ Creates or updates a user based on CUID (username). The caller specifies which I
 |--------|-----------|
 | 400 | Invalid source format, disallowed fields, or deactivated user |
 | 401 | Not authenticated |
-| 403 | Feature disabled, insufficient permissions, or source not in `managed_isds` |
+| 403 | Feature disabled, insufficient permissions, source not in `managed_isds`, or a non-staff caller naming a staff, support or identity manager account |
 
 ### Remove User from ISD
 
@@ -118499,8 +118690,8 @@ Signals that a user has been removed from an ISD. Clears attributes owned by the
 |--------|-----------|
 | 400 | Invalid source format |
 | 401 | Not authenticated |
-| 403 | Feature disabled, insufficient permissions, or source not in `managed_isds` |
-| 404 | User not found |
+| 403 | Feature disabled, insufficient permissions, source not in `managed_isds`, or a non-staff caller naming a staff, support or identity manager account |
+| 404 | User not found, or not in the `source` ISD (the user is left unchanged) |
 
 ### Removal Behavior
 
@@ -130903,6 +131094,12 @@ on or off. Wherever either condition does not hold, the pair stays, as on a
 backend without per-key commands such as ceph-s3. The agent decides this, so
 Waldur's API and models are unchanged.
 
+**A key is requested once the resource exists at the backend.** The agent mints
+a key under the resource's `backend_id`, so a request, or a retry of a failed
+one, is refused with `409` until the resource has one, which it gets when the
+agent creates it. The agent cannot act on such a command and would leave the
+key `Creating` until its sweep replayed it, long after the resource was ready.
+
 **The assignee can rotate their own key.** Whoever is trusted with a key's value
 is trusted to replace it, so a person who suspects their key has leaked does not
 have to find a manager while it stays live. Nothing else follows from being the
@@ -131003,6 +131200,7 @@ on only for a backend whose agent sets `supports_resource_api_key_lifecycle`.
 | --- | --- |
 | `resource` | `ForeignKey` — a resource owns a collection of keys |
 | `client_id` | the backend's **public** identifier, e.g. `<resource_backend_id>-<n>` (one gateway Secret entry) or an S3 access key; unique per resource, and may move on rotation. Blank on a requested key until the agent creates it |
+| `description` | the portal's own note telling the key apart from the resource's other keys (`DescribableMixin`); carried by no command, so editing it issues none; the agent and the provider still read it when they list the key |
 | `key_ciphertext` | the agent-generated value, Fernet-encrypted ([field encryption](#encryption-at-rest)); dropped when the key is deleted |
 | `issued_at` | when the agent last stored a value: the key's creation or its latest rotation. Unlike `modified`, a pause, resume or edit leaves it alone, so it is the age of the value in use |
 | `state` | FSM, aligned to resource states (below) |
@@ -131407,7 +131605,7 @@ unless `?state=Deleted` asks for them.
 Consumer side. The actions marked *governance* need the offering's
 `enable_api_key_provisioning`; without it they return 400.
 
-- `GET /` and `GET /{uuid}/` — list/retrieve status (`client_id`, state,
+- `GET /` and `GET /{uuid}/` — list/retrieve status (`client_id`, `description`, state,
   `pending_action`, `modified`, error message, assignee, limits, models as chosen
   and effective, usage — no secret). `spending_limit_status` lists each limit
   with `used`, `limit`, `resets_at` (`null` for a total) and `reached`, and
@@ -131439,8 +131637,8 @@ Consumer side. The actions marked *governance* need the offering's
   (`pending_action`); governed unless that command is `rotate` or `resume`. The
   key's assignee can retry a failed `rotate`; a retry of any other command is
   refused to them with `403`.
-- `POST /` *(governance)* — request a key: `{resource, user?, spending_limits?,
-  allowed_models?}`. Creates a `Creating` row and the `create` command; Waldur
+- `POST /` *(governance)* — request a key: `{resource, description?, user?,
+  spending_limits?, allowed_models?}`. Creates a `Creating` row and the `create` command; Waldur
   generates nothing. The assignee must be a member of the resource's project (an
   organization role alone is not enough) and must not already hold a key on the
   resource (see **One key per person** above), limits follow [Limits](#limits),
@@ -131461,6 +131659,14 @@ Consumer side. The actions marked *governance* need the offering's
   with 400 on `user` on every offering, with or without key management: the key
   is left as it was, and nothing is published or audited (see **A key's assignee
   is fixed when the key is requested** above).
+- `PATCH /{uuid}/` with `description` alone — on every offering, governed or
+  not, and in every state but `Deleted`, a command in flight or a failed one
+  included: the description is Waldur's own note, so it is saved at once
+  without a command, and `state`, `pending_action` and `modified` stay as they
+  were (`resource_api_keys.set_description`). Sent with `spending_limits` or
+  `allowed_models`, it is saved in the same transaction as their `update`, and
+  refused with it. Same permission as any edit; not audited, as it changes
+  nothing at the backend.
 - `POST /{uuid}/pause/` *(governance)* — the `pause` command.
 - `DELETE /{uuid}/` *(governance)* — the `delete` command; `202`, since the key
   is gone only once the agent acknowledges. A requested key with no `client_id`
