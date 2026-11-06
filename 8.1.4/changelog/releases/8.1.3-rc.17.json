@@ -1,0 +1,1958 @@
+{
+  "schema_version": "1.0.0",
+  "version": "8.1.3-rc.17",
+  "date": "2026-09-25",
+  "type": "rc",
+  "summary": "Waldur 8.1.3-rc.17 extends the in-app changelog system. The backend now lists releases, lets you browse what each release introduced, builds the upgrade report and announcement, filters and sorts entries, and offers newer release candidates to deployments running an RC. Support users can now edit and delete their own comments, and support notification emails are grouped into threads. Service providers can require free-form offering options to match a pattern, and they can filter offering users and provider accounts by username. Proposal reviewer invitations now always come with a working link and email, and the proposal dashboard shows reviews that are due soon instead of overdue ones. Administrators can configure an About us page, which is linked from the footer. Fixes cover SCIM account naming so logins find provisioned users, retries of OpenStack instance delete polls when Nova returns HTTP 429, Celery error message handling, avatar serving and several UI crashes and navigation problems. The frontend also gets broad keyboard-accessibility and focus-ring improvements.",
+  "entries": [
+    {
+      "type": "fix",
+      "category": "ui",
+      "title": "Accessibility and keyboard navigation fixes",
+      "description": "Fixed WCAG 2.2 AA findings from an axe-core scan across tables, sidebar, tabs and forms. Pressing Enter on a link without an onClick handler, or on a read-only avatar strip, no longer throws an error. The My Access Requests view switch is now a keyboard-operable radio group, and the sign-in method switch uses accessible tabs.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "136c8bea25",
+        "57f8e76626",
+        "233227582d",
+        "8760f901c6",
+        "baedbbb2dd"
+      ],
+      "id": "8.1.3-rc.16-1"
+    },
+    {
+      "type": "fix",
+      "category": "ai_assistant",
+      "title": "AI assistant display fixes",
+      "description": "Mermaid diagrams in AI assistant replies now fit the chat bubble. The conversation marker now stays on the AI assistant button.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "c81bfcfb02",
+        "9e8bbe785f"
+      ],
+      "id": "8.1.3-rc.16-2"
+    },
+    {
+      "type": "improvement",
+      "category": "proposal",
+      "title": "Attribute call-allocated orders to a real person",
+      "description": "Previously, orders placed when a call allocated resources were not attributed to a real person. Now, these orders are attributed to a person and flagged as placed automatically. The call's support ticket caller option is renamed to order author.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.proposal"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Marketplace migration 0297_order_placed_automatically adds an automatic-placement flag to orders. Proposal migration 0081 renames the support ticket caller option to order author.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "59f49d9be",
+        "d486c540e"
+      ],
+      "id": "8.1.3-rc.16-3"
+    },
+    {
+      "type": "feature",
+      "category": "identity",
+      "title": "Audit changes to role definitions",
+      "description": "Previously, changes to role definitions were not audited. Now, they are logged as events and shown in the audit feed.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "37bdbd2a9",
+        "b4e468dee6"
+      ],
+      "id": "8.1.3-rc.16-4"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Bump anyio and soupsieve dependencies",
+      "description": "Previously, the pinned versions of anyio and soupsieve were flagged by the OSV scan. Now, both are upgraded to clear those findings.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "d962ae73f"
+      ],
+      "id": "8.1.3-rc.16-5"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Change limits shows correct usage and prepaid pricing",
+      "description": "The Change limits view showed incorrect usage values and priced prepaid limit changes over the wrong period. It now shows correct usage and prices prepaid limit changes over the resource's actual remaining months.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "3e16d07d6d",
+        "8cab44cdc2"
+      ],
+      "id": "8.1.3-rc.16-6"
+    },
+    {
+      "type": "feature",
+      "category": "proposal",
+      "title": "Configure applicant eligibility from the call UI",
+      "description": "Previously, applicant eligibility restrictions could not be configured from the call UI. Now, the call page has an eligibility section for setting them.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "b4d9f14255"
+      ],
+      "id": "8.1.3-rc.16-7"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Consistent alerts, toast notifications and dialog button order",
+      "description": "Previously, alerts and toast notifications were built on Bootstrap components, and dialog buttons did not follow a consistent order. Now, toast notifications are rebuilt on the design system, alerts use the shared AlertItem component, and dialog buttons follow an enforced order.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "0c51df477a",
+        "f4c14faa1c",
+        "55f9548347",
+        "4d77850356",
+        "1a8ee6aaf1",
+        "65fb331938"
+      ],
+      "id": "8.1.3-rc.16-8"
+    },
+    {
+      "type": "feature",
+      "category": "infrastructure",
+      "title": "Context-aware changelog system",
+      "description": "Previously, deployments had no machine-readable way to show staff what an upgrade brings. Now, a new changelog app assembles structured release changelogs, serves them through an API, and exposes version metadata. Each change is shown only once across a release candidate cycle.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Initial migration for the new waldur_core.changelog app.",
+          "automatic": true
+        }
+      ],
+      "highlight": true,
+      "commits": [
+        "ea0509347",
+        "2349c6e1a"
+      ],
+      "id": "8.1.3-rc.16-9"
+    },
+    {
+      "type": "fix",
+      "category": "ui",
+      "title": "Dark mode and login layout theming fixes",
+      "description": "Dark mode styles now use the correct theme attribute on login layouts. Mermaid charts take their colours from design tokens and display correctly in dark mode. The provider ticket assignee picker is themed for dark mode, and login footer links are readable on gradient layouts.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "368e1b601c",
+        "3a3a8347bd",
+        "89980946c5",
+        "0db1dfb046"
+      ],
+      "id": "8.1.3-rc.16-10"
+    },
+    {
+      "type": "fix",
+      "category": "notifications",
+      "title": "Email diagnostics handle display-name sender addresses",
+      "description": "Email diagnostics did not work correctly when the sender address included a display name. Such addresses are now handled.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "1bc507541"
+      ],
+      "id": "8.1.3-rc.16-11"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Limits column in the marketplace orders list",
+      "description": "Previously, the marketplace orders list did not show order limits. Now, it has a Limits column.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "5cbabe0fa9"
+      ],
+      "id": "8.1.3-rc.16-12"
+    },
+    {
+      "type": "improvement",
+      "category": "notifications",
+      "title": "Log when a notification drop silences a mail",
+      "description": "Previously, a mail suppressed by a notification drop was skipped with no log entry. Now, a log entry is written when this happens.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "none"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "8c010daef"
+      ],
+      "id": "8.1.3-rc.16-13"
+    },
+    {
+      "type": "fix",
+      "category": "ui",
+      "title": "Menus, popovers and drawers no longer overlap or get cut off",
+      "description": "Header popovers now appear above the fixed toolbar. Select menus stay clickable inside the modal drawer. Floating drawers stay under the header and their toggles keep working. Tall actions menus are capped to the window height and scroll instead of running off-screen.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "db2d178afc",
+        "02b9ca4837",
+        "972a34e863",
+        "ebd4c127a7"
+      ],
+      "id": "8.1.3-rc.16-14"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Offering import and export keep values intact and reject invalid input",
+      "description": "Offering import now normalises null values and rejects invalid input. Offering export now keeps empty units and zero amounts instead of dropping them.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "a60c0a011",
+        "40613cdbe5"
+      ],
+      "id": "8.1.3-rc.16-15"
+    },
+    {
+      "type": "fix",
+      "category": "support",
+      "title": "Only staff and support can create support requests on behalf of others",
+      "description": "Creating a support request on behalf of another user is now limited to staff and support users.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "472998295"
+      ],
+      "id": "8.1.3-rc.16-16"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Operator-editable language list in Docker Compose",
+      "description": "Previously, Docker Compose deployments could not change the language list. Now, config/waldur-mastermind/languages.yaml is mounted into the containers so operators can edit it.",
+      "scope": "infra",
+      "component": [
+        "docker"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "43a189c"
+      ],
+      "id": "8.1.3-rc.16-17"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Order form fixes for offering switching, default limits and closed steps",
+      "description": "The order form now updates correctly when the offering is switched inside it. It keeps the offering's default limits when the form is reinitialised, and gives a single consistent reason for why its steps are closed.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "fa68a2df7b",
+        "a959cd956f",
+        "5dfd0db8da"
+      ],
+      "id": "8.1.3-rc.16-18"
+    },
+    {
+      "type": "improvement",
+      "category": "identity",
+      "title": "Outbound SCIM entitlements gated behind an offering option",
+      "description": "Previously, outbound SCIM entitlements were not controlled per offering. Now, they are sent only for offerings where the new integration option is enabled. The option can be set in the offering's user management settings.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "review",
+          "description": "Enable the outbound SCIM entitlements option on each offering that should keep pushing SCIM entitlements.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "bbd58ba38",
+        "846e1ee00a"
+      ],
+      "id": "8.1.3-rc.16-19"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Project chat rooms: one actions menu and no switcher showing other projects' rooms",
+      "description": "Previously, the chat drawer had a room switcher that listed rooms from other projects, and project chat room actions were shown as separate controls. Now, the switcher is removed and the room actions are grouped in one menu.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "e72f943ca9",
+        "c0174fcf75"
+      ],
+      "id": "8.1.3-rc.16-20"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Refused restore returns the resource to the terminated state",
+      "description": "When a restore order was refused, the resource did not return to its previous state. It now goes back to the terminated state.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "24c3f1bee"
+      ],
+      "id": "8.1.3-rc.16-21"
+    },
+    {
+      "type": "fix",
+      "category": "identity",
+      "title": "Removing a project grant sends the correct project",
+      "description": "Removing a project grant from the organization team list did not send the actual project UUID. It now does.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "193a3a0a4f"
+      ],
+      "id": "8.1.3-rc.16-22"
+    },
+    {
+      "type": "improvement",
+      "category": "openstack",
+      "title": "Resolve duplicate per-tenant OpenStack offerings with the merge engine",
+      "description": "Previously, duplicate per-tenant OpenStack offerings had to be handled without the offering merge engine. Now, they are resolved through the merge engine, both from the dedupe_tenant_offerings management command and from a duplicate offerings API with a resolve action in the staff UI.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.marketplace_openstack"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "review",
+          "description": "Deployments with duplicate per-tenant OpenStack offerings can review and resolve them with the dedupe_tenant_offerings management command or the staff duplicate offerings view.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "ef19a5362"
+      ],
+      "id": "8.1.3-rc.16-23"
+    },
+    {
+      "type": "fix",
+      "category": "ui",
+      "title": "Route guard and navigation fixes",
+      "description": "Permission gates could run before the workspace was resolved; they now wait for it. When a route guard refuses access, the denied address is now kept. Clicking a parent tab now opens its first child page.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "0c78b4b97c",
+        "d9f90676f0",
+        "77a130b0cd"
+      ],
+      "id": "8.1.3-rc.16-24"
+    },
+    {
+      "type": "fix",
+      "category": "support",
+      "title": "Service desk defaults reconcile a mistyped status",
+      "description": "The init_service_desk_defaults command skipped seeding when a status had the wrong type. It now corrects the existing status instead.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "ce78ff57a"
+      ],
+      "id": "8.1.3-rc.16-25"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Show measured units for requested resource amounts",
+      "description": "Previously, requested resource amounts in order summaries, plan rows and call resource requests were shown without their measured units. Now, the units are shown.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "a56508f3cd"
+      ],
+      "id": "8.1.3-rc.16-26"
+    },
+    {
+      "type": "feature",
+      "category": "marketplace",
+      "title": "Staff offering merge tool with preview, background execution and undo",
+      "description": "Previously, there was no supported way to combine duplicate marketplace offerings. Now, a merge engine records each merge, previews the rows it will change grouped by area, runs the merge in the background, applies an invoice snapshot policy, checks the result after the merge, and supports undo. A staff API and a new UI provide a merge wizard, merge history, merge details, grouped preview tables with drill-down, and a dialog with verification details. Merge progress is reported through new events.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Marketplace migrations 0294_offering_merge and 0295_offering_merge_progress add the offering merge record and progress tracking.",
+          "automatic": true
+        }
+      ],
+      "highlight": true,
+      "commits": [
+        "3b53d026f",
+        "66d2b5c6e",
+        "05458cf40",
+        "051a47cd9",
+        "eceab05f35",
+        "4d57dfb10e"
+      ],
+      "id": "8.1.3-rc.16-27"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Stop logging plan component price updates that changed nothing",
+      "description": "Plan component price updates were logged even when nothing changed, including during remote offering sync. These no-op updates are no longer logged, and a data migration removes the existing no-op price logs.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Marketplace migration 0296_clean_noop_price_logs removes existing log entries for price updates that changed nothing.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "0c2121b87"
+      ],
+      "id": "8.1.3-rc.16-28"
+    },
+    {
+      "type": "fix",
+      "category": "infrastructure",
+      "title": "Store VMware datastore sizes in 64-bit columns",
+      "description": "VMware datastore capacity and free space were stored in columns too small for large datastores. They are now stored in 64-bit columns.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_vmware"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "VMware migration 0030 changes the datastore capacity and free_space columns to 64-bit integers.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "3e5ab9b01"
+      ],
+      "id": "8.1.3-rc.16-29"
+    },
+    {
+      "type": "improvement",
+      "category": "identity",
+      "title": "Advertise the SRAM SCIM profile on its own discovery endpoints",
+      "description": "Previously, the SRAM SCIM profile was not advertised on its own discovery endpoints. Now, SRAM has dedicated SCIM discovery endpoints that advertise its profile.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_sram"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "d349d03d7"
+      ],
+      "id": "8.1.3-rc.17-1"
+    },
+    {
+      "type": "feature",
+      "category": "support",
+      "title": "Authors can edit and delete their own support comments",
+      "description": "Previously, users could not edit or delete support comments they had written, and the UI could show comment actions the user was not allowed to take. Now, comment authors can edit and delete their own comments, and staff are notified when a comment is updated. The UI shows comment actions only where the user may take them.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.support"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "e90d345bd",
+        "9ecd01a651"
+      ],
+      "id": "8.1.3-rc.17-2"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Bound course-account API calls with a timeout and close accounts asynchronously",
+      "description": "Previously, course-account API calls had no explicit timeout. Now, they are bounded by an explicit timeout. The course account delete action in the UI reflects that the account is closed asynchronously.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "165cc550c",
+        "adacce5555"
+      ],
+      "id": "8.1.3-rc.17-3"
+    },
+    {
+      "type": "feature",
+      "category": "infrastructure",
+      "title": "Browse changelog releases and generate upgrade reports in the backend",
+      "description": "Previously, the backend could not list changelog releases, and it did not build the upgrade report, announcement or commands. Now, the backend lists changelog releases and lets you browse what any release introduced. It also builds the upgrade report, announcement and commands. Changelog entries can be filtered by category and sorted by any column.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "highlight": true,
+      "commits": [
+        "340c18ee3",
+        "c11227beb",
+        "f05380d89"
+      ],
+      "id": "8.1.3-rc.17-4"
+    },
+    {
+      "type": "feature",
+      "category": "proposal",
+      "title": "Choose who a call's resource orders are created by",
+      "description": "Previously, the call configuration did not let you choose who creates the call's resource orders. Now, the call's general configuration section includes this setting.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "0dd5473b69"
+      ],
+      "id": "8.1.3-rc.17-5"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Clear service provider comment when an offering user becomes OK",
+      "description": "Previously, a service provider comment stayed on an offering user after the user reached the OK state. Now, the comment is cleared when the offering user becomes OK.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "64440c206"
+      ],
+      "id": "8.1.3-rc.17-6"
+    },
+    {
+      "type": "fix",
+      "category": "ui",
+      "title": "Clear stored invitation token when closing a non-pending invitation dialog",
+      "description": "The stored invitation token was kept after the user closed the dialog for an invitation that was no longer pending. The token is now cleared when that dialog is closed.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "f23d20abc9"
+      ],
+      "id": "8.1.3-rc.17-7"
+    },
+    {
+      "type": "feature",
+      "category": "ui",
+      "title": "Configurable About us page linked from the footer",
+      "description": "Previously, there was no About us page. Now, administrators can configure its content in the branding settings with a Markdown editor, and the page is linked from the footer.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "none"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "5ab37139f",
+        "a9dd1c95f5"
+      ],
+      "id": "8.1.3-rc.17-8"
+    },
+    {
+      "type": "fix",
+      "category": "support",
+      "title": "Download issue template files with the API token",
+      "description": "Issue template attachment files were downloaded without the API token. They are now downloaded with the API token.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "1d51068063"
+      ],
+      "id": "8.1.3-rc.17-9"
+    },
+    {
+      "type": "fix",
+      "category": "proposal",
+      "title": "Every reviewer invitation gets a working link and email",
+      "description": "Some reviewer pool invitations had no working link and did not send an email. Every reviewer invitation now gets a default token, a working link and an email.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.proposal"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Apply proposal migration 0082_reviewer_pool_invitation_token_default.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "05bdd0793"
+      ],
+      "id": "8.1.3-rc.17-10"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Filter offering users and provider accounts by username",
+      "description": "Previously, offering users and provider accounts could not be filtered by username. Now, the API supports a username filter for both.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "none"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "721a4b892"
+      ],
+      "id": "8.1.3-rc.17-11"
+    },
+    {
+      "type": "fix",
+      "category": "ui",
+      "title": "Fix mobile notifications drawer and navigation issues",
+      "description": "On mobile, the notifications drawer did not open correctly, and there was a gap below the navbar. Both issues have been fixed. Parent tabs now point to the first entry their submenu actually shows.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "fefe22f82b",
+        "9508141704"
+      ],
+      "id": "8.1.3-rc.17-12"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Fix offering option editing and numeric input fields",
+      "description": "The dialogs and wizard for adding, editing and deleting offering options had problems, as did the shared numeric input field used in several forms. These components have been fixed.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "4fc80324f1"
+      ],
+      "id": "8.1.3-rc.17-13"
+    },
+    {
+      "type": "fix",
+      "category": "proposal",
+      "title": "Fix open calls dashboard link filter",
+      "description": "The open calls link on the call management dashboard applied the wrong filter. The link now applies the correct filter.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "776d2ad712"
+      ],
+      "id": "8.1.3-rc.17-14"
+    },
+    {
+      "type": "fix",
+      "category": "ui",
+      "title": "Fix profile page crash caused by the recalculate user actions button",
+      "description": "The recalculate user actions button could crash the profile page. The crash has been fixed.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "fe01b47db0"
+      ],
+      "id": "8.1.3-rc.17-15"
+    },
+    {
+      "type": "fix",
+      "category": "ai_assistant",
+      "title": "Hide the anonymous chat tab while anonymous chat is disabled",
+      "description": "The support AI assistant dashboard showed the anonymous chat tab even when anonymous chat was disabled. The tab is now hidden in that case.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "none"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "4a6cb16cc4"
+      ],
+      "id": "8.1.3-rc.17-16"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Keyboard accessibility and consistent focus rings",
+      "description": "Previously, some controls could only be used with a mouse, keyboard navigation in global search did not work correctly, and focus indicators were inconsistent. Now, every focusable element has the brand focus ring, including tabs. The Add filter menu, breadcrumb dropdowns, the marketplace categories popup and search items can be reached with the keyboard. Global search keyboard navigation has been fixed, profile View/Edit controls are treated as buttons, and the Continue button in the OpenStack discovery wizard has an accessible name.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "none"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "7e6be55441",
+        "b8718c29f1",
+        "0de6595df5",
+        "e334e1086c",
+        "8057c7e44a",
+        "dead860a15"
+      ],
+      "id": "8.1.3-rc.17-17"
+    },
+    {
+      "type": "fix",
+      "category": "identity",
+      "title": "Name SCIM accounts after the match value as sent so logins find them",
+      "description": "Accounts provisioned through SCIM were not named after the match value exactly as sent, so logins could fail to find them. Accounts are now named after the match value as sent. The find_username_collisions management command has also been updated.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "aa1fe996e"
+      ],
+      "id": "8.1.3-rc.17-18"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Offer newer release candidates to deployments running an RC",
+      "description": "Previously, deployments running a release candidate were not offered newer release candidates. Now, the version check and changelog offer them newer release candidates as available upgrades.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "adbb3665b"
+      ],
+      "id": "8.1.3-rc.17-19"
+    },
+    {
+      "type": "fix",
+      "category": "openstack",
+      "title": "Retry OpenStack instance delete polls on Nova HTTP 429",
+      "description": "When Nova returned HTTP 429 (rate limited) while the backend was polling an instance deletion, the poll was not retried. These polls are now retried.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_openstack"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "f2fbc8f82"
+      ],
+      "id": "8.1.3-rc.17-20"
+    },
+    {
+      "type": "fix",
+      "category": "ui",
+      "title": "Serve user avatars without requiring an authenticated request",
+      "description": "User avatars were only served to authenticated requests, so they could fail to display. Avatars are now served without authentication.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "08acd7416"
+      ],
+      "id": "8.1.3-rc.17-21"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Show end date change request reasons in an expandable row",
+      "description": "Previously, the reasons for resource and project end date change requests were not shown in an expandable row. Now, they are shown in an expandable table row.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "none"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "f34ee97aca"
+      ],
+      "id": "8.1.3-rc.17-22"
+    },
+    {
+      "type": "improvement",
+      "category": "proposal",
+      "title": "Show reviews due soon instead of overdue reviews on the dashboard",
+      "description": "Previously, the proposal dashboard had a card for overdue reviews. Now, that card is replaced by one showing reviews that are due soon.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.proposal"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "dd58bddc9"
+      ],
+      "id": "8.1.3-rc.17-23"
+    },
+    {
+      "type": "fix",
+      "category": "infrastructure",
+      "title": "Stringify Celery exception results before writing error_message",
+      "description": "Celery exception results were written to error_message without first being converted to strings. They are now converted to strings before they are stored.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "cbb366dac"
+      ],
+      "id": "8.1.3-rc.17-24"
+    },
+    {
+      "type": "improvement",
+      "category": "notifications",
+      "title": "Thread support notification emails",
+      "description": "Previously, support notification emails for a ticket were not grouped into threads. Now, these emails are threaded, and the subject templates for comment, issue update, feedback and provider escalation notifications have been updated. A provider ticket withdrawn notification template has also been added.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.support"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "da0c8cb6a"
+      ],
+      "id": "8.1.3-rc.17-25"
+    },
+    {
+      "type": "feature",
+      "category": "marketplace",
+      "title": "Validate free-form offering options against a provider pattern",
+      "description": "Previously, free-form offering option values could not be checked against a format. Now, service providers can define a pattern, and free-form option values are validated against it.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "a8abd243d"
+      ],
+      "id": "8.1.3-rc.17-26"
+    }
+  ],
+  "since_previous": [
+    {
+      "type": "improvement",
+      "category": "identity",
+      "title": "Advertise the SRAM SCIM profile on its own discovery endpoints",
+      "description": "Previously, the SRAM SCIM profile was not advertised on its own discovery endpoints. Now, SRAM has dedicated SCIM discovery endpoints that advertise its profile.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_sram"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "d349d03d7"
+      ],
+      "id": "8.1.3-rc.17-1"
+    },
+    {
+      "type": "feature",
+      "category": "support",
+      "title": "Authors can edit and delete their own support comments",
+      "description": "Previously, users could not edit or delete support comments they had written, and the UI could show comment actions the user was not allowed to take. Now, comment authors can edit and delete their own comments, and staff are notified when a comment is updated. The UI shows comment actions only where the user may take them.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.support"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "e90d345bd",
+        "9ecd01a651"
+      ],
+      "id": "8.1.3-rc.17-2"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Bound course-account API calls with a timeout and close accounts asynchronously",
+      "description": "Previously, course-account API calls had no explicit timeout. Now, they are bounded by an explicit timeout. The course account delete action in the UI reflects that the account is closed asynchronously.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "165cc550c",
+        "adacce5555"
+      ],
+      "id": "8.1.3-rc.17-3"
+    },
+    {
+      "type": "feature",
+      "category": "infrastructure",
+      "title": "Browse changelog releases and generate upgrade reports in the backend",
+      "description": "Previously, the backend could not list changelog releases, and it did not build the upgrade report, announcement or commands. Now, the backend lists changelog releases and lets you browse what any release introduced. It also builds the upgrade report, announcement and commands. Changelog entries can be filtered by category and sorted by any column.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "highlight": true,
+      "commits": [
+        "340c18ee3",
+        "c11227beb",
+        "f05380d89"
+      ],
+      "id": "8.1.3-rc.17-4"
+    },
+    {
+      "type": "feature",
+      "category": "proposal",
+      "title": "Choose who a call's resource orders are created by",
+      "description": "Previously, the call configuration did not let you choose who creates the call's resource orders. Now, the call's general configuration section includes this setting.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "0dd5473b69"
+      ],
+      "id": "8.1.3-rc.17-5"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Clear service provider comment when an offering user becomes OK",
+      "description": "Previously, a service provider comment stayed on an offering user after the user reached the OK state. Now, the comment is cleared when the offering user becomes OK.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "64440c206"
+      ],
+      "id": "8.1.3-rc.17-6"
+    },
+    {
+      "type": "fix",
+      "category": "ui",
+      "title": "Clear stored invitation token when closing a non-pending invitation dialog",
+      "description": "The stored invitation token was kept after the user closed the dialog for an invitation that was no longer pending. The token is now cleared when that dialog is closed.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "f23d20abc9"
+      ],
+      "id": "8.1.3-rc.17-7"
+    },
+    {
+      "type": "feature",
+      "category": "ui",
+      "title": "Configurable About us page linked from the footer",
+      "description": "Previously, there was no About us page. Now, administrators can configure its content in the branding settings with a Markdown editor, and the page is linked from the footer.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "none"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "5ab37139f",
+        "a9dd1c95f5"
+      ],
+      "id": "8.1.3-rc.17-8"
+    },
+    {
+      "type": "fix",
+      "category": "support",
+      "title": "Download issue template files with the API token",
+      "description": "Issue template attachment files were downloaded without the API token. They are now downloaded with the API token.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "1d51068063"
+      ],
+      "id": "8.1.3-rc.17-9"
+    },
+    {
+      "type": "fix",
+      "category": "proposal",
+      "title": "Every reviewer invitation gets a working link and email",
+      "description": "Some reviewer pool invitations had no working link and did not send an email. Every reviewer invitation now gets a default token, a working link and an email.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.proposal"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Apply proposal migration 0082_reviewer_pool_invitation_token_default.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "05bdd0793"
+      ],
+      "id": "8.1.3-rc.17-10"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Filter offering users and provider accounts by username",
+      "description": "Previously, offering users and provider accounts could not be filtered by username. Now, the API supports a username filter for both.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "none"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "721a4b892"
+      ],
+      "id": "8.1.3-rc.17-11"
+    },
+    {
+      "type": "fix",
+      "category": "ui",
+      "title": "Fix mobile notifications drawer and navigation issues",
+      "description": "On mobile, the notifications drawer did not open correctly, and there was a gap below the navbar. Both issues have been fixed. Parent tabs now point to the first entry their submenu actually shows.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "fefe22f82b",
+        "9508141704"
+      ],
+      "id": "8.1.3-rc.17-12"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Fix offering option editing and numeric input fields",
+      "description": "The dialogs and wizard for adding, editing and deleting offering options had problems, as did the shared numeric input field used in several forms. These components have been fixed.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "4fc80324f1"
+      ],
+      "id": "8.1.3-rc.17-13"
+    },
+    {
+      "type": "fix",
+      "category": "proposal",
+      "title": "Fix open calls dashboard link filter",
+      "description": "The open calls link on the call management dashboard applied the wrong filter. The link now applies the correct filter.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "776d2ad712"
+      ],
+      "id": "8.1.3-rc.17-14"
+    },
+    {
+      "type": "fix",
+      "category": "ui",
+      "title": "Fix profile page crash caused by the recalculate user actions button",
+      "description": "The recalculate user actions button could crash the profile page. The crash has been fixed.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "fe01b47db0"
+      ],
+      "id": "8.1.3-rc.17-15"
+    },
+    {
+      "type": "fix",
+      "category": "ai_assistant",
+      "title": "Hide the anonymous chat tab while anonymous chat is disabled",
+      "description": "The support AI assistant dashboard showed the anonymous chat tab even when anonymous chat was disabled. The tab is now hidden in that case.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "none"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "4a6cb16cc4"
+      ],
+      "id": "8.1.3-rc.17-16"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Keyboard accessibility and consistent focus rings",
+      "description": "Previously, some controls could only be used with a mouse, keyboard navigation in global search did not work correctly, and focus indicators were inconsistent. Now, every focusable element has the brand focus ring, including tabs. The Add filter menu, breadcrumb dropdowns, the marketplace categories popup and search items can be reached with the keyboard. Global search keyboard navigation has been fixed, profile View/Edit controls are treated as buttons, and the Continue button in the OpenStack discovery wizard has an accessible name.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "none"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "7e6be55441",
+        "b8718c29f1",
+        "0de6595df5",
+        "e334e1086c",
+        "8057c7e44a",
+        "dead860a15"
+      ],
+      "id": "8.1.3-rc.17-17"
+    },
+    {
+      "type": "fix",
+      "category": "identity",
+      "title": "Name SCIM accounts after the match value as sent so logins find them",
+      "description": "Accounts provisioned through SCIM were not named after the match value exactly as sent, so logins could fail to find them. Accounts are now named after the match value as sent. The find_username_collisions management command has also been updated.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "aa1fe996e"
+      ],
+      "id": "8.1.3-rc.17-18"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Offer newer release candidates to deployments running an RC",
+      "description": "Previously, deployments running a release candidate were not offered newer release candidates. Now, the version check and changelog offer them newer release candidates as available upgrades.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "adbb3665b"
+      ],
+      "id": "8.1.3-rc.17-19"
+    },
+    {
+      "type": "fix",
+      "category": "openstack",
+      "title": "Retry OpenStack instance delete polls on Nova HTTP 429",
+      "description": "When Nova returned HTTP 429 (rate limited) while the backend was polling an instance deletion, the poll was not retried. These polls are now retried.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_openstack"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "f2fbc8f82"
+      ],
+      "id": "8.1.3-rc.17-20"
+    },
+    {
+      "type": "fix",
+      "category": "ui",
+      "title": "Serve user avatars without requiring an authenticated request",
+      "description": "User avatars were only served to authenticated requests, so they could fail to display. Avatars are now served without authentication.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "08acd7416"
+      ],
+      "id": "8.1.3-rc.17-21"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Show end date change request reasons in an expandable row",
+      "description": "Previously, the reasons for resource and project end date change requests were not shown in an expandable row. Now, they are shown in an expandable table row.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "none"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "f34ee97aca"
+      ],
+      "id": "8.1.3-rc.17-22"
+    },
+    {
+      "type": "improvement",
+      "category": "proposal",
+      "title": "Show reviews due soon instead of overdue reviews on the dashboard",
+      "description": "Previously, the proposal dashboard had a card for overdue reviews. Now, that card is replaced by one showing reviews that are due soon.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.proposal"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "dd58bddc9"
+      ],
+      "id": "8.1.3-rc.17-23"
+    },
+    {
+      "type": "fix",
+      "category": "infrastructure",
+      "title": "Stringify Celery exception results before writing error_message",
+      "description": "Celery exception results were written to error_message without first being converted to strings. They are now converted to strings before they are stored.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "cbb366dac"
+      ],
+      "id": "8.1.3-rc.17-24"
+    },
+    {
+      "type": "improvement",
+      "category": "notifications",
+      "title": "Thread support notification emails",
+      "description": "Previously, support notification emails for a ticket were not grouped into threads. Now, these emails are threaded, and the subject templates for comment, issue update, feedback and provider escalation notifications have been updated. A provider ticket withdrawn notification template has also been added.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.support"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "da0c8cb6a"
+      ],
+      "id": "8.1.3-rc.17-25"
+    },
+    {
+      "type": "feature",
+      "category": "marketplace",
+      "title": "Validate free-form offering options against a provider pattern",
+      "description": "Previously, free-form offering option values could not be checked against a format. Now, service providers can define a pattern, and free-form option values are validated against it.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "a8abd243d"
+      ],
+      "id": "8.1.3-rc.17-26"
+    }
+  ],
+  "base_stable_version": "8.1.2",
+  "previous_version": "8.1.3-rc.16",
+  "stable_target": "8.1.3"
+}

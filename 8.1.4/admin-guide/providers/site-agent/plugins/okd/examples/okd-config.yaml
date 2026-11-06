@@ -1,0 +1,62 @@
+# Agent configuration for the OKD/OpenShift plugin.
+# Run with: waldur_site_agent -m order_process -c okd-config.yaml
+# (or membership_sync, report, event_process)
+
+log_level: INFO
+
+offerings:
+  - name: "OKD projects"
+    waldur_api_url: "https://waldur.example.com/api/"
+    waldur_api_token: "<waldur api token>"
+    waldur_offering_uuid: "<okd offering uuid>"
+
+    backend_type: "okd"
+    order_processing_backend: "okd"
+    membership_sync_backend: "okd"
+    reporting_backend: "okd"
+
+    # Event mode: also set stomp_enabled: true and run with -m event_process
+    stomp_enabled: false
+
+    backend_settings:
+      # OKD API endpoint
+      api_url: "https://api.okd.example.com:6443"
+
+      # Service account token for authentication
+      # Create with: oc create serviceaccount waldur-agent
+      # Get a token: oc create token waldur-agent
+      token: "<okd service account token>"
+
+      # TLS certificate verification (false only for self-signed test clusters)
+      verify_cert: true
+
+      # Naming prefixes
+      namespace_prefix: "waldur-"   # all managed namespaces
+      customer_prefix: "org-"
+      project_prefix: "proj-"
+      allocation_prefix: "alloc-"
+
+      # ClusterRole bound to project members (admin, edit or view)
+      default_role: "edit"
+
+    backend_components:
+      cpu:
+        measured_unit: "Core"
+        accounting_type: "limit"
+        label: "CPU cores"
+        unit_factor: 1
+      memory:
+        measured_unit: "GB"
+        accounting_type: "limit"
+        label: "Memory (GB)"
+        unit_factor: 1
+      storage:
+        measured_unit: "GB"
+        accounting_type: "limit"
+        label: "Storage (GB)"
+        unit_factor: 1
+      pods:
+        measured_unit: "Count"
+        accounting_type: "limit"
+        label: "Pod count"
+        unit_factor: 1

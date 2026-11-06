@@ -1,0 +1,83 @@
+# OpenNebula plugin configuration with Keycloak SAML integration.
+# VDC management with Keycloak group-based SAML authentication for
+# OpenNebula Sunstone/FireEdge. See docs/saml-setup/index.md.
+
+offerings:
+  - name: "opennebula-vdc"
+    waldur_api_url: "https://waldur.example.com/api/"
+    waldur_api_token: "<waldur api token>"
+    waldur_offering_uuid: "<offering uuid>"
+
+    backend_type: "opennebula"
+    order_processing_backend: "opennebula"
+    membership_sync_backend: "opennebula"
+    reporting_backend: "opennebula"
+
+    backend_settings:
+      api_url: "http://<opennebula-host>:2633/RPC2"
+      credentials: "oneadmin:<password>"
+      zone_id: 0
+      cluster_ids: [0, 100]
+      resource_type: "vdc"
+
+      # Keycloak SAML integration
+      keycloak_enabled: true
+      keycloak:
+        keycloak_url: "https://<keycloak-host>/keycloak/"
+        keycloak_realm: "opennebula"
+        keycloak_user_realm: "master"
+        client_id: "admin-cli"
+        keycloak_username: "admin"
+        keycloak_password: "<admin-password>"
+        keycloak_ssl_verify: true
+
+      # Must match mapping_filename in saml_auth.conf
+      saml_mapping_file: "/var/lib/one/keycloak_groups.yaml"
+
+      # Default role when adding users without explicit role
+      default_user_role: "user"
+
+      # VDC role definitions. Each role creates:
+      #   - A Keycloak child group under vdc_{slug}/{name}
+      #   - An OpenNebula group {slug}-{one_group_suffix}
+      #   - SAML_GROUP + FIREEDGE template attributes on the ONE group
+      #
+      # Uncomment to override the built-in defaults:
+      # vdc_roles:
+      #   - name: "admin"
+      #     one_group_suffix: "admins"
+      #     default_view: "groupadmin"
+      #     views: "groupadmin,user,cloud"
+      #     group_admin: true
+      #   - name: "user"
+      #     one_group_suffix: "users"
+      #     default_view: "user"
+      #     views: "user"
+      #   - name: "cloud"
+      #     one_group_suffix: "cloud"
+      #     default_view: "cloud"
+      #     views: "cloud"
+
+      # Networking (optional; usually set in the offering's plugin_options)
+      # external_network_id: 45
+      # virtual_router_template_id: 1
+
+    backend_components:
+      cpu:
+        type: "cpu"
+        label: "CPU Cores"
+        measured_unit: "cores"
+        accounting_type: "limit"
+        unit_factor: 1
+      ram:
+        type: "ram"
+        label: "RAM"
+        measured_unit: "MB"
+        accounting_type: "limit"
+        unit_factor: 1
+      storage:
+        type: "storage"
+        label: "Storage"
+        measured_unit: "MB"
+        accounting_type: "limit"
+        unit_factor: 1
