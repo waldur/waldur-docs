@@ -38,6 +38,7 @@ for deployment-specific documentation.
 * [Credit management configuration](staff-users/credit-management-staff.md)
 * [Webhook event consumers](staff-users/event-consumer-webhooks.md)
 * [Impersonation](staff-users/impersonation.md)
+* [Acting on several offerings at once](staff-users/offering-bulk-actions.md)
 * [Offering merges](staff-users/offering-merges.md)
 * [Projects removal by admin](staff-users/projects-removal-admin.md)
 * [User role management](staff-users/user_role_management.md)
