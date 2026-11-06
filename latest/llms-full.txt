@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-06T03:04:10.259533Z
+Generated: 2026-11-06T07:39:30.409930Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -75068,7 +75068,7 @@ Rules:
 Use a class only when something styles it:
 
 - **Tailwind utilities.** Use them for most styling. See [design-tokens.md](design-tokens.md) for colours and font weights.
-- **Stylesheet classes.** A class a `.scss` or `.css` file defines, such as `.team-chat`, `.form-table` or `.category-card`. One also counts when it only applies inside a parent (`.card .small`), or when a parent's arbitrary variant styles it (`[&_.x]:`).
+- **Stylesheet classes.** A class a `.scss` or `.css` file defines, such as `.team-chat`, `.form-table` or `.category-card`. One also counts when it only applies inside a parent (`.team-chat .small`, `[data-slot='card'] .small`), or when a parent's arbitrary variant styles it (`[&_.x]:`).
 - **Third-party classes.** Classes defined by a library stylesheet the app imports, such as Leaflet's `leaflet-*` (`import 'leaflet/dist/leaflet.css'`).
 - **A `className` prop.** It lets the caller add its own utilities. Merge it with `cn()`, last, so it can override.
 
@@ -75354,7 +75354,7 @@ Tailwind and Bootstrap both ignore a class they do not know, so a typo (`felx`, 
 A class is known when either:
 
 - **Tailwind generates CSS for it.** The rule asks the same Tailwind design system the build loads from `src/tailwind.css`, so variants, arbitrary values, `!`, opacity modifiers, `@theme` tokens and `@utility` definitions are judged exactly as the build judges them. There is no hand-kept list of utilities.
-- **A stylesheet defines it.** Every `.scss` (compiled with Sass) and `.css` file under `src/`, `packages/` and `apps/`, plus the `node_modules` stylesheets the source imports, contributes its class selectors. A class counts as defined if it appears in any selector, including one that only applies inside a parent (`.card .small`).
+- **A stylesheet defines it.** Every `.scss` (compiled with Sass) and `.css` file under `src/`, `packages/` and `apps/`, plus the `node_modules` stylesheets the source imports, contributes its class selectors. A class counts as defined if it appears in any selector, including one that only applies inside a parent (`.team-chat .small`).
 - **An arbitrary variant styles it.** A class selected inside a Tailwind arbitrary variant in any source file (`[&_.x]:`, `has-[.x]:`, `group-[.x]:`) counts as defined, since that variant styles it. These are read from the source on every recheck, not cached; the lint plugin's own files are skipped.
 
 The rule reads class positions only:
@@ -84308,7 +84308,7 @@ Vite injects component-level stylesheets (`import './Foo.scss'`) as **unlayered*
 Consequently, any selector in a component SCSS file will override styles inside `@layer bootstrap`.
 
 > [!IMPORTANT]
-> **Scoping Rule**: Component SCSS must be strictly scoped under its own unique component class (e.g. `.my-component .title`), **never** directly under a layout root (`.aside`, `.header`, `.toolbar`, `.card`). Nesting a layout class inside your own root is safe; styling an ancestor layout root directly in component SCSS breaks layout rules app-wide. Global layout overrides belong exclusively in `src/styles/legacy/` (imported inside the bootstrap layer).
+> **Scoping Rule**: Component SCSS must be strictly scoped under its own unique component class (e.g. `.my-component .title`), **never** directly under a layout root (`.aside`, `.header`, `.toolbar`, or a waldur-ui part's `[data-slot]`). Nesting a layout class inside your own root is safe; styling an ancestor layout root directly in component SCSS breaks layout rules app-wide. Global layout overrides belong exclusively in `src/styles/legacy/` (imported inside the bootstrap layer).
 
 #### Production Layer Optimization
 
@@ -84854,7 +84854,7 @@ The former `enforce-button-variants` rule was deleted: the variant list lives in
 `yarn test:e2e:visual` runs `e2e-visual/*.spec.ts` through Playwright (project `visual`, against the app on :8001 and Storybook on :6006).
 
 - **`focus-ring.spec.ts`**: asserts that keyboard focus produces a _visible_ indicator with at least 3:1 contrast (WCAG 2.4.7 and 1.4.11), in light and dark. Its fixtures are built from `buttonVariants()` on the `actions-basebutton--playground` story's stylesheet and cover the places a ring was once suppressed: elevation utilities (`shadow-sm`), an unlayered page stylesheet setting a `box-shadow`, a menu row (`navMenuRowClassName()`) and `nav-line-tabs`. The `primary` case is a recorded contrast gap (`test.fail()`): a brand ring on a brand-filled button is about 1.6:1. `.btn-no-focus` is deliberately not a fixture — see the pseudo-states pitfall.
-- **`stat-card-parity.spec.ts`**: old-vs-new parity on one Storybook page through `visualParityHarness.ts`; **`top-bar-geometry.spec.ts`**: the header's measured geometry; **`charts.spec.ts`**, **`wizards.spec.ts`**: page screenshots in the signed-in app.
+- **`top-bar-geometry.spec.ts`**: the header's measured geometry; **`charts.spec.ts`**, **`wizards.spec.ts`**: page screenshots in the signed-in app. The old-vs-new parity specs that ran through `visualParityHarness.ts` are all gone, each when its own Bootstrap half did, and the harness went with the last of them; [visual-testing.md](visual-testing.md) → "Parity specs" keeps the recipe for rebuilding one from history.
 
 How each works, how to write one, and how to compare a branch with `develop` (including the Storybook comparison of every story with `scripts/theme-snapshots.mjs`) is in [visual-testing.md](visual-testing.md).
 
@@ -87474,7 +87474,7 @@ passes every other check and still changes the page.
 | Question                                                               | Tool                                                                   | Needs                       |
 | ---------------------------------------------------------------------- | ---------------------------------------------------------------------- | --------------------------- |
 | Did my branch change how any story renders, compared with `develop`?   | [Storybook comparison](#storybook-comparison-every-story-base-vs-head) | Two Storybook builds        |
-| Does the new component render like the old one it replaces?            | [Parity specs](#parity-specs-old-and-new-side-by-side)                 | Storybook on :6006          |
+| Does the new component render like the old one it replaces?            | [Parity specs](#parity-specs-old-and-new-side-by-side) (a recipe)      | Storybook on :6006          |
 | Is a migrated layout still the size it was measured to be?             | [Geometry specs](#geometry-specs-pinned-measurements)                  | Storybook on :6006          |
 | Do real pages with data still look the same?                           | [Page screenshots](#page-screenshots-with-local-baselines)             | App on :8001 with a backend |
 | How do the busy screens look before and after, with real data?         | [Integration-testing screenshots](#integration-testing-screenshots)    | The MR's CI pipeline        |
@@ -87504,7 +87504,7 @@ differences to the merge request.
 - **Pixels for colour, boxes for geometry.** A pixel diff is the right check for a colour or a
   missing element. For spacing and size, measure `boundingBox()` instead: a 1px shift changes every
   pixel after it, so a pixel ratio cannot tell "everything moved 1px" from "one thing moved 20px".
-  The parity harness checks dimensions first for this reason.
+  A parity spec checks dimensions first for this reason.
 - **The root font size is 13px (12px below `md`).** rem values differ between the two, so measure
   at both viewports when a layout is rem-based (`top-bar-geometry.spec.ts` does).
 - **Storybook is not the app for focus and hover.** `storybook-addon-pseudo-states` rewrites
@@ -87567,14 +87567,26 @@ of the page changed, not by how much: a 1px shift near the top of a story change
 
 A parity spec renders the old implementation and its replacement on one Storybook page and diffs
 the two live renders against each other, in the same browser and run, so there is no committed
-baseline to go stale. `e2e-visual/visualParityHarness.ts` provides the machinery;
-`stat-card-parity.spec.ts` uses it. (`card-parity.spec.ts` did, until the cards moved to waldur-ui's
-`Card` and their Metronic stylesheet was deleted: a parity story goes once nothing renders the old
-half.)
+baseline to go stale.
 
-1. **The story** (`src/core/StatCardParity.stories.tsx`, title `Migration/StatCard Parity`) renders each
-   case twice, wrapped in `data-pair="<case>" data-role="old"` and `data-role="new"`, at the same
-   fixed width.
+**Nothing in the repo does this today, and nothing should**: a parity spec needs something to render
+the old half, and Bootstrap, react-bootstrap and `src/metronic` are all gone (epic #467). A parity
+story goes once nothing renders the old half — `base-button-parity`, `card-parity` and
+`stat-card-parity` each went when theirs did, the last when `src/core/StatsCard.tsx` itself moved
+onto waldur-ui's `Card` and both halves of the pair became the same card. Their shared machinery,
+`e2e-visual/visualParityHarness.ts`, went with the last of them: `yarn deps:unused` (knip) reports a
+file nothing imports, and the ignore list is for generated and vendored files, not for code kept on
+spec.
+
+So this section is a recipe, not a description of live code. Recover the harness from history
+(`git show 842ccdd716^:e2e-visual/visualParityHarness.ts`, or any of the three specs beside it) on
+the next migration that replaces a component in place. Once the new component stands alone, pin its
+numbers with a [geometry spec](#geometry-specs-pinned-measurements) instead.
+
+The shape of one, as `stat-card-parity.spec.ts` had it:
+
+1. **The story** (title `Migration/<Component> Parity`) renders each case twice, wrapped in
+   `data-pair="<case>" data-role="old"` and `data-role="new"`, at the same fixed width.
 2. **The spec** creates a harness and runs each case in both themes:
 
    ```typescript
@@ -87604,9 +87616,11 @@ half.)
    would pass. A failing case writes `<name>-old.png`, `-new.png` and `-diff.png` to `diffDir`.
 4. **Thresholds are measured, not borrowed.** Run the spec, record the largest ratio and
    chromaticity across all cases and both themes, and set each threshold a little above that
-   noise. Write the measurement in a comment next to the threshold, as `stat-card-parity.spec.ts`
-   does. `expectBufferParity()` takes two captured buffers, for cases that need an interaction
-   (hover, focus) between the old and the new capture.
+   noise, and write the measurement in a comment next to the threshold. Never copy another
+   component's numbers: a small text-heavy element's antialiasing noise floor is many times a
+   large solid block's, so one component's passing threshold hides the other's real regression.
+   `expectBufferParity()` takes two captured buffers, for cases that need an interaction (hover,
+   focus) between the old and the new capture.
 
 ## Geometry specs: pinned measurements
 
@@ -87699,7 +87713,7 @@ locally and put the result in the merge request.
 | `node scripts/theme-snapshots.mjs capture …` / `compare …`           | Storybook comparison                                                        |
 | `node scripts/theme-snapshots.mjs root-invariance …`                 | Stories that render differently at a 13px and a 20px root                   |
 | `yarn test:e2e:visual`                                               | Every `e2e-visual` spec (project `visual`, one worker)                      |
-| `yarn playwright test stat-card-parity --project=visual --workers=1` | One spec; the argument is a filter, and a path is read as a project name    |
+| `yarn playwright test top-bar-geometry --project=visual --workers=1` | One spec; the argument is a filter, and a path is read as a project name    |
 | `yarn test:visual:update`                                            | Rewrite the local `toHaveScreenshot()` baselines (every project)            |
 
 `playwright.config.ts` starts the app (`yarn start`, :8001) and Storybook (`yarn storybook --ci`,
@@ -94703,6 +94717,7 @@ for deployment-specific documentation.
 * [Credit management configuration](staff-users/credit-management-staff.md)
 * [Webhook event consumers](staff-users/event-consumer-webhooks.md)
 * [Impersonation](staff-users/impersonation.md)
+* [Acting on several offerings at once](staff-users/offering-bulk-actions.md)
 * [Offering merges](staff-users/offering-merges.md)
 * [Projects removal by admin](staff-users/projects-removal-admin.md)
 * [User role management](staff-users/user_role_management.md)
@@ -99974,6 +99989,59 @@ waldur override_templates /etc/waldur/custom_templates.yaml
 # Generate notification documentation
 waldur print_notifications
 ```
+
+---
+
+### Acting on several offerings at once
+<!-- Source: docs/user-guide/staff-users/offering-bulk-actions.md -->
+
+# Acting on several offerings at once
+
+**Administration → Marketplace → Offerings** lists every offering on the portal. Select
+offerings with the checkboxes in the first column, or every offering on the current page with
+the checkbox in the header, and an **Actions** menu appears above the table. Each action runs
+on the selected offerings one by one, exactly as if you had used the same action in each
+offering's own row menu.
+
+Selection covers the current page only. To act on more offerings, raise the page size or
+narrow the list with the filters first.
+
+## What you can do
+
+| Action | Runs on | Notes |
+|--------|---------|-------|
+| **Activate** | Draft offerings | Skips offerings without a plan, and custom-script offerings without a creation script. |
+| **Resume** | Paused offerings | Same checks as Activate. |
+| **Pause** | Active offerings | Asks for one pause reason, saved on every paused offering and shown in the marketplace. |
+| **Set as down** | Active offerings | The confirmation warns that all operations on the offerings' resources are blocked until the offerings are restored. |
+| **Restore** | Offerings that are down | |
+| **Set to draft** | Any offering that is not a draft | |
+| **Archive** | Any offering that is not archived | |
+| **Set offering group** | Offerings of one organization that are not archived | An offering group belongs to an organization, so every selected offering must belong to the same one. Archived offerings cannot be changed and are skipped. Leave the group empty to take the offerings out of their group. |
+| **Move offerings** | Any offering | Staff only. Moves the offerings to another service provider organization, optionally keeping their permissions. |
+| **Export** | Any offering | Asks for the export parameters once and downloads one ZIP archive with a YAML file per offering. Each file can be imported on its own, just like a single-offering export. |
+| **Delete** | Draft offerings; any offering for staff | The portal still refuses an offering that has resources, or active resources when the offering restricts deletion. |
+
+An action that none of the selected offerings can take stays in the menu but is disabled, and
+the question mark beside it says why. While an action runs, the others are disabled until it
+finishes. Before an action runs, the confirmation or dialog lists
+the offerings it will change and says how many of the selected ones it leaves alone.
+
+Actions are shown only to users who may take them. A service provider who opens the list sees
+only the actions their roles allow, applied only to the offerings of their own organizations.
+State changes and deletion also depend on whether the deployment lets service providers manage
+their offerings' lifecycle; otherwise they are for staff only.
+
+## When some offerings fail
+
+Each offering succeeds or fails on its own; one refusal does not stop or undo the rest. When
+the action finishes:
+
+- a success message says how many offerings were changed;
+- an error message names the offerings that failed (up to five, then how many more) with the
+  reason the portal gave for each;
+- the list reloads, and the offerings that failed **stay selected**, so you can fix them and run
+  the action again without picking them out once more.
 
 ---
 
