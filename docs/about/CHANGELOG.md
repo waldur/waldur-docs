@@ -1,334 +1,65 @@
 # Changelog
 
-## 8.1.4-rc.6 - 2026-11-02
+## 8.1.4 - 2026-11-06
 
 ### Highlights
 
-This release tightens access control across the API. Changes to projects and to OpenStack networks, routers, load balancers and ports are now limited to people who manage them. Personal access tokens now respect their scopes and bindings everywhere. MCP clients can now sign in through a built-in OAuth server, and the chat assistant has more tools. Credit and cost policy calculations are more accurate, and OpenStack is more reliable: load balancers are removed when a tenant is terminated, and volume resizes and snapshot deletions are safer.
+This release adds spending limits per period (day, week, month, quarter, year and all-time) on usage-based resources and on individual API keys. It also adds an HPC workspace built on FirecREST v2, and new tools for billing and cost policies: credit lots, EU VAT, and explanations of why a cost policy fires. A broad security review now records who may call each API endpoint and holds personal access tokens to their scopes and bindings. Calls to remote Waldur and order callback URLs are now protected against requests to internal addresses. The portal finished moving off Bootstrap onto the shared Waldur UI component library.
 
 ### What's New
 
-- MCP clients can now sign in through a built-in OAuth server. The chat assistant gets new tools for resources, projects, orders and invoices, and every chat tool now has MCP metadata and output schemas.
-- Administrators can find global settings and administration pages from the top-bar search.
-- Resources now record when they were terminated, and the termination date appears in resource details.
-- SLURM QoS profiles support MaxTRESMinsPerJob, and the QoS profile form checks TRES formats.
-- The projects list can show, filter and export project administrators.
-- The background tenant pull imports servers and volumes that were created outside Waldur.
-- The Helm chart can scale the API, worker, beat and Homeport deployments to zero.
+- **Spending limits**: providers choose which periods customers may cap on a usage-based component, including an all-time limit that never resets. Customers set limits when ordering or later with "Change spending limits", and the Usage tab shows used against limit, when each limit resets, and why access is paused.
+- **API key limits**: each resource API key can carry its own limit per period, capped by the resource's limits. Keys can also have a description. Providers decide per offering whether keys can be limited and whether usage is reported per day. Project managers and administrators can now manage keys, and assignees can rotate their own.
+- **HPC workspace (FirecREST v2)**: work with jobs, files, software, cluster insights, job performance and PDF job reports from the resource page. A read-only workspace is available for monitor-only offerings, and the AI assistant can submit HPC jobs and show their scripts.
+- **Credit and billing**: organization credit is split into paid, granted and earned lots, which staff can top up and reclassify. EU VAT is calculated on invoices. Open invoices show estimated volume discounts and the upcoming affiliate fee, and invoice notifications can go to dedicated invoice email addresses.
+- **Cost policy transparency**: cost policies show why they fire or wait and keep a version history. Credit-aware policies fire on cost after credit, and staff can pay earlier invoices from a project credit.
+- **Feedback surveys**: staff can create surveys that customers see after login, and review responses in feedback logs.
+- **MCP server**: a Model Context Protocol server with personal access token and OAuth authorization, and new chat tools for resources, projects, orders and invoices.
+- **Event webhooks**: event consumers can deliver events to an HTTP webhook, managed from the PubSub admin page.
+- **Matrix chat**: draft a support ticket from a chat thread, and use chat commands in the message box.
+- **OpenStack**: a hard reboot action for instances, and instance and volume metrics read from Nova on a schedule. Servers and volumes created outside Waldur are imported during background syncs.
+- **Site-wide roles**: a new global permission scope, and staff can assign roles to a user from the user's affiliations screen.
+- **Admin offerings list**: act on several offerings at once (pause, move, set group).
+- Table exports gain a JSON format and server-side PDF rendering, and long exports can be cancelled.
+- The settings search in the top bar covers global settings and administration pages.
 
 ### Improvements
 
-- The site-agent offering type is renamed to `Marketplace.SiteAgent`, and the UI accepts both the old and the new value.
-- Resource unlinking runs in the background, and the UI confirms that the unlink has been scheduled.
-- Moving an OpenStack tenant now moves its networks, ports, routers and related objects with it.
-- Tenant pulls do less work: networks shared by unmanaged projects are refreshed once per cloud, and resources and tenants that were never provisioned are skipped.
-- When live resize is off, an attached volume is detached before it is extended. Octavia load balancers are deleted when their tenant is terminated.
-- The port, internal IP and backup restore pickers mark subnets that are shared with a tenant.
-- Proposal summaries are limited to 1000 characters, and the proposal form shows a character count.
-- Celery workers recover when the database server drops their connection. Structured logs keep audit event messages. Failed changelog fetches are cached and logged as warnings.
-- Team chat loads all of a user's Matrix rooms, not just the first page, and the header, timeline and active room always show the same room.
-- Date pickers open their calendar when the input gets focus, and dates can still be typed.
-- Reviewers who belong only to a reviewer pool now see My reviews in the sidebar in marketplace mode. Users with call, proposal or offering roles are no longer told they have no organization.
-- UI modernization continues: react-bootstrap and the Bootstrap grid are replaced with Tailwind layouts, charts now use design tokens, menus have outlines in dark mode, and the Add resource dialog has a refreshed layout.
-- Translations now render call rounds as application rounds and team as work team across locales.
-
-### Security and Access Control
-
-- Every API endpoint now declares who may call it, and the OpenAPI schema describes these declarations.
-- Only people who manage a project can create resources in it through the API, change its networks, routers and load balancers, or upload images to its tenants. Creating a port requires managing the tenant, and the UI offers Create port only to those users.
-- Edits to a network share are refused; sharing it differently means deleting the share and creating a new one. A project's organization can no longer be changed through PATCH or PUT. Users who can only view a LEXIS link can no longer change its HEAppE project.
-- Personal access token changes:
-  - Staff checks require the token's staff scope.
-  - Scopes and bindings now apply to service settings credentials, resource limit reallocation targets and soft-deleted projects.
-  - Tokens bound to a service provider can act on its offerings and list its projects and customers.
-  - Tokens can use a role held above their binding.
-- Provider credentials no longer appear in a per-tenant offering's service attributes. Who sees secret options in a provider's offering list is now decided for each offering.
-- New `INVOICE.LIST` and `PROJECT.UPDATE_METADATA` permissions control access to invoices and project metadata checklists. Each project settings tab, and the Credit edit buttons, appear only to users with the matching permission.
+- **Access control**: every API route now records who may call it, and CI fails when a route records nothing. Many endpoints were tightened, including Rancher, VMware console, OpenStack networks, routers and ports, OpenPortal, support attachments, provider helpdesk, onboarding and the marketplace catalog.
+- **Personal access tokens**: tokens without the staff or support scope act as the user without that role. Token bindings now apply to orders, credits, role checks, change-request reviews and service settings.
+- **Authentication**: OIDC ID tokens are validated against the provider's keys (JWKS). SAML responses are verified only with keys from the identity provider's metadata. Identity provider tokens are stored encrypted and revoked on logout. Logout ends the session and revokes the API token.
+- **Remote Waldur and callbacks**: internal addresses are refused, remote calls are limited in time and response size, and order callback URLs are checked before they are stored.
+- **Settings**: django-constance is replaced by a built-in settings store. Settings the deployment applies from a file are locked in the admin, and the Helm chart now writes only the settings the operator sets.
+- Staff can cap the API token lifetime that other users can choose, and can set another user's email directly.
+- Proposals check offering options and resource templates, and calls can limit applicants to one resource template.
+- The portal uses US English in its source strings and adds a generated British English (en-GB) locale.
+- Branded boot splash, a route loading bar, more accessible components, and typed date entry in date pickers.
+- Google Calendar integration has been removed.
+- Helm: api, worker, beat and homeport can be scaled to zero. New documentation explains how to trust a private CA.
 
 ### Bug Fixes
 
-- A replacement credit no longer pays again for costs that a deleted credit already covered.
-- Cost policies that ignore credit no longer include credit compensation, and the UI no longer offers credit fixes for them.
-- Editing a cost policy that has already fired now applies and resets the actions that changed.
-- Snapshot deletion fails immediately when OpenStack refuses it. Deleting a snapshot that was never created skips Cinder.
-- Nationality, organization type and assurance membership restrictions are now saved.
-- Objects that stay in an erred state keep their error message.
-- Chrome page translation no longer crashes the UI, charts are drawn once when they load, and a new resource's tabs appear without a page reload.
+- Snapshot deletion no longer calls Cinder for snapshots that were never created, and fails right away when OpenStack refuses it.
+- Instance actions stop polling when Nova reports an error.
+- Attached volumes are detached before they are extended when live resize is off.
+- Celery workers recover from database connections the server dropped.
+- An erred resource is now labelled "Erred" rather than "OK".
+- Fixed landing page and proposal page crashes, bulk invites stalling on the same email across projects, and cookie consent reopening after it was accepted.
 
 ### Core Component Activity
 
-- **Waldur Mastermind**: [54 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.4-rc.5...8.1.4-rc.6) - endpoint access declarations and tighter permissions, personal access token fixes, MCP OAuth and chat tools, billing and OpenStack fixes
-- **Waldur Homeport**: [46 commits](https://github.com/waldur/waldur-homeport/compare/8.1.4-rc.5...8.1.4-rc.6) - settings search, resource termination date, project administrators column, permission-based project settings, Matrix chat fixes, Tailwind UI migration
-- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.1.4-rc.5...8.1.4-rc.6) - allow scaling the API, worker, beat and Homeport deployments to zero
+- **Waldur Mastermind**: [319 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.3...8.1.4) - Spending limits, HPC workspace, credit lots, VAT, MCP server, in-house settings store and access-control hardening
+- **Waldur Homeport**: [334 commits](https://github.com/waldur/waldur-homeport/compare/8.1.3...8.1.4) - UI for spending limits, the HPC workspace and credits; the move from Bootstrap to Waldur UI components; accessibility work
+- **Waldur Helm**: [12 commits](https://github.com/waldur/waldur-helm/compare/8.1.3...8.1.4) - Chart writes only the settings the operator sets, can scale components to zero, and documents private CA trust
+- **Waldur Docker Compose**: [7 commits](https://github.com/waldur/waldur-docker-compose/compare/8.1.3...8.1.4) - Maintenance updates only
 
 ---
 
-## 8.1.4-rc.5 - 2026-10-28
 
-### Highlights
 
-This release tightens calls for proposals. Archived calls stop accepting applications, and calls now enforce their resource templates and required offering options before a proposal can be submitted or awarded. Staff can pay a project's earlier invoices from its credit, cost policies explain why they are over their limit, and credit-aware policies now trigger on the correct amount. Customers can be asked for feedback through surveys shown after login, and OpenStack tenants can use networks shared with every project from the moment the tenant is created.
 
-### What's New
 
-- Staff can create feedback surveys that customers are asked to answer after they log in, and can review the answers in the feedback logs.
-- Staff can pay a project's earlier invoices from its credit, with a preview of the invoices that will be covered.
-- Cost policies have a details view that explains why a policy is over its limit, which resources it affects and how to resolve it.
-- The resource metrics tab shows OpenStack instance and volume metrics, along with how often they are updated.
 
-### Improvements
-
-- Calls that have resource templates require applicants to use them. Call managers can limit a call to one template, and applicants then pick a single template when they add a proposal.
-- Proposals must fill in the options an offering requires before they can be submitted or awarded. The chosen options appear in the review, the proposal PDF and the award.
-- Archived calls refuse new proposals, are left out of the open calls list and are shown as closed to applications.
-- Networks that a provider shares with every project are treated as shared with each OpenStack tenant, starting when the tenant is created. The VM creation form fills the first network with a tenant subnet and marks subnets that the provider shares.
-- Webhook certificate errors now list every cause of the failure, including untrusted certificates. The configuration guide and the Helm documentation explain how to trust a private CA through a mounted trust bundle.
-- Only the metric roll-ups that new data points affect are recomputed.
-- Applied table filters show their values as tags.
-- Frequently used forms track only the fields they need, which reduces unnecessary re-rendering.
-- More of the UI moved from Bootstrap to Tailwind. This covers spacing, layout and flex utilities, and the Arrow administration tables.
-- dnspython, msgpack and qs were updated to fix published security advisories.
-
-### Bug Fixes
-
-- Credit-aware cost policies now trigger on the cost left after credit is applied, not on the remaining credit balance.
-- A VM's network interfaces now come up in the same order as its requested ports.
-- A call's slug template stays locked when an API request clears it.
-- Validating a call that already exists no longer crashes.
-- The science domain selector now appears on proposals whose call asks for it.
-- Gaps between stacked elements display correctly again. For example, the hypervisor summary charts no longer touch each other.
-
-### Core Component Activity
-
-- **Waldur Mastermind**: [15 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.4-rc.4...8.1.4-rc.5) - Feedback surveys, paying earlier invoices from project credit, credit-aware cost policy fix, stricter call and proposal checks, OpenStack shared network handling and clearer webhook certificate errors.
-- **Waldur Homeport**: [19 commits](https://github.com/waldur/waldur-homeport/compare/8.1.4-rc.4...8.1.4-rc.5) - Feedback survey UI, cost policy explanations, required options and templates in proposals, OpenStack metrics display and continued Tailwind migration.
-- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.1.4-rc.4...8.1.4-rc.5) - Documentation on trusting a private CA through a mounted trust bundle.
-
----
-
-## 8.1.4-rc.4 - 2026-10-27
-
-### Highlights
-
-This release adds site-wide roles. Staff can now define and grant permissions that cover the whole deployment instead of a single organization or project. Table and chart PDF exports are now produced on the server, and OpenStack instance and volume metrics are collected on a schedule. The release also hardens authentication (SAML, logout, Mobile ID), Rancher access control and support-user permissions, and removes the Google Calendar integration.
-
-### What's New
-
-- Staff can create roles with a global, site-wide scope and grant them from the role management and user affiliation screens. `scope_type` filters now match the public scope names.
-- Table and chart PDF exports are now rendered on the server with Typst instead of in the browser.
-- OpenStack instance and volume metrics are read from Nova on a schedule.
-- Staff can cap the API token lifetime that non-staff users may choose, and the token lifetime selector offers only the allowed values.
-- Resource templates in proposal calls support a single-selection mode.
-- The helpdesk is emailed when an organization or project administrator comments on a support request.
-- Staff can set another user's email address directly.
-
-### Security and Access Control
-
-- Logging out now ends the server session and revokes the API token.
-- SAML responses are verified only with identity provider keys from metadata. A deployment's own `SAML_CONFIG` settings are preserved, and unsolicited SAML responses are accepted by default.
-- The Mobile ID client now verifies TLS certificates, applies timeouts and keeps credentials out of logs.
-- Terms of Service acceptance is recorded only when users accept it themselves through the Terms checkbox, and each acceptance is logged.
-- Managing Rancher Keycloak group memberships requires project administrator access, and Rancher catalog changes are limited to staff and project administrators.
-- The Rancher sync binds Keycloak groups only to their own cluster or project, and managed Rancher clusters get public IPs only from their own load balancers.
-- Support users have read-only access to other users' hooks and onboarding records, and staff-only pages are hidden from them.
-- An onboarding verification's company is locked once it is verified or escalated.
-- Register checks go to manual review when the identity was typed in, and the organization creation form tells users so.
-
-### Improvements
-
-- Map location search runs when you press Enter instead of querying Nominatim as you type.
-- Issue comments display better on mobile, with more space between comments.
-- Destroy-dialog warnings for OpenStack tenants and Rancher clusters can now be translated.
-- Dependencies were cleaned up:
-  - The admin JSON editor is now a built-in widget.
-  - django-fsm was replaced by django-fsm-2.
-  - Unused runtime packages were dropped.
-  - react-arborist was replaced by a local read-only tree view.
-- More of the UI moved from legacy Metronic styles to Tailwind, covering avatars, timelines, icons, flex layouts and tables.
-
-### Bug Fixes
-
-- Fixed staff edits to user email addresses. Locked profile fields now depend on the user being edited.
-- Users whose username contains uppercase letters can now be edited.
-- A Jira deletion event deletes a support issue only when Jira reports the issue as not found.
-
-### Removed
-
-- The Google Calendar integration is gone, including its publish, sync and unpublish actions and the calendar link on offerings.
-
-### Core Component Activity
-
-- **Waldur Mastermind**: [32 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.4-rc.3...8.1.4-rc.4) - Site-wide roles, server-side PDF export, scheduled OpenStack metrics, authentication, Rancher and onboarding hardening, and removal of Google Calendar.
-- **Waldur Homeport**: [26 commits](https://github.com/waldur/waldur-homeport/compare/8.1.4-rc.3...8.1.4-rc.4) - UI for site-wide roles and token lifetime limits, PDF export through the server, staff-only pages hidden from support users, and continued Tailwind migration.
-
----
-
-## 8.1.4-rc.3 - 2026-10-24
-
-### Highlights
-
-Customers can now cap what a usage-based resource spends per day, week, month, quarter or year, or over its whole lifetime. They can change those caps at any time without placing an order. Resource API keys get the same per-period limits and can now be managed by project managers and administrators. Keys are also handled more safely: a key stays with the person it was issued to, and a deleted user's keys are withdrawn instead of being shared. OpenStack instances gain a hard reboot action, and logging out now revokes the stored identity provider token.
-
-### What's New
-
-- **Per-period spending limits**: Providers choose which periods customers may cap on a usage-based component: day, week, month, quarter, year, or an all-time limit that never resets. Each period can have a default and a maximum. Customers set limits when they order and can change them later with a new "Change spending limits" action, with no order or approval needed. When a limit is reached, the offering's usage-limit action applies until the limit resets. The order form and the dialog say whether that action pauses the resource, downscales it or only reports the overspend.
-- **Spending limit status**: The Usage tab and the resource's components panel show usage against the limit for each period, when each limit resets and why access is paused. The API keys tab names the limit that is holding a paused resource and says when access resumes.
-- **Daily usage reports**: Integrations can report usage per day, and the month's usage is derived from the daily figures. One report can hold at most 1000 items.
-- **API key limits per period**: A resource API key can have its own limit for each period. A key's limit can't be higher than the resource's limit for that period or any longer one. Per offering, providers decide whether consumers may limit keys at all, and whether the site agent reports each key's usage per day. Key limits for periods other than the month are only offered when it does. Keys can also be limited on a component that the plan prices at zero, such as a LiteLLM USD cap.
-- **API key management for project roles**: A new permission, RESOURCE.MANAGE_CONSUMER_API_KEY ("Manage API keys of resources used by the project or organization"), is granted to organization owners, project administrators and project managers. These roles can now lower a key's cap, pause a leaked key or delete a departed member's key.
-- **OpenStack hard reboot**: OpenStack instances have a new hard reboot action, available from the API and the portal.
-- **Role assignment from a user's page**: Staff can grant a user a role directly from the user's affiliations. A role's user listing now also includes users who hold organization copies of that role.
-
-### Improvements
-
-- **API key limit enforcement**: If the site agent fails to apply a limit pause, Waldur retries it, waiting longer after each failure, from 5 minutes up to 6 hours. A key paused at its own limit stays paused while its resource is restricted by the resource's spending limit. Key limits are checked again when they are saved, and audit events record the old and new values.
-- **API key usage data**: A key's daily usage reports are limited in size and in how far back they can go. Each key reads only the daily usage its limits need, and old daily usage is deleted. Older clients that send the flat monthly `limits` field get the amount rounded up to the cent instead of an error.
-- **API key dialogs**: The key dialogs offer only the periods that the resource's plan allows. A limit the key already holds is accepted only if it is left unchanged. Rotate is blocked once any of the key's limits is reached, and the tooltips name that limit and say when the key resumes.
-- **Prepaid components**: Prepaid limits are shown as one total for the whole subscription. Only one-time components can be prepaid, and the component form no longer saves prepaid settings that it hides.
-- **Service accounts**: Service accounts are closed only once a project's deletion has completed. Accounts that are already closed are treated as closed, and accounts left over from removed projects are cleaned up.
-- **Cost policies and credits**: An organization cost policy now deducts only usage compensation. Changing a credit's offering list now re-evaluates the organizations whose credits changed.
-- **Accessibility**: Header and footer link menus open and close from the keyboard. The project filter announces the selected project by name. Focus stays in the tab row when a table tab switches the page.
-- **Smaller UI touches**: Revisiting a page no longer flashes a loading spinner. Per-offering usage views choose the component type from a select instead of tabs. Long offering descriptions are truncated in the Add resource dialog. The error page and the order steps fit mobile screens, and on small screens New chat closes the AI assistant history. The unused reason field has been removed from the offering availability dialog.
-- **Demo presets**: Each demo preset resource is billed once in the current month, and the tenants in the openstack_cloud preset can now be ordered.
-- **Interface migration**: More portal code moved from Bootstrap and lodash to Tailwind and es-toolkit. Form controls moved to a shared waldur-form package, and tables no longer depend on UI-Router.
-- **Dependency updates**: Backend packages (Django REST framework, fastmcp-slim, setuptools) and frontend packages (dompurify, zod, fast-uri, undici) were updated to fix security advisories.
-
-### Security
-
-- **Fixed API key holders**: A key's assignee is set when the key is requested and can no longer be changed. To hand a key over, request one for the new holder and delete the old one. The Unassign action and the assignee field have been removed from the portal.
-- **Deleted users' keys**: Deleting a user now withdraws their API keys. Before, those keys became shared keys that any project member could reveal.
-- **Key reveal**: Staff and support can no longer reveal resource API keys directly, and the portal shows Reveal only where the API allows it.
-- **Identity provider tokens**: The stored identity provider token is revoked and removed when a user logs out, is deactivated or is deleted.
-
-### Bug Fixes
-
-- Resources paused by a project grace period or a cost policy are now also marked as restricted by their usage limit. Before, they could be resumed while still over their spending limit.
-- OpenStack instance actions stop waiting for completion when Nova reports ERROR.
-- Erred resources are labelled Erred instead of OK.
-- The Change spending limits dialog highlights the limit the backend refused. Long reset descriptions no longer squeeze the input fields.
-- Multi-select fields keep their input when the first value is selected. Table cell padding is restored. Organization credit is formatted correctly in the project credit dialog. Wizard step indicators navigate and display correctly.
-- Nested table toolbars no longer show a Filter button that did nothing.
-- The specific error messages for duplicate active affiliates and offering Terms of Service are kept after the Django REST framework upgrade.
-- Service provider revenue is returned with its fractional part.
-- The Helm chart drops the broken PayPal feature and fixes dead documentation links.
-
-### Core Component Activity
-
-- **Waldur Mastermind**: [46 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.4-rc.2...8.1.4-rc.3) - Per-period spending limits and daily usage, per-period API key limits with pause retries and cleanup of old usage data, the consumer API key permission, fixed key assignees, identity provider token revocation, OpenStack hard reboot, and fixes for prepaid components, service accounts and cost policies.
-- **Waldur Homeport**: [87 commits](https://github.com/waldur/waldur-homeport/compare/8.1.4-rc.2...8.1.4-rc.3) - UI for spending limits, API key limits and the new key permission, OpenStack hard reboot, staff role assignment, prepaid totals and accessibility fixes. Also the new waldur-form package, the move off lodash and more of the Bootstrap-to-Tailwind migration.
-- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.1.4-rc.2...8.1.4-rc.3) - Removed the broken PayPal feature and fixed dead documentation links.
-
----
-
-## 8.1.4-rc.2 - 2026-10-22
-
-### Highlights
-
-Cost policies now explain themselves. Waldur shows why each policy fires or waits, records what started each evaluation and which gate decided it, and keeps a version history of policy changes. Resource API keys are easier to manage: you can pick "All models" explicitly, the person a key is assigned to can rotate it, and the site agent is told when a key changes hands. Organization owners and readers get access to organization reporting through a new permission, and platform settings now live in a built-in settings store instead of django-constance.
-
-### What's New
-
-- **Cost policy status**: Each cost policy now reports why it fires or is waiting. The policy list shows this as a single status badge and lists the organization credit only once. The project's "what happens next" view says when a credit is holding a policy back.
-- **Cost policy audit trail**: Waldur records what started each cost policy evaluation, who started it, and which gate decided the outcome. Project credit changes made by staff now appear in the project's audit log.
-- **Version history**: Cost policies and projects now keep a version history. You can open a policy's history from its actions, and staff and support can open a project's history from the project list.
-- **Organization reporting permission**: A new permission, CUSTOMER.VIEW_REPORTING, gives access to organization reporting. Organization owners and readers have it.
-- **MCP server groundwork**: Waldur now includes an early skeleton of a Model Context Protocol (MCP) server. It authenticates with personal access tokens and is started with the `mcp_server` management command.
-- **Project resources at a glance**: You can expand a project in the organization project list to see its resources.
-- **SLURM placement in proposals**: Proposal resource requests now show the SLURM QoS and partition.
-
-### Improvements
-
-- **Resource API key models**: An empty model list on an API key now means no models, and `*` means every model. API key dialogs have a new "All models" checkbox.
-- **Resource API key management**: The person a key is assigned to can rotate it from the resource page. Each person can hold only one API key per resource. The site agent is notified when a key is reassigned. The API keys tab now appears on managed resources even before they have any keys.
-- **Settings store**: Platform settings have moved from django-constance to a built-in settings store, and a migration imports existing settings. The Helm Matrix cleanup now works with whichever settings table is present.
-- **AI assistant**: Chat tools now check tool sets and roles themselves. The anonymous marketplace discovery chat has new access-guidance rules, and its KPIs show how often searches return no results.
-- **Support requests**: Ticket comments now go to the backend the ticket belongs to, and fail gracefully if that backend can't take them. Support requests opened from an offering no longer use the offering's provider as the organization, and the caller can follow the request.
-- **Notification settings**: Notification event groups now have readable titles, descriptions and sections.
-- **Maintenance badges**: A maintenance window that is currently open shows as in progress, and its badge sits on its own line in the resource list.
-- **Tables**: Tables page through the rows they already hold, and short lists no longer show a pager.
-- **Page loading**: A loading bar shows while you move between pages. The startup splash screen is branded and has slow-loading and error states.
-- **Privacy and impersonation**: The user Audit log tab and IP column are hidden from viewers who aren't allowed to read them. Staff impersonating a user can see the user's API token even when it is concealed.
-- **Smaller UI touches**: OpenStack subnets without a name show their CIDR instead. The project hero bar now works as navigation rather than tabs. The affiliation dialog requires the start date to be before the end date. Onboarding verification statuses are now capitalized.
-- **Interface migration**: The header, breadcrumbs, modals and page layout have moved from Metronic and Bootstrap to shared Waldur UI components and Tailwind.
-- **Dependency updates**: Backend libraries (aiohttp, Pillow, certifi, pypdf) and frontend tooling (vite, markdown-it, vitest, Storybook) were updated to fix security advisories.
-
-### Bug Fixes
-
-- Marketplace resources return to the OK state when their backend recovers.
-- Resource creation is now checked against the credit gates of the cost policy itself.
-- Credit compensations no longer count toward a total limit's billed quantity.
-- Event filters by UUID now match events filed on a project's or organization's feed. The credit and access subnet history logs are now read through the organization scope.
-- The API now declares the OpenStack instance `server_group` field as nullable.
-- Bulk invitations no longer stall when the same email is invited to several projects.
-- Fixed a landing page crash ("Converting circular structure to JSON"), and a proposal page crash for staff before the call loads.
-- The cookie consent dialog no longer reopens after you close or accept it.
-
-### Core Component Activity
-
-- **Waldur Mastermind**: [31 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.4-rc.1...8.1.4-rc.2) - Cost policy status, evaluation records and history, resource API key rules, CUSTOMER.VIEW_REPORTING, project version history, an MCP server skeleton, the built-in settings store and tighter chat tool checks.
-- **Waldur Homeport**: [46 commits](https://github.com/waldur/waldur-homeport/compare/8.1.4-rc.1...8.1.4-rc.2) - UI for cost policy status and history, API key "All models" and rotation, organization reporting access and project version history. Also a new boot splash and loading bar, and the move of the header, breadcrumbs, modals and layout to Waldur UI.
-- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.1.4-rc.1...8.1.4-rc.2) - Matrix settings cleanup now works with the new settings store.
-
----
-
-## 8.1.4-rc.1 - 2026-10-18
-
-### Highlights
-
-This release lets teams draft support tickets directly from Matrix chat threads and adds EU VAT calculation to invoices. Operators can now send platform events to their own HTTP webhooks and send invoice notifications to dedicated billing addresses. Login security is stronger: OIDC ID tokens are now validated, and security-relevant actions are recorded as audit events. British English is now available as an interface language.
-
-### What's New
-
-- **Support tickets from Matrix chat**: You can now draft a support ticket from a Matrix chat thread, then review and edit the draft in the chat before submitting it. The chat composer also offers commands with an in-chat help dialog.
-- **EU VAT on invoices**: Invoices now calculate EU VAT. Organizations have new VAT fields, including a "private person" flag. New admin settings control VAT, and invoice PDFs show the VAT amounts. A new management command refreshes VAT rates.
-- **Webhook delivery for event consumers**: Event consumers can now deliver events to an HTTP webhook. You can create and manage these consumers from the pub/sub admin page.
-- **Organization invoice emails**: Organizations can set dedicated invoice email addresses, which receive invoice notifications. You can edit them in the organization contact panel, and a notification is sent when they change.
-- **British English**: The interface is now offered in British English (en-GB), generated from the US English source strings. Translatable fields such as category and role descriptions can also have en-GB versions.
-- **Security audit events**: Audit events are now emitted for security-relevant actions, including SAML2, OIDC and Valimo logins, offering deletion and policy changes.
-- **Offering option transforms**: Service providers can configure how offering option values are transformed before they are stored, and preview the result in the option editor.
-- **Option as usage limit**: An integer resource option can now be displayed as the limit of a usage-based component on resource and project views.
-- **Editable access endpoints**: Offering access endpoints can now be edited after they are created.
-- **Call statistics**: Calls now report the number of proposals, reviews and workflow steps per call and per round.
-- **Accept invitations on behalf of users**: Staff can accept a user invitation on behalf of a named user.
-
-### Improvements
-
-- **OIDC login validation**: OIDC ID tokens are now validated against the identity provider's JWKS at login. New issuer and JWKS URL settings are available on identity providers.
-- **Accounting permission**: A new permission, CUSTOMER.VIEW_ACCOUNTING, controls access to the Accounting section. It is granted to organization owners and to roles cloned from the owner role.
-- **OpenPortal feature toggles**: OpenPortal now has separate feature toggles for the sending and receiving portal. Shared OpenPortal pages are hidden when the portal plays neither role.
-- **Date entry**: Date pickers now accept dates typed into a masked input field. The project creation dialog prevents choosing an end date before the start date.
-- **Resource end dates**: The API now validates resource end dates, and the termination date pickers follow the same rules.
-- **Resource actions**: The "Show all" actions dialog is organized into tabs by action group, and duplicate resource actions were removed.
-- **Accessibility**: Shared components now have accessible names, keyboard access and sufficient colour contrast. WCAG target-size and link-in-text-block violations were also fixed.
-- **Organization onboarding**: Missing Dun & Bradstreet identity fields are now requested inline during onboarding.
-- **OpenStack floating IPs**: Floating IPs are disabled on subnets without a router, and the release option is hidden when there are no floating IPs to release.
-- **Pending orders**: Orders waiting for the project start date now show provider approval as pending.
-- **Interface refresh**: Form inputs, selects and labels now use the Waldur UI component library. Design tokens are standardized, and unused Bootstrap CSS was removed (32% smaller gzipped). Support buttons and tab count badges have a refreshed look.
-
-### Bug Fixes
-
-- OpenStack synchronization now recovers from stale cached Keystone tokens.
-- Backend URL validation for OpenStack, Rancher, VMware and marketplace settings now actually runs.
-- Links built from HOMEPORT_URL no longer contain double or missing slashes.
-- Plain-text issue descriptions and comments now keep their line breaks.
-- The organization dashboard shows the organization profile only once, and managed and remote project detail pages no longer appear as provider tabs.
-- The Reviews tab in proposal rows stays visible when reviews fail to load.
-- Several visual issues were fixed:
-  - Brand colour is restored on search and breadcrumb links.
-  - Non-scrollable tab strips now wrap.
-  - The date picker caption no longer covers the month arrows.
-  - The local login link has the right colour in the dark Neumorphism layout.
-  - Unintended font weights were removed.
-  - Chart target lines stay inside the plot area.
-
-### Core Component Activity
-
-- **Waldur Mastermind**: [28 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.3...8.1.4-rc.1) - Matrix ticket drafts, EU VAT, webhook event consumers, invoice emails, OIDC token validation, audit events, option transforms and en-GB support.
-- **Waldur Homeport**: [60 commits](https://github.com/waldur/waldur-homeport/compare/8.1.3...8.1.4-rc.1) - UI for chat tickets and commands, VAT and invoice emails, webhook consumers and option transforms, plus British English, typed date entry, accessibility work and a form/design-token migration.
-- **Waldur Helm**: [1 commit](https://github.com/waldur/waldur-helm/compare/8.1.3...8.1.4-rc.1) - Clearer titles for the Helm install and Matrix documentation pages.
-- **Waldur Docker Compose**: [1 commit](https://github.com/waldur/waldur-docker-compose/compare/8.1.3...8.1.4-rc.1) - Matrix chat add-on page retitled to name Docker Compose.
-
----
 
 ## 8.1.3 - 2026-10-13
 
