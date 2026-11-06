@@ -1,0 +1,4405 @@
+{
+  "schema_version": "1.0.0",
+  "version": "8.1.4",
+  "date": "2026-11-06",
+  "type": "stable",
+  "summary": "Waldur 8.1.4 is a large release with an extensive security hardening pass. Hundreds of endpoints now declare who may call them, and CI fails when a route declares nothing. Many access-control gaps are closed across marketplace, support, onboarding, OpenStack, Rancher, VMware and OpenPortal. Personal access token scopes and bindings are now enforced. SAML, OIDC, Mobile ID and remote-Waldur clients are hardened against signature, token and SSRF issues. django-constance is replaced by an in-house settings store, and the Helm chart now renders only the settings an operator set. Main new features: a FirecREST v2 HPC workspace with AI assistant integration, an MCP server with OAuth authorization, per-period and all-time spending limits for resources and API keys, site-wide (global) roles, organization credit lots, EU VAT calculation, invoice e-mail recipients, HTTP webhook delivery for event consumers, feedback surveys, server-side PDF exports, OpenStack hard reboot and instance metrics, and British English. Cost policies gain explainability (trigger status, version history, evaluation trigger). Credit-aware policies now fire on cost after credit. The Google Calendar integration is removed. HomePort continues its move off Bootstrap/Metronic to the waldur-ui component library and gains bulk offering actions, typed date inputs, JSON table exports and many accessibility fixes.",
+  "entries": [
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "A resource API key's assignee is fixed when the key is requested",
+      "description": "Previously, a key's assignee could be changed through a handover rotation, and the site agent was told when a key changed hands. Now, an edit that names user (null included) is refused with HTTP 400 on every offering: request a key for the new holder and delete the old one. The handover rotation, unassign action and assignee-changed site agent signal are removed.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "291ee6a16",
+        "babe314da",
+        "f118b1cb1b",
+        "7fa00b29ac"
+      ],
+      "id": "8.1.4-1"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Accessibility improvements",
+      "description": "Previously, several shared components lacked accessible names, keyboard access or sufficient contrast. Now, they have them. Header and footer link menus are keyboard disclosures, organization and project selects are named, WCAG target-size and link-in-text violations are fixed, the selected project is announced by name, and focus stays in the tab row when a router table tab switches the page.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "2852fd2028",
+        "7e00650fd6",
+        "1964ac8eb9",
+        "80049878f2",
+        "fd3aac36df",
+        "24c5df3bab"
+      ],
+      "id": "8.1.4-2"
+    },
+    {
+      "type": "feature",
+      "category": "ui",
+      "title": "Administration settings searchable from the top bar",
+      "description": "Previously, administration settings had to be found by browsing. Now, a global settings and administration registry makes them searchable from the top bar, with the matching setting row highlighted.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "b08b5f5ee5"
+      ],
+      "id": "8.1.4-3"
+    },
+    {
+      "type": "feature",
+      "category": "ai_assistant",
+      "title": "AI assistant tools and log metrics",
+      "description": "Previously, the AI assistant could not look up resources, projects, orders and invoices, and its logs did not record cache usage. Now, it has tools for these lookups. Logs record prompt-cache reads and writes, and HomePort shows them with a ratio. The anonymous chat KPI shows the no-result search rate, and anonymous discovery has access-guidance rules.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.chat"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations chat 0019 (search outcome) and 0020 (cache tokens).",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "b35bef276",
+        "b4bf1e04c",
+        "e89f6cdf01",
+        "255663bc9",
+        "f6214d853"
+      ],
+      "id": "8.1.4-4"
+    },
+    {
+      "type": "security",
+      "category": "ai_assistant",
+      "title": "AI assistant tools enforce tool-set and role checks",
+      "description": "AI assistant chat tools relied on checks outside the tool. Tool-set and role checks are now enforced inside each chat tool.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.chat"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Affects deployments with the AI assistant enabled.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "commits": [
+        "81b726ba5"
+      ],
+      "id": "8.1.4-5"
+    },
+    {
+      "type": "feature",
+      "category": "support",
+      "title": "Attachments forwarded between routed tickets and provider copies",
+      "description": "Previously, attachments were not carried between a routed ticket and its provider copy. Now, they are. The helpdesk is e-mailed when an organization or project admin comments on a support request. Ticket comments go to the ticket's own backend and fail gracefully. A support request about an offering opens without its provider as the organization.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.support"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migration support 0028 adds attachment forwarding.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "548d20f80",
+        "610cac3679",
+        "56c57088e",
+        "4180a1087",
+        "e53a04e59a"
+      ],
+      "id": "8.1.4-6"
+    },
+    {
+      "type": "improvement",
+      "category": "auth",
+      "title": "Audit events for security-relevant actions",
+      "description": "Previously, several security-relevant actions such as SAML, OIDC and Mobile ID logins were not audited. Now, they emit audit events, and structured logs keep the audit event messages.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "5916bf98a",
+        "f21bd0a60"
+      ],
+      "id": "8.1.4-7"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Branded boot splash and route loading bar",
+      "description": "Previously, the boot splash had no branding or error states, and route changes showed no progress. Now, the boot splash is branded, has slow and error states, and is shared with micro-apps. A route loading bar shows navigation progress, and each route's lazy component is created once so revisits do not flash a spinner.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "77b1655787",
+        "8e063376ee",
+        "b175d52b0a",
+        "f4a5d04900"
+      ],
+      "id": "8.1.4-8"
+    },
+    {
+      "type": "feature",
+      "category": "ui",
+      "title": "British English offered as a language",
+      "description": "Previously, only one English variant was available. Now, user-visible strings are written in US English and British English (en-GB) is generated from them and offered as a language. Some translations were corrected (call rounds, team).",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "ade7962eb",
+        "c15824ec7",
+        "7f42bc6eee",
+        "7920540d6c",
+        "a0825ffc81"
+      ],
+      "id": "8.1.4-9"
+    },
+    {
+      "type": "improvement",
+      "category": "notifications",
+      "title": "Browser event consumers expire when their tab is gone",
+      "description": "Previously, realtime event consumers registered by browser tabs stayed after the tab closed. Now, HomePort registers them as ephemeral and a periodic task expires them. The event consumer settings are shown on the PubSub health tab.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migration logging 0031 adds the ephemeral flag to event consumers.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "6f7d9f7ff",
+        "f5d45703a1",
+        "a3ad195c4e"
+      ],
+      "id": "8.1.4-10"
+    },
+    {
+      "type": "feature",
+      "category": "ui",
+      "title": "Bulk actions in the admin offerings list",
+      "description": "Previously, offerings in the admin list had to be changed one at a time. Now, several offerings can be selected and moved, paused or assigned to a group at once. The offerings filter shows the selected service provider.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "01ff01593f",
+        "29e81476f1"
+      ],
+      "id": "8.1.4-11"
+    },
+    {
+      "type": "fix",
+      "category": "infrastructure",
+      "title": "Core backend reliability fixes",
+      "description": "Several core bugs are fixed. Celery workers now recover from database connections the server dropped. Failed GitHub tag checks are cached, and changelog fetch failures are logged as warnings. User action task failures are now visible. UUID event filters match events filed on a project's or organization's feed. An object that stays erred keeps its error message. HOMEPORT_URL and a link's path are joined with exactly one slash.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "3fd7d17ff",
+        "fdcfb25b8",
+        "830105f62",
+        "4d0dda203",
+        "bee667d51",
+        "7e1715fae"
+      ],
+      "id": "8.1.4-12"
+    },
+    {
+      "type": "fix",
+      "category": "policy",
+      "title": "Cost policy evaluation fixes",
+      "description": "Several cost policy evaluation bugs are fixed. Credit compensation is now left out of policies that ignore credit, and HomePort no longer offers credit fixes for them. Editing a fired policy applies and resets the changed actions. A downscale other policies still want is kept, and removed SLURM actions are lifted. Organization policies deduct only usage compensation. Resource creation is checked against the policy's own credit gates. Organizations are re-evaluated when a credit's offering list changes.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migration invoices 0036 marks existing credit compensation items.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "8a23451ec",
+        "22dc1789c6",
+        "2a64a240b",
+        "0a1081ada",
+        "d04f715ac",
+        "200aac6a0",
+        "701987ed0"
+      ],
+      "id": "8.1.4-13"
+    },
+    {
+      "type": "feature",
+      "category": "policy",
+      "title": "Cost policy trigger status, version history and evaluation audit",
+      "description": "Previously, it was hard to tell why a cost policy fired or did not. Now, policies expose trigger_status. They keep a version history, and they record what started an evaluation, who started it and which gate decided it. Staff project-credit changes appear in the project's audit log. HomePort shows the status as one badge and says when a credit holds back a policy.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "f6ba87279",
+        "d7f1100626",
+        "9aa9d6e28c",
+        "410862097c",
+        "04b031000",
+        "45e41c29ac",
+        "a17b359a8",
+        "2214280e5",
+        "d4a02d592"
+      ],
+      "id": "8.1.4-14"
+    },
+    {
+      "type": "fix",
+      "category": "invoices",
+      "title": "Credit and total-limit billing fixes",
+      "description": "A replacement credit paid again what a deleted credit had already paid, and credit compensations were counted in a total limit's billed quantity. Both are fixed.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "446150481",
+        "ee3ee523c"
+      ],
+      "id": "8.1.4-15"
+    },
+    {
+      "type": "improvement",
+      "category": "policy",
+      "title": "Credit-aware cost policies fire on cost after credit",
+      "description": "Previously, a credit-aware cost policy fired based on the credit left. Now, it fires based on its cost after credit. Project credit can pay earlier invoices, staff can set this from HomePort, and cost policies are explained in the UI.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations invoices 0034 and 0035 add project credit options for paying earlier invoices.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "e9ddaced8",
+        "37050a4af0"
+      ],
+      "id": "8.1.4-16"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Date pickers use a typed, masked input",
+      "description": "Previously, dates were picked mainly from a calendar. Now, a typed, masked input is the primary control, and the calendar opens on focus. Project and affiliation dialogs enforce start-before-end dates. Month arrows and month/year dropdowns are fixed.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "8280731dd7",
+        "84bc67c51a",
+        "01c48d9f44",
+        "27a2ca1d30",
+        "c108cf836d",
+        "f73464711b",
+        "246579433f"
+      ],
+      "id": "8.1.4-17"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Dated usage reports from offering managers and provider revenue fraction",
+      "description": "Previously, offering managers could not submit dated usage reports, and service provider revenue was returned without its fraction. Now, offering managers can submit dated usage reports, and revenue is returned with its fraction.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "654d1c91e",
+        "bab1c02c2"
+      ],
+      "id": "8.1.4-18"
+    },
+    {
+      "type": "improvement",
+      "category": "auth",
+      "title": "Dedicated permissions for invoices, accounting and reporting",
+      "description": "Previously, access to invoices, accounting and organization reporting followed fixed roles. Now, invoice access is gated on INVOICE.LIST. Accounting is gated on CUSTOMER.VIEW_ACCOUNTING, granted to owners and their clones. Organization reporting is shown to roles with CUSTOMER.VIEW_REPORTING, granted to owners and readers. Organization owners can also manage their service provider's team.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend",
+        "docker"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migration permissions 0038 adds the INVOICE.LIST permission.",
+          "automatic": true
+        },
+        {
+          "type": "review",
+          "description": "Check custom roles: grant INVOICE.LIST, CUSTOMER.VIEW_ACCOUNTING or CUSTOMER.VIEW_REPORTING where those roles should keep invoice, accounting or reporting access.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "3f43726eb",
+        "c9c6d9266",
+        "20cb898d86",
+        "8577206f6",
+        "440eb015cc",
+        "bdba2310a"
+      ],
+      "id": "8.1.4-19"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Dependency updates and cleanup",
+      "description": "Previously, several dependencies had open OSV scan findings or were unmaintained. Now, backend dependencies are bumped (pyasn1, pypdf, dnspython, msgpack, fastmcp-slim, setuptools, djangorestframework 3.18.3, Pillow, certifi, aiohttp 3.14.5). The inactive django-fsm is replaced by django-fsm-2, django-jsoneditor is replaced by a local admin JSON widget, and unused django-stubs-ext and ua-parser are dropped. Frontend dependencies are bumped (fast-uri, undici, vite, markdown-it, glob, minimatch, vitest, Storybook), and an unfixable deepmerge advisory is suppressed in the scanner.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "59829234a",
+        "48bd62715",
+        "d27c6ef3d",
+        "c8417e6e9",
+        "33b515f2e",
+        "d39a3924c",
+        "f2206d4be",
+        "94cbfe5aa",
+        "773a946b7",
+        "960c19c6c",
+        "ed0b03ca6c",
+        "9f477746a0",
+        "8be9da2729",
+        "0afcaab26b",
+        "71e9909cbf",
+        "71683bb40b"
+      ],
+      "id": "8.1.4-20"
+    },
+    {
+      "type": "feature",
+      "category": "invoices",
+      "title": "Estimated volume discounts and upcoming affiliate fee on open invoices",
+      "description": "Previously, open invoices did not show volume discounts until they were final. Now, open invoices show estimated volume discounts, marked as estimates, and the upcoming affiliate fee.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "8bbf69caa",
+        "b3aa18ba23"
+      ],
+      "id": "8.1.4-21"
+    },
+    {
+      "type": "feature",
+      "category": "invoices",
+      "title": "EU VAT calculation on invoices",
+      "description": "Previously, invoices did not calculate EU VAT. Now, they do, using organization VAT fields, VIES checks and a VAT rate table refreshed by a management command. Organizations can be marked as private persons, and the invoice PDF shows the VAT.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "highlight": true,
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations structure 0086 (customer VAT fields) and invoices 0033 (VAT rates).",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "2733c2e70",
+        "bbc8ffa847"
+      ],
+      "id": "8.1.4-22"
+    },
+    {
+      "type": "feature",
+      "category": "notifications",
+      "title": "Event consumers can deliver events to an HTTP webhook",
+      "description": "Previously, event consumers received events only through the message queue. Now, they can deliver events to an HTTP webhook, managed from the pub/sub admin page. Certificate failures name all their causes, and the docs describe how to trust a private CA through a mounted trust bundle.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend",
+        "helm"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migration logging 0030 adds webhook delivery to event consumers.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "069b3ebc0",
+        "326852f495",
+        "73396cfc3",
+        "4a05d4833",
+        "72b3711"
+      ],
+      "id": "8.1.4-23"
+    },
+    {
+      "type": "improvement",
+      "category": "auth",
+      "title": "Every API endpoint declares who may call it",
+      "description": "Previously, the rule for who may call an endpoint lived in scattered checks and was not described anywhere. Now, every route declares who may call it through described permission checks, filter backends and access declarations. The rule appears in the OpenAPI schema, and CI fails when a route declares nothing. This covers users, core, permissions, structure, marketplace, support, onboarding, passkeys, logging, chat, billing, invoices, policy, OpenStack, Rancher, VMware, AWS, DigitalOcean, OpenPortal, site agent, metrics, Matrix, feedback, booking, LEXIS and the authentication plugins.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "8ef5211c5",
+        "057a899b1",
+        "91690ad76",
+        "c53c115a6",
+        "9c797f6ec",
+        "a459e7e8b",
+        "3e5ed0ae4",
+        "5a51220d9",
+        "685ecd21f",
+        "dd2de2337",
+        "599d4c329",
+        "bd978296f",
+        "ecadc69d4",
+        "98845836f",
+        "300c25b60",
+        "25771d5a4",
+        "16cb62f39",
+        "ec4ef786c",
+        "4678fc1ef",
+        "c2f518119",
+        "b7a1a655e"
+      ],
+      "id": "8.1.4-24"
+    },
+    {
+      "type": "feature",
+      "category": "reporting",
+      "title": "Feedback surveys shown to customers after login",
+      "description": "Previously, there was no way to survey users inside the portal. Now, staff can define feedback surveys that are shown to customers after login, and review feedback logs.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.feedback"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations feedback 0001 and checklist 0016.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "4fce74d08",
+        "b59dbb36cf"
+      ],
+      "id": "8.1.4-25"
+    },
+    {
+      "type": "feature",
+      "category": "auth",
+      "title": "Global permission scope for site-wide roles",
+      "description": "Previously, roles could only be granted on an organization, project, offering or similar scope. Now, a global scope supports site-wide roles. Staff can create and grant them from the role and affiliation screens, and assign roles to a user from a staff view. A site-wide project role works on project paths. scope_type filters match the public scope names, and list_users matches a role and its organization copies.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "highlight": true,
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migration permissions 0036 adds the global role scope.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "eca5183d8",
+        "447ac8618",
+        "f27e7d027f",
+        "3ea92c675a",
+        "5803a8e723",
+        "d6ff93ef44",
+        "1ed01154a"
+      ],
+      "id": "8.1.4-26"
+    },
+    {
+      "type": "breaking",
+      "category": "marketplace",
+      "title": "Google Calendar integration removed",
+      "description": "The Google Calendar integration for booking offerings is removed, along with its HomePort publish, sync and unpublish actions and the offering calendar link. Its models are deleted by migration.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "high"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.google",
+          "waldur_mastermind.booking"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migration google 0005 deletes the Google Calendar models.",
+          "automatic": true
+        },
+        {
+          "type": "inform_users",
+          "description": "Tell booking offering providers that bookings are no longer published to Google Calendar.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "5074dad20",
+        "a089e53535"
+      ],
+      "id": "8.1.4-27"
+    },
+    {
+      "type": "feature",
+      "category": "openstack",
+      "title": "Hard reboot action for OpenStack instances",
+      "description": "Previously, OpenStack instances could only be restarted softly. Now, a hard reboot action is available in the API and HomePort.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_openstack"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "7ba51401f",
+        "241944e02f"
+      ],
+      "id": "8.1.4-28"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Helm chart can scale components to zero and drops PayPal settings",
+      "description": "Previously, the api, worker, beat and homeport deployments could not be scaled to zero, and the chart carried settings for the broken PayPal feature. Now, they can be scaled to zero replicas, and the PayPal feature settings are removed from the chart.",
+      "scope": "infra",
+      "component": [
+        "helm"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "08cef3d",
+        "2d0b3dd"
+      ],
+      "id": "8.1.4-29"
+    },
+    {
+      "type": "security",
+      "category": "ui",
+      "title": "HomePort dompurify updated to 3.4.17",
+      "description": "The HTML sanitizer dompurify is bumped to 3.4.17 to fix GHSA-cg2g-xh64-v4q7, GHSA-mrv2-3pqr-j5jr and GHSA-c6gr-qvv4-5v3f.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "HomePort builds before 8.1.4 with dompurify older than 3.4.17",
+        "exploitability": "Not described in the commit data.",
+        "mitigation": "Upgrade to 8.1.4.",
+        "ghsa": "GHSA-cg2g-xh64-v4q7"
+      },
+      "commits": [
+        "b63807c698"
+      ],
+      "id": "8.1.4-30"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "HomePort hides actions and pages the API would refuse",
+      "description": "Previously, HomePort showed actions and pages that then failed with permission errors. Now, it hides public offering links the route guard would refuse, delete actions the API would refuse, staff-only pages from support users, the user Audit log tab and IP column from viewers who cannot read them, and project Credit edit buttons from users the API refuses. Project settings tabs are gated on the permission each tab needs. Users with call, proposal or offering roles are no longer told they have no organization. Staff impersonating a user see the API token when it is concealed.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "3a641155af",
+        "b34fa2f9bb",
+        "cb2f7effe7",
+        "51724b42f3",
+        "504262d537",
+        "b8022d4022",
+        "ca366e330d",
+        "025af7282a"
+      ],
+      "id": "8.1.4-31"
+    },
+    {
+      "type": "security",
+      "category": "ui",
+      "title": "HomePort qs updated to 6.17.0",
+      "description": "The qs query-string library is bumped to 6.17.0 to fix GHSA-6pq8-jhm2-2vcw.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "HomePort builds before 8.1.4 with qs older than 6.17.0",
+        "exploitability": "Not described in the commit data.",
+        "mitigation": "Upgrade to 8.1.4.",
+        "ghsa": "GHSA-6pq8-jhm2-2vcw"
+      },
+      "commits": [
+        "0a68fd5b9f"
+      ],
+      "id": "8.1.4-32"
+    },
+    {
+      "type": "fix",
+      "category": "ui",
+      "title": "HomePort UI fixes",
+      "description": "Several HomePort bugs are fixed. Chrome page translation no longer crashes React with removeChild errors, and Sentry events from machine-translated pages are tagged. The landing page no longer crashes with \"Converting circular structure to JSON\". The cookie consent dialog no longer reopens after close or accept. Bulk invites no longer stall on the same e-mail across projects, and the invite dialog shows why Continue is blocked. Organization credit is formatted in the project credit dialog. The multi-select input stays mounted when the first value is selected. Wizard step indicators and order steps on mobile work again. Location search runs on Enter instead of querying Nominatim as you type. The maintenance announcement bar is reworked, and open maintenance windows show as in progress. Notification event groups get readable titles.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "2a30af05c5",
+        "ecdbb42992",
+        "d1f3df1b65",
+        "b07a6f6dd2",
+        "8638cd3e0c",
+        "3a117319c0",
+        "cac9b74448",
+        "a6138e5e23",
+        "8883be9ecd",
+        "62bdeb8e56",
+        "2498162088",
+        "0273464183",
+        "c72c77f935",
+        "78491144a4"
+      ],
+      "id": "8.1.4-33"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "HomePort UI moves from Bootstrap and Metronic to waldur-ui",
+      "description": "Previously, HomePort relied on react-bootstrap, Bootstrap utilities and Metronic styles. Now, react-bootstrap is removed. Cards, modals, form inputs, breadcrumbs, the app header and page layout use waldur-ui components and Tailwind on a three-layer design token system, and detail views use an accessible PropertyList. Layouts the migration broke are restored.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "f4f62b3b6b",
+        "a2ef824206",
+        "852a24aa33",
+        "681f8fc034",
+        "c0af05b879",
+        "b3a13db3b1",
+        "3e1ea8c1c0",
+        "c50815affa",
+        "135dd12292",
+        "d4efde1f80",
+        "6e9ed113a4",
+        "3b71ba6e5c",
+        "999f8b5399"
+      ],
+      "id": "8.1.4-34"
+    },
+    {
+      "type": "security",
+      "category": "ui",
+      "title": "HomePort zod updated to 4.6.7",
+      "description": "The zod validation library is bumped to 4.6.7 to fix GHSA-mrhx-c7xc-m3w5.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "low",
+        "affected_versions": "HomePort builds before 8.1.4 with zod older than 4.6.7",
+        "exploitability": "Not described in the commit data.",
+        "mitigation": "Upgrade to 8.1.4.",
+        "ghsa": "GHSA-mrhx-c7xc-m3w5"
+      },
+      "commits": [
+        "e22edabaf9"
+      ],
+      "id": "8.1.4-35"
+    },
+    {
+      "type": "feature",
+      "category": "slurm",
+      "title": "HPC workspace on FirecREST v2",
+      "description": "Previously, HPC resources had no in-portal workspace. Now, a FirecREST v2 HPC workspace provides jobs, files, insights, job performance, PDF job reports and maintenance sync, with an AI assistant integration. Offerings with only slurm-monitor get a read-only workspace. The assistant's job card carries the job's program as a file and can show the script beside the full-screen assistant. Jobs submitted from the assistant appear in the HPC jobs table. Maintenance windows can name affected partitions.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_firecrest"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "highlight": true,
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations waldur_firecrest 0007 (removes the Job model) and marketplace 0323 (maintenance affected partitions).",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "0e3a46724",
+        "ca35bd45f",
+        "009b00aa7",
+        "760098b24b",
+        "253cb2c774",
+        "7651c227b7",
+        "36fc859615"
+      ],
+      "id": "8.1.4-36"
+    },
+    {
+      "type": "fix",
+      "category": "identity",
+      "title": "Identity Bridge remove leaves users outside the ISD untouched",
+      "description": "An Identity Bridge remove affected users outside the identity source domain (ISD). It now leaves them untouched.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_auth_social"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "af21b8ee4"
+      ],
+      "id": "8.1.4-37"
+    },
+    {
+      "type": "security",
+      "category": "auth",
+      "title": "Identity provider tokens are encrypted, short-lived and revoked on logout",
+      "description": "Tokens from identity providers were stored without encryption and kept after logout, deactivation and deletion. They are now encrypted at rest, kept only while needed, and revoked and removed on logout, deactivation and deletion. For downstream services, the user's token is exchanged for an audience-restricted one.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_auth_social"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "high",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Stored identity provider tokens could be exposed to anyone with database access, and stayed valid after the user logged out.",
+        "mitigation": "Upgrade to 8.1.4. The migration encrypts existing tokens."
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migration waldur_auth_social 0018 encrypts stored OAuth tokens.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "101cda32a",
+        "1d792c944",
+        "fbae475cf"
+      ],
+      "id": "8.1.4-38"
+    },
+    {
+      "type": "security",
+      "category": "auth",
+      "title": "Impersonation header is rejected on authentication paths that ignore it",
+      "description": "Some authentication paths silently ignored the impersonation header, so the request ran as the caller instead of the intended user. Those paths now reject the header. HomePort rolls the impersonation back when the backend refuses it.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Affects staff who use impersonation.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "commits": [
+        "919dfaa57",
+        "6791298bb1"
+      ],
+      "id": "8.1.4-39"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "In-house settings store replaces django-constance",
+      "description": "Previously, runtime settings were stored with django-constance, and the Helm chart rendered every setting. Now, an in-house settings store replaces it, and existing constance values are imported by migration. Settings the deployment applies from a file are locked against edits in the admin. The Helm chart renders only the settings the operator set. The Helm Matrix cleanup clears settings from whichever settings table exists.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "helm"
+      ],
+      "impact": {
+        "risk": "high"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "highlight": true,
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations configuration 0001\u20130003 create the settings store, import existing constance settings and add the locked flag.",
+          "automatic": true
+        },
+        {
+          "type": "review",
+          "description": "Check Helm values after upgrading: only settings explicitly set by the operator are rendered, and settings applied from a file are locked in the admin.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "af4cae4ea",
+        "2fd2db682",
+        "ea535be",
+        "0ed8a6b"
+      ],
+      "id": "8.1.4-40"
+    },
+    {
+      "type": "feature",
+      "category": "notifications",
+      "title": "Invoice notifications sent to an organization's invoice e-mails",
+      "description": "Previously, invoice notifications went only to organization owners. Now, an organization can list invoice e-mail addresses that receive invoice notifications. They are edited in the organization contact panel, and changes to them are notified.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migration structure 0087 adds customer invoice e-mails.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "7bba99cf8",
+        "cca66d2d7b"
+      ],
+      "id": "8.1.4-41"
+    },
+    {
+      "type": "security",
+      "category": "infrastructure",
+      "title": "LEXIS link HEAppE project can no longer be changed by viewers",
+      "description": "Anyone who could see a LEXIS link could change its HEAppE project. Viewers can no longer change it.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_lexis"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Requires an authenticated user who can see a LEXIS link.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "commits": [
+        "3ece6e566"
+      ],
+      "id": "8.1.4-42"
+    },
+    {
+      "type": "security",
+      "category": "auth",
+      "title": "Logout ends the Django session and revokes the API token",
+      "description": "Logging out did not end the Django session or revoke the API token. Both are now ended on logout, including SAML2 logout.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "A token or session captured before logout stayed usable after the user logged out.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "commits": [
+        "5345e844d"
+      ],
+      "id": "8.1.4-43"
+    },
+    {
+      "type": "security",
+      "category": "marketplace",
+      "title": "Marketplace offering and catalog data shown only to callers who may see it",
+      "description": "Several marketplace endpoints exposed data beyond what the caller could see elsewhere. A service provider's offerings list, plan components, offering groups, category component usages, offering roles and plan usage reports now follow the public and provider offering visibility rules. Who sees an offering's secret options is now decided per offering. Provider credentials are kept out of a per-tenant offering's service attributes. Offering consents can no longer be edited or deleted through the API.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "high",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Requires an authenticated user.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "commits": [
+        "2b97e4620",
+        "404a29380",
+        "b4a308c7d",
+        "828ba0712",
+        "7d1f89937",
+        "8d021f647",
+        "f93126152",
+        "c9716be3f",
+        "7c602d4b2"
+      ],
+      "id": "8.1.4-44"
+    },
+    {
+      "type": "security",
+      "category": "marketplace",
+      "title": "Marketplace order, resource and usage actions restricted to authorized callers",
+      "description": "Several marketplace actions accepted callers without the required rights. The public set_usage API now accepts usage only from the resource's provider. Only staff, not support, can create auto-approval rules without APPROVE_ORDER. Only those who may place an order can change its purchase order. Resource GLauth exports are gated on the offering's integration permission and dropped from consumer resources. An order's resource is hidden where the resource views hide it. Resource team routes are gated like list_users, and reallocation targets are checked like update_limits checks its resource. Only those who manage a project can create resources in it through the API, and plugin resources are concealed as the consumer resource view conceals them. HomePort leaves out the usage card's user filter when the team route refuses the caller.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "high",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Requires an authenticated user. Usage submission requires a signed public API request.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "commits": [
+        "c1eb34307",
+        "2ffb7279d",
+        "922dcece1",
+        "87bc37639",
+        "d308924f8",
+        "1083507fd",
+        "25c139e8f",
+        "759b36bc38",
+        "431eb8e5f",
+        "c133f1947"
+      ],
+      "id": "8.1.4-45"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Marketplace resource state and validation fixes",
+      "description": "Several marketplace bugs are fixed. Resource end dates are now validated on set_end_date, and HomePort's termination date pickers follow the same rules. A resource returns to OK when its backend recovers. HomePort labels an erred resource as Erred instead of OK. Custom messages for conditional unique constraints are kept under DRF 3.18.2.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "1106d37eb",
+        "f018748b04",
+        "ac33914ac",
+        "53ec56f33c",
+        "86066461e"
+      ],
+      "id": "8.1.4-46"
+    },
+    {
+      "type": "fix",
+      "category": "ui",
+      "title": "Matrix chat room handling fixes",
+      "description": "The chat header, timeline and active room could fall out of sync. Only the first page of a user's Matrix rooms was read. The view that did not own the active room showed an unusable chat. All three are fixed.",
+      "scope": "plugin",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.matrix_chat"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "004afe7c42",
+        "8e199da5ea",
+        "1a096177f4"
+      ],
+      "id": "8.1.4-47"
+    },
+    {
+      "type": "feature",
+      "category": "slurm",
+      "title": "MaxTRESMinsPerJob in SLURM QoS profiles",
+      "description": "Previously, SLURM QoS profiles could not set MaxTRESMinsPerJob. Now, they can, and the QoS profile form checks the TRES format.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migration marketplace 0319 adds offering QoS max_tres_mins_per_job.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "d1a9a5ef4",
+        "7f62f56fed"
+      ],
+      "id": "8.1.4-48"
+    },
+    {
+      "type": "feature",
+      "category": "ai_assistant",
+      "title": "MCP server with OAuth authorization",
+      "description": "Previously, Waldur exposed no Model Context Protocol endpoint. Now, an MCP server authenticates with personal access tokens. django-oauth-toolkit acts as the MCP authorization server, and chat tools carry MCP metadata and output schemas.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.mcp"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "highlight": true,
+      "commits": [
+        "1294541d3",
+        "41744ac15",
+        "e0f879c8b"
+      ],
+      "id": "8.1.4-49"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Members' offering users created when an offering allows it",
+      "description": "Offering users for project members were not created when an offering was allowed to create them. They are now created.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "f09b257f2"
+      ],
+      "id": "8.1.4-50"
+    },
+    {
+      "type": "improvement",
+      "category": "reporting",
+      "title": "Metric roll-ups recompute only what new points touch",
+      "description": "Previously, metric roll-ups were recomputed broadly on every run. Now, only the roll-ups that new points touch are recomputed.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.marketplace_metrics"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations marketplace_metrics 0003 and 0004 add point received_at, roll-up state and an index.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "a44e81bfd"
+      ],
+      "id": "8.1.4-51"
+    },
+    {
+      "type": "security",
+      "category": "auth",
+      "title": "Mobile ID client verifies TLS, times out and keeps credentials out of logs",
+      "description": "The Mobile ID (Valimo) client now verifies TLS certificates, uses timeouts and keeps credentials out of logs.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_auth_valimo"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Affects deployments that use Mobile ID login.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "commits": [
+        "5812de9a3"
+      ],
+      "id": "8.1.4-52"
+    },
+    {
+      "type": "security",
+      "category": "marketplace",
+      "title": "Network access rules applied to stats and to service provider lookups",
+      "description": "Resources that network (access subnet) rules hide still counted in organization and project stats. Access subnet resource impact ignored the organization's network restriction. Organizations found through a service provider role bypassed the portal network rule. All three now apply the network rules.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Affects deployments that use access subnet restrictions.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "commits": [
+        "c6f759d20",
+        "e8b3bf8a4",
+        "293cbd968"
+      ],
+      "id": "8.1.4-53"
+    },
+    {
+      "type": "feature",
+      "category": "marketplace",
+      "title": "Offering access endpoints can be edited",
+      "description": "Previously, an offering access endpoint could only be added or removed. Now, it can be updated in place.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend",
+        "docker"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "6c7d2559a",
+        "c46aa996fa"
+      ],
+      "id": "8.1.4-54"
+    },
+    {
+      "type": "feature",
+      "category": "marketplace",
+      "title": "Offering option transforms and options shown as component limits",
+      "description": "Previously, offering option values were stored as entered, and options could not stand in for component limits. Now, option values can be transformed before they are stored, with a preview in HomePort. An integer resource option can be shown as the limit of a usage-based component.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "10088275e",
+        "2fe8dbd402",
+        "433937da5",
+        "3c99ad8098"
+      ],
+      "id": "8.1.4-55"
+    },
+    {
+      "type": "security",
+      "category": "auth",
+      "title": "OIDC ID tokens are validated against the provider's JWKS",
+      "description": "OIDC login did not validate the ID token signature against the identity provider's published keys. The ID token is now checked against the provider's JWKS at login. Identity providers gain issuer and JWKS URL fields.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_auth_social"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "high",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Affects deployments that use OIDC identity providers.",
+        "mitigation": "Upgrade to 8.1.4 and check the issuer and JWKS settings of each identity provider."
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migration waldur_auth_social 0017 adds issuer and JWKS URL fields to identity providers.",
+          "automatic": true
+        },
+        {
+          "type": "review",
+          "description": "Check that each OIDC identity provider has a correct issuer and JWKS URL.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "4f847ff7c"
+      ],
+      "id": "8.1.4-56"
+    },
+    {
+      "type": "security",
+      "category": "identity",
+      "title": "Onboarding verifications and justifications protected from tampering",
+      "description": "Onboarding records could be changed after review or accessed across users. A verification's checklist answers and justification are now kept as staff reviewed them. A justification of another user's verification is answered as if it did not exist. A justification's verification is set only when it is created. A verification is validated against its own user, also when staff run it. Only staff can change onboarding question metadata. The company is locked once a verification is verified or escalated. Register checks go to manual review when the identity was typed, and HomePort tells users so.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Requires an authenticated user who takes part in organization onboarding.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "commits": [
+        "6005fe9c3",
+        "e74c9bc25",
+        "bdb3bc215",
+        "60338607f",
+        "d01e5e150",
+        "503c10dda",
+        "818cc7ecf",
+        "daa4ed2d6",
+        "f0644bded0"
+      ],
+      "id": "8.1.4-57"
+    },
+    {
+      "type": "security",
+      "category": "marketplace",
+      "title": "OpenPortal data limited to its project and organization",
+      "description": "OpenPortal user and project info, associations, user usage, project templates and managed projects are now shown only to the related project, organization or visible user. A new project template is limited to organizations the caller's roles reach.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_openportal"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Requires an authenticated user.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "commits": [
+        "6e1bd9235",
+        "70cb2e1bd",
+        "d33c07541",
+        "db3384f57"
+      ],
+      "id": "8.1.4-58"
+    },
+    {
+      "type": "feature",
+      "category": "openstack",
+      "title": "OpenStack instance and volume metrics read from Nova",
+      "description": "Previously, OpenStack instances and volumes had no metrics in Waldur. Now, their metrics are read from Nova on a schedule, and HomePort shows them with their update schedule and an option for faster updates.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.marketplace_openstack",
+          "waldur_openstack"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migration marketplace_openstack 0020 adds instance metrics.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "69e9fd59e",
+        "17c4a39b96",
+        "b5d7c10cc7"
+      ],
+      "id": "8.1.4-59"
+    },
+    {
+      "type": "security",
+      "category": "openstack",
+      "title": "OpenStack networking, statistics and tenant migration permissions tightened",
+      "description": "Several OpenStack endpoints allowed users without the right rights. Non-shared external networks are now shown only to their provider, staff and support. Image and flavor usage statistics are limited to staff and support. Only those who manage a tenant can create ports in it, and HomePort offers Create port only to them. Only those who manage a project can change or delete its routers, load balancers and networks, or upload images to its tenants. Network share edits are refused (another share is a delete plus a create). The server group collection create, which could only fail, is closed. Tenant migration requires ORDER.CREATE, and only its creator or staff can delete a migration.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_openstack",
+          "waldur_openstack_replication",
+          "waldur_mastermind.marketplace_openstack"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "high",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Requires an authenticated user with access to an OpenStack project or tenant.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "commits": [
+        "c53129a54",
+        "5e1b21d2c",
+        "2c7e01f7f",
+        "8f084509fc",
+        "8c22023e4",
+        "a904dc03d",
+        "b5c9ff39f",
+        "31da989c5",
+        "5fd34bc7d"
+      ],
+      "id": "8.1.4-60"
+    },
+    {
+      "type": "fix",
+      "category": "openstack",
+      "title": "OpenStack resource lifecycle fixes",
+      "description": "Several OpenStack lifecycle bugs are fixed. Octavia load balancers are now deleted on tenant termination. An attached volume is detached before extending when live resize is off. Snapshot deletion fails at once when OpenStack refuses it, and Cinder is skipped for snapshots that were never created. Instance action polling stops when Nova reports ERROR. Stale cached Keystone tokens are recovered during pulls. Never-provisioned resources and tenants are skipped in periodic pulls. A VM's network interfaces come up in the requested port order. The instance server_group field is declared nullable.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_openstack"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migration waldur_openstack 0090 restricts pool member subnets.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "c5af794a2",
+        "9f1e29e18",
+        "1d2dd655c",
+        "ecd13b556",
+        "da469a6b5",
+        "8262f5489",
+        "6240166a1",
+        "211e2e325",
+        "75b1ccbbd"
+      ],
+      "id": "8.1.4-61"
+    },
+    {
+      "type": "security",
+      "category": "marketplace",
+      "title": "Order callback and backend URLs are validated before use",
+      "description": "Order callback URLs were stored and called without checks. The BackendURLValidator used by OpenStack, Rancher, VMware and marketplace serializers was never instantiated, so its URL checks did not run. Callback URLs are now checked before they are stored and before they are sent, and the backend URL validator now runs.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Requires an authenticated user who can submit orders with callback URLs or edit service settings.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "commits": [
+        "3bc5af688",
+        "adb76aec5"
+      ],
+      "id": "8.1.4-62"
+    },
+    {
+      "type": "feature",
+      "category": "invoices",
+      "title": "Organization credit split into paid, granted and earned lots",
+      "description": "Previously, organization credit was a single balance. Now, it is split into paid, granted and earned lots. HomePort shows the lots and lets staff top up and reclassify credit.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migration invoices 0037 adds credit lots.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "1cec73134",
+        "9336d6cd68"
+      ],
+      "id": "8.1.4-63"
+    },
+    {
+      "type": "feature",
+      "category": "marketplace",
+      "title": "Per-period and all-time spending limits on usage-based components",
+      "description": "Previously, usage-based components had only an unenforced usage limit. Now, providers choose which calendar periods (day, week, month, quarter, year, or an all-time limit that never resets) customers may cap, each with an optional default and maximum. Customers set limits when ordering and change them later with set_spending_limits, without an order or approval. A reached limit applies the offering's action_on_usage_limit until the limit resets. Integrations can report usage per day. Daily reports are bounded in size, and grace-period or cost-policy pauses are marked as usage-limit pauses too. HomePort adds the provider settings, order fields, a Change spending limits action, and per-period status in the Usage tab and components panel. It also states what a reached limit does on each offering.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "highlight": true,
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations marketplace 0308 (spending limits) and 0318 (API key usage history).",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "0c7e95f33",
+        "84a53e30b",
+        "630bca63a",
+        "4dcf32145",
+        "31267e0d3",
+        "b36713533d",
+        "48258e16d1",
+        "2a9f69f483",
+        "43f53a321d",
+        "ddda35ab56",
+        "02ba7fbd13",
+        "ea6b666eb0",
+        "97c4a0eb1c",
+        "eae6324ec4",
+        "373d2801ab",
+        "ae1ebbac03"
+      ],
+      "id": "8.1.4-64"
+    },
+    {
+      "type": "feature",
+      "category": "marketplace",
+      "title": "Per-period spending limits on resource API keys",
+      "description": "Previously, an API key had a single monthly limit per component. Now, a key carries one limit per period, capped by the resource's limits for that period and every longer one. Two offering options control what a key is offered: api_key_limits, and api_key_daily_usage for agents that report per-key daily usage. Limits are validated again under locks. Daily usage reports are bounded in size and time, and old daily rows are pruned. Failed limit pauses are retried with backoff. A key stays paused while its resource is restricted, and audit events record old and new limits. The flat monthly limits field remains, with legacy amounts rounded up to the cent. HomePort shows one field per period, reads usage per limit, and locks the assignee's Rotate on any reached limit.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations marketplace 0313\u20130317 move existing key limits to monthly spending limits, add the daily usage option and add limit pause retries.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "420eac13a",
+        "a929e9e66",
+        "0f102ff70",
+        "51ca9ca18",
+        "1d1819625",
+        "d5dfb80b1",
+        "2984a9bf6",
+        "1439bcb9d",
+        "86f354685",
+        "54ae495cf",
+        "c6c2e4001",
+        "f56451aba",
+        "811aff07a",
+        "4038dc4ae",
+        "e6ac222b9",
+        "ffed2a4aa",
+        "4c4ce3a35f",
+        "e89052d8dd",
+        "062fcf6cc1",
+        "0aa02278f0",
+        "3f14286852",
+        "a3367b1453",
+        "ef04229242",
+        "44d7a8f2d9",
+        "40ae999579",
+        "bdb02e9d9a",
+        "e654875a1e"
+      ],
+      "id": "8.1.4-65"
+    },
+    {
+      "type": "security",
+      "category": "auth",
+      "title": "Personal access token scopes and bindings are enforced everywhere",
+      "description": "A personal access token without the staff or support scope could still act with its owner's staff or support role in many checks. Token bindings were also not applied to several paths. Staff checks now require the token's staff scope, and a token without the staff or support scope reads and writes as the user without that role. Scopes and bindings now also apply to order validation, review assignment, resource change request decisions, end-date change reviews, access subnets, service settings credentials, identity provider and helpdesk credentials, reallocate_limits targets, credits, role checks, soft-deleted projects and the other_users project list.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "high",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Requires a personal access token issued by a staff or support user without the matching scope.",
+        "mitigation": "Upgrade to 8.1.4. Integrations that relied on a token without the staff or support scope acting as staff must use a token with that scope."
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migration core 0054 adds the TokenScopedUser model.",
+          "automatic": true
+        },
+        {
+          "type": "review",
+          "description": "Check automation that uses personal access tokens: tokens without the staff or support scope no longer get staff or support access.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "4bcd62bf0",
+        "079213a89",
+        "59828a49a",
+        "3d0304059",
+        "862e5b1bd",
+        "51307e0ee",
+        "9177dc98f",
+        "88213ea34",
+        "6834966e6",
+        "25ed78939",
+        "951c60201",
+        "d528850ee",
+        "97a0a671b"
+      ],
+      "id": "8.1.4-66"
+    },
+    {
+      "type": "feature",
+      "category": "auth",
+      "title": "Personal access tokens can be bound to a service provider",
+      "description": "Previously, a personal access token bound to a service provider could not act on that provider's offerings or list its projects and customers, and a token could not use a role held above its binding. Now, a token bound to a service provider can act on the provider's offerings and list its projects and customers, and a token can use a role held above its binding.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "076b97888",
+        "e7148452d",
+        "05ed98c0b"
+      ],
+      "id": "8.1.4-67"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Prepaid components limited to one-time and shown as one subscription total",
+      "description": "Previously, any component could be prepaid, and prepaid limits were shown per period. Now, only one-time components can be prepaid, prepaid limits are shown as one total for the whole subscription, and HomePort saves components without the prepaid settings the form hides.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "42ac7602d",
+        "5b844e1bbc",
+        "ac619a130",
+        "e02e3f3166"
+      ],
+      "id": "8.1.4-68"
+    },
+    {
+      "type": "feature",
+      "category": "ui",
+      "title": "Project administrators shown and filterable in the projects list",
+      "description": "Previously, the projects list did not show project administrators. Now, projects can be filtered by administrator (the user_role filter also matches organization role copies). Administrators can be shown and exported in the projects list, and projects can be expanded to show their resources.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "2630b6d5c",
+        "b9ffccb7f",
+        "a4275fea67",
+        "a2671f8dcc"
+      ],
+      "id": "8.1.4-69"
+    },
+    {
+      "type": "feature",
+      "category": "marketplace",
+      "title": "Project managers and administrators can manage a resource's API keys",
+      "description": "Previously, a resource's API keys were governed by RESOURCE.MANAGE_USERS, which only the organization owner holds. Now, a new RESOURCE.MANAGE_CONSUMER_API_KEY permission is granted to the organization owner, project administrator and project manager. HomePort checks it on the project side only and labels it clearly in the role editor.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend",
+        "docker"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migration permissions 0035 adds RESOURCE.MANAGE_CONSUMER_API_KEY.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "a2d750687",
+        "fa56efa2b",
+        "e4d5206e7e",
+        "175642e59d",
+        "219162b15e"
+      ],
+      "id": "8.1.4-70"
+    },
+    {
+      "type": "security",
+      "category": "identity",
+      "title": "Project, user and core permission fixes",
+      "description": "Several core write paths had permission gaps. A project's customer can no longer be changed through PATCH or PUT. Only staff can create, change and delete notification templates. Only a key's owner and staff can delete an SSH key. An organization's project checklist template is shown only to those who may create projects there. Project metadata checklists honour PROJECT.UPDATE_METADATA. Only staff can recalculate every user's actions. Terms of Service acceptance is recorded only from the user themselves and is logged, and HomePort sends consent only from the Terms checkbox. Profile details are locked according to the edited user. Support users are read-only on other users' hooks and onboarding records.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Requires an authenticated user.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migration permissions 0037 adds the PROJECT.UPDATE_METADATA permission.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "ec40ce90a",
+        "f5310cc40",
+        "4d82b2298",
+        "ee5abf332",
+        "58f53a378",
+        "7c1bc8495",
+        "8b7367238",
+        "611c4b3fbf",
+        "fb16ed407",
+        "f5844da14"
+      ],
+      "id": "8.1.4-71"
+    },
+    {
+      "type": "feature",
+      "category": "reporting",
+      "title": "Project version history for staff and support",
+      "description": "Previously, project changes had no version history. Now, project revisions are recorded, existing projects get an initial revision, and staff and support can view the history in HomePort.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migration structure 0088 backfills initial project revisions.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "9d4060193",
+        "3a6a1ef20b"
+      ],
+      "id": "8.1.4-72"
+    },
+    {
+      "type": "fix",
+      "category": "proposal",
+      "title": "Proposal and call fixes",
+      "description": "Call.clean() crashed on calls that already existed, and a call's slug template was unlocked when the API cleared it. Both are fixed. The proposal page no longer crashes for staff before the call loads. Pool-only reviewers in marketplace mode see My reviews in the sidebar. The science domain selector appears on proposals whose call asks for it. SLURM QoS and partition are shown on proposal resource requests.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "3154690f3",
+        "36ffb1f6c",
+        "3085871bd7",
+        "7bbbc46a8a",
+        "74fe488212",
+        "160c73f11b"
+      ],
+      "id": "8.1.4-73"
+    },
+    {
+      "type": "improvement",
+      "category": "proposal",
+      "title": "Proposal requirements enforced: offering options, resource templates and archived calls",
+      "description": "Previously, proposals could be submitted or awarded without required offering options, without the call's resource templates, or to archived calls. Now, offering options are required before submission or award and are shown in the review, PDF and award. Calls with resource templates require them and support a single-selection mode. Archived calls refuse proposals and are kept out of open calls. Proposal summaries are limited to 1000 characters, and the form shows a character count.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations proposal 0090 (resource template selection mode) and 0091 (project summary max length).",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "b653f271b",
+        "50698115c7",
+        "ed447c9ff",
+        "a22b0b69d",
+        "5d99bcdf36",
+        "a383a046a",
+        "8030e63a2",
+        "501148315a",
+        "713190c5d",
+        "6b5ac80783"
+      ],
+      "id": "8.1.4-74"
+    },
+    {
+      "type": "feature",
+      "category": "proposal",
+      "title": "Proposal, review and step counts per call and round",
+      "description": "Previously, call statistics did not count proposals, reviews and steps. Now, the call stats endpoint counts them per call and round.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "3efe60c29",
+        "d98c0b465",
+        "d9c27cd44"
+      ],
+      "id": "8.1.4-75"
+    },
+    {
+      "type": "security",
+      "category": "infrastructure",
+      "title": "Rancher clusters, catalogs and workloads require the right administrator access",
+      "description": "Rancher objects could be changed by users without the right rights or moved out of their scope. Catalog changes are now restricted to staff and project administrators. Keycloak group memberships require project administrator access, and the sync binds groups only to their own cluster or project. Deploying an application requires administering the target cluster. Setting a cluster's security group rules requires cluster administrator rights. Workloads, ingresses, services, catalogs and cluster VM projects keep their placement on update, and the Rancher id of applications, ingresses and services is read-only. A managed cluster gets public IPs only from its own load balancers. Managed Rancher resources are shown only to those the consumer resource routes show them to.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_rancher",
+          "waldur_mastermind.marketplace_rancher"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "high",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Requires an authenticated user with access to a Rancher project or cluster.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "commits": [
+        "c1a2960b4",
+        "c697a1597",
+        "667d08af3",
+        "955efc237",
+        "5121eee5e",
+        "6aeae192d",
+        "109f69938",
+        "ae76d9a7a",
+        "0d7134129",
+        "f2651c795",
+        "4ad4f73b1",
+        "712ff7d90"
+      ],
+      "id": "8.1.4-76"
+    },
+    {
+      "type": "security",
+      "category": "marketplace",
+      "title": "Remote Waldur client refuses internal addresses and bounds remote calls",
+      "description": "The remote Waldur client used by remote offerings could be pointed at internal addresses, echoed remote responses back to callers, and made unbounded calls. It now refuses internal addresses in every form, stops echoing remote response bodies, and limits remote calls by page count, time and size. Refused URLs all get the same answer.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.marketplace_remote"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "high",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Requires a user who can configure a remote Waldur offering or import from a remote Waldur URL.",
+        "mitigation": "Upgrade to 8.1.4. Until then, restrict who can configure remote offerings."
+      },
+      "commits": [
+        "0943f1017",
+        "f0ac4a975"
+      ],
+      "id": "8.1.4-77"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Resource API key management improvements",
+      "description": "Previously, only managers could rotate a key, one person could hold several keys on one resource, an empty model list meant all models, keys had no description, and keys could be requested before the resource was provisioned. Now, a key's assignee can rotate it. A second key for the same person on the same resource is refused. An empty model list means no models and * means every model, and HomePort adds an All models checkbox. Keys can carry a description. Key requests are refused until the resource has a backend id. The API keys tab appears on managed resources that have no keys yet.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations marketplace 0308\u20130312 (model list semantics and backfill) and 0324 (key description).",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "d7e5318a6",
+        "8ed2701676",
+        "ff518041f",
+        "ab7b33e6b",
+        "024b356248",
+        "4b1f2dd94",
+        "e85ca690a",
+        "7c19ca65ac",
+        "44736a84ec"
+      ],
+      "id": "8.1.4-78"
+    },
+    {
+      "type": "security",
+      "category": "marketplace",
+      "title": "Resource API keys can no longer be revealed by staff or shared after user deletion",
+      "description": "Staff and support could reveal resource API keys directly. Deleting a user turned their personal keys into shared keys that any project member could reveal, while the departed person's copy kept working. Staff and support can no longer reveal keys directly, and HomePort offers reveal only where the API allows it. A deleted user's keys are now withdrawn.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "high",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Affects offerings that use resource API keys.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "commits": [
+        "e8f95a190",
+        "f8b0408ec",
+        "bba8b52586"
+      ],
+      "id": "8.1.4-79"
+    },
+    {
+      "type": "feature",
+      "category": "marketplace",
+      "title": "Resource termination time recorded",
+      "description": "Previously, Waldur did not record when a resource was terminated. Now, it records the termination time, backfills it for existing resources, and shows it in the resource details.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations marketplace 0320 and 0321 add and backfill resource terminated_at.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "f433aef94",
+        "55b95755e8"
+      ],
+      "id": "8.1.4-80"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Resources unlinked asynchronously",
+      "description": "Previously, resources were unlinked inside the request. Now, unlinking runs asynchronously, and HomePort says the unlink has been scheduled.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "f9582c976",
+        "7dee1113c5"
+      ],
+      "id": "8.1.4-81"
+    },
+    {
+      "type": "security",
+      "category": "auth",
+      "title": "SAML responses are verified only with identity provider keys from metadata",
+      "description": "SAML response signatures were not limited to the keys in the identity provider's metadata. Responses are now verified only against those keys. A deployment's own SAML_CONFIG settings are kept when the extension composes its settings, and unsolicited SAML responses are accepted by default. The SAML2 login view now documents that unsolicited responses are accepted.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_auth_saml2"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "high",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Affects deployments that use SAML2 login.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "actions": [
+        {
+          "type": "review",
+          "description": "If you rely on rejecting unsolicited SAML responses, check your SAML_CONFIG: unsolicited responses are now accepted by default.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "b34974911",
+        "6a1586c29",
+        "542eee4d4"
+      ],
+      "id": "8.1.4-82"
+    },
+    {
+      "type": "feature",
+      "category": "marketplace",
+      "title": "Separate OpenPortal sending and receiving portal toggles",
+      "description": "Previously, a single toggle controlled OpenPortal pages. Now, separate feature toggles gate the sending and receiving portal pages. Shared pages are hidden when the portal plays neither side, and detail pages are kept out of the provider tabs.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_openportal"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "238f06966",
+        "be8645e36a",
+        "05409b4620",
+        "2c40f7c031",
+        "679d42d9e0"
+      ],
+      "id": "8.1.4-83"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Service accounts closed after project deletion commits",
+      "description": "Service accounts could be closed before a project delete committed, already-closed accounts were not treated as closed, and accounts of removed projects were not reconciled. Accounts are now closed after the delete commits, already-closed accounts count as closed, and removed projects' accounts are reconciled.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "38e1c5c4c"
+      ],
+      "id": "8.1.4-84"
+    },
+    {
+      "type": "improvement",
+      "category": "openstack",
+      "title": "Shared network handling for OpenStack tenants",
+      "description": "Previously, networks shared with every project were not treated as shared with each tenant, and networks shared by unmanaged projects were refreshed in every tenant pull. Now, networks shared with every project are treated as shared with each tenant from tenant creation on, and networks shared by unmanaged projects are refreshed once per cloud. HomePort seeds a VM's first network with a tenant subnet, marks subnets the provider shares in the port, internal IP and backup restore pickers, and shows nameless subnets by their CIDR.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_openstack"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "1607065ea",
+        "e42798aaa",
+        "08991786f0",
+        "64de9fef90",
+        "e02257cd8f"
+      ],
+      "id": "8.1.4-85"
+    },
+    {
+      "type": "security",
+      "category": "marketplace",
+      "title": "Site agent configuration and logs visible only to offering managers",
+      "description": "A site agent's configuration and logs are now shown only to those who may change its offering. Separately, an empty request to create a site agent identity used to fail. It is now refused with a validation error.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.marketplace_site_agent"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Requires an authenticated user who can see the offering.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "commits": [
+        "fd090ebf3",
+        "05f131ac0"
+      ],
+      "id": "8.1.4-86"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Site-agent offering type renamed to Marketplace.SiteAgent",
+      "description": "Previously, site-agent offerings used the old offering type name. Now, the type is Marketplace.SiteAgent and existing offerings are migrated. The old value is kept as an alias, and HomePort accepts both values.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migration marketplace 0322 renames the site-agent offering type.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "088c62745",
+        "a45a8bdba3",
+        "db8e3c3847"
+      ],
+      "id": "8.1.4-87"
+    },
+    {
+      "type": "security",
+      "category": "support",
+      "title": "Support attachments, provider helpdesk and ticket routing restricted",
+      "description": "Support endpoints had several access gaps. Attachments now follow their issue's visibility and comment rights. Only offerings the caller may see are accepted on an issue. customer_context lists only recent tickets the provider may open. Provider helpdesk connections are kept to staff and to one source of credentials, and fields that creation reserves for staff stay staff-only on update. Providers can no longer move a routed ticket into another organization or assign inactive agents, and escalated_at is read-only. Saved-filter owners can change their filters. A Jira deletion event deletes an issue only when Jira reports the issue as not found.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.support"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Requires an authenticated user. The Jira deletion fix concerns incoming webhook events.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "commits": [
+        "b413f68fe",
+        "56ec43dd8",
+        "805fe8af6",
+        "902cb1b35",
+        "f83a786fe",
+        "bd36ba38f",
+        "8f16546d9",
+        "ef4b6a328",
+        "d164084e9"
+      ],
+      "id": "8.1.4-88"
+    },
+    {
+      "type": "feature",
+      "category": "support",
+      "title": "Support tickets drafted from Matrix chat threads",
+      "description": "Previously, a support ticket could not be created from a Matrix chat thread. Now, a ticket can be drafted from a thread and edited before it is sent, and chat commands are available in the composer. Plain-text issue descriptions and comments keep their line breaks.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.matrix_chat"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migration matrix_chat 0013 adds ticket drafts.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "6fafea97f",
+        "30e068aa02",
+        "e801a53ecf"
+      ],
+      "id": "8.1.4-89"
+    },
+    {
+      "type": "feature",
+      "category": "reporting",
+      "title": "Table and chart PDF exports rendered on the server with Typst",
+      "description": "Previously, PDF exports of tables and charts were rendered in the browser. Now, they are rendered on the server with Typst.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend",
+        "docker"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "e1e836bcc",
+        "c62647f32b"
+      ],
+      "id": "8.1.4-90"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Table exports add JSON format and cancellation",
+      "description": "Previously, table exports could not be cancelled, had no JSON format, and had an Apply table filters toggle. Now, JSON is available, an export can be cancelled and stops when its dialog closes, and exports always keep the table's scope.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "8a7fd939bc",
+        "5b277466e7",
+        "6fb9558d2a"
+      ],
+      "id": "8.1.4-91"
+    },
+    {
+      "type": "improvement",
+      "category": "openstack",
+      "title": "Tenant moves carry their objects and background pulls import external resources",
+      "description": "Previously, moving a tenant left its networks, ports, routers and other objects behind, and servers and volumes created outside Waldur were not imported automatically. Now, a tenant's objects and offerings move with it, and the background tenant pull imports servers and volumes created outside Waldur.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_openstack",
+          "waldur_mastermind.marketplace_openstack"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations waldur_openstack 0089 and marketplace_openstack 0021 move existing tenant objects and offerings to the tenant's project.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "14206af85",
+        "14411d318"
+      ],
+      "id": "8.1.4-92"
+    },
+    {
+      "type": "improvement",
+      "category": "identity",
+      "title": "User administration improvements",
+      "description": "Previously, non-staff users could choose any API token lifetime, staff could not set a user's e-mail directly, users with uppercase usernames could not be edited, and staff could not accept invitations for others. Now, staff can cap the token lifetime non-staff users may choose, and HomePort offers only the allowed lifetimes. Staff can set a user's e-mail directly, users with uppercase letters in their username can be edited, and staff can accept a user invitation on behalf of a named user. Nationality, organization type and assurance membership restrictions are now saved.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "f5146515a",
+        "c05d79f161",
+        "7f2675acb",
+        "7bb9668d9a",
+        "c85a49ea74",
+        "e590d8be0",
+        "53fa42081"
+      ],
+      "id": "8.1.4-93"
+    },
+    {
+      "type": "security",
+      "category": "infrastructure",
+      "title": "VMware consoles and inventory restricted",
+      "description": "A VMware VM's web console is now opened only for those who may change the VM: the organization owner, a project manager, a project admin or staff. The remote console (VMRC) is staff-only, and HomePort offers it to staff only. A VMware settings object's inventory is shown only to those who may use it.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_vmware"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "high",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Requires an authenticated user who can see a VMware VM or settings object.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "commits": [
+        "7c47ed984",
+        "9f9d0c4a2",
+        "6a54d7a66",
+        "c568cf12c7"
+      ],
+      "id": "8.1.4-94"
+    }
+  ],
+  "since_previous": [
+    {
+      "type": "feature",
+      "category": "ai_assistant",
+      "title": "AI assistant tools and log metrics",
+      "description": "Previously, the AI assistant could not look up resources, projects, orders and invoices, and its logs did not record cache usage. Now, it has tools for these lookups. Logs record prompt-cache reads and writes, and HomePort shows them with a ratio. The anonymous chat KPI shows the no-result search rate, and anonymous discovery has access-guidance rules.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.chat"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations chat 0019 (search outcome) and 0020 (cache tokens).",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "b35bef276",
+        "b4bf1e04c",
+        "e89f6cdf01",
+        "255663bc9",
+        "f6214d853"
+      ],
+      "id": "8.1.4-4"
+    },
+    {
+      "type": "feature",
+      "category": "support",
+      "title": "Attachments forwarded between routed tickets and provider copies",
+      "description": "Previously, attachments were not carried between a routed ticket and its provider copy. Now, they are. The helpdesk is e-mailed when an organization or project admin comments on a support request. Ticket comments go to the ticket's own backend and fail gracefully. A support request about an offering opens without its provider as the organization.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.support"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migration support 0028 adds attachment forwarding.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "548d20f80",
+        "610cac3679",
+        "56c57088e",
+        "4180a1087",
+        "e53a04e59a"
+      ],
+      "id": "8.1.4-6"
+    },
+    {
+      "type": "improvement",
+      "category": "notifications",
+      "title": "Browser event consumers expire when their tab is gone",
+      "description": "Previously, realtime event consumers registered by browser tabs stayed after the tab closed. Now, HomePort registers them as ephemeral and a periodic task expires them. The event consumer settings are shown on the PubSub health tab.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migration logging 0031 adds the ephemeral flag to event consumers.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "6f7d9f7ff",
+        "f5d45703a1",
+        "a3ad195c4e"
+      ],
+      "id": "8.1.4-10"
+    },
+    {
+      "type": "feature",
+      "category": "ui",
+      "title": "Bulk actions in the admin offerings list",
+      "description": "Previously, offerings in the admin list had to be changed one at a time. Now, several offerings can be selected and moved, paused or assigned to a group at once. The offerings filter shows the selected service provider.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "01ff01593f",
+        "29e81476f1"
+      ],
+      "id": "8.1.4-11"
+    },
+    {
+      "type": "fix",
+      "category": "infrastructure",
+      "title": "Core backend reliability fixes",
+      "description": "Several core bugs are fixed. Celery workers now recover from database connections the server dropped. Failed GitHub tag checks are cached, and changelog fetch failures are logged as warnings. User action task failures are now visible. UUID event filters match events filed on a project's or organization's feed. An object that stays erred keeps its error message. HOMEPORT_URL and a link's path are joined with exactly one slash.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "3fd7d17ff",
+        "fdcfb25b8",
+        "830105f62",
+        "4d0dda203",
+        "bee667d51",
+        "7e1715fae"
+      ],
+      "id": "8.1.4-12"
+    },
+    {
+      "type": "fix",
+      "category": "policy",
+      "title": "Cost policy evaluation fixes",
+      "description": "Several cost policy evaluation bugs are fixed. Credit compensation is now left out of policies that ignore credit, and HomePort no longer offers credit fixes for them. Editing a fired policy applies and resets the changed actions. A downscale other policies still want is kept, and removed SLURM actions are lifted. Organization policies deduct only usage compensation. Resource creation is checked against the policy's own credit gates. Organizations are re-evaluated when a credit's offering list changes.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migration invoices 0036 marks existing credit compensation items.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "8a23451ec",
+        "22dc1789c6",
+        "2a64a240b",
+        "0a1081ada",
+        "d04f715ac",
+        "200aac6a0",
+        "701987ed0"
+      ],
+      "id": "8.1.4-13"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Dated usage reports from offering managers and provider revenue fraction",
+      "description": "Previously, offering managers could not submit dated usage reports, and service provider revenue was returned without its fraction. Now, offering managers can submit dated usage reports, and revenue is returned with its fraction.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "654d1c91e",
+        "bab1c02c2"
+      ],
+      "id": "8.1.4-18"
+    },
+    {
+      "type": "improvement",
+      "category": "auth",
+      "title": "Dedicated permissions for invoices, accounting and reporting",
+      "description": "Previously, access to invoices, accounting and organization reporting followed fixed roles. Now, invoice access is gated on INVOICE.LIST. Accounting is gated on CUSTOMER.VIEW_ACCOUNTING, granted to owners and their clones. Organization reporting is shown to roles with CUSTOMER.VIEW_REPORTING, granted to owners and readers. Organization owners can also manage their service provider's team.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend",
+        "docker"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migration permissions 0038 adds the INVOICE.LIST permission.",
+          "automatic": true
+        },
+        {
+          "type": "review",
+          "description": "Check custom roles: grant INVOICE.LIST, CUSTOMER.VIEW_ACCOUNTING or CUSTOMER.VIEW_REPORTING where those roles should keep invoice, accounting or reporting access.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "3f43726eb",
+        "c9c6d9266",
+        "20cb898d86",
+        "8577206f6",
+        "440eb015cc",
+        "bdba2310a"
+      ],
+      "id": "8.1.4-19"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Dependency updates and cleanup",
+      "description": "Previously, several dependencies had open OSV scan findings or were unmaintained. Now, backend dependencies are bumped (pyasn1, pypdf, dnspython, msgpack, fastmcp-slim, setuptools, djangorestframework 3.18.3, Pillow, certifi, aiohttp 3.14.5). The inactive django-fsm is replaced by django-fsm-2, django-jsoneditor is replaced by a local admin JSON widget, and unused django-stubs-ext and ua-parser are dropped. Frontend dependencies are bumped (fast-uri, undici, vite, markdown-it, glob, minimatch, vitest, Storybook), and an unfixable deepmerge advisory is suppressed in the scanner.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "59829234a",
+        "48bd62715",
+        "d27c6ef3d",
+        "c8417e6e9",
+        "33b515f2e",
+        "d39a3924c",
+        "f2206d4be",
+        "94cbfe5aa",
+        "773a946b7",
+        "960c19c6c",
+        "ed0b03ca6c",
+        "9f477746a0",
+        "8be9da2729",
+        "0afcaab26b",
+        "71e9909cbf",
+        "71683bb40b"
+      ],
+      "id": "8.1.4-20"
+    },
+    {
+      "type": "feature",
+      "category": "invoices",
+      "title": "Estimated volume discounts and upcoming affiliate fee on open invoices",
+      "description": "Previously, open invoices did not show volume discounts until they were final. Now, open invoices show estimated volume discounts, marked as estimates, and the upcoming affiliate fee.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "8bbf69caa",
+        "b3aa18ba23"
+      ],
+      "id": "8.1.4-21"
+    },
+    {
+      "type": "improvement",
+      "category": "auth",
+      "title": "Every API endpoint declares who may call it",
+      "description": "Previously, the rule for who may call an endpoint lived in scattered checks and was not described anywhere. Now, every route declares who may call it through described permission checks, filter backends and access declarations. The rule appears in the OpenAPI schema, and CI fails when a route declares nothing. This covers users, core, permissions, structure, marketplace, support, onboarding, passkeys, logging, chat, billing, invoices, policy, OpenStack, Rancher, VMware, AWS, DigitalOcean, OpenPortal, site agent, metrics, Matrix, feedback, booking, LEXIS and the authentication plugins.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "8ef5211c5",
+        "057a899b1",
+        "91690ad76",
+        "c53c115a6",
+        "9c797f6ec",
+        "a459e7e8b",
+        "3e5ed0ae4",
+        "5a51220d9",
+        "685ecd21f",
+        "dd2de2337",
+        "599d4c329",
+        "bd978296f",
+        "ecadc69d4",
+        "98845836f",
+        "300c25b60",
+        "25771d5a4",
+        "16cb62f39",
+        "ec4ef786c",
+        "4678fc1ef",
+        "c2f518119",
+        "b7a1a655e"
+      ],
+      "id": "8.1.4-24"
+    },
+    {
+      "type": "feature",
+      "category": "auth",
+      "title": "Global permission scope for site-wide roles",
+      "description": "Previously, roles could only be granted on an organization, project, offering or similar scope. Now, a global scope supports site-wide roles. Staff can create and grant them from the role and affiliation screens, and assign roles to a user from a staff view. A site-wide project role works on project paths. scope_type filters match the public scope names, and list_users matches a role and its organization copies.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "highlight": true,
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migration permissions 0036 adds the global role scope.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "eca5183d8",
+        "447ac8618",
+        "f27e7d027f",
+        "3ea92c675a",
+        "5803a8e723",
+        "d6ff93ef44",
+        "1ed01154a"
+      ],
+      "id": "8.1.4-26"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "HomePort hides actions and pages the API would refuse",
+      "description": "Previously, HomePort showed actions and pages that then failed with permission errors. Now, it hides public offering links the route guard would refuse, delete actions the API would refuse, staff-only pages from support users, the user Audit log tab and IP column from viewers who cannot read them, and project Credit edit buttons from users the API refuses. Project settings tabs are gated on the permission each tab needs. Users with call, proposal or offering roles are no longer told they have no organization. Staff impersonating a user see the API token when it is concealed.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "3a641155af",
+        "b34fa2f9bb",
+        "cb2f7effe7",
+        "51724b42f3",
+        "504262d537",
+        "b8022d4022",
+        "ca366e330d",
+        "025af7282a"
+      ],
+      "id": "8.1.4-31"
+    },
+    {
+      "type": "fix",
+      "category": "ui",
+      "title": "HomePort UI fixes",
+      "description": "Several HomePort bugs are fixed. Chrome page translation no longer crashes React with removeChild errors, and Sentry events from machine-translated pages are tagged. The landing page no longer crashes with \"Converting circular structure to JSON\". The cookie consent dialog no longer reopens after close or accept. Bulk invites no longer stall on the same e-mail across projects, and the invite dialog shows why Continue is blocked. Organization credit is formatted in the project credit dialog. The multi-select input stays mounted when the first value is selected. Wizard step indicators and order steps on mobile work again. Location search runs on Enter instead of querying Nominatim as you type. The maintenance announcement bar is reworked, and open maintenance windows show as in progress. Notification event groups get readable titles.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "2a30af05c5",
+        "ecdbb42992",
+        "d1f3df1b65",
+        "b07a6f6dd2",
+        "8638cd3e0c",
+        "3a117319c0",
+        "cac9b74448",
+        "a6138e5e23",
+        "8883be9ecd",
+        "62bdeb8e56",
+        "2498162088",
+        "0273464183",
+        "c72c77f935",
+        "78491144a4"
+      ],
+      "id": "8.1.4-33"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "HomePort UI moves from Bootstrap and Metronic to waldur-ui",
+      "description": "Previously, HomePort relied on react-bootstrap, Bootstrap utilities and Metronic styles. Now, react-bootstrap is removed. Cards, modals, form inputs, breadcrumbs, the app header and page layout use waldur-ui components and Tailwind on a three-layer design token system, and detail views use an accessible PropertyList. Layouts the migration broke are restored.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "f4f62b3b6b",
+        "a2ef824206",
+        "852a24aa33",
+        "681f8fc034",
+        "c0af05b879",
+        "b3a13db3b1",
+        "3e1ea8c1c0",
+        "c50815affa",
+        "135dd12292",
+        "d4efde1f80",
+        "6e9ed113a4",
+        "3b71ba6e5c",
+        "999f8b5399"
+      ],
+      "id": "8.1.4-34"
+    },
+    {
+      "type": "feature",
+      "category": "slurm",
+      "title": "HPC workspace on FirecREST v2",
+      "description": "Previously, HPC resources had no in-portal workspace. Now, a FirecREST v2 HPC workspace provides jobs, files, insights, job performance, PDF job reports and maintenance sync, with an AI assistant integration. Offerings with only slurm-monitor get a read-only workspace. The assistant's job card carries the job's program as a file and can show the script beside the full-screen assistant. Jobs submitted from the assistant appear in the HPC jobs table. Maintenance windows can name affected partitions.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_firecrest"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "highlight": true,
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations waldur_firecrest 0007 (removes the Job model) and marketplace 0323 (maintenance affected partitions).",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "0e3a46724",
+        "ca35bd45f",
+        "009b00aa7",
+        "760098b24b",
+        "253cb2c774",
+        "7651c227b7",
+        "36fc859615"
+      ],
+      "id": "8.1.4-36"
+    },
+    {
+      "type": "fix",
+      "category": "identity",
+      "title": "Identity Bridge remove leaves users outside the ISD untouched",
+      "description": "An Identity Bridge remove affected users outside the identity source domain (ISD). It now leaves them untouched.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_auth_social"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "af21b8ee4"
+      ],
+      "id": "8.1.4-37"
+    },
+    {
+      "type": "security",
+      "category": "auth",
+      "title": "Identity provider tokens are encrypted, short-lived and revoked on logout",
+      "description": "Tokens from identity providers were stored without encryption and kept after logout, deactivation and deletion. They are now encrypted at rest, kept only while needed, and revoked and removed on logout, deactivation and deletion. For downstream services, the user's token is exchanged for an audience-restricted one.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_auth_social"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "high",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Stored identity provider tokens could be exposed to anyone with database access, and stayed valid after the user logged out.",
+        "mitigation": "Upgrade to 8.1.4. The migration encrypts existing tokens."
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migration waldur_auth_social 0018 encrypts stored OAuth tokens.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "101cda32a",
+        "1d792c944",
+        "fbae475cf"
+      ],
+      "id": "8.1.4-38"
+    },
+    {
+      "type": "security",
+      "category": "auth",
+      "title": "Impersonation header is rejected on authentication paths that ignore it",
+      "description": "Some authentication paths silently ignored the impersonation header, so the request ran as the caller instead of the intended user. Those paths now reject the header. HomePort rolls the impersonation back when the backend refuses it.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Affects staff who use impersonation.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "commits": [
+        "919dfaa57",
+        "6791298bb1"
+      ],
+      "id": "8.1.4-39"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "In-house settings store replaces django-constance",
+      "description": "Previously, runtime settings were stored with django-constance, and the Helm chart rendered every setting. Now, an in-house settings store replaces it, and existing constance values are imported by migration. Settings the deployment applies from a file are locked against edits in the admin. The Helm chart renders only the settings the operator set. The Helm Matrix cleanup clears settings from whichever settings table exists.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "helm"
+      ],
+      "impact": {
+        "risk": "high"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "highlight": true,
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations configuration 0001\u20130003 create the settings store, import existing constance settings and add the locked flag.",
+          "automatic": true
+        },
+        {
+          "type": "review",
+          "description": "Check Helm values after upgrading: only settings explicitly set by the operator are rendered, and settings applied from a file are locked in the admin.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "af4cae4ea",
+        "2fd2db682",
+        "ea535be",
+        "0ed8a6b"
+      ],
+      "id": "8.1.4-40"
+    },
+    {
+      "type": "security",
+      "category": "marketplace",
+      "title": "Marketplace offering and catalog data shown only to callers who may see it",
+      "description": "Several marketplace endpoints exposed data beyond what the caller could see elsewhere. A service provider's offerings list, plan components, offering groups, category component usages, offering roles and plan usage reports now follow the public and provider offering visibility rules. Who sees an offering's secret options is now decided per offering. Provider credentials are kept out of a per-tenant offering's service attributes. Offering consents can no longer be edited or deleted through the API.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "high",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Requires an authenticated user.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "commits": [
+        "2b97e4620",
+        "404a29380",
+        "b4a308c7d",
+        "828ba0712",
+        "7d1f89937",
+        "8d021f647",
+        "f93126152",
+        "c9716be3f",
+        "7c602d4b2"
+      ],
+      "id": "8.1.4-44"
+    },
+    {
+      "type": "security",
+      "category": "marketplace",
+      "title": "Marketplace order, resource and usage actions restricted to authorized callers",
+      "description": "Several marketplace actions accepted callers without the required rights. The public set_usage API now accepts usage only from the resource's provider. Only staff, not support, can create auto-approval rules without APPROVE_ORDER. Only those who may place an order can change its purchase order. Resource GLauth exports are gated on the offering's integration permission and dropped from consumer resources. An order's resource is hidden where the resource views hide it. Resource team routes are gated like list_users, and reallocation targets are checked like update_limits checks its resource. Only those who manage a project can create resources in it through the API, and plugin resources are concealed as the consumer resource view conceals them. HomePort leaves out the usage card's user filter when the team route refuses the caller.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "high",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Requires an authenticated user. Usage submission requires a signed public API request.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "commits": [
+        "c1eb34307",
+        "2ffb7279d",
+        "922dcece1",
+        "87bc37639",
+        "d308924f8",
+        "1083507fd",
+        "25c139e8f",
+        "759b36bc38",
+        "431eb8e5f",
+        "c133f1947"
+      ],
+      "id": "8.1.4-45"
+    },
+    {
+      "type": "fix",
+      "category": "ui",
+      "title": "Matrix chat room handling fixes",
+      "description": "The chat header, timeline and active room could fall out of sync. Only the first page of a user's Matrix rooms was read. The view that did not own the active room showed an unusable chat. All three are fixed.",
+      "scope": "plugin",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.matrix_chat"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "004afe7c42",
+        "8e199da5ea",
+        "1a096177f4"
+      ],
+      "id": "8.1.4-47"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Members' offering users created when an offering allows it",
+      "description": "Offering users for project members were not created when an offering was allowed to create them. They are now created.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "f09b257f2"
+      ],
+      "id": "8.1.4-50"
+    },
+    {
+      "type": "security",
+      "category": "marketplace",
+      "title": "Network access rules applied to stats and to service provider lookups",
+      "description": "Resources that network (access subnet) rules hide still counted in organization and project stats. Access subnet resource impact ignored the organization's network restriction. Organizations found through a service provider role bypassed the portal network rule. All three now apply the network rules.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Affects deployments that use access subnet restrictions.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "commits": [
+        "c6f759d20",
+        "e8b3bf8a4",
+        "293cbd968"
+      ],
+      "id": "8.1.4-53"
+    },
+    {
+      "type": "security",
+      "category": "identity",
+      "title": "Onboarding verifications and justifications protected from tampering",
+      "description": "Onboarding records could be changed after review or accessed across users. A verification's checklist answers and justification are now kept as staff reviewed them. A justification of another user's verification is answered as if it did not exist. A justification's verification is set only when it is created. A verification is validated against its own user, also when staff run it. Only staff can change onboarding question metadata. The company is locked once a verification is verified or escalated. Register checks go to manual review when the identity was typed, and HomePort tells users so.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Requires an authenticated user who takes part in organization onboarding.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "commits": [
+        "6005fe9c3",
+        "e74c9bc25",
+        "bdb3bc215",
+        "60338607f",
+        "d01e5e150",
+        "503c10dda",
+        "818cc7ecf",
+        "daa4ed2d6",
+        "f0644bded0"
+      ],
+      "id": "8.1.4-57"
+    },
+    {
+      "type": "security",
+      "category": "marketplace",
+      "title": "OpenPortal data limited to its project and organization",
+      "description": "OpenPortal user and project info, associations, user usage, project templates and managed projects are now shown only to the related project, organization or visible user. A new project template is limited to organizations the caller's roles reach.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_openportal"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Requires an authenticated user.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "commits": [
+        "6e1bd9235",
+        "70cb2e1bd",
+        "d33c07541",
+        "db3384f57"
+      ],
+      "id": "8.1.4-58"
+    },
+    {
+      "type": "security",
+      "category": "openstack",
+      "title": "OpenStack networking, statistics and tenant migration permissions tightened",
+      "description": "Several OpenStack endpoints allowed users without the right rights. Non-shared external networks are now shown only to their provider, staff and support. Image and flavor usage statistics are limited to staff and support. Only those who manage a tenant can create ports in it, and HomePort offers Create port only to them. Only those who manage a project can change or delete its routers, load balancers and networks, or upload images to its tenants. Network share edits are refused (another share is a delete plus a create). The server group collection create, which could only fail, is closed. Tenant migration requires ORDER.CREATE, and only its creator or staff can delete a migration.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_openstack",
+          "waldur_openstack_replication",
+          "waldur_mastermind.marketplace_openstack"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "high",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Requires an authenticated user with access to an OpenStack project or tenant.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "commits": [
+        "c53129a54",
+        "5e1b21d2c",
+        "2c7e01f7f",
+        "8f084509fc",
+        "8c22023e4",
+        "a904dc03d",
+        "b5c9ff39f",
+        "31da989c5",
+        "5fd34bc7d"
+      ],
+      "id": "8.1.4-60"
+    },
+    {
+      "type": "security",
+      "category": "marketplace",
+      "title": "Order callback and backend URLs are validated before use",
+      "description": "Order callback URLs were stored and called without checks. The BackendURLValidator used by OpenStack, Rancher, VMware and marketplace serializers was never instantiated, so its URL checks did not run. Callback URLs are now checked before they are stored and before they are sent, and the backend URL validator now runs.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Requires an authenticated user who can submit orders with callback URLs or edit service settings.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "commits": [
+        "3bc5af688",
+        "adb76aec5"
+      ],
+      "id": "8.1.4-62"
+    },
+    {
+      "type": "feature",
+      "category": "invoices",
+      "title": "Organization credit split into paid, granted and earned lots",
+      "description": "Previously, organization credit was a single balance. Now, it is split into paid, granted and earned lots. HomePort shows the lots and lets staff top up and reclassify credit.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migration invoices 0037 adds credit lots.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "1cec73134",
+        "9336d6cd68"
+      ],
+      "id": "8.1.4-63"
+    },
+    {
+      "type": "feature",
+      "category": "marketplace",
+      "title": "Per-period and all-time spending limits on usage-based components",
+      "description": "Previously, usage-based components had only an unenforced usage limit. Now, providers choose which calendar periods (day, week, month, quarter, year, or an all-time limit that never resets) customers may cap, each with an optional default and maximum. Customers set limits when ordering and change them later with set_spending_limits, without an order or approval. A reached limit applies the offering's action_on_usage_limit until the limit resets. Integrations can report usage per day. Daily reports are bounded in size, and grace-period or cost-policy pauses are marked as usage-limit pauses too. HomePort adds the provider settings, order fields, a Change spending limits action, and per-period status in the Usage tab and components panel. It also states what a reached limit does on each offering.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "highlight": true,
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations marketplace 0308 (spending limits) and 0318 (API key usage history).",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "0c7e95f33",
+        "84a53e30b",
+        "630bca63a",
+        "4dcf32145",
+        "31267e0d3",
+        "b36713533d",
+        "48258e16d1",
+        "2a9f69f483",
+        "43f53a321d",
+        "ddda35ab56",
+        "02ba7fbd13",
+        "ea6b666eb0",
+        "97c4a0eb1c",
+        "eae6324ec4",
+        "373d2801ab",
+        "ae1ebbac03"
+      ],
+      "id": "8.1.4-64"
+    },
+    {
+      "type": "security",
+      "category": "auth",
+      "title": "Personal access token scopes and bindings are enforced everywhere",
+      "description": "A personal access token without the staff or support scope could still act with its owner's staff or support role in many checks. Token bindings were also not applied to several paths. Staff checks now require the token's staff scope, and a token without the staff or support scope reads and writes as the user without that role. Scopes and bindings now also apply to order validation, review assignment, resource change request decisions, end-date change reviews, access subnets, service settings credentials, identity provider and helpdesk credentials, reallocate_limits targets, credits, role checks, soft-deleted projects and the other_users project list.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "high",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Requires a personal access token issued by a staff or support user without the matching scope.",
+        "mitigation": "Upgrade to 8.1.4. Integrations that relied on a token without the staff or support scope acting as staff must use a token with that scope."
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migration core 0054 adds the TokenScopedUser model.",
+          "automatic": true
+        },
+        {
+          "type": "review",
+          "description": "Check automation that uses personal access tokens: tokens without the staff or support scope no longer get staff or support access.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "4bcd62bf0",
+        "079213a89",
+        "59828a49a",
+        "3d0304059",
+        "862e5b1bd",
+        "51307e0ee",
+        "9177dc98f",
+        "88213ea34",
+        "6834966e6",
+        "25ed78939",
+        "951c60201",
+        "d528850ee",
+        "97a0a671b"
+      ],
+      "id": "8.1.4-66"
+    },
+    {
+      "type": "security",
+      "category": "identity",
+      "title": "Project, user and core permission fixes",
+      "description": "Several core write paths had permission gaps. A project's customer can no longer be changed through PATCH or PUT. Only staff can create, change and delete notification templates. Only a key's owner and staff can delete an SSH key. An organization's project checklist template is shown only to those who may create projects there. Project metadata checklists honour PROJECT.UPDATE_METADATA. Only staff can recalculate every user's actions. Terms of Service acceptance is recorded only from the user themselves and is logged, and HomePort sends consent only from the Terms checkbox. Profile details are locked according to the edited user. Support users are read-only on other users' hooks and onboarding records.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Requires an authenticated user.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migration permissions 0037 adds the PROJECT.UPDATE_METADATA permission.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "ec40ce90a",
+        "f5310cc40",
+        "4d82b2298",
+        "ee5abf332",
+        "58f53a378",
+        "7c1bc8495",
+        "8b7367238",
+        "611c4b3fbf",
+        "fb16ed407",
+        "f5844da14"
+      ],
+      "id": "8.1.4-71"
+    },
+    {
+      "type": "security",
+      "category": "infrastructure",
+      "title": "Rancher clusters, catalogs and workloads require the right administrator access",
+      "description": "Rancher objects could be changed by users without the right rights or moved out of their scope. Catalog changes are now restricted to staff and project administrators. Keycloak group memberships require project administrator access, and the sync binds groups only to their own cluster or project. Deploying an application requires administering the target cluster. Setting a cluster's security group rules requires cluster administrator rights. Workloads, ingresses, services, catalogs and cluster VM projects keep their placement on update, and the Rancher id of applications, ingresses and services is read-only. A managed cluster gets public IPs only from its own load balancers. Managed Rancher resources are shown only to those the consumer resource routes show them to.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_rancher",
+          "waldur_mastermind.marketplace_rancher"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "high",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Requires an authenticated user with access to a Rancher project or cluster.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "commits": [
+        "c1a2960b4",
+        "c697a1597",
+        "667d08af3",
+        "955efc237",
+        "5121eee5e",
+        "6aeae192d",
+        "109f69938",
+        "ae76d9a7a",
+        "0d7134129",
+        "f2651c795",
+        "4ad4f73b1",
+        "712ff7d90"
+      ],
+      "id": "8.1.4-76"
+    },
+    {
+      "type": "security",
+      "category": "marketplace",
+      "title": "Remote Waldur client refuses internal addresses and bounds remote calls",
+      "description": "The remote Waldur client used by remote offerings could be pointed at internal addresses, echoed remote responses back to callers, and made unbounded calls. It now refuses internal addresses in every form, stops echoing remote response bodies, and limits remote calls by page count, time and size. Refused URLs all get the same answer.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.marketplace_remote"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "high",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Requires a user who can configure a remote Waldur offering or import from a remote Waldur URL.",
+        "mitigation": "Upgrade to 8.1.4. Until then, restrict who can configure remote offerings."
+      },
+      "commits": [
+        "0943f1017",
+        "f0ac4a975"
+      ],
+      "id": "8.1.4-77"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Resource API key management improvements",
+      "description": "Previously, only managers could rotate a key, one person could hold several keys on one resource, an empty model list meant all models, keys had no description, and keys could be requested before the resource was provisioned. Now, a key's assignee can rotate it. A second key for the same person on the same resource is refused. An empty model list means no models and * means every model, and HomePort adds an All models checkbox. Keys can carry a description. Key requests are refused until the resource has a backend id. The API keys tab appears on managed resources that have no keys yet.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Migrations marketplace 0308\u20130312 (model list semantics and backfill) and 0324 (key description).",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "d7e5318a6",
+        "8ed2701676",
+        "ff518041f",
+        "ab7b33e6b",
+        "024b356248",
+        "4b1f2dd94",
+        "e85ca690a",
+        "7c19ca65ac",
+        "44736a84ec"
+      ],
+      "id": "8.1.4-78"
+    },
+    {
+      "type": "security",
+      "category": "auth",
+      "title": "SAML responses are verified only with identity provider keys from metadata",
+      "description": "SAML response signatures were not limited to the keys in the identity provider's metadata. Responses are now verified only against those keys. A deployment's own SAML_CONFIG settings are kept when the extension composes its settings, and unsolicited SAML responses are accepted by default. The SAML2 login view now documents that unsolicited responses are accepted.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_auth_saml2"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "high",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Affects deployments that use SAML2 login.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "actions": [
+        {
+          "type": "review",
+          "description": "If you rely on rejecting unsolicited SAML responses, check your SAML_CONFIG: unsolicited responses are now accepted by default.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "b34974911",
+        "6a1586c29",
+        "542eee4d4"
+      ],
+      "id": "8.1.4-82"
+    },
+    {
+      "type": "security",
+      "category": "marketplace",
+      "title": "Site agent configuration and logs visible only to offering managers",
+      "description": "A site agent's configuration and logs are now shown only to those who may change its offering. Separately, an empty request to create a site agent identity used to fail. It is now refused with a validation error.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.marketplace_site_agent"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Requires an authenticated user who can see the offering.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "commits": [
+        "fd090ebf3",
+        "05f131ac0"
+      ],
+      "id": "8.1.4-86"
+    },
+    {
+      "type": "security",
+      "category": "support",
+      "title": "Support attachments, provider helpdesk and ticket routing restricted",
+      "description": "Support endpoints had several access gaps. Attachments now follow their issue's visibility and comment rights. Only offerings the caller may see are accepted on an issue. customer_context lists only recent tickets the provider may open. Provider helpdesk connections are kept to staff and to one source of credentials, and fields that creation reserves for staff stay staff-only on update. Providers can no longer move a routed ticket into another organization or assign inactive agents, and escalated_at is read-only. Saved-filter owners can change their filters. A Jira deletion event deletes an issue only when Jira reports the issue as not found.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.support"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Requires an authenticated user. The Jira deletion fix concerns incoming webhook events.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "commits": [
+        "b413f68fe",
+        "56ec43dd8",
+        "805fe8af6",
+        "902cb1b35",
+        "f83a786fe",
+        "bd36ba38f",
+        "8f16546d9",
+        "ef4b6a328",
+        "d164084e9"
+      ],
+      "id": "8.1.4-88"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Table exports add JSON format and cancellation",
+      "description": "Previously, table exports could not be cancelled, had no JSON format, and had an Apply table filters toggle. Now, JSON is available, an export can be cancelled and stops when its dialog closes, and exports always keep the table's scope.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "8a7fd939bc",
+        "5b277466e7",
+        "6fb9558d2a"
+      ],
+      "id": "8.1.4-91"
+    },
+    {
+      "type": "security",
+      "category": "infrastructure",
+      "title": "VMware consoles and inventory restricted",
+      "description": "A VMware VM's web console is now opened only for those who may change the VM: the organization owner, a project manager, a project admin or staff. The remote console (VMRC) is staff-only, and HomePort offers it to staff only. A VMware settings object's inventory is shown only to those who may use it.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_vmware"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "high",
+        "affected_versions": "8.1.3 and earlier",
+        "exploitability": "Requires an authenticated user who can see a VMware VM or settings object.",
+        "mitigation": "Upgrade to 8.1.4."
+      },
+      "commits": [
+        "7c47ed984",
+        "9f9d0c4a2",
+        "6a54d7a66",
+        "c568cf12c7"
+      ],
+      "id": "8.1.4-94"
+    }
+  ],
+  "base_stable_version": "8.1.3",
+  "previous_version": "8.1.4-rc.6"
+}
