@@ -53,6 +53,11 @@ This release adds spending limits per period (day, week, month, quarter, year an
 - **Waldur Helm**: [12 commits](https://github.com/waldur/waldur-helm/compare/8.1.3...8.1.4) - Chart writes only the settings the operator sets, can scale components to zero, and documents private CA trust
 - **Waldur Docker Compose**: [7 commits](https://github.com/waldur/waldur-docker-compose/compare/8.1.3...8.1.4) - Maintenance updates only
 
+### Resources
+
+- [OpenAPI Schema](../API/waldur-openapi-schema-8.1.4.yaml)
+- [API changes](https://api-docs.waldur.com/8.1.4/integrator-guide/APIs/api-changes/waldur-openapi-schema-8.1.4-diff/)
+
 ---
 
 
