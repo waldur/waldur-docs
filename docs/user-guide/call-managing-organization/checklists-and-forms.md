@@ -2,7 +2,7 @@
 
 Waldur uses a flexible checklist system to create customizable forms for proposals, compliance checks, and onboarding workflows. This guide covers how to configure and manage checklists within call management.
 
-![Call COI settings](../img/call_coi_settings.png)
+![Checklists under Administration → Compliance](../img/admin-compliance-checklists.png)
 
 ## Overview
 

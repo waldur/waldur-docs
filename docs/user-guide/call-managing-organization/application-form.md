@@ -19,6 +19,8 @@ applicant sees of all this is described in the [Applicant guide](applicant-guide
 Under **Application form → Project details fields**, choose what the Project details
 step asks the applicant for. Each field is one of:
 
+![Project details fields with the Required, Optional and Not asked settings](../img/cm-proposal-fields.png)
+
 | State | On the form | On submission |
 |---|---|---|
 | **Required** | shown, marked with a red asterisk | blocked while empty |
@@ -28,9 +30,10 @@ step asks the applicant for. Each field is one of:
 **Name** is always required and is not configurable: it identifies the
 proposal and forms the last part of the awarded project's name — a granted
 project is named `<call reference or slug> - <round start date> - <proposal name>`.
-The project duration is not a field the applicant fills in either; it is derived
-from the subscription lengths requested and the call's fixed duration, and shown
-read-only (see [How long a granted project runs](allocation-decision.md#how-long-a-granted-project-runs)).
+**Project duration in days** is likewise a fixed **Required** row, because it states the length
+of the award. The applicant picks it only when the call offers **Durations the applicant chooses
+from**; otherwise it is derived from the subscription lengths requested and the call's fixed
+duration, and shown read-only (see [How long a granted project runs](allocation-decision.md#how-long-a-granted-project-runs)).
 The configurable fields are **Summary**,
 **Description**, **Science domain** and **Supporting documentation**.
 
@@ -63,7 +66,7 @@ checked, and a call with every row empty is open to anyone who can sign in.
 
 | Restriction | Matched against | Values |
 |---|---|---|
-| **Email patterns** | the applicant's email address | regular expressions, for example `.*@(helsinki\.fi\|kth\.se)$` |
+| **Email patterns** | the applicant's email address | regular expressions, for example `.*@(example\.edu\|example\.org)$` |
 | **User affiliations** | the affiliations the identity provider asserts | standard eduPerson values are offered as suggestions; any other value can be typed in |
 | **Identity sources** | the institution that authenticated the applicant, exactly as reported at login | free text — no suggestions, because the value comes from the applicant's home institution rather than from the providers this installation is configured with |
 | **Nationalities** | the applicant's nationality or nationalities | picked from the country list, stored as ISO country codes |
@@ -91,7 +94,7 @@ one. The rows are **not** six independent requirements:
   listed, not just one of them.
 
 The call in the screenshot above therefore admits an applicant who is either
-`faculty` or `staff`, **or** has a `helsinki.fi` or `kth.se` address — and who,
+`faculty` or `staff`, **or** has an `example.edu` or `example.org` address — and who,
 in addition, holds a Finnish, Swedish or Norwegian nationality, comes from an
 organization of type *University*, and carries the *IAP Medium* assurance level.
 
@@ -134,14 +137,16 @@ Eligibility is checked when a proposal is **created**. Two consequences follow:
 - Eligibility does not limit who may join the project once the proposal is
   granted. It gates who may apply, nothing further.
 
-Applicants are not shown the restrictions themselves. A call that has any of
-them carries a warning in the call catalogue — *This call restricts who may
-apply. Check the terms before submitting* — and an applicant who does not
-qualify is refused when the proposal is created, with a message naming the
-restriction that failed. Spell the rules out in the call description or the
+Applicants are not shown the restrictions themselves. An applicant who does not
+qualify sees **Apply to call** disabled with *You are not eligible to apply to this
+call.*, and is refused when the proposal is created, with a message naming the
+restriction that failed. Where applicants reach a call through an offering's
+**Apply for access**, the round list there warns that the call restricts who may
+apply. On deployments that run their calls outside Waldur, **Apply** leads to the
+call's external URL and no eligibility check is made in advance. Spell the rules out in the call description or the
 external URL, so nobody writes a proposal they cannot submit.
 
-The same warning appears when the call-managing organization
+The same applies when the call-managing organization
 [limits proposals per applicant](organization-setup.md#limiting-proposals-per-applicant); that limit
 is checked on creation and again on submission.
 
@@ -160,6 +165,8 @@ was deleted, cannot be submitted until that request is replaced.
 
 The **Template selection** card above the templates sets how many an applicant
 may choose:
+
+![Template selection and resource templates](../img/cm-resource-templates.png)
 
 | Applicants can request | On the applicant's form | Rule |
 |---|---|---|

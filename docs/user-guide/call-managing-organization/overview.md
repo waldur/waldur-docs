@@ -44,13 +44,14 @@ In the course of a call you will meet:
 
 | Role | Part in the process |
 |---|---|
-| **Organisation owner** | Owns the call-managing organisation and appoints call organisers |
+| **Organisation owner** | Owns the call-managing organisation and appoints call organisers; does not create or configure calls without a call role |
 | **Call organiser** | Creates calls in the organisation and oversees all of them |
 | **Call manager** | Configures and runs the calls they are assigned to, drives proposals through the workflow and records the decisions |
 | **Panel member**, **Chair**, **Vice-chair** | Members of the call's panel; steps can be completed by them or by the chair or vice-chair |
-| **Reviewer** | Member of the call's reviewer pool who reviews the proposals assigned to them |
+| **Reviewer** | Member of the call's reviewer pool who reviews the proposals assigned to them; the **Call reviewer** role can also be granted on the call's **Team** tab |
 | **Evaluator role holder** | Holds a role on one proposal, such as rapporteur, defined per call |
 | **Offering manager** | Service provider team that accepts the call's offering requests and, on calls that ask for it, assesses each requested offering |
+| **Offering evaluator** | Member of an offering's team, without managing the offering, to whom offering managers hand their part of a step |
 | **Applicant** | Creates and submits a proposal; the proposal's managers (principal investigators) act for its team |
 | **Staff** | Enables call management for an organisation, manages call templates and checklists, and can act anywhere |
 
@@ -58,9 +59,12 @@ In the course of a call you will meet:
 
 1. **Draft** — the call is created, blank or from a template, and configured: rounds,
    application form, offerings, workflow, team. Nobody can apply yet.
-2. **Active** — once the workflow check finds no errors, a call manager activates it and it
-   appears in the call catalogue. Applicants submit proposals to its open rounds.
-3. **Archived** — the call's workflow steps become read-only.
+2. **Active** — once the workflow check finds no errors, a call manager, call organiser or
+   staff activates it and it appears in the call catalogue. Applicants submit proposals to its
+   open rounds.
+3. **Archived** — the whole call becomes read-only. Archiving a call whose proposals are still
+   in evaluation asks for confirmation (**Archive anyway**), and those proposals stop where they
+   are. An archived call can be activated again.
 
 The calls list groups calls by these states (All / Active / Draft / Archived). See
 [Creating and configuring a call](creating-a-call.md) and

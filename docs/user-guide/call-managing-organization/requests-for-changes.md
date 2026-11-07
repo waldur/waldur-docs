@@ -11,16 +11,21 @@ the applicant can withdraw it.
 A step with **Allow requesting changes** turned on (in the step's settings,
 under **Inputs and visibility**) can send a proposal back to its applicant
 without rejecting it — to fix a missing document or clarify a resource
-request, say. It is not available on the allocation decision or on a step the
-applicant completes.
+request, say. It is available on assessment and decision steps, but not on the
+allocation decision, a step the applicant completes, an assignment step or a
+step that runs once per round.
 
-1. On the proposal, click **Request changes** in the **Progress** panel.
+1. On the proposal, click **Request changes** in the **Current step** panel.
 2. Write a **Message to the applicant**, choose the **Parts the applicant may
    change** — for example *Summary*, *Description*, *Supporting
    documentation*, *Resource requests*, *Project team* or *Compliance
-   checklist* — and optionally a **Due date**.
+   checklist* — and optionally a **Due date**. At a step of an extension or a
+   final report, the parts are that run's own instead: *Form answers* and, in an
+   extension, *Requested end date and resources*.
 
-The proposal stays **In review** on its step. Only the chosen parts become
+![Request changes dialog](../img/cm-request-changes-dialog.png)
+
+The proposal stays **In review** on its step (or, in an extension or final report, stays accepted). Only the chosen parts become
 editable for the applicant, who is notified and sees *Changes requested at
 <step>* with the parts they may edit; they make the changes and click **Submit
 changes**. The step's deadline does not run out while the request is open, and
@@ -36,7 +41,8 @@ acts on it with its full duration again:
   actor is told. Nothing is decided on anyone's behalf.
 
 A step may send the proposal back as often as needed, one open request at a
-time. What the applicant sees is described in the
+time. Steps running alongside each other can each have a request open; the
+applicant answers them together. What the applicant sees is described in the
 [Applicant guide](applicant-guide.md#when-changes-are-requested).
 
 ## Withdrawn proposals

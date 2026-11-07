@@ -12,28 +12,32 @@ To review proposals you need:
 
 ### Creating your profile
 
-1. Navigate to the **My reviews** page from the sidebar
-2. Click **Create profile** in the profile banner
+1. Open your user profile and select the **Reviewer profile** tab — or, on the
+   **My reviews** page, click **Create profile** in the *Reviewer profile required*
+   banner shown above the reviews, assignments, invitations and calls tabs
+2. Click **Create reviewer profile**
 
-![Reviewer profile required](../img/reviewer_my_reviews.png)
+![The Reviewer profile tab of the user profile](../img/reviewer-profile-editor.png)
 
 The profile editor is organised into four tabs:
 
 | Tab | Content |
 |---|---|
-| **Profile info** | Biography, ORCID ID, alternative names, availability status (whether you are available for new review assignments) |
+| **Profile info** | ORCID iD, biography and alternative names, along with the number of reviews you have completed and your average review time |
 | **Affiliations** | Current and past institutional affiliations with type (employment, education, visiting, honorary, consulting), organisation, department, and date range |
 | **Expertise** | Self-declared expertise categories with a proficiency level for each (expert, familiar, basic) |
 | **Publications** | Academic publications with title, authors, venue (journal, conference, preprint, book, thesis, report), and year |
 
-Each list (affiliations, expertise, publications) uses a per-row **Add** dropdown for quick item creation, an inline edit button per row, and a **Bulk remove** action for clearing several rows at once. You can also connect and sync your **ORCID** record to import affiliations and publications automatically.
+A single **Add** menu in the profile header adds an affiliation, expertise or publication. Each list has an inline edit button per row, and you can select several rows and **Remove** them at once. On **Profile info** you can **Connect ORCID** and then **Sync ORCID** to import affiliations and publications automatically, or **Disconnect ORCID**.
 
 !!! tip
     Keep your expertise and affiliations up to date. This data is used for automated reviewer-proposal matching and conflict of interest detection.
 
 ### Publishing your profile
 
-Set the profile to **Published** when ready to receive review invitations. The status is shown as a badge next to your name on the reviews page. Unpublished profiles are not visible to call managers and you will not receive new invitations until the profile is published.
+Click **Publish profile** when ready to receive review invitations. The status is shown as a badge (**Published** or **Not published**) on the profile and on the reviews page. Unpublished profiles are not visible to call managers and you will not receive new invitations until the profile is published.
+
+Where the platform operator approves new profiles, the button reads **Request publication** and the profile shows **Awaiting approval** until the operator decides; **Withdraw request** cancels it, and a declined request is shown with the operator's reason. The operator can also suspend or block a reviewer, who is then offered no new review work.
 
 ## Accepting a pool invitation
 
@@ -43,7 +47,8 @@ tab of your **My reviews** page.
 
 ![Reviewer invitations tab with a pending pool invitation](../img/reviewer-invitations.png)
 
-Each invitation shows the call, the date you were invited, and its status.
+Each invitation shows the call, the date you were invited, when it expires, and
+its status; the tab lists pending invitations by default.
 Opening the invitation link shows the call, who invited you and when the
 invitation expires, along with the call's **COI policy** so you understand the
 rules before joining, and a note that you will be able to disclose conflicts
@@ -68,7 +73,9 @@ Invitation statuses: **Invitation pending** | **Accepted** | **Declined** |
 
 ## Review dashboard
 
-Open **My reviews** from the sidebar. The tabs organise your workload:
+Open **My reviews** from the sidebar (it is called **My tasks** if you hold no
+reviewer or panel member role). The page opens on the **Tasks** tab. The tabs
+organise your workload:
 
 | Tab | Content |
 |---|---|
@@ -77,7 +84,9 @@ Open **My reviews** from the sidebar. The tabs organise your workload:
 | **Assignments** | Pending assignment batches to accept or decline |
 | **Invitations** | Pool invitations awaiting your response |
 | **Evaluator roles** | Proposals on which you hold an evaluator role, such as rapporteur; shown only when you hold one |
-| **Calls** | Calls you are pooled for, with review deadlines |
+| **Calls** | Calls whose reviewer pool you have joined |
+
+![The Tasks tab of My reviews](../img/reviewer-tasks.png)
 
 The reviewer tabs appear once you review for a call — you hold a reviewer or
 panel member role, or have been invited to a pool or assigned a review. Without
@@ -87,7 +96,7 @@ them the page shows **Tasks** alone.
 
 The **Reviews** tab shows all reviews assigned to you with their status (in review, submitted, rejected) and deadlines, alongside your reviewer profile stats (Invitations / In progress / Completed / Avg. review time).
 
-![My reviews with profile stats and review list](../img/scenario_reviewer_dashboard.png)
+![My reviews: profile card, counts and the Reviews tab](../img/reviewer-dashboard-my-reviews.png)
 
 How to evaluate and score one is described in [Reviewing proposals](reviewer-workflow.md#evaluating-a-proposal).
 
@@ -119,8 +128,6 @@ For each assignment, you can:
 
 Shows pool invitations from call managers. You must accept an invitation before you can be assigned proposals.
 
-![Reviewer invitations](../img/scenario_reviews_invitations.png)
-
 ### Evaluator roles
 
 Lists the proposals on which you hold an evaluator role, such as rapporteur: the proposal, its call, your role, whether you are the lead, and your conflict-of-interest status. Click a proposal to open it. When the call asks evaluators to confirm the absence of a conflict, the proposal opens to you only after you choose **Confirm no conflict of interest** from its row's actions menu. See [Working as a rapporteur](reviewer-workflow.md#working-as-a-rapporteur).
@@ -129,7 +136,9 @@ Lists the proposals on which you hold an evaluator role, such as rapporteur: the
 
 ### Calls
 
-Shows calls you are pooled for, with their current status and review deadlines.
+Shows the calls whose reviewer pool you have accepted, with your pool status,
+your reviews in progress and completed, your assignments and the date you
+joined; an optional **COI** column counts your conflicts of interest by severity.
 
 ![Reviewer calls with review counts](../img/scenario_reviewer_calls.png)
 

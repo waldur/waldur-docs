@@ -9,22 +9,31 @@ other parts of the configuration have pages of their own, linked from the
 
 Open your call-managing organisation and switch to the **Call management** tab. The **Calls**
 section lists every call your organisation manages, grouped by state (All / Active / Draft /
-Archived). Click a call name to open its configuration.
+Archived). Click a call name to open its **Manage** page, and switch to **Edit** to configure it.
+Expand a call's row for its readiness — including the **Workflow check** verdict — its setup
+and, for a call created from a template, **Created from template**.
 
 ![Calls list](../img/cm-calls-list.png)
 
 ## Creating a call
 
-**Performed by:** Call organiser or Organization owner
+**Performed by:** Call organiser (or staff)
 
 1. Navigate to the **Call management** section, in the organisation dashboard.
 2. Go to the **Calls** section and click **Create call**. It offers two ways to
    start:
-      - **Blank call** — asks for the call's **Name**, **Description**,
-        **External URL** and an optional **Compliance checklist**.
+      - **Blank call** — asks for the call's **Name** and an optional
+        **Compliance checklist**; the rest is filled in on the call's **Edit** page.
       - **From template** — see [Starting from a call template](#starting-from-a-call-template).
 3. Either way the call is created as a **Draft**. Assign its call managers on
    the call's **Team** tab (see [Call team](call-resources-and-team.md#call-team)).
+
+![The Create call menu: Blank call or From template](../img/cm-create-call-menu.png)
+
+**Create call** is also on the **Manage calls** page, which lists the calls of every
+organisation you run calls for; there it asks which organisation the call belongs to. Next to
+it, **Import call** creates a call from an exported call file. A call's actions menu offers
+**Duplicate call** and **Export**, which saves its configuration to such a file.
 
 ### Starting from a call template
 
@@ -46,8 +55,8 @@ scenarios. Staff also see unpublished templates in the dialog, marked
 **Unpublished**. With no template published, the dialog says so: start from a
 blank call, or import a call file.
 
-A call created from a template remembers it: the calls list shows **Created
-from template**, and the call's **Validation → Changes** tab lists how the
+A call created from a template remembers it: its expanded row in the calls list shows
+**Created from template**, and the call's **Validation → Changes** tab lists how the
 call now differs from the template.
 
 For a worked example, see the [Extreme Scale call template](extreme-scale-template.md).
@@ -60,25 +69,27 @@ The call's **Edit** page groups its settings into tabs:
 
 | Tab | Sub-tabs | Described in |
 |---|---|---|
-| **Call** | **General** (name, description, reference code, proposal slug template, external URL), **General configuration**, **Documents** | this page; [Proposal ID configuration](proposal-id-configuration.md) |
+| **Call** | **General** (name, description, reference code, proposal slug template, logo), **General configuration**, **Documents** | this page; [Proposal ID configuration](proposal-id-configuration.md) |
 | **Rounds** | — | [Rounds](call-rounds.md) |
 | **Application form** | **Project details fields**, **Applicant eligibility**, **Applicant data visibility**, **Resource templates** | [Application form](application-form.md) |
 | **Resources** | the call's offerings | [Resources, role mapping and team](call-resources-and-team.md) |
 | **Evaluation workflow** | **Steps & settings**, **Evaluator roles**, **Panels**, **COI settings**, **Reviewer eligibility**, **Matching settings** | [Workflow configuration](workflow-configuration.md), [Conflict of interest management](coi-management.md#configuring-coi-detection), [Reviewer management](reviewer-management.md#configuring-matching) |
-| **Allocation** | **Allocation settings**, **Role mapping** | [Resources, role mapping and team](call-resources-and-team.md#role-mapping) |
+| **Allocation** | **Allocation settings**, **Role mapping** | [Allocation settings](#allocation-settings); [Resources, role mapping and team](call-resources-and-team.md#role-mapping) |
 | **Team** | — | [Resources, role mapping and team](call-resources-and-team.md#call-team) |
 
 Next to **Edit**, the call has a **Manage** page (dashboard, proposals, reviews, reviewer pool,
-reports) and a **Validation** page (see [Checking and activating a call](call-activation.md)).
+resource pools, reports and events) and a **Validation** page (see
+[Checking and activating a call](call-activation.md)).
 
-*Important: The round must be created and configured first. Only after round configuration is
-complete can the call be fully configured and activated.*
+The tabs can be configured in any order. Only activation needs a round: until the call has
+one, the **Rounds** tab carries a warning icon.
 
 ## General settings
 
 The **Call → General** sub-tab holds the call's identity: name, description, reference code,
-an optional external URL, and the proposal slug template used to generate
-human-readable proposal IDs. See
+and the proposal slug template used to generate human-readable proposal IDs, with a card for the
+call's logo. On deployments that run their calls outside Waldur (the `marketplace.call_only`
+feature) it also holds the call's **External URL**, which is then required. See
 [Proposal ID configuration](proposal-id-configuration.md) for slug placeholders.
 
 ![Call general settings](../img/cm-call-general.png)
@@ -123,3 +134,16 @@ On the **Orders** tab:
 ![Call general configuration](../img/call_configuration_general.png)
 
 ![Results publication and undecided-proposal settings](../img/call-results-publication-settings.png)
+
+## Allocation settings
+
+Under **Allocation → Allocation settings**, **Awards past the resource pools** sets how the
+allocation decision is held to the call's resource pools:
+
+![Allocation settings](../img/cm-allocation-settings.png)
+
+- **Soft** — a call manager can approve an award past what remains, with an override and a
+  reason.
+- **Hard** — an award past what remains is refused; only staff may override.
+
+A change affects only later decisions.

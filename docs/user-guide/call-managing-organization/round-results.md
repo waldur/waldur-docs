@@ -11,19 +11,24 @@ held [allocation decisions](allocation-decision.md#held-decisions).
 
 Before its cut-off a round is **Scheduled** or **Open**, derived from its dates.
 Once the cut-off has passed, the round enters a stored lifecycle that the call
-manager drives from the round's **⋮** menu on the call's **Rounds** tab:
+manager drives from the round's **⋮** menu in the **Rounds** section of the call's edit page:
 
 | Stage | Entered | What it means |
 |---|---|---|
 | **Evaluating** | automatically after the cut-off (an hourly job), when the round is closed early, or on the first lifecycle action | The round's proposals are being evaluated |
 | **Deciding** | **Start deciding** | The evaluated batch has gone to the decision body. Optional — results can be published straight from *Evaluating* |
-| **Results published** | **Publish results** | Every decision of the round has been announced |
+| **Results published** | **Publish results** | Every decision of the round has been announced. On a call whose results are [adopted before publication](#recording-adoption), only after the round has been through *Deciding* and its adoption is recorded |
 | **Closed** | **Complete round** | Nothing more happens in the round |
 
 The rounds list shows the stage next to the round's status, and, for call
 managers, a **held** count of decisions recorded but not yet announced. Expand a
 row to see when each stage started, who published the results, the rule for
 undecided proposals and the adoption record.
+
+Besides the lifecycle actions, the menu offers **Close round** (before the cut-off),
+**Allocate in submission order**, **Complete a step for the round**, **Undecided proposals
+rule** and **Record adoption** (**Edit adoption record** once recorded), as far as they apply
+to the round.
 
 ![Rounds list with lifecycle stage and held decisions](../img/call-rounds-lifecycle.png)
 
@@ -35,15 +40,16 @@ active.
 
 ## Publishing a round's results
 
-**Applicants learn the decision** under **Call → General
-configuration** decides when an applicant hears the outcome:
+**Applicants learn the decision** under **Edit → General configuration → Decisions
+and rounds** decides when an applicant hears the outcome:
 
 - **As each decision is made** — completing or rejecting the **Allocation
   decision** step announces the outcome at once, as before.
 - **Together for the whole round** — the decision is recorded but **held**. The
   proposal stays **In review** for the applicant, the notification is not sent,
   and nothing is provisioned. The call team sees the tentative outcome
-  (*Awarded (tentative)*, *Not awarded (tentative)*) in the proposals list. When
+  (*Awarded (tentative)*, *Not awarded (tentative)*, *Decision lapsed (tentative)*)
+  in the proposals list. When
   the round is ready, a call manager publishes its results and every applicant
   of the round is told at the same time.
 
@@ -68,7 +74,8 @@ and publishing again retries it.
 On a call that announces each decision as it is made, **Publish results** holds
 nothing back: it only records the round's stage.
 
-Until results are published, a call manager can take a held decision back with
+Until results are published (or, on a call that requires adoption, until the
+adoption is recorded), a call manager can take a held decision back with
 **Reopen decision** on the proposal — see
 [Held decisions](allocation-decision.md#held-decisions).
 
@@ -103,6 +110,11 @@ its release failed at publication; publish the results again first.
 Where the results must be adopted by another body (a board, for example), record
 it with **Record adoption** on the round: the adoption date, a note and
 optionally the adopting document. It can be recorded at any time after the
-cut-off. While the round still holds its decisions, the adoption note, the
+cut-off.
+
+When **Results are adopted before publication** is set under **Edit → General
+configuration → Decisions and rounds**, adoption becomes a required step: it is recorded
+while the round is **Deciding**, **Publish results** stays disabled until it is, and once it
+is recorded a held decision can no longer be reopened. While the round still holds its decisions, the adoption note, the
 document and the reason for publishing early are shown only to those who may see
 held decisions.

@@ -52,21 +52,21 @@ see [Confirming no conflict of interest before submitting](#confirming-no-confli
 
 ## Finding your assigned proposals
 
-Open **My reviews** from the sidebar. The page opens on the **Reviews** tab,
-which lists every review assigned to you with its proposal, call, due date and
+Open **My reviews** from the sidebar. The page opens on the **Tasks** tab, which
+lists everything waiting for you; the **Reviews** tab lists every review assigned to you with its proposal, call, due date and
 state, alongside your profile stats (Invitations / In progress / Completed /
 Avg. review time). The other tabs are described under
 [Review dashboard](reviewer-guide.md#review-dashboard).
 
-![Reviewer dashboard on the My reviews tab](../img/reviewer-dashboard-my-reviews.png)
+![The Reviews tab of My reviews](../img/reviewer-dashboard-my-reviews.png)
 
 Click a review in the **In review** state to open the proposal and start
 evaluating.
 
 ## Evaluating a proposal
 
-A review opens on the **Reviewer** view. The header shows the proposal name, its
-current state, and its position in the call's workflow (for example
+A review opens on the **Reviewer** view. The header shows the proposal name, the
+state of your review, and the proposal's position in the call's workflow (for example
 *Step 1 of 4: Administrative check*). The **Progress** panel on the right lets
 you jump between sections and holds the **Submit review** and **Send back**
 actions.
@@ -85,12 +85,13 @@ information the call manager expects reviewers to weigh:
 - **Project details** — name, summary, description, science domain and duration.
 - **Resource requests** — the offerings and quantities requested.
 - **Project team** — members and their roles.
+- **Compliance checklist** — the applicant's answers, when the proposal was
+  submitted under a compliance checklist.
+- **Activity** — the proposal's activity.
 
 ![Project details section that a reviewer evaluates](../img/reviewer-proposal-project-details.png)
 
 ![Resource requests section that a reviewer evaluates](../img/reviewer-proposal-resource-requests.png)
-
-![Proposal review detail](../img/scenario_proposal_reviews_detail.png)
 
 To leave feedback on a specific field, click the **Add comment** action next to
 it. Field-level comments are collected alongside your overall score when you
@@ -123,12 +124,15 @@ collects your overall assessment:
   criterion** instead and shows the resulting **Overall score**: the
   criteria's average, weighted by the share each carries (shown next to a
   criterion's name when the shares differ). Every criterion must be rated
-  before you can submit.
+  before you can submit; until then **Submit review** is disabled with
+  *Rate every criterion to submit*.
 - **Comments** — public feedback, shared with the applicant after the decision.
 - **Notes (not visible to user)** — private feedback for the call managers and
   panel only.
 - **I confirm I have no conflict of interest with this proposal** — the COI
-  confirmation toggle (only shown on calls that require it, see below).
+  confirmation toggle (only shown on calls that require it, see below). When
+  the call has its own declaration text, it is shown under *By confirming you
+  declare:* and the toggle reads **I confirm the declaration above**.
 
 Together with the field-level comments — on the project title, summary, description,
 duration, supporting documentation, resource requests and team — these make up your review.
@@ -170,8 +174,9 @@ The review dialog offers two ways to save:
 - **Submit review** — finalises the review and moves it to the *Submitted*
   state. On COI-enabled steps this requires the confirmation toggle to be on.
 
-Use **Send back** on the proposal (rather than the dialog) to return a proposal
-to the applicant or the call manager when it cannot be evaluated as submitted.
+**Send back** in the Progress panel (rather than the dialog) rejects your
+review after you confirm: the review moves to the *Rejected* state and the call
+managers are notified. It does not return the proposal to the applicant.
 
 Your submitted review is your contribution to the call's review step. On calls
 that ask the applicant to respond to the reviews, the applicant reads your
@@ -182,9 +187,10 @@ shows reviewer names to applicants.
 
 Some calls add a **Panel review** step after expert review. Panel members
 consolidate the individual expert reviews into a collective recommendation. The
-panel step is owned by the **panel member** role and is completed from the call's
-proposal workflow rather than the personal **My reviews** page; a panel member
-does not receive individual expert-review assignments. See
+panel step is owned by the **panel member** role and is completed on the proposal
+itself; the contributions and steps waiting for you are listed on the **Tasks**
+tab of your reviews page. A panel member does not receive individual
+expert-review assignments. See
 [Workflow configuration](workflow-configuration.md) for
 how the panel step fits into the overall sequence.
 

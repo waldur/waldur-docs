@@ -12,8 +12,6 @@ Reviewers maintain profiles — biography, ORCID ID, affiliations, expertise, pu
 
 Call managers build a curated pool of reviewers for each call.
 
-![Reviewer dashboard](../img/reviewer_dashboard.png)
-
 ### Building a reviewer pool
 
 **Performed by:** Call manager
@@ -21,14 +19,13 @@ Call managers build a curated pool of reviewers for each call.
 1. Open the call's **Manage** page
 2. Select the **Reviewer pool** tab
 3. Add reviewers using one of these methods:
-    - **By profile**: Search and select from published reviewer profiles
-    - **By email**: Invite reviewers via email who may not yet have accounts
+    - **Invite by email** on the **Pool** tab: invite a reviewer by email address, including someone who may not yet have an account
+    - **Discovery** tab: **Confirm** suggested reviewers, then choose **Send confirmed invitations** (see [Generating suggestions](#generating-suggestions))
+    - Granting a user the call's reviewer role on the call's **Team** tab adds them to the pool directly, as **Accepted**
 
-The **Pool** table lists each reviewer with their acceptance status, review counts, invitation date and assignment load; an **Expertise match** column is available from the column settings, and expanding a row reveals the reviewer's expertise in full.
+The **Pool** table lists each reviewer with their acceptance status, review counts, invitation date and assignment load; optional **COI** and **Expertise match** columns are available from the column settings. Expanding a row shows the reviewer's **Profile**, **COI**, **Affiliations**, **Expertise** and **Publications** sub-tabs.
 
-![Reviewer pool with members and statuses](../img/scenario_pool_overview.png)
-
-![Reviewer pool](../img/cm-reviewer-pool.png)
+![Invite reviewer by email dialog](../img/invite-by-email-dialog.png)
 
 ### Invitation workflow
 
@@ -66,8 +63,22 @@ stops working. A declined invitation cannot be resent. (API: the
 !!! note
     An invitation can be sent by email to someone who has no Waldur account yet; the link carries a secure random token. Opening it still requires signing in.
 
+The row menu also offers **Show reviews** (when the reviewer has reviews on the call)
+and **Copy invitation link**.
+
 A call manager can also force-accept an invitation the reviewer cannot answer — see
 [Force-accepting reviewer pool invitations](coi-management.md#force-accepting-reviewer-pool-invitations).
+
+### Reviewer eligibility and standing
+
+Under **Evaluation workflow → Reviewer eligibility** in the call's **Edit** view
+you can restrict who may review for the call — by email patterns, affiliations,
+identity sources and similar rules, separately from applicant eligibility. A
+reviewer is checked when invited to the pool, when accepting an invitation, when
+suggested, and when given the call's reviewer role; reviewers already in the pool
+are not removed when the rules change. A reviewer whom the platform operator has
+**Suspended** or **Blocked** takes on no new review work either: they cannot be
+invited, force-accepted or chosen for assignments.
 
 ## Conflict of interest (COI) detection
 
@@ -109,11 +120,9 @@ Waldur uses algorithmic matching to suggest optimal reviewer-proposal assignment
 
 ![Matching configuration](../img/scenario_matching_settings.png)
 
-![Matching algorithm settings](../img/scenario_matching_config.png)
-
 ### Generating suggestions
 
-1. In the **Reviewer pool > Discovery** tab, click **Generate matches**
+1. In the **Reviewer pool > Discovery** tab, open the actions menu and choose **Generate matches** (offered only when automated matching is enabled on the platform)
 2. In the **Generate reviewer matches** dialog, choose what to match reviewers against:
     - **Call description** — match against the call's own description
     - **All proposals** — match each reviewer against every proposal
@@ -124,14 +133,14 @@ Waldur uses algorithmic matching to suggest optimal reviewer-proposal assignment
 
 ![Reviewer suggestions with affinity scores](../img/scenario_pool_discovery.png)
 
-The Discovery table has **Reviewer / Affinity / Status / Reviewed by / Actions** columns. Each suggestion row shows:
+The Discovery table has **Reviewer / Affinity / Status / Reviewed by / Actions** columns, plus optional **Keywords**, **Text** and **Match reason** columns. Each suggestion row shows:
 
 - **Affinity score** as a percentage. Hovering the score reveals the **Score breakdown** tooltip — the *Keyword match*, *Text similarity*, and *Combined* components.
 - **Status** — *Awaiting manager review* (newly generated), *Manager approved*, *Manager rejected*, or *Invitation sent*.
 - **Reviewed by** — the manager who last actioned the suggestion.
-- **Expand row** to see the full reviewer profile summary (biography, expertise, recent publications) without leaving the page.
+- **Expand row** to see the reviewer's biography, pool status, when the suggestion was reviewed, any rejection reason, the matched expertise keywords and the best matching proposals with their affinity and COI status. **View profile** in the row menu opens the full profile, publications included.
 
-For each suggestion you can **Confirm** (queue for invitation) or **Reject**, or use **Invite by email** to send a direct invitation to a candidate who is not yet in the pool. Bulk **Confirm all**, **Reject all**, and **Delete all** actions act on the whole table.
+For each suggestion you can **Confirm** (queue for invitation) or **Reject**, or use **Invite by email** to send a direct invitation to a candidate who is not yet in the pool. Confirmed suggestions are invited when you choose **Send confirmed invitations** from the actions menu. The bulk **Confirm all**, **Reject all**, and **Delete all** actions act on the rows you have selected.
 
 ### Reviewer bidding
 
@@ -156,18 +165,24 @@ The **Reviewer pool** panel groups the call manager's reviewer-related views und
 The header buttons on **Assignment batches** are:
 
 - **How it works** — open an explainer of the assignment flow.
-- **Manual assignment** — create a draft batch for a single reviewer with hand-picked proposals.
-- **Generate assignments** — let the matching algorithm build batches from the current reviewer pool and unassigned proposals.
+- **Create assignment** — a menu with:
+    - **Manual assignment** — create a draft batch for a single reviewer with hand-picked proposals.
+    - **Compute affinities** — compute reviewer-proposal affinity scores.
+    - **Generate assignments** — let the matching algorithm build batches from the current reviewer pool and unassigned proposals.
+
+**Compute affinities** and **Generate assignments** are offered only when automated matching is enabled on the platform.
 
 ### Creating a manual assignment batch
 
 **Performed by:** Call manager
 
-1. Click **Manual assignment** on the **Assignment batches** tab.
+![The Create assignment menu](../img/create-assignment-menu.png)
+
+1. Choose **Create assignment → Manual assignment** on the **Assignment batches** tab.
 2. Pick a **reviewer** from the pool. The dropdown shows each reviewer's email and current load (e.g. `2/5 assigned`). An assignment that would take the reviewer above their maximum is refused (see [Managing reviewer capacity](#managing-reviewer-capacity)); the dialog then offers **Assign anyway**.
-3. Pick one or more **proposals**. The selector keeps a single chip visible with a `+N more` indicator so the dialog stays compact when many proposals are added.
-4. Optionally add **manager notes** — internal context visible to other managers but not to the reviewer.
-5. Click **Create assignment**. A draft batch is created. The reviewer is **not** notified yet.
+3. Pick one or more **proposals**. The selector keeps a single chip visible with a `+N more` indicator so the dialog stays compact when many proposals are added. Proposals that are not at a review step are left out, and the dialog says how many.
+4. Optionally add **Notes**. They are stored as the batch's manager notes and, once the batch is sent, included in the email to the reviewer and shown with the batch on their **Assignments** tab.
+5. Click **Create assignment**. The proposals are added to the reviewer's existing draft batch, or to a new one if they have none. The reviewer is **not** notified yet.
 
 ![Manual assignment dialog](../img/manual_assignment_dialog.png)
 
@@ -175,13 +190,13 @@ The header buttons on **Assignment batches** are:
 
 Drafts give you a final review checkpoint before reviewers see the assignment.
 
-1. Tick the checkbox next to one or more **Draft** batches. The toolbar shows `(N) Selected` and a **Send drafts (N)** button.
-2. Click **Send drafts (N)** to dispatch the selected batches. The batch status moves from **Draft** to **Sent**, the batch appears on the reviewer's **Assignments** tab, and the reviewer is emailed the list of proposals, any manager notes, the response deadline and a link to that tab — provided the `proposal.reviewer_assignment_invitation` notification is enabled. Until a batch is sent the reviewer does not see it at all.
+1. Tick the checkbox next to one or more **Draft** batches.
+2. Open **All actions** and choose **Send drafts (N)** to dispatch the selected batches. The batch status moves from **Draft - pending approval** to **Sent to reviewer**, the batch appears on the reviewer's **Assignments** tab, and the reviewer is emailed the list of proposals, any manager notes, the response deadline and a link to that tab — provided the `proposal.reviewer_assignment_invitation` notification is enabled. Until a batch is sent the reviewer does not see it at all.
 3. Non-draft batches in the selection are ignored automatically.
 
 ![Bulk send draft batches](../img/assignment_bulk_send.png)
 
-You can also send a single batch from the per-row 3-dot menu (**Send**).
+You can also send a single batch from the per-row 3-dot menu (**Send**). The same menu offers **Extend deadline** for sent and expired batches and **Cancel** for draft and sent ones.
 
 ### Reviewing a batch
 
@@ -195,11 +210,15 @@ Expanding a batch row shows its items — proposals, status, affinity, COI flags
 DRAFT → SENT → RESPONDED / EXPIRED / CANCELLED
 ```
 
-- **Draft**: Manager is preparing the batch
-- **Sent**: Invitation sent to reviewer
-- **Responded**: Reviewer has accepted or declined all items
-- **Expired**: Batch expired without full response (the call's assignment expiration days, 7 by default); its unanswered items expire with it
-- **Cancelled**: Withdrawn by the call manager; the reviewer no longer sees it
+- **Draft - pending approval**: Manager is preparing the batch
+- **Sent to reviewer**: Invitation sent to reviewer
+- **Reviewer responded**: Reviewer has accepted or declined all items
+- **Invitation expired**: Batch expired without full response (the call's assignment expiration days, 7 by default); its unanswered items expire with it
+- **Cancelled by manager**: Withdrawn by the call manager; the reviewer no longer sees it
+
+Items in a batch are shown as **Awaiting response**, **Accepted**, **Declined**,
+**Blocked due to COI**, **Expired without response** or **Reassigned to another
+reviewer**; a pending item of a batch not sent yet is shown as **Not sent yet**.
 
 Before a sent batch expires, the reviewer is sent one reminder, by default 2 days
 before the deadline. When a batch expires, the call managers are emailed so they
@@ -213,7 +232,7 @@ items to pending, and the reviewer gets a new reminder before the new deadline.
 Reviews the reviewer already accepted from the batch are not due before the
 batch's deadline, so extending it gives them more time as well.
 
-![Assignment batches with mixed statuses](../img/scenario_assignments_expanded.png)
+![A batch expanded: notes from the manager and per-item statuses](../img/scenario_assignments_expanded.png)
 
 ### Assignment item responses
 
@@ -223,8 +242,6 @@ For each proposal in a batch, the reviewer can:
 - **Decline**: Records decline reason; the proposal can then be assigned to another reviewer
 
 Expanded batches show individual item responses:
-
-![Batch with accepted and declined items](../img/scenario_assignments_mixed.png)
 
 What the reviewer sees is described in [Reviewer profile and invitations](reviewer-guide.md#assignments).
 
@@ -242,7 +259,7 @@ Matching settings**.
 
 ### Managing reviewer capacity
 
-The **Reviewer capacity** tab lists every pool member and their current load. Use it to adjust the **Maximum assignments** per reviewer when workload, sabbaticals, or expertise concentration change during a call.
+The **Reviewer capacity** tab lists every pool member with **Reviewer**, **Current**, **Max** and **Utilization** columns. Use it to adjust the **Maximum assignments** per reviewer when workload, sabbaticals, or expertise concentration change during a call.
 
 The maximum is enforced. A reviewer's current load is counted live from their
 open assignments in the call:

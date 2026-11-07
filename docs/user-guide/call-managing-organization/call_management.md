@@ -21,7 +21,7 @@ See [Limiting proposals per applicant](organization-setup.md#limiting-proposals-
 
 ## Step 2: Call creation
 
-**Performed by:** Call organiser or Organization owner
+**Performed by:** Call organiser (or staff)
 
 Create the call, blank or from a template, and assign its call managers. See
 [Creating and configuring a call](creating-a-call.md).
@@ -64,16 +64,16 @@ Configure the call on its **Edit** page, then check and activate it:
 
 See [How long a granted project runs](allocation-decision.md#how-long-a-granted-project-runs).
 
-### 1a. Project details fields
+### Project details fields
 
 See [Project details fields](application-form.md#project-details-fields).
 
-### 1b. Applicant eligibility
+### Applicant eligibility
 
 See [Applicant eligibility](application-form.md#applicant-eligibility) and
 [When eligibility is checked](application-form.md#when-eligibility-is-checked).
 
-### 1c. Resource templates
+### Resource templates
 
 See [Resource templates](application-form.md#resource-templates).
 
@@ -87,7 +87,7 @@ See [Checking the workflow before activation](call-activation.md#checking-the-wo
 
 ## Step 5: Submit proposal
 
-**Performed by:** Call member (Applicant)
+**Performed by:** Applicant
 
 Applicants find the active call, create a proposal, fill it in and submit it. See the
 [Applicant guide](applicant-guide.md).
@@ -157,10 +157,10 @@ Solutions for common issues encountered during the call management process:
 | Issue | Possible Cause | Solution |
 | --- | --- | --- |
 | Unable to create call | Insufficient permissions | Verify user has Call Organiser role |
-| Round cannot be activated | Missing required configuration | Check that all mandatory fields are completed |
+| **Activate** is disabled | The call has no round, no enabled workflow step, not exactly one enabled allocation decision, or no accepted offering — or you lack the right to edit the call | Hover over **Activate** for the reason and fix it |
 | Offering request pending | Service provider hasn't responded | Contact provider directly or through system notification |
-| Reviewer cannot access proposal | Incorrect assignment | Verify reviewer assignment in call settings |
-| Applicant cannot see active call | Call visibility settings | Check call publication status and visibility settings |
+| Reviewer cannot access proposal | Incorrect assignment | Verify the assignment on the call's **Manage → Reviews** and **Reviewer pool** tabs |
+| Applicant cannot see or apply to a call | The call is not active, or none of its rounds is open | A call is public only while it is **Active**, and **Apply** needs an open round |
 | Resource allocation failed | Insufficient provider capacity | Contact service provider to resolve capacity issue |
 | Round cannot be deleted | The round has proposals, in any state | Rounds with proposals stay on record; only an empty round can be deleted (see [Configuring rounds](call-rounds.md#configuring-rounds)) |
 | **Activate** is refused or shows a number of errors | The workflow check found errors | Open the call's **Validation → Check** tab and fix each error from its link (see [Checking the workflow before activation](call-activation.md#checking-the-workflow-before-activation)) |
@@ -174,7 +174,7 @@ Solutions for common issues encountered during the call management process:
 A: A Call Organiser is appointed by the Organization Owner to create calls and assign Call Managers. The Call Manager is responsible for the detailed configuration of calls assigned to them including setting up rounds, assigning reviewers, and managing the review process.
 
 **Q: Can a call have multiple rounds running simultaneously?**
-A: No, Waldur supports multiple rounds within a single call, allowing for different resource types or applicant categories to be handled separately, but they cannot be active at the same time.
+A: No. A call can have several rounds, but their submission periods may not overlap.
 
 **Q: What happens if insufficient reviewers complete their evaluations?**
 A: **Minimum contributions** on an assessment step (**Minimum reviewers** on a decision) is a completion gate: the step cannot be completed with a positive outcome until that many reviews have been submitted, though declining the proposal is always possible. If the step has a duration and its deadline passes first, the step is marked **Overdue** and the workflow moves on to the next step, or rejects the proposal if it was the last one (see [Deadline handling](workflow-configuration.md#deadline-handling)). To avoid this, assign further reviewers in time, or leave the step's duration unset so it waits.

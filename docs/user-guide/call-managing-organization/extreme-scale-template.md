@@ -22,7 +22,7 @@ One [evaluator role](workflow-configuration.md#evaluator-roles), **Rapporteur**,
 | # | Step | Kind and outcomes | Completed by | Configuration |
 |---|---|---|---|---|
 | 1 | **Administrative check** | Decision — Eligible / Ineligible | Call manager | Rejects an ineligible proposal, and can send it back to the applicant for changes; shown to applicants |
-| 2 | **Technical assessment** | Assessment — per requested offering | Offering manager | One contribution per requested partition, from that offering's team: Accepted, Conditionally accepted or Rejected. A rejected partition does not stop the proposal; the step is held for a manual advance |
+| 2 | **Technical assessment** | Assessment — per requested offering | Offering manager | One contribution per requested partition, from that offering's team: Accepted, Conditionally accepted or Rejected. A rejected partition does not stop the proposal; a team can hand its contribution on to anyone with a role on its offering; the step is held for a manual advance |
 | 3 | **Rapporteur assignment** | Assignment — Done | Panel chair or vice-chair | Runs alongside the technical assessment; assigns the two rapporteurs and the lead; rapporteurs confirm they have no conflict of interest |
 | 4 | **Rapporteurs' questions and reviewer suggestions** | Assessment — Done | Rapporteurs | Each rapporteur records questions for the applicant and suggests scientific reviewers |
 | 5 | **Scientific reviewer assignment** | Assignment — Done | Call manager | The call manager invites suggested reviewers to the pool and assigns reviewers, then completes the step |
@@ -37,14 +37,16 @@ One [evaluator role](workflow-configuration.md#evaluator-roles), **Rapporteur**,
 
 Each step has a duration, from 7 days for the administrative check, the rapporteur assignment, the response and the consolidated report to 30 days for the committee meeting. Adjust them to your calendar.
 
-The committee's ranking itself — final scores, rank and recommended resources — is recorded on the round, not in a step (see [Ranking and meeting notes](round-rankings.md#ranking-and-meeting-notes)).
+Each round report of the committee meeting can rank the proposals it covers; the committee's overall ranking — final scores, rank and recommended resources — is recorded on the round, not in a step (see [Round steps and rankings](round-rankings.md)).
+
+The steps carry [status labels](workflow-configuration.md#status-labels) in the template's vocabulary — *Administratively Rejected*, *Awarded (tentative)*, *Not awarded* or *Project extended*, say — so applicants and evaluators see the process's own wording on their lists. Change them on each step's **Inputs and visibility** page.
 
 ### After the award
 
 Two further phases run on an accepted proposal, each as a run of its own:
 
-- **Extension** — the applicant files an **Extension request** (until 30 days before the project ends), the team of each partition hosting the project assesses it in **Extension request assessment**, and the call manager decides in **Extension request results**. An approved extension moves the project's end date.
-- **Closing** — the **Final report** opens when the project ends, extension included; the call manager accepts it in **Final report approval**, which completes the project.
+- **Extension** — the applicant files an **Extension request** (until 30 days before the project ends), the team of each partition hosting the project assesses it in **Extension request assessment** (each team can hand its contribution on within the offering's team), and the call manager decides in **Extension request results**. An approved extension moves the project's end date.
+- **Closing** — the **Final report** opens when the project ends, extension included; the call manager accepts it in **Final report approval**, which completes the project, or sends it back to the applicant for changes.
 
 ### Evaluation forms
 
@@ -87,6 +89,8 @@ The template leaves out everything that belongs to your portal. Before activatin
 6. **Set up role mapping and resource templates**, as for any call (see [Role mapping](call-resources-and-team.md#role-mapping) and [Resource templates](application-form.md#resource-templates)).
 7. **Activate** the call.
 
+The call's **Validation** page has a **Scenarios** tab with the template's five test scenarios — the happy path, a rejection at the administrative check, changes requested at the administrative check, an extension and final report, and no response to the reviews — to check the workflow still behaves after you adapt it.
+
 ## Adapting the template
 
 The template is a starting point. Under **Evaluation workflow → Steps & settings** you can change anything it sets up:
@@ -96,7 +100,7 @@ The template is a starting point. Under **Evaluation workflow → Steps & settin
 - **Add a step** of any kind at any position. A step that reads earlier work lists those steps as **Input steps**, and they must come before it.
 - **Change who contributes** (**Contributors**), how many contributions a step needs (**Minimum contributions** / **Maximum contributions**), **Blind review**, and what a negative outcome does (**On a negative outcome**: reject, cancel or continue).
 - **Use another evaluator vocabulary.** A domain panel chair, say, is another [evaluator role](workflow-configuration.md#evaluator-roles): define it under **Evaluator roles**, assign it in an assignment step, and name it as the contributors and responsible role of the steps its holders work on.
-- **Change notification rules** per step through the API (see [Notification rules](workflow-configuration.md#notification-rules)).
+- **Change notification rules** per step on the **Check** page of its **Configure** dialog, on the **Notifications** tab of the call's **Validation** page, or through the API (see [Notification rules](workflow-configuration.md#notification-rules)).
 
 For example, a process without rapporteurs could disable the rapporteur assignment, the questions step, the two report steps and the final feedback, list only the scientific review as the input of the response step, and let the committee decide from the reviews and the response.
 
@@ -112,7 +116,7 @@ When removing steps, keep in mind:
 Some parts of the process are left to convention because the call configuration cannot express them:
 
 - **Scientific reviewer assignment** stays a manual gate: an assignment step without an evaluator role, completed by the call manager once reviewers are assigned through the reviewer pool and assignment batches. The three-review minimum is enforced on the review step itself.
-- **The ranking and meeting notes** are records of the round, not step settings, so the template carries nothing for them. See [Ranking and meeting notes](round-rankings.md#ranking-and-meeting-notes).
+- **The overall ranking and meeting notes** are records of the round, not step settings, so the template carries nothing for them; only the committee meeting's round reports rank the proposals they cover. See [Ranking and meeting notes](round-rankings.md#ranking-and-meeting-notes).
 
 ## Related guides
 
