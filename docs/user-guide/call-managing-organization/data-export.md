@@ -1,6 +1,6 @@
 # Data export
 
-Waldur provides multiple ways to export data from the platform. This guide covers the export capabilities available for call management.
+Waldur provides multiple ways to export data from the platform. This guide covers the export capabilities available for call management. For dashboards and the **Reports** page, see [Dashboards and reports](dashboards-and-reports.md).
 
 ![Call proposals list](../img/call_proposals_list.png)
 
@@ -58,19 +58,13 @@ actions) renders the application as the applicant filled it — fields,
 requested resources, team and the names of its attachments — for archiving or
 a panel meeting. The attachments themselves are not included.
 
+The round's ranking has its own export and import — see
+[Ranking and meeting notes](round-rankings.md#ranking-and-meeting-notes).
+
 ## Call reports
 
-**Call management → Reports** on a call-managing organisation, and the
-**Reports** tab of a call's **Manage** page, summarise the calls you may
-configure. Filter them by call, round and dates, and switch between:
-
-| Report | Answers |
-|---|---|
-| **Portfolio** | Proposals per call and round: how many were submitted, where they stand, how many were accepted, success rate and mean score |
-| **Workflow** | Where proposals wait: proposals at each step now, those past the step deadline, and how long each step takes |
-| **Reviewers** | How reviewers answer their invitations and how fast they review |
-| **Rounds** | How long each round takes from its cut-off to publishing results, and whether results came after the allocation date |
-| **Budgets** | What each resource pool offers, what proposals ask for, and what has been awarded |
+The **Reports** page (Portfolio, Workflow, Reviewers, Rounds and Budgets) is described in
+[Dashboards and reports](dashboards-and-reports.md#call-reports).
 
 ## Saved filters
 

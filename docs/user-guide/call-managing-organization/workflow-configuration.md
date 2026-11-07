@@ -2,7 +2,9 @@
 
 A call's evaluation workflow is an ordered list of **call steps** that every submitted proposal walks through. The call manager decides which steps the call has, what each is called, in which order they run, who completes them, who contributes to them and what they read from earlier steps. A step is one of four **kinds**, and a call can use a kind as many times as its process needs — two assessments and a decision in a light call, or a dozen steps for a call with rapporteurs, peer review and a committee.
 
-For a ready-made example, create a call from the [Extreme Scale call template](extreme-scale-template.md): it sets up a thirteen-step evaluation with rapporteurs, three scientific reviews, a response to reviews, a consolidated report, a committee meeting and final feedback, followed by an extension request and a final report after the award, which you can then adapt.
+A lightweight call might use only an administrative check and an allocation decision. A competitive programme can add a technical assessment per partition, rapporteurs, peer review, a response to the reviews, reports and a committee meeting. For a ready-made example, create a call from the [Extreme Scale call template](extreme-scale-template.md): it sets up a thirteen-step evaluation with rapporteurs, three scientific reviews, a response to reviews, a consolidated report, a committee meeting and final feedback, followed by an extension request and a final report after the award, which you can then adapt.
+
+This page covers configuring the workflow. Driving individual proposals through it is described in [Running the evaluation](call-manager-workflow.md).
 
 ## Step kinds
 
@@ -59,16 +61,37 @@ Enable, rename, reorder or remove them, and add others, to build the call's proc
 1. Open the call's **Edit** page
 2. Select the **Evaluation workflow** tab, then the **Steps & settings** sub-tab
 
-The table lists the steps in order with their **Step** name, **Kind**, **Duration (days)**, **Responsible role** and **Transition**; steps that run alongside each other are grouped together. When the call has steps after the award, the table has a tab per phase: **Evaluation**, **Extension** and **Final report**. Expanding a row shows the rest of its configuration: description, outcomes, what a negative outcome does, its evaluators and contributors, input steps and flags. **Preview sequence** beneath the table shows the resulting order.
+The **Steps & settings** sub-tab sits next to **Evaluator roles**, **Panels**, **COI settings**, **Reviewer eligibility** and **Matching settings**. Its table lists the steps in order with their **Step** name, **Kind**, **Duration (days)**, **Responsible role** and **Transition**; steps that run alongside each other are grouped together. When the call has steps after the award, the table has a tab per phase: **Evaluation**, **Extension** and **Final report**. Expanding a row shows the rest of its configuration: description, outcomes, what a negative outcome does, its evaluators and contributors, input steps and flags. **Preview sequence** beneath the table visualises the proposal journey exactly as configured.
 
-![Workflow steps configuration](../img/scenario_workflow_config.png)
+![Workflow steps with per-step durations and responsible roles](../img/scenario_workflow_config.png)
+
+![Workflow steps configuration](../img/cm-workflow-steps-config.png)
 
 - **Add** opens the **Add step** dialog. Pick the step's **Kind** first; the dialog then shows the settings that kind supports. A new step is appended at the end unless you give it a position, and it starts with its kind's default notification rules.
-- Each row's actions menu offers **Configure**, **Move up**, **Move down**, **Enable** or **Disable**, and **Remove**.
+- Each row's actions menu offers **Configure**, **Move up**, **Move down**, **Enable** or **Disable**, and **Remove**. Choose **Configure** to open a step's settings.
 
 ![Add step dialog with the kind picker](../img/cm-add-step-dialog.png)
 
-Steps stay editable while the call is in **Draft** or **Active**; the table becomes read-only once the call is **Archived**.
+!!! warning
+    Workflow steps stay editable while the call is in **Draft** or **Active**; the step table only becomes read-only once the call is **Archived**.
+
+    Adding, removing, reordering, enabling or disabling a step, moving the allocation decision or changing a step's input steps does **not** retroactively change proposals already in flight: each proposal's path is fixed when it is submitted, so reconfiguring an active call means new submissions follow the new sequence while existing proposals continue on the one they were submitted under. Make structural changes before activation wherever you can.
+
+    Per-step **durations** are the exception — a step reads its duration when it becomes active, so adjusting one still affects steps a proposal has not reached yet.
+
+### The step dialog
+
+The **Configure** dialog adapts to the step's kind. For a **decision** such as the administrative check, it shows the name and description, the outcomes, what a negative outcome does, the estimated duration, responsible role, transition mode and an optional checklist.
+
+![Configure a step: checklist and role](../img/cm-step-config-dialog.png)
+
+For an **assessment** such as expert review, it adds the contributors, the number of contributions needed, the minimum score threshold, scoring criteria, blind review, conflict-of-interest confirmation, input steps, and whether the step's report is released to the applicant or collects reviewer suggestions.
+
+![Configure review criteria: duration, role and thresholds](../img/cm-step-config-review.png)
+
+The remaining criteria appear lower in the same dialog:
+
+![Configure review criteria: COI confirmation and checklist](../img/cm-step-config-coi.png)
 
 ### Per-step settings
 
@@ -106,7 +129,30 @@ On the allocation decision, **Allocation timing** chooses between **On decision*
 !!! note
     **Transition** governs only whether advancing needs a second manual action after a human completes the step. It never decides the outcome from review scores — **Minimum contributions**, **Minimum reviewers** and **Minimum score threshold** remain completion gates that a human must clear.
 
+Some settings in more detail:
+
+- **Minimum contributions / Minimum reviewers / Minimum score threshold** — completion gates; the step cannot complete with a positive outcome until enough contributions or reviews are submitted and the average score clears the threshold. A **Declined** outcome is never blocked (see [Completing or rejecting a step](call-manager-workflow.md#completing-or-rejecting-a-step)).
+- **Blind review** — evaluators cannot see each other's assessments.
+- **Conflict of interest confirmation** — reviewers must confirm they have no conflict with the proposal before they can **submit** their review; it does not block them from opening or drafting it. On an assignment step, a new evaluator role holder gets no access until they confirm (see [Conflict of interest management](coi-management.md)).
+- **Applicant visible** — off by default; while an invisible step runs, the applicant sees it only under the name of its stage (see [Viewing workflow progress](#for-applicants)).
+
 ![Configure an assessment step: contributors, inputs and release](../img/cm-step-config-assessment.png)
+
+### Scoring criteria
+
+Every review is scored on the same 1–5 scale. When the review step names
+scoring **criteria** (for example *Excellence*, *Impact*, *Quality of
+implementation*), the reviewer rates each criterion and the overall score is
+derived from them: their average weighted by each criterion's **Weight**,
+rounded half up. A review cannot be submitted until every criterion is rated.
+Without criteria the reviewer gives the overall score directly.
+
+Weights are relative to the step's other criteria (1–100); the step's settings
+show each criterion's resulting **Share**, and reviewers see it next to the
+criterion's name when the weights differ. Once a reviewer has scored the
+criteria, or submitted a review in the step, the criteria and their weights
+are fixed: they can be reordered, but not renamed, added, removed or
+reweighted. The proposal and review exports carry a column per criterion.
 
 ### Contributors
 
@@ -144,6 +190,14 @@ Define the roles under **Evaluation workflow → Evaluator roles**:
 
 ![Evaluator roles of a call](../img/cm-evaluator-roles.png)
 
+Then use the roles in the steps:
+
+- an **assignment** step lists the roles it fills under **Assigns roles** — one step can fill several, for example a lead and a second rapporteur;
+- a step whose **Responsible role** is an evaluator role is completed by its holders;
+- an assessment whose **Contributors** are an evaluator role takes one contribution from each holder.
+
+Holders are assigned on each proposal's **Evaluators** section (see [Assigning evaluators](call-manager-workflow.md#assigning-evaluators)).
+
 Rules that apply to every holder:
 
 - **One evaluator role per person per proposal.** Someone who holds one role on a proposal cannot be given another on the same proposal. A revoked holder may be given another role.
@@ -166,17 +220,17 @@ A step can read what earlier steps produced for the same proposal: list them und
 !!! warning
     Choosing a step as an input of an applicant step shows the applicant every submitted contribution of that step. Pick the input steps of a response step accordingly.
 
-**Response to reviews.** An applicant step with the **Submitted** outcome set and input steps is a response step: the applicant reads the reviews and questions it lists, fills in the step's form and submits the response. The whole applicant team reads the submitted response; later steps that list the response step as an input read it too. If the response step lapses unanswered, it is completed as *No response* and the workflow moves on.
+**Response to reviews.** An applicant step with the **Submitted** outcome set and input steps is a response step: the applicant reads the reviews and questions it lists, fills in the step's form and submits the response. The whole applicant team reads the submitted response; later steps that list the response step as an input read it too, as the individual and consolidated reports do in the Extreme Scale template. If the response step lapses unanswered, it is completed as *No response* and the workflow moves on.
 
 ### Releasing a report
 
 An assessment step with **Release the report to the applicant** produces a report the applicant can be given, such as the consolidated report. It is on by default for a new assessment whose contributors are an evaluator role with **Maximum contributions** set to 1.
 
-Once the step is completed, its completer or a call manager can release the report from the proposal's **Feedback to the applicant** section — once, optionally with an edited text that the applicant reads in place of the report. The applicant reads released reports whatever the call says about showing reviews, but not while the allocation decision is held for the round. The call team sees who released a report and when. Switching the setting off takes a released report back from the applicant.
+Once the step is completed, its completer or a call manager releases the report from the proposal — see [Releasing the consolidated report](call-manager-workflow.md#releasing-the-consolidated-report). Switching the setting off takes a released report back from the applicant.
 
 ### Collecting reviewer suggestions
 
-An assessment step can **Collect reviewer suggestions** when its **Contributors** and its **Responsible role** are both the holders of an evaluator role. While it runs, each holder suggests reviewers for the proposal — an existing user or an e-mail address, with a note on their expertise. Call managers see the suggestions on the proposal, merged per person and flagged for known conflicts, and invite the suggested people to the reviewer pool from there. See [Reviewer suggestions](call-manager-workflow.md#reviewer-suggestions).
+An assessment step can **Collect reviewer suggestions** when its **Contributors** and its **Responsible role** are both the holders of an evaluator role. While it runs, each holder suggests reviewers for the proposal, and call managers invite the suggested people to the reviewer pool from there. See [Reviewer suggestions](call-manager-workflow.md#reviewer-suggestions).
 
 The applicant team never sees suggestions or who made them.
 
@@ -195,22 +249,16 @@ When an applicant submits a proposal to a call with workflow steps configured:
 3. The first enabled step becomes **Active**. If that step has a duration set, its deadline is calculated from the duration; otherwise it has no deadline
 4. The proposal state changes to **In review**
 
-Steps 3 and 4 happen at once only when the call starts evaluation **on submission**, the default. When the call starts evaluation **at the round cut-off**, the proposal stays **Submitted** with every enabled step **Pending** until its round's cutoff date. An hourly job then activates the first enabled step of each such proposal and moves it to **In review**; the step's deadline counts from that moment, not from submission. See [When evaluation starts](call_management.md#when-evaluation-starts).
+Steps 3 and 4 happen at once only when the call starts evaluation **on submission**, the default. When the call starts evaluation **at the round cut-off**, the proposal stays **Submitted** with every enabled step **Pending** until its round's cutoff date. An hourly job then activates the first enabled step of each such proposal and moves it to **In review**; the step's deadline counts from that moment, not from submission. See [When evaluation starts](call-rounds.md#when-evaluation-starts).
 
 !!! note
     A proposal must have a project team before it can be submitted. If the call has no enabled steps at all, the proposal goes to **Submitted** rather than **In review**.
 
 ### Step completion
 
-On the proposal page, a user who may complete the active step can:
+A user who may complete the active step completes it with an outcome, rejects the proposal at it, or — on a step held for manual advance — advances the workflow; see [Completing or rejecting a step](call-manager-workflow.md#completing-or-rejecting-a-step). Contributors submit their own contribution from the step's **contributions** section instead; a per-offering step completes itself once every requested offering has answered. Steps completed by the **Applicant** are acted on by the applicant: the award response offers **Accept award** and **Decline award**, a response step **Submit response**. Staff users can act on applicant steps as well.
 
-- **Complete step** — opens a dialog asking for an **Outcome** (required) and an optional **Comment**. When the step advances immediately, this also moves the proposal to the next enabled step.
-- **Reject at step** — asks for a **Rejection reason** (required) and ends the workflow
-- **Advance workflow** — shown only when the step is held for manual advance and is waiting to be advanced
-
-Contributors submit their own contribution from the step's **contributions** section instead; a per-offering step completes itself once every requested offering has answered. Steps completed by the **Applicant** are acted on by the applicant: the award response offers **Accept award** and **Decline award**, a response step **Submit response**. Staff users can act on applicant steps as well.
-
-Call managers can also complete one step for every proposal of a round at once — see [Completing a step for the whole round](call-manager-workflow.md#completing-a-step-for-the-whole-round).
+Call managers can also complete one step for every proposal of a round at once — see [Completing a step for the whole round](round-rankings.md#completing-a-step-for-the-whole-round).
 
 A negative outcome — **Ineligible**, **Infeasible** or **Declined** — does what the step's **On a negative outcome** says: reject the proposal, cancel it, or continue to the next step. The default award response cancels the proposal when the applicant declines.
 
@@ -252,9 +300,7 @@ A short line under the tracker says what is happening — the expected decision 
 
 ### For call managers
 
-Call managers see the same timeline with full details — each step's status, responsible role, date and recorded outcome. The **Proposals** list on the call manage page also carries a **Step** column showing each proposal's current step and its responsible role.
-
-![Call management dashboard with stats](../img/scenario_dashboard_stats.png)
+Call managers see the same timeline with full details — each step's status, responsible role, date and recorded outcome. The **Proposals** list on the call manage page also carries a **Step** column showing each proposal's current step and its responsible role (see [Running the evaluation](call-manager-workflow.md#the-proposals-list)).
 
 ### For reviewers and evaluators
 
@@ -273,6 +319,11 @@ For example:
 - **Response to reviews** checklist: "Response to the reviewers' comments" (rich text)
 - **Allocation decision** checklist: "Decision" (single select), "Allocation notes" (text area)
 
-When a checklist is attached and marked as required, the step can only be completed after all required questions are answered.
+The **Checklist required** toggle controls how strictly the checklist is enforced:
+
+- **Required** — the step cannot be completed until every required question is answered. This is the checklist **gate** (see [Completing or rejecting a step](call-manager-workflow.md#completing-or-rejecting-a-step)).
+- **Advisory** (toggle off) — the checklist is available to record structured input but never blocks completion.
+
+A technical-assessment checklist, for example, pairs a single-select decision question with a free-text rationale — in the demo call, *Technical feasibility decision* (**Feasible – sufficient resources** / **Feasible with conditions** / **Not feasible**) and *Assessment rationale*.
 
 See [Checklists and forms](checklists-and-forms.md) for details on configuring evaluation checklists.

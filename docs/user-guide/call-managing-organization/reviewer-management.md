@@ -1,36 +1,12 @@
 # Reviewer management
 
-This guide covers the complete reviewer lifecycle in Waldur's call management system: building reviewer pools, managing reviewer profiles, configuring reviewer-proposal matching, and handling conflicts of interest.
+This guide covers the call manager's side of reviewing: building reviewer pools, configuring reviewer-proposal matching, sending assignment batches and managing reviewer capacity. Conflicts of interest are covered in [Conflict of interest management](coi-management.md); the reviewer's side in [Reviewer profile and invitations](reviewer-guide.md) and [Reviewing proposals](reviewer-workflow.md).
 
 ![Reviewer pool management](../img/reviewer_pool_table.png)
 
 ## Reviewer profiles
 
-Reviewers in Waldur maintain detailed profiles that enable intelligent matching with proposals.
-
-### Profile components
-
-Each reviewer profile includes:
-
-- **Personal information**: Name, ORCID ID, biography, alternative names
-- **Affiliations**: Current and past institutional affiliations with type (employment, education, visiting, honorary, consulting), organization identifier, and date range
-- **Expertise**: Self-declared expertise categories with proficiency levels (expert, familiar, basic)
-- **Publications**: Academic publications with title, authors, venue, venue type (journal, conference, preprint, book, thesis, report), and year
-- **Availability**: Whether the reviewer is available for new review assignments
-
-!!! tip
-    Reviewers should keep their profiles up-to-date, especially expertise areas and affiliations. This data is used for automated reviewer-proposal matching and conflict of interest detection.
-
-### Managing your reviewer profile
-
-1. Open the **Reviews** page from the sidebar and create or open your reviewer profile from the profile panel
-2. Fill in your biography, ORCID ID, and availability status
-3. Add **affiliations** with your current and past institutions
-4. Add **expertise categories** with your proficiency level for each
-5. Add relevant **publications** for matching purposes
-6. Set your profile to **Published** when ready to receive review assignments
-
-The profile editor is organised into four tabs — **Profile info**, **Affiliations**, **Expertise**, and **Publications** — and you can connect and sync your **ORCID** record to import affiliations and publications automatically.
+Reviewers maintain profiles — biography, ORCID ID, affiliations, expertise, publications and availability — that enable matching with proposals and conflict of interest detection. Only **published** profiles are visible to call managers. How reviewers create and publish them is described in [Getting started as a reviewer](reviewer-guide.md#getting-started-as-a-reviewer).
 
 ## Reviewer pool management
 
@@ -48,6 +24,12 @@ Call managers build a curated pool of reviewers for each call.
     - **By profile**: Search and select from published reviewer profiles
     - **By email**: Invite reviewers via email who may not yet have accounts
 
+The **Pool** table lists each reviewer with their acceptance status, review counts, invitation date and assignment load; an **Expertise match** column is available from the column settings, and expanding a row reveals the reviewer's expertise in full.
+
+![Reviewer pool with members and statuses](../img/scenario_pool_overview.png)
+
+![Reviewer pool](../img/cm-reviewer-pool.png)
+
 ### Invitation workflow
 
 When a reviewer is added to a pool:
@@ -57,7 +39,12 @@ When a reviewer is added to a pool:
 3. To accept, the reviewer must have a published profile (they are prompted to create or publish one if they do not); an invitation addressed to a specific reviewer can only be accepted by that reviewer's account
 4. The call's COI policy is shown on the acceptance page
 
-Invitation statuses: **Pending** | **Accepted** | **Declined** | **Expired**
+Invitation statuses in the pool table:
+
+- **Accepted** — the reviewer has accepted the invitation and is ready for assignments
+- **Pending** — invitation sent, awaiting response (a reviewer may still need to create or publish a profile before they can accept)
+- **Declined** — the reviewer declined the invitation
+- **Expired** — the invitation lapsed without a response
 
 ### Invitation expiry and resending
 
@@ -77,89 +64,15 @@ stops working. A declined invitation cannot be resent. (API: the
 `resend-invitation` action of the call reviewer pool.)
 
 !!! note
-    Invitation tokens are generated using secure random bytes and do not require the reviewer to have an existing Waldur account to respond.
+    An invitation can be sent by email to someone who has no Waldur account yet; the link carries a secure random token. Opening it still requires signing in.
+
+A call manager can also force-accept an invitation the reviewer cannot answer — see
+[Force-accepting reviewer pool invitations](coi-management.md#force-accepting-reviewer-pool-invitations).
 
 ## Conflict of interest (COI) detection
 
-Waldur includes an automated COI detection system to ensure fair and unbiased peer review.
-
-### COI types detected
-
-Waldur recognises around twenty specific conflict types, grouped into broad families:
-
-| Family | Specific types (examples) |
-|---|---|
-| Institutional | Same institution, same department, former institution, consortium membership |
-| Financial | Direct financial interest related to the proposal |
-| Relational | Family, supervisor, mentor/mentee, or editorial relationship |
-| Co-authorship | Recent or older co-authored publications |
-| Collaboration & role | Active or grant collaboration, named on the proposal, conference organiser, competitor, professional-society membership |
-
-Each specific type is mapped to a severity and a handling rule in the call's **Type handling** COI settings (see below).
-
-### Severity levels
-
-- **Real**: Confirmed conflict that must be addressed
-- **Apparent**: Circumstantial conflict that may need review
-- **Potential**: Possible conflict flagged for awareness
-
-### Detection methods
-
-- **Automated**: System cross-references reviewer affiliations and publications against proposal team data
-- **Self-disclosed**: Conflicts declared by the reviewer
-- **Reported**: Third parties report potential conflicts
-- **Manager-identified**: Call managers manually flag conflicts
-
-### Configuring COI detection
-
-**Performed by:** Call manager
-
-1. Open the call's **Edit** view
-2. Select **Evaluation workflow → COI settings**
-
-The COI configuration is organised into four tabs:
-
-| Tab | Purpose |
-|---|---|
-| **Detection** | Lookback periods (co-authorship, institutional), shared-publication thresholds, "same department" / "same institution" toggles |
-| **Automation** | Auto-detect toggles per source (co-authorship search, institutional matching, declared conflicts) — determines what runs without manual triggering |
-| **Type handling** | For each conflict type, choose whether it triggers **recusal**, requires a **management plan**, or is **disclosure only** — used by the detector when assigning severities |
-| **Invitations** | How much of each proposal a reviewer sees in an assignment batch before accepting it — in the assignment invitation email and on their **Assignments** tab: **Titles only** (the default), **Titles and summaries**, or **Full proposal details**, which currently shows the same as titles and summaries. A proposal blocked by a conflict of interest is always shown by title only. After accepting, the reviewer reads the full proposal through their review. |
-
-A summary dialog (from the section header) lists every setting at a glance, and inline tooltips explain each COI concept.
-
-![COI detection settings](../img/scenario_coi_config.png)
-
-!!! note
-    Once a call is **activated**, most COI configuration fields are locked to keep detection results reproducible. To change a locked setting, deactivate the call (and re-run detection afterwards).
-
-### Running COI detection
-
-1. Click **Run COI Detection** in the call management dashboard
-2. The system runs a batch detection job (processed in the background)
-3. Review detected conflicts in the **COI** tab of the Reviewer pool
-4. For each conflict, choose to **Dismiss**, **Waive** (with justification), or **Recuse** the reviewer
-
-### COI review interface
-
-The **COI** tab is the operational view used to triage all detected and declared conflicts on the call.
-
-- **Status filters** — narrow the list to *Pending*, *Dismissed*, *Waived*, or *Recused*.
-- **Severity styling** — each row is styled by severity (Real conflict / Apparent conflict / Potential conflict) so high-severity rows stand out at a glance.
-- **Expandable rows** — expand a row to see the evidence behind a detected conflict: shared publications with venues and years, shared affiliations with overlapping date ranges, and self-disclosed text.
-- **Waive dialog** — choosing **Waive** opens a dialog that requires a written **justification** (the management plan) before the conflict can be cleared. The justification, the manager, and the timestamp are recorded on the conflict and stay visible to staff users.
-- **Recuse** — removes the reviewer from the proposal and, if any review or assignment item already exists, marks it as cancelled.
-
-![Detected conflicts with severity styling](../img/scenario_coi_severities.png)
-
-![Expanded COI evidence](../img/scenario_coi_evidence.png)
-
-### COI gating on assignments
-
-When a conflict exists between a reviewer and a proposal, the corresponding assignment item is **blocked** until the conflict is resolved (dismissed, waived, or the reviewer recused). Staff users can **force-unblock** a blocked assignment when a strong operational reason exists; the override is flagged on the assignment.
-
-!!! warning
-    All staff overrides are recorded with the overriding user, reason, and timestamp, and remain visible to staff.
+COI types, severities, detection settings, the **COI** tab and the gating of assignments are
+described in [Conflict of interest management](coi-management.md).
 
 ## Reviewer-proposal matching
 
@@ -195,6 +108,8 @@ Waldur uses algorithmic matching to suggest optimal reviewer-proposal assignment
     yields too few.
 
 ![Matching configuration](../img/scenario_matching_settings.png)
+
+![Matching algorithm settings](../img/scenario_matching_config.png)
 
 ### Generating suggestions
 
@@ -298,12 +213,20 @@ items to pending, and the reviewer gets a new reminder before the new deadline.
 Reviews the reviewer already accepted from the batch are not due before the
 batch's deadline, so extending it gives them more time as well.
 
+![Assignment batches with mixed statuses](../img/scenario_assignments_expanded.png)
+
 ### Assignment item responses
 
 For each proposal in a batch, the reviewer can:
 
 - **Accept**: Creates a Review in IN_REVIEW state — reviewer can begin evaluation
 - **Decline**: Records decline reason; the proposal can then be assigned to another reviewer
+
+Expanded batches show individual item responses:
+
+![Batch with accepted and declined items](../img/scenario_assignments_mixed.png)
+
+What the reviewer sees is described in [Reviewer profile and invitations](reviewer-guide.md#assignments).
 
 ### Auto-reassignment
 

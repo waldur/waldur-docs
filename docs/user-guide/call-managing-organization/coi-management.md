@@ -1,22 +1,102 @@
 # Conflict of interest management
 
-Waldur includes a conflict of interest (COI) detection and management system for the call-for-proposals workflow. This guide covers how call managers review COIs and use staff override capabilities when the automated workflow gets blocked.
+Waldur includes a conflict of interest (COI) detection and management system for the call-for-proposals workflow, to ensure fair and unbiased peer review. This guide covers how call managers configure detection, review the conflicts found, and use staff override capabilities when the automated workflow gets blocked. What reviewers see and do is described in [Reviewing proposals](reviewer-workflow.md#declaring-a-conflict-of-interest).
 
 ## Overview
 
-COIs are detected automatically or self-declared by reviewers when they accept pool invitations. Each COI has:
+COIs are detected automatically or declared — by the reviewer, by a third party, or by the call manager. Each COI has:
 
 - **Type**: Same institution, co-authorship, family relationship, mentor/mentee, financial interest, etc.
 - **Severity**: Real (must recuse), Apparent (requires management plan), or Potential (disclosure only)
 - **Status**: Pending, Dismissed, Waived, or Recused
 
+### COI types detected
+
+Waldur recognises around twenty specific conflict types, grouped into broad families:
+
+| Family | Specific types (examples) |
+|---|---|
+| Institutional | Same institution, same department, former institution, consortium membership |
+| Financial | Direct financial interest related to the proposal |
+| Relational | Family, supervisor, mentor/mentee, or editorial relationship |
+| Co-authorship | Recent or older co-authored publications |
+| Collaboration & role | Active or grant collaboration, named on the proposal, conference organiser, competitor, professional-society membership |
+
+Each specific type is mapped to a severity and a handling rule in the call's **Type handling** COI settings (see [Configuring COI detection](#configuring-coi-detection)).
+
+### Severity levels
+
+| Severity | Meaning | Required action |
+|---|---|---|
+| **Real conflict — must recuse** | Confirmed conflict that must be addressed | Reviewer is recused from the proposal |
+| **Apparent conflict — requires management** | Circumstantial conflict that may need review | Call manager waives with a written management plan, or recuses |
+| **Potential conflict — disclosure only** | Possible conflict flagged for awareness | Acknowledge; review may proceed |
+
+### Detection methods
+
+- **Automated**: System cross-references reviewer affiliations and publications against proposal team data
+- **Self-disclosed**: Conflicts declared by the reviewer
+- **Reported**: Third parties report potential conflicts
+- **Manager-identified**: Call managers manually flag conflicts
+
+Keeping reviewer profiles (affiliations and publications) up to date makes the automated detection accurate.
+
+## Configuring COI detection
+
+**Performed by:** Call manager
+
+1. Open the call's **Edit** view
+2. Select **Evaluation workflow → COI settings**
+
+You control co-authorship and institutional lookback windows, matching thresholds, and which relationships are flagged. The COI configuration is organised into four tabs:
+
+| Tab | Purpose |
+|---|---|
+| **Detection** | Lookback periods (co-authorship, institutional), shared-publication thresholds, "same department" / "same institution" toggles |
+| **Automation** | Auto-detect toggles per source (co-authorship search, institutional matching, declared conflicts) — determines what runs without manual triggering |
+| **Type handling** | For each conflict type, choose whether it triggers **recusal**, requires a **management plan**, or is **disclosure only** — used by the detector when assigning severities |
+| **Invitations** | How much of each proposal a reviewer sees in an assignment batch before accepting it — in the assignment invitation email and on their **Assignments** tab: **Titles only** (the default), **Titles and summaries**, or **Full proposal details**, which currently shows the same as titles and summaries. A proposal blocked by a conflict of interest is always shown by title only. After accepting, the reviewer reads the full proposal through their review. |
+
+A summary dialog (from the section header) lists every setting at a glance, and inline tooltips explain each COI concept.
+
+![COI detection settings](../img/scenario_coi_config.png)
+
+![COI detection settings](../img/cm-coi-settings.png)
+
+!!! note
+    Once a call is **activated**, most COI configuration fields are locked to keep detection results reproducible. To change a locked setting, deactivate the call (and re-run detection afterwards).
+
+When a review step has **Conflict of interest confirmation** enabled, reviewers
+must additionally attest to being conflict-free before they can submit their
+review — the **Submit review** button stays disabled until they do (see
+[Per-step settings](workflow-configuration.md#per-step-settings)).
+
+## Running COI detection
+
+1. Open the call's **Reviewer pool** and its **COI** tab, and click **Detect conflicts**
+2. The system runs a batch detection job (processed in the background)
+3. Review the detected conflicts in the same **COI** tab
+4. For each conflict, choose to **Dismiss**, **Waive** (with justification), or **Recuse** the reviewer
+
 ## Reviewing conflicts of interest
 
-Navigate to your call's **Manage** page and select the **Reviewer pool** tab, then the **COI** sub-tab.
+Navigate to your call's **Manage** page and select the **Reviewer pool** tab, then the **COI** sub-tab. It lists conflicts detected between reviewers and proposal teams.
 
 ![COI review tab showing conflicts with types, severities, and statuses](../img/coi-review-tab.png)
 
-The COI table shows all detected conflicts with their type, severity, current status, and detection method. For each pending COI, the call manager can take one of three actions:
+The COI table shows all detected conflicts with their type, severity, current status, and detection method. It is the operational view used to triage all detected and declared conflicts on the call:
+
+- **Status filters** — narrow the list to *Pending*, *Dismissed*, *Waived*, or *Recused*.
+- **Severity styling** — each row is styled by severity (Real conflict / Apparent conflict / Potential conflict) so high-severity rows stand out at a glance.
+- **Expandable rows** — expand a row to see the evidence behind a detected conflict: shared publications with venues and years, shared affiliations with overlapping date ranges, and self-disclosed text.
+
+![Detected conflicts with severity styling](../img/scenario_coi_severities.png)
+
+![Expanded COI evidence](../img/scenario_coi_evidence.png)
+
+![COI detection results](../img/cm-coi-management.png)
+
+For each pending COI, the call manager can take one of three actions:
 
 ### Dismiss
 
@@ -24,14 +104,22 @@ Mark the COI as a false positive. The reviewer can continue reviewing the propos
 
 ### Waive
 
-Approve the reviewer to continue despite the conflict, but with a mandatory **management plan** describing the mitigation measures. Related blocked assignments are automatically unblocked.
+Approve the reviewer to continue despite the conflict, but with a mandatory **management plan** describing the mitigation measures. Choosing **Waive** opens a dialog that requires this written **justification** before the conflict can be cleared. The justification, the manager, and the timestamp are recorded on the conflict and stay visible to staff users. Related blocked assignments are automatically unblocked.
 
 ### Recuse
 
-Permanently remove the reviewer from the proposal. Any existing reviews are discarded, and assignment items are marked as blocked.
+Permanently remove the reviewer from the proposal: their pending or accepted assignment items for it are marked as blocked, a review still in progress is rejected, and an evaluator role they hold on the proposal is revoked.
 
 !!! note
     When a COI is dismissed or waived, any assignment items that were blocked solely because of that COI are automatically changed from "blocked" to "pending". If multiple COIs exist for the same reviewer-proposal pair, the assignment remains blocked until all COIs are resolved.
+
+### COI gating on assignments
+
+When a conflict exists between a reviewer and a proposal, the corresponding assignment item is **blocked** until the conflict is resolved (dismissed, waived, or the reviewer recused). Call managers and staff can **force-unblock** a blocked assignment when a strong operational reason exists; the override is flagged on the assignment (see [Force-unblocking COI-blocked assignments](#force-unblocking-coi-blocked-assignments)).
+
+### Evaluator role holders
+
+A pending or recused conflict of interest between an evaluator role holder and the proposal stops their access at once; dismissing or waiving it gives it back (see [Evaluator roles](workflow-configuration.md#evaluator-roles)).
 
 ### Evaluators who join the applicant team
 
@@ -58,11 +146,11 @@ If a reviewer's invitation is stuck in **pending**, **declined**, or **expired**
 2. Find the invitation with the stuck status
 3. Click the three-dot action menu and select **Force accept**
 
-![Force accept action in the reviewer pool dropdown](../img/reviewer-pool-force-accept-action.png)
+    ![Force accept action in the reviewer pool dropdown](../img/reviewer-pool-force-accept-action.png)
 
 4. In the dialog, provide a mandatory **override reason** explaining why the override is necessary
 
-![Force accept dialog with required reason field](../img/force-accept-dialog.png)
+    ![Force accept dialog with required reason field](../img/force-accept-dialog.png)
 
 5. Click **Force accept** to confirm
 
@@ -77,7 +165,7 @@ The invitation status changes to "Accepted" with an "Overridden" badge indicatin
 
 If an assignment item is blocked due to a COI and the manager wants to proceed regardless:
 
-1. Navigate to the **Assignments** sub-tab in the Reviewer pool
+1. Navigate to the **Assignment batches** sub-tab in the Reviewer pool
 2. Expand the assignment batch to see individual items
 3. Find the item with **COI blocked** status
 4. Click the action menu and select **Force unblock**

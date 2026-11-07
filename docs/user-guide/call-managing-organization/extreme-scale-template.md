@@ -37,7 +37,7 @@ One [evaluator role](workflow-configuration.md#evaluator-roles), **Rapporteur**,
 
 Each step has a duration, from 7 days for the administrative check, the rapporteur assignment, the response and the consolidated report to 30 days for the committee meeting. Adjust them to your calendar.
 
-The committee's ranking itself — final scores, rank and recommended resources — is recorded on the round, not in a step (see [Ranking and meeting notes](call-manager-workflow.md#ranking-and-meeting-notes)).
+The committee's ranking itself — final scores, rank and recommended resources — is recorded on the round, not in a step (see [Ranking and meeting notes](round-rankings.md#ranking-and-meeting-notes)).
 
 ### After the award
 
@@ -84,7 +84,7 @@ The template leaves out everything that belongs to your portal. Before activatin
 3. **Add rounds** with their cut-off and allocation dates.
 4. **Check the evaluation forms.** The call gets its own copies of the template's forms, so editing them changes no other call. Attach a form to the steps that have none — the technical assessment and the scientific review, say — under **Steps & settings**, and mark each form required or advisory; without a form, a contribution is its outcome and comment. See [Checklists and forms](checklists-and-forms.md).
 5. **Add people** on the call's **Team** tab: call managers, panel members (the rapporteurs are chosen from them) with the panel's **Chair** and **Vice-chair**, who assign the rapporteurs and write the committee's round reports. Invite the scientific reviewers under **Manage → Reviewer pool**.
-6. **Set up role mapping and resource templates**, as for any call (see [Call management](call_management.md)).
+6. **Set up role mapping and resource templates**, as for any call (see [Role mapping](call-resources-and-team.md#role-mapping) and [Resource templates](application-form.md#resource-templates)).
 7. **Activate** the call.
 
 ## Adapting the template
@@ -112,11 +112,11 @@ When removing steps, keep in mind:
 Some parts of the process are left to convention because the call configuration cannot express them:
 
 - **Scientific reviewer assignment** stays a manual gate: an assignment step without an evaluator role, completed by the call manager once reviewers are assigned through the reviewer pool and assignment batches. The three-review minimum is enforced on the review step itself.
-- **The ranking and meeting notes** are records of the round, not step settings, so the template carries nothing for them. See [Ranking and meeting notes](call-manager-workflow.md#ranking-and-meeting-notes).
+- **The ranking and meeting notes** are records of the round, not step settings, so the template carries nothing for them. See [Ranking and meeting notes](round-rankings.md#ranking-and-meeting-notes).
 
 ## Related guides
 
 - [Workflow configuration](workflow-configuration.md) — step kinds, contributors, evaluator roles and input steps
-- [Call manager workflow](call-manager-workflow.md) — running the evaluation the template sets up
+- [Running the evaluation](call-manager-workflow.md) — running the evaluation the template sets up
 - [Applicant guide](applicant-guide.md) — responding to reviews and reading released reports
-- [Reviewer workflow](reviewer-workflow.md) — the reviewer's and rapporteur's side
+- [Reviewing proposals](reviewer-workflow.md) — the reviewer's and rapporteur's side
