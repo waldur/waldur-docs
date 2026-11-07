@@ -172,6 +172,11 @@ The review dialog offers two ways to save:
 Use **Send back** on the proposal (rather than the dialog) to return a proposal
 to the applicant or the call manager when it cannot be evaluated as submitted.
 
+Your submitted review is your contribution to the call's review step. On calls
+that ask the applicant to respond to the reviews, the applicant reads your
+review without your private comment, and without your name unless the call
+shows reviewer names to applicants.
+
 ## Panel review
 
 Some calls add a **Panel review** step after expert review. Panel members
@@ -181,6 +186,72 @@ proposal workflow rather than the personal **My reviews** page; a panel member
 does not receive individual expert-review assignments. See
 [The evaluation workflow](call-manager-workflow.md#the-evaluation-workflow) for
 how the panel step fits into the overall sequence.
+
+## Working as a rapporteur
+
+Some calls give panel members an **evaluator role** on individual proposals —
+on the [Extreme Scale template](extreme-scale-template.md), two **rapporteurs**
+per proposal, one of them the lead. The steps below follow that template; other
+calls name their roles and steps differently.
+
+### Getting assigned
+
+A call manager assigns you to a proposal — on the Extreme Scale template, the
+panel chair or vice-chair — and you receive an e-mail. The
+proposal then appears on the **Evaluator roles** tab of your reviews page with
+your role and whether you are the lead. If the call asks you to confirm that you
+have no conflict of interest, choose **Confirm no conflict of interest** from
+the row's actions menu first; the proposal opens to you after that.
+
+![Evaluator roles tab](../img/reviewer-evaluator-roles.png)
+
+You hold one evaluator role per proposal, and you are never shown to the
+applicant. If a conflict of interest is recorded between you and the proposal,
+you lose access to it until the call manager dismisses or waives the conflict;
+if you are recused, your assignment is revoked and you are told.
+
+### Questions and reviewer suggestions
+
+While the questions step runs, the proposal shows your own contribution card.
+Fill in the questions for the applicant in the step's form and **Submit
+contribution**.
+
+On the same step you can **Suggest a reviewer** for the scientific review: pick
+a user, or enter an e-mail address for someone you cannot find, and add a
+**Note** on their expertise. Your suggestions are listed with their status;
+**Take back** removes one while it is still pending. The call manager decides
+whom to invite to the reviewer pool. The applicant never sees suggestions.
+
+![Suggesting a reviewer](../img/rapporteur-suggest-reviewer.png)
+
+### Reading the earlier steps
+
+From the individual reports onwards, the proposal shows a ***step*: inputs**
+section with what the earlier steps produced: the questions, the reviews with the
+reviewers' names, and the applicant's response. Of a technical assessment split
+per partition you see its outcome; each partition's assessment stays with that
+partition's team and the call managers.
+Reviewers' private comments are never shown to you, and the call may conceal
+who on the applicant team wrote the response.
+
+![A rapporteur reading the inputs of the individual reports](../img/rapporteur-step-inputs.png)
+
+### Individual and consolidated reports
+
+Each rapporteur writes an **individual report** on their own contribution card;
+the step is blind, so you do not read the other rapporteur's report until it is
+an input of the next step. The **consolidated report** is a single
+contribution, which only the lead rapporteur can write; on the Extreme Scale
+template the lead also writes the **final feedback** after the committee
+meeting.
+
+The rapporteurs complete their own steps: once the contributions a step needs
+are submitted, either rapporteur can **Complete step** on the proposal.
+
+Once the consolidated report step is completed, a rapporteur or a call manager
+can release it (and the final feedback likewise) to the applicant from the **Feedback to the applicant** section:
+**Release to applicant**, optionally with an **Edited text** that the applicant
+reads instead. A report is released once and cannot be changed afterwards.
 
 ## Related guides
 

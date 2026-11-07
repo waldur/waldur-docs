@@ -4,7 +4,8 @@ This guide follows an **applicant** (a principal investigator or proposal
 submitter) end to end: finding an open call, creating and filling in a proposal,
 answering the call's compliance checklist, submitting, tracking the proposal
 through the evaluation workflow, reading technical-assessment feedback when the
-call shares it, and finally responding to an award.
+call shares it, responding to the reviews and reading released reports on calls
+that use them, and finally responding to an award.
 
 For the call manager's side of the same workflow see the
 [Call manager workflow](call-manager-workflow.md); for the reviewer's side see
@@ -13,9 +14,11 @@ the [Reviewer workflow](reviewer-workflow.md).
 !!! note
     Screenshots in this guide use the *2025 Spring HPC Allocation Call* demo
     call, which shares its technical assessment with applicants and includes an
-    award-response step. Your calls will show different names, offerings,
-    checklists and reviewers, and the steps you see depend on how the call
-    manager configured the call.
+    award-response step; those of the response to reviews and the released
+    report use a call created from the
+    [Extreme Scale template](extreme-scale-template.md). Your calls will show
+    different names, offerings, checklists and reviewers, and the steps you see
+    depend on how the call manager configured the call.
 
 !!! tip "Service access modes"
     How applicants reach calls depends on the deployment's service access mode. In a marketplace-only
@@ -228,18 +231,53 @@ applicant of the round is notified at the same time, and the proposal moves on: 
 ## Technical-assessment feedback
 
 Some steps can be made **visible to applicants** by the call manager. When the
-**Technical assessment** step is shared, a **Technical assessment decisions**
-section shows the feasibility decisions from the technical reviewers — one entry
-per reviewer, each with a colour-coded decision badge and comment.
+**Technical assessment** step is shared, its **contributions** section shows the
+assessment of each service provider. On a call that assesses each requested
+partition separately, there is one card per partition, filled in by the team of
+the provider that runs it, with its outcome —
+**Accepted**, **Conditionally accepted** with the conditions, or **Rejected** —
+and the provider's comment. A partition that rejected your proposal does not
+necessarily end it: some calls carry on to the decision with the other
+partitions.
 
-![Technical assessment decisions visible to the applicant](../img/applicant-technical-assessment.png)
+![Technical assessment per partition visible to the applicant](../img/applicant-technical-assessment.png)
 
 !!! note
     You only see this section when the call manager has marked the step
     **applicant-visible**. On calls that keep technical assessments internal, the
-    section does not appear — this is expected, not an error. The decision wording
-    and badge colours come from the call's own technical-assessment checklist, so
-    they differ between calls.
+    section does not appear — this is expected, not an error. Whether you see who
+    wrote an assessment depends on the call, and per-partition outcomes stay
+    hidden while the call holds decisions for the round's publication.
+
+## Responding to the reviews
+
+Some calls ask you to respond to the reviewers before the decision. The
+proposal then shows a step named by the call — *Response to reviews*, say —
+with **Respond by *date*.** and, above your response form, what you are
+responding to: the reviews and the evaluators' questions the call lists for
+the step. Reviews appear without the reviewers' names or their private
+comments.
+
+Fill in the response form, click **Save answers**, then **Submit response**.
+You are asked to confirm, as a response cannot be changed afterwards. Any of the proposal's managers
+can submit the response; the whole team reads it once it is submitted.
+
+![Responding to the reviews](../img/applicant-response-to-reviews.png)
+
+!!! warning
+    The response step has a deadline. If it passes without a response, the step
+    ends as *No response* and the proposal moves on to the decision without it.
+
+## Feedback to the applicant
+
+Calls can release a report to you, such as the panel's consolidated report.
+Released reports appear in the **Feedback to the applicant** section of the
+proposal, with the date they were released. What you read may be an edited
+version prepared for applicants. A call that announces its decisions together
+for the whole round releases nothing to you before the round's results are
+published.
+
+![A released consolidated report](../img/applicant-released-report.png)
 
 ## Responding to an award
 

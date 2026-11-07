@@ -316,7 +316,7 @@ Configure project role assignments:
 
 #### 4. Workflow steps
 
-Under **Configuration → Steps & settings**, configure the evaluation pipeline that submitted proposals progress through. See [Workflow configuration](workflow-configuration.md) for details.
+Under **Evaluation workflow → Steps & settings**, configure the evaluation pipeline that submitted proposals progress through: add, name, reorder and configure call steps of four kinds, and define the call's evaluator roles under **Evaluator roles**. See [Workflow configuration](workflow-configuration.md) for details. To start from a complete process, create the call from the [Extreme Scale call template](extreme-scale-template.md).
 
 ![Workflow steps with per-step durations and responsible roles](../img/scenario_workflow_config.png)
 
@@ -643,7 +643,7 @@ A: A Call Organiser is appointed by the Organization Owner to create calls and a
 A: No, Waldur supports multiple rounds within a single call, allowing for different resource types or applicant categories to be handled separately, but they cannot be active at the same time.
 
 **Q: What happens if insufficient reviewers complete their evaluations?**
-A: **Minimum reviewers** on a workflow step is a completion gate: the step cannot be completed with a positive outcome until that many reviews have been submitted, though declining the proposal is always possible. If the step has a duration and its deadline passes first, the step is marked **Overdue** and the workflow moves on to the next step, or rejects the proposal if it was the last one (see [Deadline handling](workflow-configuration.md#deadline-handling)). To avoid this, assign further reviewers in time, or leave the step's duration unset so it waits.
+A: **Minimum contributions** on an assessment step (**Minimum reviewers** on a decision) is a completion gate: the step cannot be completed with a positive outcome until that many reviews have been submitted, though declining the proposal is always possible. If the step has a duration and its deadline passes first, the step is marked **Overdue** and the workflow moves on to the next step, or rejects the proposal if it was the last one (see [Deadline handling](workflow-configuration.md#deadline-handling)). To avoid this, assign further reviewers in time, or leave the step's duration unset so it waits.
 
 **Q: Can applicants edit their proposals after submission?**
 A: No. Once a proposal is submitted its requested resources and documents are fixed, and an applicant cannot change them any more: what was submitted is what gets evaluated. Call managers and staff can still adjust a proposal at any time. A draft left open at its round's cut-off is the exception only in that it survives into the next round (see [Drafts at the cut-off](#drafts-at-the-cut-off)); it is still a draft until the applicant submits it.
@@ -655,4 +655,4 @@ A: Resource transfer between projects requires administrative approval. Contact 
 A: Waldur automatically sends email notifications to all team members listed in a proposal when a decision (approval or rejection) is announced — when it is made, or, on a call that publishes results together for the whole round, when the round's results are published.
 
 **Q: Can a Call manager override reviewer scores?**  
-A: Decisions are always made by a person completing a workflow step; scores never decide on their own. A step can be declined regardless of scores, but approving is blocked while a **Minimum reviewers** or **Minimum score threshold** set on that step is not met. All reviewer feedback remains visible and documented.
+A: Decisions are always made by a person completing a workflow step; scores never decide on their own. A step can be declined regardless of scores, but approving is blocked while a **Minimum contributions**, **Minimum reviewers** or **Minimum score threshold** set on that step is not met. All reviewer feedback remains visible and documented.
