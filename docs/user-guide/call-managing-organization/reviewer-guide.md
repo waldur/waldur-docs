@@ -42,7 +42,7 @@ If you accept, the page checks that you have a **published** reviewer profile. I
 
 ## Review dashboard
 
-The reviews page provides four tabs for managing your review workload: **Reviews**, **Assignments**, **Invitations**, and **Calls**.
+The reviews page provides tabs for managing your review workload: **Tasks**, **Reviews**, **Assignments**, **Invitations**, **Evaluator roles** and **Calls**. **Evaluator roles** appears once you hold an evaluator role on a proposal.
 
 ### Reviews
 
@@ -79,6 +79,12 @@ For each assignment, you can:
 Shows pool invitations from call managers. You must accept an invitation before you can be assigned proposals.
 
 ![Reviewer invitations](../img/scenario_reviews_invitations.png)
+
+### Evaluator roles
+
+Lists the proposals on which you hold an evaluator role, such as rapporteur: the proposal, its call, your role, whether you are the lead, and your conflict-of-interest status. Click a proposal to open it. When the call asks evaluators to confirm the absence of a conflict, the proposal opens to you only after you choose **Confirm no conflict of interest** from its row's actions menu. See [Working as a rapporteur](reviewer-workflow.md#working-as-a-rapporteur).
+
+![Evaluator roles tab](../img/reviewer-evaluator-roles.png)
 
 ### Calls
 
