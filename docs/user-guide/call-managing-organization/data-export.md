@@ -2,7 +2,7 @@
 
 Waldur provides multiple ways to export data from the platform. This guide covers the export capabilities available for call management. For dashboards and the **Reports** page, see [Dashboards and reports](dashboards-and-reports.md).
 
-![Call proposals list](../img/call_proposals_list.png)
+![Export dialog with the Visible columns and Full report choices](../img/cm-export-dialog.png)
 
 ## Table export
 
@@ -94,6 +94,9 @@ The structure export includes:
 - Marketplace data (categories, offerings, plans, resources, orders)
 - Billing information (invoices, credits, usage)
 - Checklists and answers
+- Calls for proposals (call-managing organisations, calls and their offerings, rounds,
+  resource pools, proposals with their requested and awarded resources, reviews, reviewer
+  assignment batches, step contributions, reviewer suggestions and project role mappings)
 
 ## API-based export
 

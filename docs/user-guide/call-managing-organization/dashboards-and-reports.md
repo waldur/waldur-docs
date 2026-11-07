@@ -12,8 +12,8 @@ To take data out of Waldur, see [Data export](data-export.md).
 After signing in, open your call-managing organisation and switch to the
 **Call management** tab. Its **Dashboard** counts open calls, accepted proposals,
 pending proposals and pending reviews — each with a **View all** shortcut into
-the matching list — above a second row tracking active rounds, rounds and calls
-closing soon, and pending offering requests.
+the matching list — above a second row tracking **Active rounds**, **Round closing
+soon**, **Calls closing soon** and **Pending offering requests**.
 
 ![Call management dashboard](../img/cm-dashboard.png)
 
@@ -25,9 +25,11 @@ reports.
 
 ## Call dashboard
 
-The call dashboard provides an overview of the entire call:
+The call dashboard provides an overview of the entire call. It counts the call's
+**Rounds**, **Offerings**, **Reviewer pool**, **Proposals** and **Reviews**, and shows the
+call's workflow steps read-only below the figures:
 
-![Call dashboard with stats: rounds, offerings, pool, proposals, reviews](../img/scenario_dashboard_stats.png)
+![Call dashboard: counts and the workflow steps](../img/scenario_dashboard_stats.png)
 
 - Use the dashboard to monitor:
       - Round statuses
@@ -49,19 +51,20 @@ configure. Filter them by call, round and dates, and switch between:
 | **Rounds** | How long each round takes from its cut-off to publishing results, and whether results came after the allocation date |
 | **Budgets** | What each resource pool offers, what proposals ask for, and what has been awarded |
 
+Staff and support find the same reports across every organisation under **Reporting →
+Proposals**, filtered additionally by organisation.
+
 ## Admin reviews and proposals
 
-Staff users can view all reviews across all calls from the admin reviews page:
+Staff, support, call organisers and call managers find **All reviews** and **All
+proposals** in the calls section of the sidebar. **All reviews** lists reviews across the
+calls, filterable by state, call, round, organisation, reviewer and proposal:
 
 ![Admin reviews across all calls](../img/scenario_admin_reviews_all.png)
 
 Reviews can be filtered by specific call to focus on a particular review round:
 
-![Admin reviews filtered by call](../img/scenario_admin_reviews_spring_hpc.png)
-
-![Admin reviews — GPU program](../img/scenario_admin_reviews_gpu.png)
-
-The admin proposals view lists every proposal with its call, round, and state, helping staff
+**All proposals** lists proposals with their call, round, and state, helping staff
 track which proposals are progressing through review.
 
 ![All proposals](../img/scenario_proposals_with_reviews.png)

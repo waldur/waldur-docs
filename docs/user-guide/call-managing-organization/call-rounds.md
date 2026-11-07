@@ -8,12 +8,19 @@ be activated.
 
 **Performed by:** Call manager
 
-1. Create a **Round** within the call, on its **Rounds** tab.
-2. Configure the round settings:
-      - Start and cutoff dates (or a start date with a repeat cadence to create several rounds at once)
-      - Review duration (in days)
-      - Allocation date, when the call allocates on a fixed date
-3. Save the round.
+1. On the call's **Rounds** tab, open the **New round** dialog.
+2. On the **Submission** step, set:
+      - **Time zone**, **Start date** and **Cutoff date** — or tick **No cut-off (continuously open)**
+      - Optionally **Repeats**, to create several rounds at once: pick a **Cadence** (**Monthly**,
+        **Quarterly**, **Biannual**, **Yearly** or **Custom**), the **Number of rounds** and the
+        **Submission window (days)** each round stays open, in place of the cutoff date
+3. On the **Allocation** step, set the **Allocation date** — asked only when the call's
+   allocation decision step allocates on a fixed date.
+4. Click **Create**.
+
+A round's row actions edit it afterwards: **Edit submission settings**, **Edit review settings**
+(where **Review duration without a step deadline (days)** is set), **Edit allocation settings**,
+the round's lifecycle actions, and **Delete**.
 
 ![Rounds configuration with start and cutoff dates](../img/scenario_rounds_config.png)
 

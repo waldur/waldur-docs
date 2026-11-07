@@ -31,6 +31,13 @@ for the setting and the feature flags it combines with, and
 | Setting | Effect | Described in |
 |---|---|---|
 | `DEFAULT_PROPOSAL_REQUIRED_FIELDS`, `DEFAULT_PROPOSAL_HIDDEN_FIELDS` (under **Proposal settings**) | The project details fields a new call starts with; applied when the call is created | [Project details fields](application-form.md#project-details-fields) |
+| `PROPOSAL_REVIEW_DURATION` (under **Proposal settings**) | The review duration, in days, a new round gets when none is given | [Rounds](call-rounds.md) |
+| `PROPOSAL_DASHBOARD_REVIEWS_DUE_WITHIN_DAYS` (under **Proposal settings**) | How many days ahead a deadline counts as due soon, for reviews on the call manager dashboard and for tasks in **My tasks** | [Dashboards and reports](dashboards-and-reports.md) |
+| `REVIEWER_PROFILES_ENABLED`, `REVIEWER_PUBLICATION_REQUIRES_APPROVAL` (under **Proposal settings**) | Whether users can create and publish reviewer profiles, and whether publishing a profile needs staff approval | [Reviewer profiles](reviewer-management.md#reviewer-profiles) |
+| `COI_DETECTION_ENABLED`, `COI_DISCLOSURE_REQUIRED` (under **Proposal settings**) | Whether call managers can run automated conflict of interest detection, and whether reviewers must file a current conflict of interest disclosure for a call before taking on its reviews | [Conflict of interest management](coi-management.md) |
+| `COI_COAUTHORSHIP_LOOKBACK_YEARS`, `COI_COAUTHORSHIP_THRESHOLD_PAPERS`, `COI_INSTITUTIONAL_LOOKBACK_YEARS` (under **Proposal settings**) | Defaults for co-authorship and institutional conflict detection: the years looked back, and the number of co-authored papers that counts as a conflict | [Configuring COI detection](coi-management.md#configuring-coi-detection) |
+| `AUTOMATED_MATCHING_ENABLED` (under **Proposal settings**) | Whether automated reviewer matching is available: reviewer suggestions, affinity scores and generated assignments | [Reviewer-proposal matching](reviewer-management.md#reviewer-proposal-matching) |
+| `ORCID_*` (under **ORCID integration settings**) | The ORCID client, endpoints and sandbox mode used to connect reviewers' ORCID records to their profiles | [Reviewer profile and invitations](reviewer-guide.md) |
 | `ENABLED_USER_PROFILE_ATTRIBUTES` | Which applicant attributes are collected, and so which eligibility rows a call offers | [Entering values](application-form.md#entering-values) |
 | `SERVICE_ACCESS_MODE` (under **Marketplace visibility & access**) | Calls mode | [Service access modes](../../admin-guide/mastermind-configuration/service-access-modes.md) |
 

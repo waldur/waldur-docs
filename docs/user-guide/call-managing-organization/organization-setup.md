@@ -20,14 +20,19 @@ limit on how many proposals one applicant may hold with the organisation.
       - These offerings will form the resource pool available for allocation
 
 4. **Assign Call organisers**:
-      - Go to the **Team** section of your organization
+      - Open the organization's **Call management** tab and go to **Team** — the tab
+        appears only once staff have turned call management on
       - Click on the **Add member** button
       - Search for users to assign as Call organisers
-      - Select the **Call organiser** role from the dropdown menu
+      - Select the **Organization call organizer** role
       - Click **Add** to confirm the assignment
 
-Once the organisation manages calls, it has a **Call management** tab with its dashboard,
-calls, proposals and reports (see [Dashboards and reports](dashboards-and-reports.md)).
+Once the organisation manages calls, its **Call management** tab has the sections
+**Dashboard**, **Calls**, **Proposals**, **Reviews**, **Reports** and **Team** (see
+[Dashboards and reports](dashboards-and-reports.md)). An owner without a call role lands on
+**Calls** and does not see **Dashboard** or **Reports**. On deployments that run their calls
+outside Waldur (the `marketplace.call_only` feature), **Proposals**, **Reviews** and **Reports**
+are not shown.
 Continue with [Creating and configuring a call](creating-a-call.md).
 
 ## Limiting proposals per applicant
@@ -55,8 +60,8 @@ applicant at the limit cannot submit another one. They are refused with
 *You have reached the maximum of N active projects or pending proposals. You
 cannot submit another proposal until one of them is completed or closed.*
 
-Once a limit is set, every call of the organization carries the catalogue
-warning *This call restricts who may apply* (see
+Once a limit is set, every call of the organization counts as restricting who
+may apply (see
 [When eligibility is checked](application-form.md#when-eligibility-is-checked)), and an applicant
 at the limit sees **Apply to call** disabled with *You are not eligible to
 apply to this call.* State the limit in the call descriptions.

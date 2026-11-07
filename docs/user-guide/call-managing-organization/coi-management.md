@@ -4,7 +4,7 @@ Waldur includes a conflict of interest (COI) detection and management system for
 
 ## Overview
 
-COIs are detected automatically or declared — by the reviewer, by a third party, or by the call manager. Each COI has:
+COIs are detected automatically or declared by the reviewer. Each COI has:
 
 - **Type**: Same institution, co-authorship, family relationship, mentor/mentee, financial interest, etc.
 - **Severity**: Real (must recuse), Apparent (requires management plan), or Potential (disclosure only)
@@ -35,9 +35,8 @@ Each specific type is mapped to a severity and a handling rule in the call's **T
 ### Detection methods
 
 - **Automated**: System cross-references reviewer affiliations and publications against proposal team data
-- **Self-disclosed**: Conflicts declared by the reviewer
-- **Reported**: Third parties report potential conflicts
-- **Manager-identified**: Call managers manually flag conflicts
+- **Self-disclosed**: Conflicts declared by the reviewer when accepting a pool invitation (through the API; the invitation page has no declaration form)
+- **Reported** and **Manager-identified**: recorded detection methods, but there is no screen for a third party or a call manager to flag a conflict
 
 Keeping reviewer profiles (affiliations and publications) up to date makes the automated detection accurate.
 
@@ -53,18 +52,16 @@ You control co-authorship and institutional lookback windows, matching threshold
 | Tab | Purpose |
 |---|---|
 | **Detection** | Lookback periods (co-authorship, institutional), shared-publication thresholds, "same department" / "same institution" toggles |
-| **Automation** | Auto-detect toggles per source (co-authorship search, institutional matching, declared conflicts) — determines what runs without manual triggering |
+| **Automation** | Auto-detect toggles per source (co-authorship, institutional, named personnel) — determines what runs without manual triggering |
 | **Type handling** | For each conflict type, choose whether it triggers **recusal**, requires a **management plan**, or is **disclosure only** — used by the detector when assigning severities |
 | **Invitations** | How much of each proposal a reviewer sees in an assignment batch before accepting it — in the assignment invitation email and on their **Assignments** tab: **Titles only** (the default), **Titles and summaries**, or **Full proposal details**, which currently shows the same as titles and summaries. A proposal blocked by a conflict of interest is always shown by title only. After accepting, the reviewer reads the full proposal through their review. |
 
 A summary dialog (from the section header) lists every setting at a glance, and inline tooltips explain each COI concept.
 
-![COI detection settings](../img/scenario_coi_config.png)
-
 ![COI detection settings](../img/cm-coi-settings.png)
 
 !!! note
-    Once a call is **activated**, most COI configuration fields are locked to keep detection results reproducible. To change a locked setting, deactivate the call (and re-run detection afterwards).
+    COI settings stay editable while the call is active; they are read-only only on an archived call or for users without permission to edit the call. Re-run detection after changing them.
 
 When a review step has **Conflict of interest confirmation** enabled, reviewers
 must additionally attest to being conflict-free before they can submit their
@@ -73,8 +70,8 @@ review — the **Submit review** button stays disabled until they do (see
 
 ## Running COI detection
 
-1. Open the call's **Reviewer pool** and its **COI** tab, and click **Detect conflicts**
-2. The system runs a batch detection job (processed in the background)
+1. Open the call's **Reviewer pool** and its **COI** tab, and click **Detect conflicts** (shown only when COI detection is enabled on the platform)
+2. The system runs a batch detection job in the background; the button shows that detection is running, and you are told how many new conflicts were found when it finishes
 3. Review the detected conflicts in the same **COI** tab
 4. For each conflict, choose to **Dismiss**, **Waive** (with justification), or **Recuse** the reviewer
 
@@ -82,21 +79,17 @@ review — the **Submit review** button stays disabled until they do (see
 
 Navigate to your call's **Manage** page and select the **Reviewer pool** tab, then the **COI** sub-tab. It lists conflicts detected between reviewers and proposal teams.
 
-![COI review tab showing conflicts with types, severities, and statuses](../img/coi-review-tab.png)
+![COI tab with conflict types, severity badges and the Detect conflicts button](../img/coi-review-tab.png)
 
-The COI table shows all detected conflicts with their type, severity, current status, and detection method. It is the operational view used to triage all detected and declared conflicts on the call:
+The COI table has **Reviewer**, **Proposal**, **Round**, **COI type**, **Severity**, **Status** and **Detected** columns, plus an optional **Detection** (method) column. It is the operational view used to triage all detected and declared conflicts on the call:
 
-- **Status filters** — narrow the list to *Pending*, *Dismissed*, *Waived*, or *Recused*.
-- **Severity styling** — each row is styled by severity (Real conflict / Apparent conflict / Potential conflict) so high-severity rows stand out at a glance.
-- **Expandable rows** — expand a row to see the evidence behind a detected conflict: shared publications with venues and years, shared affiliations with overlapping date ranges, and self-disclosed text.
-
-![Detected conflicts with severity styling](../img/scenario_coi_severities.png)
+- **Filters** — narrow the list by status (*Pending*, *Dismissed*, *Waived*, *Recused*), severity, COI type or round.
+- **Severity badges** — the **Severity** column shows each conflict's severity (Real conflict / Apparent conflict / Potential conflict) as a coloured badge.
+- **Expandable rows** — expand a row to see the evidence description and evidence data behind a conflict, the conflicting person or organisation, and, once it has been handled, who reviewed it and when, the review notes and any management plan.
 
 ![Expanded COI evidence](../img/scenario_coi_evidence.png)
 
-![COI detection results](../img/cm-coi-management.png)
-
-For each pending COI, the call manager can take one of three actions:
+For each pending COI, the call manager can take one of three actions. Only a pending conflict can be resolved, and only once:
 
 ### Dismiss
 
@@ -104,7 +97,11 @@ Mark the COI as a false positive. The reviewer can continue reviewing the propos
 
 ### Waive
 
-Approve the reviewer to continue despite the conflict, but with a mandatory **management plan** describing the mitigation measures. Choosing **Waive** opens a dialog that requires this written **justification** before the conflict can be cleared. The justification, the manager, and the timestamp are recorded on the conflict and stay visible to staff users. Related blocked assignments are automatically unblocked.
+Approve the reviewer to continue despite the conflict, but with a mandatory **management plan** describing the mitigation measures. Choosing **Waive** opens a dialog that requires this written **Management plan** (and accepts optional **Review notes**) before the conflict can be cleared. The management plan, the manager, and the timestamp are recorded on the conflict and stay visible to staff users. Related blocked assignments are automatically unblocked.
+
+**Waive** is disabled for a conflict type that the call's **Type handling** settings require recusal for.
+
+![Waive conflict of interest dialog with the Management plan field](../img/coi-waive-dialog.png)
 
 ### Recuse
 
@@ -137,7 +134,7 @@ When the automated workflow gets stuck — for example, a reviewer cannot answer
 
 ### Force-accepting reviewer pool invitations
 
-If a reviewer's invitation is stuck in **pending**, **declined**, or **expired** status, a call manager can force-accept it.
+If a reviewer's invitation is stuck in **pending**, **declined**, or **expired** status, a call manager can force-accept it. An invitation sent by email to someone without a reviewer profile cannot be force-accepted, nor can the invitation of a reviewer whom the platform operator has suspended or blocked, or who does not meet the call's reviewer eligibility rules.
 
 !!! tip
     For an invitation that simply expired or went unanswered, resend it instead: the reviewer gets a new link and a new expiry date and accepts it themselves (see [Invitation expiry and resending](reviewer-management.md#invitation-expiry-and-resending)). Keep force-accept for cases where the reviewer has agreed through other channels but cannot answer the invitation.
@@ -156,8 +153,6 @@ If a reviewer's invitation is stuck in **pending**, **declined**, or **expired**
 
 The invitation status changes to "Accepted" with an "Overridden" badge indicating it was manually accepted.
 
-![Reviewer pool showing overridden badge on force-accepted invitation](../img/reviewer-pool-overview.png)
-
 !!! warning
     Force-accepting an invitation bypasses the reviewer's consent. Only use this when you have confirmed with the reviewer through other channels. The override reason is recorded for audit purposes.
 
@@ -167,9 +162,9 @@ If an assignment item is blocked due to a COI and the manager wants to proceed r
 
 1. Navigate to the **Assignment batches** sub-tab in the Reviewer pool
 2. Expand the assignment batch to see individual items
-3. Find the item with **COI blocked** status
+3. Find the item with **Blocked due to COI** status
 4. Click the action menu and select **Force unblock**
-5. Provide a mandatory **override reason**
+5. Provide a mandatory **Override reason**
 6. The item status changes from "blocked" to "pending"
 
 !!! warning

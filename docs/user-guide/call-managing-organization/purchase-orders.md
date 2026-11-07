@@ -8,7 +8,7 @@ Some offerings may not be provisioned until the applicant supplies a purchase or
 
 The requirement is a property of the offering:
 
-1. Open the offering and go to **Integration** → **Operations**.
+1. Open the offering and go to **Integration** → **Operations** → **Orders & approval**.
 2. Set one of:
       - **Enable purchase order upload** — a purchase order may be supplied, but it is optional.
       - **Require purchase order upload** — a purchase order is mandatory. This also enables the upload if it was not enabled already.
@@ -24,7 +24,7 @@ When the offering is added to a call, the call entry inherits the requirement as
 
 **Performed by:** Call member (Applicant)
 
-Purchase orders are supplied per resource request, in the **Additional configuration** step of the resource request form:
+Purchase orders are supplied per resource request. On a call where the applicant adds resource requests with **Add resource**, they are entered in the **Additional configuration** step of the resource request form:
 
 - **Purchase order reference** — the identifier from your organisation's finance system, for example `PO-4711`.
 - **Purchase order document** — the purchase order itself, as a PDF.
@@ -35,6 +35,8 @@ Either one satisfies the requirement. Some providers want the document, others o
 
 !!! tip
     You do not need the purchase order to save the request. Enter the amounts, save, obtain the purchase order from your organisation, then reopen the request and attach it. Only submitting the proposal requires it.
+
+On a call that offers resource templates instead, the templates table gains a **Purchase order** column where one is required.
 
 The **Purchase order** column in the resource requests list shows where each request stands — `Required` while one is still missing, and the reference (or `Attached`) once it is supplied.
 

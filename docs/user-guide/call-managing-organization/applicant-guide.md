@@ -28,15 +28,17 @@ summarised in the [overview](overview.md).
 
 ## Finding an open call
 
-Open **Calls → Calls for proposals** from the sidebar. The dashboard lists
-**Open calls** you can apply to and the **Available offerings** they grant access
-to. Each call card shows the managing organisation, a short description and the
-submission **cutoff**.
+Open **Calls → Calls for proposals** from the sidebar. Once you have proposals, the
+page opens with summary cards of your own work — **In draft**, **In review**,
+**Awarded** and the **Next draft deadline** — each linking to the matching proposals.
+Below them, three tabs list the **Open calls** you can apply to, **All calls**, and the
+**Available offerings** the calls grant access to. Each call card shows the managing
+organisation, a short description and the submission **cutoff**.
 
 ![Calls for proposals dashboard with open calls](../img/applicant-open-calls.png)
 
-Use **Details** to read a call's full description and eligibility rules, or
-**View all** (or **All calls** in the banner) to browse the complete catalogue.
+Use **Details** to read a call's full description and eligibility rules, or the
+**All calls** tab to browse the complete catalogue.
 When you have found the call you want, click **Apply to call**.
 
 ![Public calls listing with active calls](../img/scenario_public_calls.png)
@@ -50,8 +52,8 @@ The call's details page offers the same with **Apply to round**.
     from the public landing page — handy for sharing a call with colleagues.
 
 A call marked *This call restricts who may apply* checks who you are before you
-can apply; when you do not qualify, **Apply to call** is disabled with *You are
-not eligible to apply to this call*.
+can apply; when you do not qualify, **Apply to call** is disabled and the call's
+page says *You are not eligible to apply to this call.*
 
 ### How many proposals you may have at once
 
@@ -94,7 +96,7 @@ Expand **Project details** and describe your project:
 | **Summary** | Required |
 | **Description** | Optional, longer free text |
 | **Science domain** | Optional; pick a domain, then a sub-domain from the taxonomy your deployment maintains |
-| **Project duration** | Read-only. The longest subscription you request under **Resource requests**, or the duration the call fixes; see below |
+| **Project duration** | A choice from the lengths the call offers, when it offers any. Otherwise read-only: the longest subscription you request under **Resource requests**, or the duration the call fixes; see below |
 | **Upload supporting documentation** | Optional attachments |
 
 Required fields are marked with a red asterisk, and the card header shows how
@@ -112,7 +114,10 @@ call manager's side of it.
 ![Project details step](../img/applicant-project-details.png)
 
 !!! note "Project duration"
-    You are not asked how long the project should run. When the call sets a
+    When the call offers a list of lengths, choose one under **Project
+    duration**; no subscription you request may run longer, and the award may
+    move the project to another length from the list. Otherwise you are not
+    asked how long the project should run. When the call sets a
     fixed duration, the project lasts exactly that long, and any subscription
     length you choose must fit inside it. Otherwise, when a resource you
     request is sold by the month, you choose the subscription length on that
@@ -157,15 +162,13 @@ question; the card header tracks your progress as *n/N answered*, and its
 subtitle warns that *additional questions may appear based on your answers* — so
 the total can grow as you answer.
 
-![Compliance checklist step](../img/applicant-compliance-checklist.png)
+![Compliance checklist with a follow-up question shown based on an earlier answer](../img/applicant-compliance-checklist.png)
 
 Checklists support many question types — single- and multi-select, numbers,
 dates, file uploads, confirmations and more (see
 [Checklists and forms](checklists-and-forms.md)). Some questions are
 **conditional**: answering one may reveal a follow-up, flagged with a
 *Shown based on: …* hint naming the answer that triggered it.
-
-![A conditional follow-up question revealed by an answer](../img/applicant-compliance-conditional.png)
 
 ### Project team
 
@@ -180,7 +183,9 @@ against finished sections and an empty circle against those still needing input.
 
 ![Reviewing the proposal before submitting](../img/applicant-review-submit.png)
 
-When everything is complete, click **Submit**. A note beneath the button records
+When everything is complete, click **Submit** and confirm. Only a proposal manager
+of the team can submit; other team members see *Only a proposal manager can submit
+the proposal.* instead of the button. A note beneath the button records
 that submitting means agreeing to the platform's terms of service and privacy
 policy. The proposal moves out of **Draft** and into the evaluation workflow, and
 the call team can now see it.
@@ -225,7 +230,8 @@ Proposal states an applicant sees:
 ### Withdrawing a proposal
 
 To take a submitted proposal out of evaluation, a proposal manager of its team
-uses **Withdraw proposal** on it and may give a reason. This works while the
+uses **Withdraw proposal** on it and may give a reason. The confirmation warns
+that *A withdrawn proposal cannot be resubmitted.* This works while the
 proposal is **Submitted** or **In review**; it moves to **Canceled**, and the
 call managers are told. Once an award awaits your answer, decline the award
 instead. A proposal still in **Draft** is not withdrawn but deleted, with
@@ -337,15 +343,18 @@ published.
 
 If the call includes an **award response** step, an approved proposal pauses for
 your decision before resources are provisioned. The stepper shows an *Award
-response* step, and the **Progress** panel offers **Accept award** and **Decline
-award**.
+response* step. The side column — **Current step** and **On this page** — shows the
+decision's comment, warns *The award differs from your request* when it does, and ends
+with **Accept award** and **Decline award**. Any proposal manager of the team can
+answer.
 
 ![Accept and decline award controls](../img/applicant-award-response.png)
 
 The award may differ from what you requested: the call manager can change
 amounts, move an item to another offering of the call, or add and remove items.
-The **Awarded resources** section on the proposal shows what was granted, each
-item marked **As requested** or **Changed**, and the **Summary of the award**
+The **Awarded resources** section on the proposal shows what was granted. An item
+awarded as requested carries no badge; the others are marked **Changed**, **Moved**,
+**Added** or **Not awarded**, and the **Summary of the award**
 totals its estimated cost. You see this section once the decision is released
 to you; it is read-only.
 
@@ -365,8 +374,20 @@ allocation.
 
 !!! tip
     Not every call uses an award response step. When it is absent, an approved
-    proposal is provisioned automatically at the **Allocation decision** step
-    without asking you to confirm.
+    proposal is provisioned automatically as soon as the decision is released
+    to you, without asking you to confirm. On a call that allocates on a fixed
+    date, the project starts on the round's allocation date.
+
+### After acceptance
+
+An accepted proposal gains an **Allocation outcome** section: the project it produced
+and, for each requested and awarded item, the resource that came of it. On a call with
+steps after the award, an **Extensions and final report** section lets the team
+**Request extension** of the project, and holds the final report once the call team opens
+it towards the project's end (see
+[After the award](allocation-decision.md#after-the-award-extensions-and-final-reports)).
+
+![The Allocation outcome of an accepted proposal](../img/applicant-allocation-outcome.png)
 
 ## Related guides
 

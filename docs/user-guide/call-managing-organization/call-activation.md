@@ -1,6 +1,6 @@
 # Checking and activating a call
 
-**Performed by:** Call manager
+**Performed by:** Call manager (or call organiser, or staff)
 
 A call opens for proposals when it is activated. Activation runs the workflow check first, and
 refuses a call whose workflow cannot run as configured.
@@ -13,12 +13,18 @@ Once all configurations are complete:
       - Verify general settings are correct
       - Confirm team assignments are complete
       - Check that offerings are properly configured
-      - Ensure role mappings are defined
+      - Ensure role mappings are defined — without them the **Activate call** confirmation
+        warns **No role mappings**: projects allocated from approved proposals would have
+        nobody on them
 
 2. **Run the workflow check** — see [Checking the workflow before activation](#checking-the-workflow-before-activation).
 
 3. **Activate the call**:
-      - Choose **Activate** from the call's actions to open it for proposal submissions
+      - Choose **Activate** from the call's actions to open it for proposal submissions, and
+        confirm in the **Activate call** dialog
+      - **Activate** stays disabled, with the reason on hover, while the call has no round, no
+        enabled workflow step, not exactly one enabled allocation decision, or no accepted
+        offering
       - Once activated, the call becomes visible to potential applicants
       - Applicants can now submit proposals during active rounds
 
@@ -43,7 +49,9 @@ finding with its severity and a link that opens the setting to fix:
 **Activate** runs the same check and refuses the call while there are errors;
 the action shows their number (*Activate (2 errors)*), and a refused activation
 lists all of them at once. There is no override. The calls list shows the
-verdict too, under **Workflow check**.
+verdict too, under **Workflow check** in the call's expanded row.
+
+An archived call can be activated again the same way.
 
 The other sub-tabs of **Validation** help confirm that the workflow does what
 you intend: **Roles**, **Notifications**, **Diagram**, **Timeline**,

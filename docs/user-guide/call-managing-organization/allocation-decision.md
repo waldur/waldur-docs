@@ -39,8 +39,8 @@ Decisions are always made by a person completing a workflow step; scores never d
 own. The step can be declined regardless of scores, but approving is blocked while a
 **Minimum reviewers** or **Minimum score threshold** set on it is not met. On the allocation
 decision, **Decide automatically** awards the proposal as requested as soon as it reaches the
-step, and **Allocation timing** chooses between allocating **On decision** and on the round's
-allocation date (see [Per-step settings](workflow-configuration.md#per-step-settings)).
+step, and **Allocation timing** chooses between allocating **On decision** and on a
+**Fixed date** — the round's allocation date (see [Per-step settings](workflow-configuration.md#per-step-settings)).
 
 Completing it with an *Approved* outcome advances the proposal to the next enabled step.
 Provisioning happens when the **last enabled step** completes, not at the
@@ -70,10 +70,17 @@ manager can:
 - change the amounts of an item,
 - move an item to another offering of the call that its provider has accepted,
   or pick another plan of that offering,
-- add items and remove them.
+- add items with **Add item**, and remove them.
 
-Each row is marked **As requested** or **Changed**, and a changed amount shows
-the requested one beneath it. The **Summary of the award** in the side panel
+Each row's actions offer **Edit** and **Remove**. Adding or editing an item is first
+confirmed in a **Change the award** dialog, and removing one in its own confirmation; the
+item form then walks through **Select offering**, **Configure award** and **Additional
+configuration**.
+
+An item awarded as requested carries no badge; the others are marked **Changed**,
+**Moved**, **Added** or **Not awarded**, and a changed plan or option reads
+*X (requested Y)*. When the award differs from the request, the section's header says
+**Differs from the request**. The **Summary of the award** in the side panel
 totals the estimated cost of what is awarded. A proposal ranked on its round shows the
 recommended resources, and **Prefill from recommendation** copies them into the award (see
 [Ranking and meeting notes](round-rankings.md#ranking-and-meeting-notes)).
@@ -117,7 +124,7 @@ results*.
 
 On the proposal's **Call manager** tab, the stepper shows the held outcome on
 the allocation decision, the awarded resources are read-only, and the
-**Progress** panel offers **Reopen decision**. The **Applicant** tab shows the
+**Current step** panel offers **Reopen decision**. The **Applicant** tab shows the
 proposal as the applicant sees it, with the decision still the current step.
 
 ![A held decision on the call manager's proposal view](../img/cm-held-decision-proposal.png)
@@ -131,7 +138,9 @@ ahead is kept.
 
 ![Reopen decision dialog](../img/cm-reopen-decision-dialog.png)
 
-Reopening is possible only before the round's results are published, and only
+Reopening is possible only before the round's results are published — on a call whose
+results are [adopted before publication](round-results.md#recording-adoption), only
+until the adoption is recorded — and only
 for staff and users who can update the call — not support, and not the
 applicant even if they also manage the call. Nothing is sent to the applicant.
 The proposal's event feed records that the decision was reopened and by whom,
@@ -162,11 +171,16 @@ with the proposal travels with its order — see [Purchase orders in calls](purc
 
 ### How long a granted project runs
 
-When a proposal is granted, the project's end date is decided in this order:
+When a proposal is granted, the project starts on the day it is created, or on the round's
+allocation date when **Allocation timing** is **Fixed date**. Its end date is decided in this
+order:
 
 1. **The call's fixed duration**, when it is set. The project ends that many days after it starts. Subscription lengths requested under the call are limited to fit inside it, and a resource never outlasts its project.
-2. **The longest awarded subscription**, when the call sets no fixed duration. The project lasts as long as the longest subscription in its [awarded resources](#awarded-resources), which start as a copy of the resource requests.
-3. **No end date**, when the call sets no fixed duration and nothing requested is sold by the month. The project runs until someone sets an end date on it.
+2. **The length chosen from the call's list**, when the call offers
+   **Durations the applicant chooses from**: the awarded length, or the requested one
+   before there is an award.
+3. **The longest awarded subscription**, when the call sets neither. The project lasts as long as the longest subscription in its [awarded resources](#awarded-resources), which start as a copy of the resource requests.
+4. **No end date**, when the call sets no fixed duration or list and nothing requested is sold by the month. The project runs until someone sets an end date on it.
 
 !!! warning "Awards that must expire"
     If every award from the call must end, set a fixed duration. Without one, a proposal that requests only resources not sold by the month creates a project with no end date.

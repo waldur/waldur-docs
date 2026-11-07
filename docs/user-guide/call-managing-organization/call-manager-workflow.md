@@ -20,21 +20,38 @@ workflow itself is configured is described in [Workflow configuration](workflow-
 ### The proposals list
 
 The **Proposals** tab (under either call management or the call's Manage view)
-lists every proposal for the call with its applicant, current **Step** and the
-step's responsible role, creation date, state and compliance status. Click a
-proposal to open it. A decision held for the round's publication shows its
+lists every proposal for the call with its **Name**, **Applicant**, current
+**Step** and the step's responsible role, **Panel** (on calls that route
+proposals to panels), **Created** date, **State** and, when the call has a
+compliance checklist, **Compliance**. Click a proposal to open it. A decision held for the round's publication shows its
 tentative outcome in place of the state (see [Held decisions](allocation-decision.md#held-decisions)).
 
-![Proposals list](../img/cm-proposals-list.png)
+![Proposals list with two rows selected for a bulk action](../img/cm-proposals-list.png)
+
+Select proposals to act on several at once from **All actions**:
+
+- **Decide a step** — records one outcome, with a reason, on every selected
+  proposal standing at the chosen decision step, each as if completed from its
+  own page. The result lists the proposals **Completed**, those **Refused** with
+  why, and those **Not at this step, so left alone**. The allocation decision,
+  assessments and steps run once per round are decided on each proposal.
+- **Assign a reviewer**, **Message the applicants**, **Export the proposals
+  (CSV)** and **Export their reviews (CSV)**.
 
 ### Opening a proposal
 
 A proposal opens on the **Call manager** view. The **workflow stepper** at the
-top shows each step with its status and outcome; the **Progress** sidebar on the
-right offers the section tabs and the step action buttons — **Create review**,
-**Complete step** and **Reject at step**.
+top shows each step with its status and outcome. The sidebar on the right starts
+with the **Current step** panel, which names the active step, says why it cannot
+move on yet or that all contributions are in, and offers the step's actions —
+**Complete step**, **Reject at step**, **Request changes**, **Advance workflow**,
+**Reopen decision** and **Cancel request for changes**, as they apply. Below it
+come **On this page**, listing the proposal's sections, the cost summary, and
+**Assign reviewer**.
 
 ![Proposal workflow view](../img/cm-proposal-workflow.png)
+
+![The Current step panel](../img/cm-current-step-panel.png)
 
 The stepper makes the proposal's position obvious at a glance: completed steps
 carry their outcome (for example *Eligible*, *Accepted*, *Approved*), the active
@@ -76,7 +93,16 @@ confirming from the **Evaluator roles** tab of their reviews page.
 On an assessment step with contributors, the **contributions** section of the
 proposal lists one card per contribution with its status, outcome, conditions
 and comment. Contributors fill in the step's form and **Submit contribution**
-from their own card (a contribution without a form is its outcome and comment); call managers and the step's completer read them all.
+from their own card, using **Fill in form** and **Close form** to open and
+close the step's form (a contribution without a form is its outcome and
+comment); call managers and the step's completer read them all.
+
+On a step whose contributions **can be handed to** someone (see
+[Contributors](workflow-configuration.md#contributors)), the holder of a
+contribution, or a call manager, uses **Hand on** to pass it to someone else,
+who can **Accept** or **Decline** it; **Take back** returns it to its holder.
+Call managers can reopen a submitted contribution with **Request changes** and a
+message to its contributor; its answers are kept, and the applicant is not told.
 
 When the step takes **one contribution per requested offering**, each partition
 the proposal requests gets its own card, which only that offering's team can
@@ -159,16 +185,25 @@ On the proposal page, a user who may complete the active step can:
 - **Complete step** — opens a dialog asking for an **Outcome** (required) and an optional **Comment**. When the step advances immediately, this also moves the proposal to the next enabled step.
 - **Reject at step** — asks for a **Rejection reason** (required) and ends the workflow.
 - **Advance workflow** — shown only when the step is held for manual advance and is waiting to be advanced.
+- **Reopen decision** — takes back a decision held for the round's publication; see [Held decisions](allocation-decision.md#held-decisions).
 
 Choose an outcome from the step's allow-list (for the administrative check, *Eligible* or
-*Ineligible*) and add an optional comment.
+*Ineligible*) and add an optional comment. The dialog may also show:
+
+- that the step is waiting for a lead, or **cannot move on yet** because work is missing — tick **Complete it without that work** to let your outcome stand in for it;
+- **Completing now leaves a later step short**, for example of reviewers — tick **Complete the step anyway** to go ahead;
+- the score gate: while the average score is below the step's threshold, only the declining outcome can be chosen;
+- on the allocation decision, the **Call budget** table; when the award exceeds what remains, **Override the budget** with a reason (on a call that enforces its budget strictly, only staff may);
+- on an applicant step answered by staff, **You answer for the applicant** and a required reason, which the applicant is told along with who answered.
 
 ![Complete step dialog](../img/cm-complete-step-dialog.png)
 
 If the step's checklist is **required** and any required question is still
 unanswered, **Complete step** is disabled and explains why on hover — *Answer the
 required checklist questions before completing this step*. Answer the checklist
-first, then complete the step.
+first, then complete the step. On a step with contributors, the hover text says
+instead that the required questions are answered on the step's contributions, by
+those who contribute to it.
 
 ![Checklist gate blocking completion](../img/cm-checklist-gate-blocked.png)
 

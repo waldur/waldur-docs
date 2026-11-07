@@ -21,9 +21,8 @@ at that step, each with an optional feedback field — and the **Outcome**, clic
 Each proposal of the round that stands at that step is completed on its own, as
 if you had completed it on the proposal: the step's gates, notifications and
 records apply to each. The result, shown below, lists which proposals were **Completed**,
-which were **Skipped** (not at the step, or a step you cannot act on), and which
-failed with the reason — a failure leaves that proposal as it was and does not
-stop the others. Running it again completes only what is still open.
+which were **Not completed**, with the reason — a failure leaves that proposal as it was and does not
+stop the others — and which were **Skipped** (not at the step, or a step you cannot act on). Running it again completes only what is still open.
 
 The **allocation decision** cannot be completed for a round: awards are decided
 per proposal. Feedback on a step whose report is released to the applicant
@@ -34,10 +33,25 @@ stays withheld until the report is released.
 A step set to **Runs once per round** (see
 [Per-step settings](workflow-configuration.md#per-step-settings)) — the committee meeting of
 the Extreme Scale template, say — is not completed for the round as above, nor on a proposal.
-Expanding a round on the **Rounds** tab shows its **Steps**; **Open for round** opens such a
-step for the round's proposals that have reached it, its contributors each write
-one round report covering those proposals, and the step completes for the round
-once the reports are in.
+Expanding a round on the **Rounds** tab shows its **Steps** tab, listing each enabled
+step with when it is **Due in this round**, how many proposals stand **Before / at the step**,
+and its **State**. Each row offers **Due date**, to set when the step is due for every proposal
+of the round, and **Move on (*n*)** when proposals wait after the step to be moved on together.
+
+![The Steps tab of an expanded round](../img/cm-round-steps.png)
+
+On a round step, **Open for round** moves the round's proposals waiting before the step into
+it, optionally with a **Due date**; its contributors each write one round report covering the
+proposals they hold it for, and the step completes for the round once the reports are in. If
+some of the round's proposals have not reached the step yet, opening is refused: they join the
+step as they arrive, or **Open anyway** with a **Reason for opening early**, which is recorded
+on the round. Once opened, the button reads **Open again**.
+
+Round reports are listed on the round's **Meeting notes** tab as **Round report: *step***.
+**Open report** leads to the report's own page, where its author writes the notes, answers the
+step's form, ranks the proposals the report covers under **Ranking in this report**, and clicks
+**Submit report**. A call manager can **Reopen** a submitted report to hand it back to its
+author; proposals that reached the step since then join it.
 
 ## Ranking and meeting notes
 
@@ -61,8 +75,13 @@ editable. A ranked proposal's [Awarded resources](allocation-decision.md#awarded
 shows the recommendation, and **Prefill from recommendation** copies it into the
 awarded resources.
 
-Call managers and staff edit both; panel members and support read them;
-reviewers and applicants see neither. Anyone on the applicant team of a proposal
+Call managers, the organisers of the call-managing organisation and staff edit both,
+and the call's panel chair and vice-chair write the overall ranking as well. Panel
+members and support read them, as do those allowed to read the call's results once
+the round's results are published; reviewers and applicants see neither. A round
+report and its ranking are written by its author until submitted, and read by the
+call managers, staff, support and those working on a later step that reads the
+round step. Anyone on the applicant team of a proposal
 in the round, or with a conflict of interest on record with one of them, sees
 nothing of that round's ranking or notes, and nobody can rank a proposal whose
 applicant team they are on.
