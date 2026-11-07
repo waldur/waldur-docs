@@ -23874,7 +23874,7 @@
 <h1 id="conflict-of-interest-management">Conflict of interest management</h1>
 <p>Waldur includes a conflict of interest (COI) detection and management system for the call-for-proposals workflow, to ensure fair and unbiased peer review. This guide covers how call managers configure detection, review the conflicts found, and use staff override capabilities when the automated workflow gets blocked. What reviewers see and do is described in <a href="../reviewer-workflow/#declaring-a-conflict-of-interest">Reviewing proposals</a>.</p>
 <h2 id="overview">Overview</h2>
-<p>COIs are detected automatically or declared — by the reviewer, by a third party, or by the call manager. Each COI has:</p>
+<p>COIs are detected automatically or declared by the reviewer. Each COI has:</p>
 <ul>
 <li><strong>Type</strong>: Same institution, co-authorship, family relationship, mentor/mentee, financial interest, etc.</li>
 <li><strong>Severity</strong>: Real (must recuse), Apparent (requires management plan), or Potential (disclosure only)</li>
@@ -23943,9 +23943,8 @@
 <h3 id="detection-methods">Detection methods</h3>
 <ul>
 <li><strong>Automated</strong>: System cross-references reviewer affiliations and publications against proposal team data</li>
-<li><strong>Self-disclosed</strong>: Conflicts declared by the reviewer</li>
-<li><strong>Reported</strong>: Third parties report potential conflicts</li>
-<li><strong>Manager-identified</strong>: Call managers manually flag conflicts</li>
+<li><strong>Self-disclosed</strong>: Conflicts declared by the reviewer when accepting a pool invitation (through the API; the invitation page has no declaration form)</li>
+<li><strong>Reported</strong> and <strong>Manager-identified</strong>: recorded detection methods, but there is no screen for a third party or a call manager to flag a conflict</li>
 </ul>
 <p>Keeping reviewer profiles (affiliations and publications) up to date makes the automated detection accurate.</p>
 <h2 id="configuring-coi-detection">Configuring COI detection</h2>
@@ -23969,7 +23968,7 @@
 </tr>
 <tr>
 <td><strong>Automation</strong></td>
-<td>Auto-detect toggles per source (co-authorship search, institutional matching, declared conflicts) — determines what runs without manual triggering</td>
+<td>Auto-detect toggles per source (co-authorship, institutional, named personnel) — determines what runs without manual triggering</td>
 </tr>
 <tr>
 <td><strong>Type handling</strong></td>
@@ -23982,11 +23981,10 @@
 </tbody>
 </table>
 <p>A summary dialog (from the section header) lists every setting at a glance, and inline tooltips explain each COI concept.</p>
-<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/scenario_coi_config.png" data-desc-position="bottom"><img alt="COI detection settings" src="../../img/scenario_coi_config.png"></a></p>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/cm-coi-settings.png" data-desc-position="bottom"><img alt="COI detection settings" src="../../img/cm-coi-settings.png"></a></p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Once a call is <strong>activated</strong>, most COI configuration fields are locked to keep detection results reproducible. To change a locked setting, deactivate the call (and re-run detection afterwards).</p>
+<p>COI settings stay editable while the call is active; they are read-only only on an archived call or for users without permission to edit the call. Re-run detection after changing them.</p>
 </div>
 <p>When a review step has <strong>Conflict of interest confirmation</strong> enabled, reviewers
 must additionally attest to being conflict-free before they can submit their
@@ -23994,28 +23992,28 @@ review — the <strong>Submit review</strong> button stays disabled until they d
 <a href="../workflow-configuration/#per-step-settings">Per-step settings</a>).</p>
 <h2 id="running-coi-detection">Running COI detection</h2>
 <ol>
-<li>Open the call's <strong>Reviewer pool</strong> and its <strong>COI</strong> tab, and click <strong>Detect conflicts</strong></li>
-<li>The system runs a batch detection job (processed in the background)</li>
+<li>Open the call's <strong>Reviewer pool</strong> and its <strong>COI</strong> tab, and click <strong>Detect conflicts</strong> (shown only when COI detection is enabled on the platform)</li>
+<li>The system runs a batch detection job in the background; the button shows that detection is running, and you are told how many new conflicts were found when it finishes</li>
 <li>Review the detected conflicts in the same <strong>COI</strong> tab</li>
 <li>For each conflict, choose to <strong>Dismiss</strong>, <strong>Waive</strong> (with justification), or <strong>Recuse</strong> the reviewer</li>
 </ol>
 <h2 id="reviewing-conflicts-of-interest">Reviewing conflicts of interest</h2>
 <p>Navigate to your call's <strong>Manage</strong> page and select the <strong>Reviewer pool</strong> tab, then the <strong>COI</strong> sub-tab. It lists conflicts detected between reviewers and proposal teams.</p>
-<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/coi-review-tab.png" data-desc-position="bottom"><img alt="COI review tab showing conflicts with types, severities, and statuses" src="../../img/coi-review-tab.png"></a></p>
-<p>The COI table shows all detected conflicts with their type, severity, current status, and detection method. It is the operational view used to triage all detected and declared conflicts on the call:</p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/coi-review-tab.png" data-desc-position="bottom"><img alt="COI tab with conflict types, severity badges and the Detect conflicts button" src="../../img/coi-review-tab.png"></a></p>
+<p>The COI table has <strong>Reviewer</strong>, <strong>Proposal</strong>, <strong>Round</strong>, <strong>COI type</strong>, <strong>Severity</strong>, <strong>Status</strong> and <strong>Detected</strong> columns, plus an optional <strong>Detection</strong> (method) column. It is the operational view used to triage all detected and declared conflicts on the call:</p>
 <ul>
-<li><strong>Status filters</strong> — narrow the list to <em>Pending</em>, <em>Dismissed</em>, <em>Waived</em>, or <em>Recused</em>.</li>
-<li><strong>Severity styling</strong> — each row is styled by severity (Real conflict / Apparent conflict / Potential conflict) so high-severity rows stand out at a glance.</li>
-<li><strong>Expandable rows</strong> — expand a row to see the evidence behind a detected conflict: shared publications with venues and years, shared affiliations with overlapping date ranges, and self-disclosed text.</li>
+<li><strong>Filters</strong> — narrow the list by status (<em>Pending</em>, <em>Dismissed</em>, <em>Waived</em>, <em>Recused</em>), severity, COI type or round.</li>
+<li><strong>Severity badges</strong> — the <strong>Severity</strong> column shows each conflict's severity (Real conflict / Apparent conflict / Potential conflict) as a coloured badge.</li>
+<li><strong>Expandable rows</strong> — expand a row to see the evidence description and evidence data behind a conflict, the conflicting person or organisation, and, once it has been handled, who reviewed it and when, the review notes and any management plan.</li>
 </ul>
-<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/scenario_coi_severities.png" data-desc-position="bottom"><img alt="Detected conflicts with severity styling" src="../../img/scenario_coi_severities.png"></a></p>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/scenario_coi_evidence.png" data-desc-position="bottom"><img alt="Expanded COI evidence" src="../../img/scenario_coi_evidence.png"></a></p>
-<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/cm-coi-management.png" data-desc-position="bottom"><img alt="COI detection results" src="../../img/cm-coi-management.png"></a></p>
-<p>For each pending COI, the call manager can take one of three actions:</p>
+<p>For each pending COI, the call manager can take one of three actions. Only a pending conflict can be resolved, and only once:</p>
 <h3 id="dismiss">Dismiss</h3>
 <p>Mark the COI as a false positive. The reviewer can continue reviewing the proposal without restrictions. Related assignment items that were blocked by this COI are automatically unblocked.</p>
 <h3 id="waive">Waive</h3>
-<p>Approve the reviewer to continue despite the conflict, but with a mandatory <strong>management plan</strong> describing the mitigation measures. Choosing <strong>Waive</strong> opens a dialog that requires this written <strong>justification</strong> before the conflict can be cleared. The justification, the manager, and the timestamp are recorded on the conflict and stay visible to staff users. Related blocked assignments are automatically unblocked.</p>
+<p>Approve the reviewer to continue despite the conflict, but with a mandatory <strong>management plan</strong> describing the mitigation measures. Choosing <strong>Waive</strong> opens a dialog that requires this written <strong>Management plan</strong> (and accepts optional <strong>Review notes</strong>) before the conflict can be cleared. The management plan, the manager, and the timestamp are recorded on the conflict and stay visible to staff users. Related blocked assignments are automatically unblocked.</p>
+<p><strong>Waive</strong> is disabled for a conflict type that the call's <strong>Type handling</strong> settings require recusal for.</p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/coi-waive-dialog.png" data-desc-position="bottom"><img alt="Waive conflict of interest dialog with the Management plan field" src="../../img/coi-waive-dialog.png"></a></p>
 <h3 id="recuse">Recuse</h3>
 <p>Permanently remove the reviewer from the proposal: their pending or accepted assignment items for it are marked as blocked, a review still in progress is rejected, and an evaluator role they hold on the proposal is revoked.</p>
 <div class="admonition note">
@@ -24037,7 +24035,7 @@ applicant.</p>
 <h2 id="staff-override-capabilities">Staff override capabilities</h2>
 <p>When the automated workflow gets stuck — for example, a reviewer cannot answer their invitation or an assignment is blocked by a COI that the manager wants to override — staff and call managers can use manual overrides.</p>
 <h3 id="force-accepting-reviewer-pool-invitations">Force-accepting reviewer pool invitations</h3>
-<p>If a reviewer's invitation is stuck in <strong>pending</strong>, <strong>declined</strong>, or <strong>expired</strong> status, a call manager can force-accept it.</p>
+<p>If a reviewer's invitation is stuck in <strong>pending</strong>, <strong>declined</strong>, or <strong>expired</strong> status, a call manager can force-accept it. An invitation sent by email to someone without a reviewer profile cannot be force-accepted, nor can the invitation of a reviewer whom the platform operator has suspended or blocked, or who does not meet the call's reviewer eligibility rules.</p>
 <div class="admonition tip">
 <p class="admonition-title">Tip</p>
 <p>For an invitation that simply expired or went unanswered, resend it instead: the reviewer gets a new link and a new expiry date and accepts it themselves (see <a href="../reviewer-management/#invitation-expiry-and-resending">Invitation expiry and resending</a>). Keep force-accept for cases where the reviewer has agreed through other channels but cannot answer the invitation.</p>
@@ -24058,7 +24056,6 @@ applicant.</p>
 </li>
 </ol>
 <p>The invitation status changes to "Accepted" with an "Overridden" badge indicating it was manually accepted.</p>
-<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/reviewer-pool-overview.png" data-desc-position="bottom"><img alt="Reviewer pool showing overridden badge on force-accepted invitation" src="../../img/reviewer-pool-overview.png"></a></p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>Force-accepting an invitation bypasses the reviewer's consent. Only use this when you have confirmed with the reviewer through other channels. The override reason is recorded for audit purposes.</p>
@@ -24068,9 +24065,9 @@ applicant.</p>
 <ol>
 <li>Navigate to the <strong>Assignment batches</strong> sub-tab in the Reviewer pool</li>
 <li>Expand the assignment batch to see individual items</li>
-<li>Find the item with <strong>COI blocked</strong> status</li>
+<li>Find the item with <strong>Blocked due to COI</strong> status</li>
 <li>Click the action menu and select <strong>Force unblock</strong></li>
-<li>Provide a mandatory <strong>override reason</strong></li>
+<li>Provide a mandatory <strong>Override reason</strong></li>
 <li>The item status changes from "blocked" to "pending"</li>
 </ol>
 <div class="admonition warning">
