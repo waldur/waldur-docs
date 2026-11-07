@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-06T10:27:34.560531Z
+Generated: 2026-11-07T03:04:23.048785Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -1010,8 +1010,11 @@ waldur:
 
 Like `waldur.marketplace.countries`, these values are applied by the
 `init-whitelabeling` post-install/post-upgrade hook: the chart becomes the
-source of truth and reapplies the value on every `helm upgrade`, overwriting
-any change made through the admin UI in between.
+source of truth and reapplies the value on every `helm upgrade`. Mastermind
+locks such settings, so the admin UI shows them as managed by the deployment
+and refuses changes that the next upgrade would revert. Removing a key from
+`settingsOverrides` hands the setting back to administrators with its current
+value.
 
 ## Arbitrary feature flags
 
@@ -5876,6 +5879,43 @@ To setup white-labeling, you can define next variables in `waldur/values.yaml` f
 Alternatively, TOS and PP files content can be provided as multiline values in `tosHtml` and `privacyHtml` options respectfully.
 If defined, they take precedence over the aforementioned ones.
 
+## Settings managed by the chart
+
+A setting the chart renders is reapplied by the `init-whitelabeling` hook on
+every `helm upgrade`. Mastermind locks it: the admin UI shows it as managed by
+the deployment and refuses changes, which the next upgrade would revert.
+Leaving a value empty (or unset, for the booleans) leaves the setting to
+administrators. Locking needs a Mastermind image whose
+`override_constance_settings` has `--lock`; with an older image the rendered
+settings stay editable and the next upgrade reverts changes, as before.
+
+The chart renders only what you set. `site.name`, `currencyName`,
+`whitelabeling.sidebarStyle`, `whitelabeling.disableDarkTheme`,
+`whitelabeling.autoApproveUserTOS`, `enableStrictCheckAcceptingInvitation`,
+`homeport.docsLink` and `support.backend` have no chart default. Two chart defaults differ from
+Waldur's, and the chart makes them Waldur's defaults in `override.conf.py`
+instead of rendering them, so administrators can still change them:
+
+* the documentation link is `https://docs.waldur.com` unless
+  `homeport.docsLink` is set (`""` means no link on a new install; an
+  upgraded one keeps the link the previous chart stored until an
+  administrator clears it);
+* the support desk is off unless `support` is in `waldur.features` or
+  `waldur.support.existingSecret` is set.
+
+### Upgrading
+
+Settings the chart no longer renders keep their current values and are
+handed to administrators. Removing `support` from `waldur.features` no longer
+switches the support desk off: administrators switch it in the admin UI.
+
+A values file that copies the previous chart defaults (`site.name: Waldur`,
+`currencyName: EUR`, `whitelabeling.sidebarStyle: dark`, the three booleans
+set to `false`, `homeport.docsLink`, `support.backend: basic`) still sets them, so they stay rendered
+and become locked. Delete the ones administrators should manage. The same
+applies to `helm upgrade --reuse-values`, which carries the previous chart
+defaults forward: pass your values file instead.
+
 ## Available countries
 
 The countries offered in the organization creation dialog are set with
@@ -5891,8 +5931,8 @@ waldur:
 By default the value is empty and the chart does not touch the setting, so a list
 configured through *Administration → Branding* is preserved. Once the value is
 set, the chart becomes the source of truth: it is reapplied by the
-`init-whitelabeling` hook on every `helm upgrade`, overwriting changes made
-through the admin UI.
+`init-whitelabeling` hook on every `helm upgrade`, and the admin UI shows it
+as managed by the deployment and does not let administrators change it.
 
 ---
 
@@ -6017,6 +6057,13 @@ Upgrade Waldur dependencies and release:
   helm dep update waldur/
   helm upgrade waldur waldur/
 ```
+
+Settings the chart renders are locked in the admin UI, and settings it no
+longer renders are handed back to administrators with their current values.
+Before upgrading from a chart that rendered its defaults, see "Upgrading"
+under "Settings managed by the chart" in
+[docs/whitelabeling.md](docs/whitelabeling.md): a copied values file or
+`--reuse-values` keeps those defaults set and locked.
 
 Restart deployments to apply configmaps changes:
 
@@ -113800,12 +113847,31 @@ Each stored value records who wrote it last, in `Setting.source`, with `updated_
 |---|---|
 | `api` | A person, through `POST /api/override-settings/` or another endpoint that changes settings. `updated_by` holds them. |
 | `admin` | A person, through the Django admin settings page. `updated_by` holds them. |
-| `deployment` | The deployment's configuration: `override_constance_settings` and `init_matrix_settings`, run by the Helm or Compose init job. `source_detail` holds the file or command. Re-applied on every deploy, which records an unchanged value as `deployment` too; a file applied with `--if-unset` (`languages.yaml`) only seeds settings without a value. |
+| `deployment` | The deployment's configuration: `override_constance_settings` and `init_matrix_settings`, run by the Helm or Compose init job. `source_detail` holds the file or command. See below for what a deploy re-applies. |
 | `cli` | An operator running a management command, such as `set_constance_image`, `set_login_logo_language` or `import_structure`. |
 | `application` | Waldur itself, with no person acting, such as a refreshed eduTEAMS token or the telemetry deployment ID. |
 | `migration` | A data migration, such as the copy out of django-constance in `configuration.0002`. |
 
 The admin page and the API write only values that changed, so re-submitting a form does not claim the settings it did not change.
+
+### Settings the deployment manages
+
+Besides the last writer, a setting records in `managed_by` what re-applies it on every deploy. A change made anywhere else lasts only until the next deploy.
+
+- `override_constance_settings FILE --lock` is how the image's `init-whitelabeling` applies its files on every start. It records the file in `managed_by` and locks the settings: `POST /api/override-settings/` answers 400 naming the file, and the Django admin shows them read-only. Re-submitting the current value is not an error.
+- `init_matrix_settings` records itself in `managed_by` but does not lock: `MATRIX_TOKENS_MANAGED_BY` hands the Matrix settings between the deployment and the Setup wizard.
+- A file applied without `--lock`, such as a one-off fix or input piped through `/dev/stdin`, writes its values and manages nothing.
+- A file applied with `--if-unset` (`languages.yaml`) only seeds settings without a value; they are the administrators' to change.
+
+A setting is handed back to administrators, keeping its value, when the file or command that manages it runs without it, or when its file is applied with `--if-unset`.
+
+A file is recorded by its name, not its path, so any file of the same name acts for the deployed one: `override_constance_settings /tmp/whitelabeling.yaml --if-unset` hands back everything the deployed `whitelabeling.yaml` manages, and the same file with `--lock` hands back what it does not set. Give one-off files a name of their own.
+
+`waldur override_constance_settings --unlock SETTING` only lifts the lock: while the file still holds the setting, the next deploy puts its value back and locks it again.
+
+Settings Waldur changes itself while running (`REMOTE_EDUTEAMS_REFRESH_TOKEN`, `TELEMETRY_DEPLOYMENT_ID`) are only given a first value from a file, never re-applied or locked. A key in a file that is not a setting is reported and skipped.
+
+`GET /api/override-settings/sources/` lists the stored values with `source`, `source_detail`, `locked` and `managed_by`, for staff and support. `waldur dump_constance_settings --managed-only out.yaml` dumps the settings a deploy re-applies, each under a comment naming its file or command.
 
 ## Frontend Integration
 
