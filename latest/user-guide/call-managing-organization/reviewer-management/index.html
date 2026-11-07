@@ -23529,8 +23529,8 @@
 <h3 id="building-a-reviewer-pool">Building a reviewer pool</h3>
 <p><strong>Performed by:</strong> Call manager</p>
 <ol>
-<li>Navigate to the <strong>call</strong> settings</li>
-<li>Select the <strong>Reviewer Pool</strong> section</li>
+<li>Open the call's <strong>Manage</strong> page</li>
+<li>Select the <strong>Reviewer pool</strong> tab</li>
 <li>Add reviewers using one of these methods:<ul>
 <li><strong>By profile</strong>: Search and select from published reviewer profiles</li>
 <li><strong>By email</strong>: Invite reviewers via email who may not yet have accounts</li>
@@ -23616,7 +23616,7 @@ stops working. A declined invitation cannot be resent. (API: the
 <p><strong>Performed by:</strong> Call manager</p>
 <ol>
 <li>Open the call's <strong>Edit</strong> view</li>
-<li>Select <strong>COI settings</strong></li>
+<li>Select <strong>Evaluation workflow → COI settings</strong></li>
 </ol>
 <p>The COI configuration is organised into four tabs:</p>
 <table>
@@ -23703,18 +23703,26 @@ stops working. A declined invitation cannot be resent. (API: the
 <h3 id="configuring-matching">Configuring matching</h3>
 <p><strong>Performed by:</strong> Call manager</p>
 <ol>
-<li>Navigate to call settings</li>
-<li>Select the <strong>Matching Configuration</strong> section</li>
+<li>Open the call's <strong>Edit</strong> page</li>
+<li>Select <strong>Evaluation workflow → Matching settings</strong></li>
 <li>Configure:<ul>
 <li><strong>Affinity method</strong>: Keyword, TF-IDF, or Combined</li>
-<li><strong>Weights</strong>: Keyword weight and text weight (the interface flags when they do not sum to 1.0, which is recommended for best results)</li>
-<li><strong>Assignment algorithm</strong>: how batches balance load — MinMax (balanced load), FairFlow, or Hungarian</li>
+<li><strong>Weights</strong>: Keyword weight and text weight, which should sum to 1.0 (the form warns when they do not)</li>
 <li><strong>Constraints</strong>: Min/max reviewers per proposal, max proposals per reviewer</li>
 <li><strong>Threshold</strong>: Minimum affinity score for suggestions</li>
-<li><strong>Reviewer bids</strong>: Whether to incorporate reviewer preferences, and their weight</li>
+<li><strong>Response window</strong>: days a reviewer has to answer an assignment batch, and the reminder before it expires</li>
 </ul>
 </li>
 </ol>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <strong>Assignment algorithm</strong> (MinMax, FairFlow, Hungarian) is stored but not
+used yet. <strong>Generate assignments</strong> picks reviewers for each proposal in one
+greedy pass: accepted pool members by their affinity for the proposal,
+highest first, skipping reviewers with a pending or recused conflict of
+interest, and topping up with other accepted pool members when affinity
+yields too few.</p>
+</div>
 <p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/scenario_matching_settings.png" data-desc-position="bottom"><img alt="Matching configuration" src="../../img/scenario_matching_settings.png"></a></p>
 <h3 id="generating-suggestions">Generating suggestions</h3>
 <ol>
@@ -23739,7 +23747,7 @@ stops working. A declined invitation cannot be resent. (API: the
 </ul>
 <p>For each suggestion you can <strong>Confirm</strong> (queue for invitation) or <strong>Reject</strong>, or use <strong>Invite by email</strong> to send a direct invitation to a candidate who is not yet in the pool. Bulk <strong>Confirm all</strong>, <strong>Reject all</strong>, and <strong>Delete all</strong> actions act on the whole table.</p>
 <h3 id="reviewer-bidding">Reviewer bidding</h3>
-<p>The matching configuration can incorporate <strong>reviewer bids</strong> — preference signals (<em>Eager to review</em>, <em>Willing to review</em>, <em>Not willing to review</em>, <em>Has conflict of interest</em>) weighted by a configurable <strong>bid weight</strong>. Bidding is part of the matching backend; there is no reviewer-facing bidding screen in the current interface, so bids are managed as configuration rather than collected from reviewers directly.</p>
+<p>Reviewers can record a <strong>bid</strong> per proposal — <em>eager</em>, <em>willing</em>, <em>not willing</em> or <em>conflict</em> — through the API (<code>/api/reviewer-bids/</code>); there is no bidding screen in the interface. Only the reviewer who placed a bid can change or withdraw it. Bids are stored and listed only: neither affinity scoring nor assignment reads them, whatever the matching configuration's bid settings say, and a <em>conflict</em> bid does not record a conflict of interest — declare conflicts through the COI tooling instead.</p>
 <h2 id="assignment-workflow-stage-2">Assignment workflow (Stage 2)</h2>
 <p>After matching, call managers create assignment batches to formally assign proposals to reviewers.</p>
 <h3 id="reviewer-pool-navigation">Reviewer pool navigation</h3>
@@ -23804,15 +23812,17 @@ batch's deadline, so extending it gives them more time as well.</p>
 <p>For each proposal in a batch, the reviewer can:</p>
 <ul>
 <li><strong>Accept</strong>: Creates a Review in IN_REVIEW state — reviewer can begin evaluation</li>
-<li><strong>Decline</strong>: Records decline reason; may trigger auto-reassignment if configured</li>
+<li><strong>Decline</strong>: Records decline reason; the proposal can then be assigned to another reviewer</li>
 </ul>
 <h3 id="auto-reassignment">Auto-reassignment</h3>
-<p>If configured in the <strong>Assignment Configuration</strong>:</p>
-<ul>
-<li>When a reviewer declines, the system automatically finds the next-best reviewer</li>
-<li>Maximum auto-reassignment attempts are configurable (default: 3)</li>
-<li>Reminder emails sent before assignment expiry (configurable days before, 2 by default)</li>
-</ul>
+<p>A declined proposal is <strong>not</strong> reassigned automatically. The call's assignment
+configuration stores an <em>auto-reassign on decline</em> switch and a maximum number
+of attempts (API only), but no reassignment is carried out yet: assign the
+proposal to another reviewer yourself, with <strong>Manual assignment</strong> or
+<strong>Generate assignments</strong>.</p>
+<p>Reminder emails before a batch expires are sent (2 days before by default);
+set the response window and the reminder under <strong>Evaluation workflow →
+Matching settings</strong>.</p>
 <h3 id="managing-reviewer-capacity">Managing reviewer capacity</h3>
 <p>The <strong>Reviewer capacity</strong> tab lists every pool member and their current load. Use it to adjust the <strong>Maximum assignments</strong> per reviewer when workload, sabbaticals, or expertise concentration change during a call.</p>
 <p>The maximum is enforced. A reviewer's current load is counted live from their
