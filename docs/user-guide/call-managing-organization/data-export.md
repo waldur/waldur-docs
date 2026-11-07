@@ -54,9 +54,28 @@ spreadsheet formula is written with a leading apostrophe.
 ### One proposal as a PDF
 
 **Download PDF** on a proposal (on the proposal page, or in a proposal row's
-actions) renders the application as the applicant filled it — fields,
-requested resources, team and the names of its attachments — for archiving or
-a panel meeting. The attachments themselves are not included.
+actions) renders the proposal as one document, for archiving or a panel
+meeting. Waldur builds it on the server, from what the person downloading it
+may read, so each reader gets their own version:
+
+- **Everyone who can open the proposal** gets the application as the applicant
+  filled it: fields, summary and description, requested resources, team and the
+  names of its attachments. Applicant details follow the call's applicant
+  visibility settings, and an offering's provider sees only their own
+  offerings' requests.
+- **The call team** (call managers, call organisers, staff and support) also
+  gets the evaluation record: each workflow step with its status, outcome,
+  reasons, dates, internal notes and, unless the step is blind or its
+  decision is held, who completed it; the contributions;
+  the technical assessment per offering; released reports; the round's
+  ranking, final score and recommendation; and the award.
+- **The applicant team** sees an evaluation step's outcome and reports once
+  they are released to them, and the award once the decision is released. They
+  never see internal notes, reviewers' private comments or the ranking.
+- **Evaluators** (reviewers, rapporteurs, panel members) get what they can read
+  on the proposal page, and no more.
+
+The attachments themselves are not included.
 
 The round's ranking has its own export and import — see
 [Ranking and meeting notes](round-rankings.md#ranking-and-meeting-notes).
