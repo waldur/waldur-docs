@@ -42,8 +42,8 @@ Call managers build a curated pool of reviewers for each call.
 
 **Performed by:** Call manager
 
-1. Navigate to the **call** settings
-2. Select the **Reviewer Pool** section
+1. Open the call's **Manage** page
+2. Select the **Reviewer pool** tab
 3. Add reviewers using one of these methods:
     - **By profile**: Search and select from published reviewer profiles
     - **By email**: Invite reviewers via email who may not yet have accounts
@@ -115,7 +115,7 @@ Each specific type is mapped to a severity and a handling rule in the call's **T
 **Performed by:** Call manager
 
 1. Open the call's **Edit** view
-2. Select **COI settings**
+2. Select **Evaluation workflow → COI settings**
 
 The COI configuration is organised into four tabs:
 
@@ -177,15 +177,22 @@ Waldur uses algorithmic matching to suggest optimal reviewer-proposal assignment
 
 **Performed by:** Call manager
 
-1. Navigate to call settings
-2. Select the **Matching Configuration** section
+1. Open the call's **Edit** page
+2. Select **Evaluation workflow → Matching settings**
 3. Configure:
     - **Affinity method**: Keyword, TF-IDF, or Combined
-    - **Weights**: Keyword weight and text weight (the interface flags when they do not sum to 1.0, which is recommended for best results)
-    - **Assignment algorithm**: how batches balance load — MinMax (balanced load), FairFlow, or Hungarian
+    - **Weights**: Keyword weight and text weight, which should sum to 1.0 (the form warns when they do not)
     - **Constraints**: Min/max reviewers per proposal, max proposals per reviewer
     - **Threshold**: Minimum affinity score for suggestions
-    - **Reviewer bids**: Whether to incorporate reviewer preferences, and their weight
+    - **Response window**: days a reviewer has to answer an assignment batch, and the reminder before it expires
+
+!!! note
+    The **Assignment algorithm** (MinMax, FairFlow, Hungarian) is stored but not
+    used yet. **Generate assignments** picks reviewers for each proposal in one
+    greedy pass: accepted pool members by their affinity for the proposal,
+    highest first, skipping reviewers with a pending or recused conflict of
+    interest, and topping up with other accepted pool members when affinity
+    yields too few.
 
 ![Matching configuration](../img/scenario_matching_settings.png)
 
@@ -213,7 +220,7 @@ For each suggestion you can **Confirm** (queue for invitation) or **Reject**, or
 
 ### Reviewer bidding
 
-The matching configuration can incorporate **reviewer bids** — preference signals (*Eager to review*, *Willing to review*, *Not willing to review*, *Has conflict of interest*) weighted by a configurable **bid weight**. Bidding is part of the matching backend; there is no reviewer-facing bidding screen in the current interface, so bids are managed as configuration rather than collected from reviewers directly.
+Reviewers can record a **bid** per proposal — *eager*, *willing*, *not willing* or *conflict* — through the API (`/api/reviewer-bids/`); there is no bidding screen in the interface. Only the reviewer who placed a bid can change or withdraw it. Bids are stored and listed only: neither affinity scoring nor assignment reads them, whatever the matching configuration's bid settings say, and a *conflict* bid does not record a conflict of interest — declare conflicts through the COI tooling instead.
 
 ## Assignment workflow (Stage 2)
 
@@ -296,15 +303,19 @@ batch's deadline, so extending it gives them more time as well.
 For each proposal in a batch, the reviewer can:
 
 - **Accept**: Creates a Review in IN_REVIEW state — reviewer can begin evaluation
-- **Decline**: Records decline reason; may trigger auto-reassignment if configured
+- **Decline**: Records decline reason; the proposal can then be assigned to another reviewer
 
 ### Auto-reassignment
 
-If configured in the **Assignment Configuration**:
+A declined proposal is **not** reassigned automatically. The call's assignment
+configuration stores an *auto-reassign on decline* switch and a maximum number
+of attempts (API only), but no reassignment is carried out yet: assign the
+proposal to another reviewer yourself, with **Manual assignment** or
+**Generate assignments**.
 
-- When a reviewer declines, the system automatically finds the next-best reviewer
-- Maximum auto-reassignment attempts are configurable (default: 3)
-- Reminder emails sent before assignment expiry (configurable days before, 2 by default)
+Reminder emails before a batch expires are sent (2 days before by default);
+set the response window and the reminder under **Evaluation workflow →
+Matching settings**.
 
 ### Managing reviewer capacity
 

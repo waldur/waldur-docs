@@ -55,7 +55,7 @@ configuration.
 
 ### General settings
 
-The **General** tab holds the call's identity: name, description, reference code,
+The **Call → General** sub-tab holds the call's identity: name, description, reference code,
 an optional external URL, and the proposal slug template used to generate
 human-readable proposal IDs. See
 [Proposal ID configuration](proposal-id-configuration.md) for slug placeholders.
@@ -64,14 +64,14 @@ human-readable proposal IDs. See
 
 ### Configuration and workflow steps
 
-The **Configuration** tab is where the evaluation workflow lives. Below the
-general options, the project details fields, applicant data visibility,
-applicant eligibility and resource templates, the **Steps & settings** table
+The **Evaluation workflow** tab is where the evaluation workflow lives. On its
+**Steps & settings** sub-tab, next to **Evaluator roles**, **Panels**, **COI
+settings**, **Reviewer eligibility** and **Matching settings**, the table
 lists every workflow step in order with its kind, duration, responsible role
 and transition mode, with a tab per phase when the call has steps after the
 award. The **Preview sequence** below
 the table visualises the proposal journey exactly as configured. The
-**Evaluator roles** sub-tab next to it defines the roles that people hold on a
+**Evaluator roles** sub-tab defines the roles that people hold on a
 proposal, such as rapporteurs (see [Evaluator roles](#evaluator-roles)).
 
 ![Workflow steps configuration](../img/cm-workflow-steps-config.png)
@@ -213,8 +213,8 @@ are covered in depth in [Reviewer management](reviewer-management.md) and the
 
 ### COI settings
 
-Configure automated conflict detection per call from the **COI settings** tab
-in the call configuration. You control co-authorship and institutional
+Configure automated conflict detection per call from **Evaluation workflow →
+COI settings** in the call configuration. You control co-authorship and institutional
 lookback windows, matching thresholds, and which relationships are flagged.
 
 ![COI detection settings](../img/cm-coi-settings.png)
@@ -472,7 +472,7 @@ allocation decision as such:
 
 - If **Award response** is disabled, the allocation decision is the last step, so
   approving it immediately marks the proposal **Accepted**, creates a project
-  under the applicant's organisation, provisions the requested resources and
+  under the call-managing organisation, provisions the awarded resources and
   grants the team access.
 - If **Award response** is enabled, the proposal moves to that step instead and
   waits for the applicant to accept before anything is provisioned. See

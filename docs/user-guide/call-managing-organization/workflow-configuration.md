@@ -54,10 +54,10 @@ Enable, rename, reorder or remove them, and add others, to build the call's proc
 
 ## Configuring workflow steps
 
-**Performed by:** Call organiser or staff
+**Performed by:** Call manager, call organiser or staff
 
 1. Open the call's **Edit** page
-2. Select the **Configuration** tab, then the **Steps & settings** sub-tab
+2. Select the **Evaluation workflow** tab, then the **Steps & settings** sub-tab
 
 The table lists the steps in order with their **Step** name, **Kind**, **Duration (days)**, **Responsible role** and **Transition**; steps that run alongside each other are grouped together. When the call has steps after the award, the table has a tab per phase: **Evaluation**, **Extension** and **Final report**. Expanding a row shows the rest of its configuration: description, outcomes, what a negative outcome does, its evaluators and contributors, input steps and flags. **Preview sequence** beneath the table shows the resulting order.
 
@@ -264,7 +264,7 @@ Reviewers open their assigned reviews from the **Reviews** page. The current wor
 
 ## Evaluation checklists
 
-Each workflow step can have an attached **checklist** — a structured form filled in during evaluation. Checklists support 18 question types, including yes/no, single and multiple select, text and rich text, numbers, dates, file uploads, ratings and Likert scales, with conditional visibility. On a step with contributors, each contribution has its own answers.
+Each workflow step can have an attached **checklist** — a structured form filled in during evaluation. A step can use the portal's shared checklists and those of the call's own organization (see [Shared and organization checklists](checklists-and-forms.md#shared-and-organization-checklists)). Checklists support 18 question types, including yes/no, single and multiple select, text and rich text, numbers, dates, file uploads, ratings and Likert scales, with conditional visibility. On a step with contributors, each contribution has its own answers.
 
 For example:
 

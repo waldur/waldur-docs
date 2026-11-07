@@ -33,6 +33,16 @@ Permanently remove the reviewer from the proposal. Any existing reviews are disc
 !!! note
     When a COI is dismissed or waived, any assignment items that were blocked solely because of that COI are automatically changed from "blocked" to "pending". If multiple COIs exist for the same reviewer-proposal pair, the assignment remains blocked until all COIs are resolved.
 
+### Evaluators who join the applicant team
+
+Whoever joins the team of a proposal they evaluate is treated as having a
+recorded conflict of interest with it: their evaluator role on it is revoked
+(*Joined the applicant team.*), a review in progress is rejected, assignments
+not yet answered are blocked and their open contributions are withdrawn. An
+offering manager on the team no longer fills their offering's technical
+assessment of it, and a panel member on the team reads the proposal as an
+applicant.
+
 ## Staff override capabilities
 
 When the automated workflow gets stuck — for example, a reviewer cannot answer their invitation or an assignment is blocked by a COI that the manager wants to override — staff and call managers can use manual overrides.

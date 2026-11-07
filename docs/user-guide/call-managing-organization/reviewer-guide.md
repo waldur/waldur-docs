@@ -97,7 +97,7 @@ Shows calls you are pooled for, with their current status and review deadlines.
 When you accept an assignment and open a review:
 
 1. Read the proposal summary, team composition, and resource requests
-2. Score each section using the rating fields
+2. Give an overall score from 1 to 5 — or, when the review step names scoring criteria, rate each criterion and the overall score is derived from them, weighted by each criterion's share
 3. Provide public feedback (visible to the applicant after decision) and private comments (visible to call managers only)
 4. Click **Submit** to finalise the review
 
@@ -108,7 +108,7 @@ When you accept an assignment and open a review:
 
 Each review includes:
 
-- **Summary score** — overall numeric rating
+- **Summary score** — overall rating from 1 to 5, derived from the criterion scores when the step has criteria
 - **Summary public comment** — feedback shared with the applicant
 - **Summary private comment** — internal feedback for call managers
 - **Field-specific comments** — feedback on the project title, summary, description, duration, supporting documentation, resource requests, and team
@@ -193,8 +193,8 @@ Batch lifecycle:
 4. **Expired** — batch expired without full response
 5. **Cancelled** — manager cancelled the batch
 
-!!! tip
-    Configure auto-reassignment in the call settings to automatically find the next-best reviewer when a reviewer declines an assignment.
+!!! note
+    A declined proposal is not reassigned automatically: the call manager assigns it to another reviewer in a new batch.
 
 ## Conflict of interest management
 

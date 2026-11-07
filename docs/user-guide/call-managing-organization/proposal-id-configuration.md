@@ -8,10 +8,10 @@ Each proposal receives a unique **slug** (identifier) generated from a configura
 
 ## Configuring the ID template
 
-**Performed by:** Call manager (before any proposals are submitted)
+**Performed by:** Call manager (before the call has any proposals)
 
-1. Navigate to the **call configuration**
-2. In the **General configuration** section, set the **Proposal slug template**
+1. Open the call's **Edit** page
+2. Under **Call → General**, set the **Proposal slug template**
 3. Use the available template variables to define your pattern
 
 ## Available template variables
@@ -39,7 +39,7 @@ Each proposal receives a unique **slug** (identifier) generated from a configura
 
 ## Important considerations
 
-- The template **cannot be changed** after proposals have been submitted to the call
+- The template **cannot be changed** once the call has proposals, drafts included
 - The counter resets per round — each round starts counting from 1
 - Proposal slugs are unique within the system
 - The counter counts all proposals in the round (including drafts)

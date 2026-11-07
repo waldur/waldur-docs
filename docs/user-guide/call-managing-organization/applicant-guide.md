@@ -42,6 +42,24 @@ When you have found the call you want, click **Apply to call**.
     The **Calls for proposals** catalogue is also reachable without signing in,
     from the public landing page — handy for sharing a call with colleagues.
 
+A call marked *This call restricts who may apply* checks who you are before you
+can apply; when you do not qualify, **Apply to call** is disabled with *You are
+not eligible to apply to this call*.
+
+### How many proposals you may have at once
+
+A call-managing organization may limit how many proposals one applicant holds
+with it at a time, across all of its calls. A proposal you created counts while
+it is **Submitted** or **In review**, and once **Accepted** for as long as its
+project runs. Drafts, rejected and cancelled proposals do not count, nor do
+proposals on which you are only a team member.
+
+At the limit you cannot start or submit another proposal to that
+organization's calls: you see *You have reached the maximum of N active
+projects or pending proposals*. You can apply again once one of them is
+decided against, withdrawn, or its project has ended. A draft you have already
+started stays a draft; submit it when a place frees up.
+
 ## Starting a proposal
 
 **Apply** opens the **Create proposal** dialog. It confirms the call name, the
@@ -191,6 +209,15 @@ Proposal states an applicant sees:
 | **Rejected** | Not funded |
 | **Canceled** | Withdrawn, or an award you declined |
 
+### Withdrawing a proposal
+
+To take a submitted proposal out of evaluation, a proposal manager of its team
+uses **Withdraw proposal** on it and may give a reason. This works while the
+proposal is **Submitted** or **In review**; it moves to **Canceled**, and the
+call managers are told. Once an award awaits your answer, decline the award
+instead. A proposal still in **Draft** is not withdrawn but deleted, with
+**Delete draft**.
+
 ## Tracking progress
 
 Open a submitted proposal to follow it through the call's **evaluation
@@ -202,12 +229,26 @@ proposal has cleared *Administrative check* and *Technical assessment* and is in
 ![Tracking a proposal through the workflow stepper](../img/applicant-tracking-status.png)
 
 The sections below the stepper are read-only once submitted, so you always see
-exactly what you sent. Editing a submitted proposal is refused outright, not
-just hidden: your requested resources, documents and checklist answers are fixed
-at the moment you submit, and only the call team can change them afterwards. A
-draft you leave open when the round closes is the one exception — it moves into
+exactly what you sent. Editing a submitted proposal is refused, not just
+hidden: your requested resources, documents and checklist answers are fixed at
+the moment you submit, and only the call team can change them afterwards —
+unless they ask you to (see [When changes are requested](#when-changes-are-requested)).
+A draft you leave open when the round closes is not affected — it moves into
 the call's next round and stays editable, because it was never submitted (see
 [Drafts at the cut-off](call_management.md#drafts-at-the-cut-off)).
+
+### When changes are requested
+
+On some calls an evaluation step can send your proposal back to you for
+changes instead of rejecting it. You are notified, and the proposal shows
+*Changes requested at <step>* with the message, the parts you may edit and,
+when set, the date to submit the changes by. The proposal stays **In review**.
+
+Only the parts listed become editable — for example the summary, supporting
+documentation or resource requests. Make the changes and click **Submit
+changes** in the **Progress** panel; the step then continues with what you
+changed. If the due date passes first, the request lapses and the step
+continues with the proposal as it stands.
 
 Which steps appear, and how much of each you can see,
 depends on the call's configuration at the moment you submitted (see
@@ -298,7 +339,7 @@ to you; it is read-only.
 ![Awarded resources as the applicant sees them](../img/applicant-awarded-resources.png)
 
 **Accept award** asks you to confirm; once you do, the awarded resources are
-provisioned, a project is created under your organisation and your team is
+provisioned, a project is created under the call-managing organisation and your team is
 granted access.
 
 ![Accept award confirmation](../img/applicant-award-accept.png)
