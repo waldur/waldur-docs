@@ -11,13 +11,16 @@ Checklists in Waldur serve multiple purposes:
 | Checklist Type | Purpose |
 |---|---|
 | **Proposal compliance** | Questions that proposal submitters must answer |
+| **Workflow step evaluation** | The form evaluators (or the applicant, on an applicant step) fill in at a workflow step — see [Workflow configuration](workflow-configuration.md#evaluation-checklists) |
 | **Offering compliance** | Compliance checks for service provider offerings |
+| **Project compliance** | Compliance checks for projects |
 | **Project metadata** | Additional project information collection |
-| **Onboarding** | Data collection during organization onboarding |
+| **Onboarding customer data** / **Onboarding intent/purpose data** | Data collection during organization onboarding |
+| **Feedback survey** | Feedback surveys |
 
 ## Supported question types
 
-Waldur supports 16 question types for building forms:
+Waldur supports 18 question types for building forms:
 
 | Question Type | Description | Validation |
 |---|---|---|
@@ -36,7 +39,9 @@ Waldur supports 16 question types for building forms:
 | **Email** | Email address input | Email format validation |
 | **URL** | URL input | URL format validation |
 | **Country** | Country selector (ISO 3166) | Country code validation |
-| **Rating** | Numeric rating scale | Configurable min/max (e.g., 1-5 for Likert) |
+| **Rating** | Numeric rating scale | Configurable min/max (e.g., 1-5) |
+| **Likert** | Agreement scale with labelled ends | 3, 5 or 7 points; optional N/A |
+| **Rich text** | Formatted long text | Optional character limit |
 
 ## File upload configuration
 
@@ -98,9 +103,13 @@ When a triggered answer is submitted, the checklist completion is marked as requ
 
 **Performed by:** Call manager
 
-1. Navigate to the **call configuration**
-2. In the **General configuration** section, select a **compliance checklist**
+1. Open the call's **Edit** page
+2. Under **Call → General configuration**, on its **Compliance** tab, select a **Compliance checklist** (it can also be chosen when creating a blank call)
 3. The selected checklist will be presented to all proposal submitters
+
+The compliance checklist can only be changed while the call has no proposals.
+Evaluation checklists for individual workflow steps are attached in each step's
+settings instead (see [Workflow configuration](workflow-configuration.md)).
 
 When a proposal is created, the system automatically creates a checklist completion record for that proposal. Submitters must answer all required questions before submitting.
 
@@ -114,13 +123,31 @@ For each proposal with an attached checklist:
 
 ## Managing checklists (administrators)
 
-Administrators can manage checklists via the admin interface:
+Staff manage checklists under **Administration → Compliance → Checklists**:
 
-1. **Create checklist**: Define name, type, and description
+1. **Create checklist**: Define name, type, description and, optionally, the **Organization** it belongs to (see below)
 2. **Add questions**: Create questions with type, ordering, required flag, and guidance text
 3. **Add options**: For selection types, add option labels with sort order
 4. **Add dependencies**: Configure conditional visibility between questions
 5. **Attach to calls**: Link the checklist to specific calls via call configuration
 
+### Shared and organization checklists
+
+A checklist either belongs to one organization or is shared by the whole
+portal:
+
+- **Organization checklist** — only that organization's calls can use it, and
+  only its people see it. Use it for an evaluation form that is internal to one
+  call-managing organization.
+- **Shared** (no organization) — every call on the portal can use it.
+
+Leave **Organization** empty for a shared checklist. A call created from a
+template or imported from a file gets its own copies of the template's
+evaluation forms, so editing them changes no other call.
+
 !!! warning
     Modifying checklist questions after proposals have been submitted may affect existing answers. Consider creating a new checklist version for significant changes.
+
+    A checklist, or a question, that already has answers cannot be deleted —
+    deleting it would delete the answers with it. Detach the checklist from
+    the call or step that uses it instead.

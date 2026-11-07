@@ -9,32 +9,90 @@ This guide walks you through the entire lifecycle of call management in Waldur, 
 **Performed by:** Organization owner
 
 1. **Verify organization type**:
-      - Navigate to your organization's profile settings
       - Confirm your organization is registered as a **Call managing organization**
-      - If not, contact your Waldur administrator to update your organization type
+      - If not, contact your Waldur administrator: staff turn it on with **Manages calls** under the organization's **Edit → Call manager** tab
 
-2. **Review available offerings**:
+2. **Decide on a per-applicant limit** (optional):
+      - The same **Call manager** tab holds **Active proposals per applicant** — see [Limiting proposals per applicant](#limiting-proposals-per-applicant)
+
+3. **Review available offerings**:
       - Check that there are **marketplace offerings** available to be requested in calls
       - These offerings will form the resource pool available for allocation
 
-3. **Assign Call organisers**:
+4. **Assign Call organisers**:
       - Go to the **Team** section of your organization
       - Click on the **Add member** button
       - Search for users to assign as Call organisers
       - Select the **Call organiser** role from the dropdown menu
       - Click **Add** to confirm the assignment
 
+### Limiting proposals per applicant
+
+**Set by:** Staff, on the organization's **Edit → Call manager** tab
+
+**Active proposals per applicant** caps how many proposals one applicant may
+hold with the organization at a time, across **all** of its calls. Leave it
+empty for no limit (the default).
+
+A proposal holds a place:
+
+- while it is **Submitted** or **In review**, and
+- once **Accepted**, for as long as its project runs — until the project is
+  completed, removed or past its end date.
+
+Drafts, rejected and cancelled proposals hold none, and an accepted proposal
+and its project count as one place, not two. Only the proposal's **creator**
+is counted: being a member or co-manager of someone else's proposal team takes
+no place.
+
+The limit is checked when a proposal is created and again when it is
+submitted, where it holds: a draft takes no place until it is submitted, so an
+applicant at the limit cannot submit another one. They are refused with
+*You have reached the maximum of N active projects or pending proposals. You
+cannot submit another proposal until one of them is completed or closed.*
+
+Once a limit is set, every call of the organization carries the catalogue
+warning *This call restricts who may apply* (see
+[When eligibility is checked](#when-eligibility-is-checked)), and an applicant
+at the limit sees **Apply to call** disabled with *You are not eligible to
+apply to this call.* State the limit in the call descriptions.
+
 ## Step 2: Call creation
 
 **Performed by:** Call organiser or Organization owner
 
 1. Navigate to the **Call management** section, in the organisation dashboard.
-2. Go to the **Calls** section, to click **"Create call"**.
-3. Fill in the following details:
-      - Call title
-      - Description and documentation
-      - Submission guidelines
-      - Assign call manager to the call
+2. Go to the **Calls** section and click **Create call**. It offers two ways to
+   start:
+      - **Blank call** — asks for the call's **Name**, **Description**,
+        **External URL** and an optional **Compliance checklist**.
+      - **From template** — see [Starting from a call template](#starting-from-a-call-template).
+3. Either way the call is created as a **Draft**. Assign its call managers on
+   the call's **Team** tab.
+
+### Starting from a call template
+
+**From template** opens **Create call from template**: pick a **Template**,
+optionally give a **Call name**, and click **Create**. The call is created as
+a draft with the template's settings, workflow steps, evaluator roles,
+evaluation forms and notification rules, ready to complete with the parts that
+belong to your portal: offerings, rounds, people, role mapping and resource
+templates.
+
+The dialog lists the templates staff have published, each with the process it
+models and a description. Staff manage them under **Administration → Call
+templates**: **Load preset** adds templates from the presets shipped with
+Waldur — among them *Rapid access*, *Staff-reviewed allocation*,
+*Peer-reviewed allocation*, *Technical and scientific review*, *Regular
+Access*, *Extreme Scale Access*, beamtime proposals and classroom allocations —
+and each template's row shows its workflow as steps, a diagram, a timeline and
+scenarios. Staff also see unpublished templates in the dialog, marked
+**Unpublished**. With no template published, the dialog says so: start from a
+blank call, or import a call file.
+
+A call created from a template remembers it: the calls list shows **Created
+from template**, and the call's **Validation → Changes** tab lists how the
+call now differs from the template.
 
 ## Step 3: Configure call rounds
 
@@ -77,7 +135,7 @@ Two things end this:
 - **No later round.** If the round that closed is the call's last one, the draft
   is cancelled; there is nowhere for it to move on to.
 - **The setting is off.** With **Carry unsubmitted drafts over to the next round**
-  turned off under **Configuration → General configuration**, every draft left at
+  turned off under **Call → General configuration**, every draft left at
   the cut-off is cancelled, as Waldur did before the setting existed.
 
 Only drafts carry over. A submitted proposal stays with the round it was
@@ -95,7 +153,7 @@ Each call decides when a submitted proposal's evaluation starts:
   background job checks for such proposals every hour, so they move to
   **In review** within about an hour of the cut-off.
 
-Choose it with **Evaluation starts** under **Configuration → General
+Choose it with **Evaluation starts** under **Call → General
 configuration** (the call's `evaluation_start` field in the API). It cannot be
 changed while the call has proposals that are submitted or in review.
 
@@ -103,22 +161,58 @@ changed while the call has proposals that are submitted or in review.
 
 **Performed by:** Call manager
 
-Before activating a call, the Call manager must configure all necessary settings:
+Before activating a call, the Call manager must configure all necessary settings.
+
+The call's **Edit** page groups its settings into tabs:
+
+| Tab | Sub-tabs |
+|---|---|
+| **Call** | **General** (name, description, reference code, proposal slug template, external URL), **General configuration**, **Documents** |
+| **Rounds** | — |
+| **Application form** | **Project details fields**, **Applicant eligibility**, **Applicant data visibility**, **Resource templates** |
+| **Resources** | the call's offerings |
+| **Evaluation workflow** | **Steps & settings**, **Evaluator roles**, **Panels**, **COI settings**, **Reviewer eligibility**, **Matching settings** |
+| **Allocation** | **Allocation settings**, **Role mapping** |
+| **Team** | — |
 
 ### Call configuration settings
 
 #### 1. General configuration
 
-Under **Configuration → General configuration**, set the basic call parameters:
+Under **Call → General configuration**, set the basic call parameters. They are
+grouped into tabs.
+
+On the **Duration** tab:
 
 - **Fixed duration for granted projects (in days)**: how long every granted project runs. When it is set, it decides the project's end date, and applicants can only choose subscription lengths that fit inside it. Applicants see the resulting length in the submission form; they are not asked for a duration. See [How long a granted project runs](#how-long-a-granted-project-runs).
+- **Durations the applicant chooses from**: instead of a fixed duration, a list of project lengths the applicant picks from; the award may move a proposal to another of them. No prepaid subscription may run longer than the chosen length. Setting a list clears the fixed duration, and setting a fixed duration clears the list.
+
+On the **Evaluation** tab:
+
 - **Evaluation starts**: **On submission** or **At the round cut-off** — when a submitted proposal's evaluation starts. It cannot be changed while the call has submitted or in-review proposals. See [When evaluation starts](#when-evaluation-starts).
+- **Target days from cut-off to decision**: how long the evaluation is planned to take after a round's cut-off. A round with an allocation date uses that date instead. The [workflow check](#checking-the-workflow-before-activation) warns when the step durations up to the decision take longer.
+
+On the **Decisions and rounds** tab:
+
 - **Applicants learn the decision**: **As each decision is made** (the default) or **Together for the whole round** — whether each allocation decision is announced as soon as it is made, or held until a call manager publishes the round's results. It cannot be changed while the call holds decisions that have not been published. See [Publishing a round's results](#publishing-a-rounds-results).
+- **Results are adopted before publication**: for results a body such as a governing board must adopt first. The adoption is recorded while the round is deciding, the round's results cannot be published until it is, and once adopted a held decision can no longer be reopened. See [Recording adoption](#recording-adoption).
 - **Undecided proposals when a round is completed**: **Block completion until every proposal is decided** (the default) or **Reject them automatically** — what completing a round does with proposals that still have no decision. A round can override it. See [Completing a round](#completing-a-round).
 - **Carry unsubmitted drafts over to the next round**: on by default. A draft still open when its round's cut-off passes moves to the call's next round instead of being cancelled, and its creator is told which round it moved to and when the new deadline is. With it off the draft is cancelled at the cut-off, as are drafts left at the last round's cut-off either way. See [Drafts at the cut-off](#drafts-at-the-cut-off).
+
+On the **Compliance** tab:
+
 - **Compliance checklist**: an optional checklist for proposal compliance evaluation. It can only be changed while the call has no proposals.
+- **Conflict-of-interest declaration**: the wording evaluators confirm on steps that ask them to declare having no conflict of interest, unless a step words its own. Leave it empty for the platform's standard declaration. A change applies only to confirmations made after it.
+
+On the **Applicants** tab:
+
+- **Copied on mail to the applicant**: the proposal team roles (for example the proposal managers, that is the principal investigators) whose holders are copied on every mail to the applicant — submission, step outcomes they are told of, requests for changes and results.
 - **Reviewer identity visible to applicants**: whether applicants can see who is reviewing their proposals (Yes/No)
 - **Reviews visible to applicants**: whether applicants can read the reviews and feedback (Yes/No)
+
+On the **Orders** tab:
+
+- **Resource orders created by**: who the orders for granted resources are attributed to — the proposal applicant (the default), the project manager, the call manager, or a **Named contact**, such as a shared mailbox, who must hold a role on the call or its organization. That person is named on each order and receives the order notifications.
 
 ![Call general configuration](../img/call_configuration_general.png)
 
@@ -135,16 +229,16 @@ When a proposal is granted, the project's end date is decided in this order:
 !!! warning "Awards that must expire"
     If every award from the call must end, set a fixed duration. Without one, a proposal that requests only resources not sold by the month creates a project with no end date.
 
-Further sub-tabs sit alongside it under **Configuration**:
+The **Application form** tab holds what the call asks of applicants:
 
 - **Project details fields** — what this call asks applicants for (see below)
-- **Applicant data visibility** — which applicant data is exposed during evaluation
 - **Applicant eligibility** — who may submit a proposal at all (see below)
+- **Applicant data visibility** — which applicant data is exposed during evaluation
 - **Resource templates** — what applicants can request, and how many templates (see below)
 
 #### 1a. Project details fields
 
-Under **Configuration → Project details fields**, choose what the Project details
+Under **Application form → Project details fields**, choose what the Project details
 step asks the applicant for. Each field is one of:
 
 | State | On the form | On submission |
@@ -182,7 +276,7 @@ a call that already exists.
 
 #### 1b. Applicant eligibility
 
-Under **Configuration → Applicant eligibility**, restrict who may submit a
+Under **Application form → Applicant eligibility**, restrict who may submit a
 proposal to this call. Each row holds a list of values; a row left empty is not
 checked, and a call with every row empty is open to anyone who can sign in.
 
@@ -268,9 +362,13 @@ qualify is refused when the proposal is created, with a message naming the
 restriction that failed. Spell the rules out in the call description or the
 external URL, so nobody writes a proposal they cannot submit.
 
+The same warning appears when the call-managing organization
+[limits proposals per applicant](#limiting-proposals-per-applicant); that limit
+is checked on creation and again on submission.
+
 #### 1c. Resource templates
 
-Under **Configuration → Resource templates**, define what applicants can
+Under **Application form → Resource templates**, define what applicants can
 request. A template names one of the call's offerings with a plan, its amounts
 (usage limits) and any preset attributes. Its attributes and subscription
 length are checked against the offering when you save it.
@@ -297,7 +395,7 @@ submitted proposals keep their amounts.
 
 #### 2. Offerings configuration
 
-Define available resources:
+Define available resources on the **Resources** tab:
 
 - **Add Offerings**: Select which service provider offerings will be available for this call
 - Ensure all required offerings have been approved by service providers
@@ -307,7 +405,7 @@ Define available resources:
 
 #### 3. Role mapping
 
-Configure project role assignments:
+Configure project role assignments under **Allocation → Role mapping**:
 
 - **Proposal project role mappings**: Map each proposal role to corresponding project roles
 - Each proposal role must be mapped to a project role to ensure proper access when projects are created
@@ -322,13 +420,13 @@ Under **Evaluation workflow → Steps & settings**, configure the evaluation pip
 
 #### 5. COI settings
 
-Configure conflict of interest detection parameters. See [Reviewer management](reviewer-management.md#conflict-of-interest-coi-detection) for details.
+Configure conflict of interest detection parameters under **Evaluation workflow → COI settings**. See [Reviewer management](reviewer-management.md#conflict-of-interest-coi-detection) for details.
 
 ![COI detection settings](../img/scenario_coi_config.png)
 
 #### 6. Matching settings
 
-Configure the reviewer-proposal matching algorithm. See [Reviewer management](reviewer-management.md#reviewer-proposal-matching) for details.
+Configure the reviewer-proposal matching algorithm under **Evaluation workflow → Matching settings**. See [Reviewer management](reviewer-management.md#reviewer-proposal-matching) for details.
 
 ![Matching algorithm settings](../img/scenario_matching_config.png)
 
@@ -336,7 +434,8 @@ Configure the reviewer-proposal matching algorithm. See [Reviewer management](re
 
 The **Team** tab assigns **call managers** and **panel members** to the call.
 
-  *Note: The primary Call manager is added by the Call organiser during call creation.*
+A panel member's row offers setting them as the call's panel **Chair** or
+**Vice-chair**.
 
 Reviewers are not managed here — they are added to the call's reviewer pool on the call manage page. See [Reviewer management](reviewer-management.md#reviewer-pool-management).
 
@@ -352,10 +451,41 @@ Once all configurations are complete:
       - Check that offerings are properly configured
       - Ensure role mappings are defined
 
-2. **Activate the call**:
-      - Click **"Activate call"** to open it for proposal submissions
+2. **Run the workflow check** — see [Checking the workflow before activation](#checking-the-workflow-before-activation).
+
+3. **Activate the call**:
+      - Choose **Activate** from the call's actions to open it for proposal submissions
       - Once activated, the call becomes visible to potential applicants
       - Applicants can now submit proposals during active rounds
+
+### Checking the workflow before activation
+
+The call's **Validation** tab, between **Manage** and **Edit**, says whether
+the call's workflow works as configured. Its **Check** sub-tab lists every
+finding with its severity and a link that opens the setting to fix:
+
+- **Errors** mean the call cannot run as configured — for example no round, no
+  enabled step, no or several allocation decisions, an award response before
+  the decision, a step that nobody can complete, a run condition naming a
+  missing or later step, an accepted offering missing, or a notification rule
+  that can never reach anyone.
+- **Warnings** never block — for example step durations up to the decision
+  that exceed the round's time to decision (the allocation date, else **Target
+  days from cut-off to decision**), steps without a duration, or an empty
+  reviewer pool.
+- **Info** lists, for example, the roles the call managers assign by hand and
+  the steps that differ from the template the call was created from.
+
+**Activate** runs the same check and refuses the call while there are errors;
+the action shows their number (*Activate (2 errors)*), and a refused activation
+lists all of them at once. There is no override. The calls list shows the
+verdict too, under **Workflow check**.
+
+The other sub-tabs of **Validation** help confirm that the workflow does what
+you intend: **Roles**, **Notifications**, **Diagram**, **Timeline**,
+**Paths**, **Dry run**, **Scenarios**, and **Changes** — the call's saved
+workflow versions, compared with each other or with the template the call was
+created from.
 
 ## Step 5: Submit proposal  
 
@@ -459,8 +589,65 @@ Reviewers evaluate proposals using a structured assessment process:
 
 1. Open a review from the **My reviews** list
 2. Read the proposal summary, team composition, and resource requests
-3. Score each section and provide feedback
+3. Score the proposal and provide feedback
 4. Submit the review
+
+Every review is scored on the same 1–5 scale. When the review step names
+scoring **criteria** (for example *Excellence*, *Impact*, *Quality of
+implementation*), the reviewer rates each criterion and the overall score is
+derived from them: their average weighted by each criterion's **Weight**,
+rounded half up. A review cannot be submitted until every criterion is rated.
+Without criteria the reviewer gives the overall score directly.
+
+Weights are relative to the step's other criteria (1–100); the step's settings
+show each criterion's resulting **Share**, and reviewers see it next to the
+criterion's name when the weights differ. Once a reviewer has scored the
+criteria, or submitted a review in the step, the criteria and their weights
+are fixed: they can be reordered, but not renamed, added, removed or
+reweighted. The proposal and review exports carry a column per criterion.
+
+### Requesting changes from the applicant
+
+**Performed by:** Whoever acts on the current step (call manager by default)
+
+A step with **Allow requesting changes** turned on (in the step's settings,
+under **Inputs and visibility**) can send a proposal back to its applicant
+without rejecting it — to fix a missing document or clarify a resource
+request, say. It is not available on the allocation decision or on a step the
+applicant completes.
+
+1. On the proposal, click **Request changes** in the **Progress** panel.
+2. Write a **Message to the applicant**, choose the **Parts the applicant may
+   change** — for example *Summary*, *Description*, *Supporting
+   documentation*, *Resource requests*, *Project team* or *Compliance
+   checklist* — and optionally a **Due date**.
+
+The proposal stays **In review** on its step. Only the chosen parts become
+editable for the applicant, who is notified and sees *Changes requested at
+<step>* with the parts they may edit; they make the changes and click **Submit
+changes**. The step's deadline does not run out while the request is open, and
+the step cannot be completed or rejected until the request is closed: the step
+shows *Waiting for the applicant's changes*.
+
+The request closes in one of three ways, and each returns the step to whoever
+acts on it with its full duration again:
+
+- the applicant submits the changes;
+- the call manager uses **Cancel request for changes**;
+- its due date passes without changes — the request lapses and the step's
+  actor is told. Nothing is decided on anyone's behalf.
+
+A step may send the proposal back as often as needed, one open request at a
+time.
+
+### Withdrawn proposals
+
+A proposal manager of the applicant team can use **Withdraw proposal**, with
+an optional reason, while the proposal is **Submitted** or **In review**. The
+proposal is **Canceled**: its unfinished steps are skipped, reviews still
+being written are closed, unanswered review assignments lapse, and the call
+managers are emailed. Once an award awaits the applicant's answer, withdrawing
+is refused — declining the award is the way out then.
 
 ## Step 7: Decision and allocation
 
@@ -483,7 +670,7 @@ The final decision process determines which proposals receive resource allocatio
    publishes results together for the whole round, when the round's results are
    [published](#publishing-a-rounds-results).
 3. If accepted:
-      - A **new project** is created under the proposing organization.
+      - A **new project** is created under the call-managing organization.
       - The awarded resources are provisioned.
       - Team members are added to the project.
 
@@ -515,7 +702,7 @@ active.
 
 ### Publishing a round's results
 
-**Applicants learn the decision** under **Configuration → General
+**Applicants learn the decision** under **Call → General
 configuration** decides when an applicant hears the outcome:
 
 - **As each decision is made** — completing or rejecting the **Allocation
@@ -601,6 +788,12 @@ The call dashboard provides an overview of the entire call:
       - Review progress
       - Reviewer pool capacity
 
+The organization's **Call management** dashboard counts only the calls you may
+configure: a call manager's figures cover the calls they manage, while call
+organisers, staff and support see every call of the organization. Its
+statistics are refused to anyone who may read none of the organization's call
+reports.
+
 ### Admin reviews
 
 Staff users can view all reviews across all calls from the admin reviews page:
@@ -631,6 +824,8 @@ Solutions for common issues encountered during the call management process:
 | Applicant cannot see active call | Call visibility settings | Check call publication status and visibility settings |
 | Resource allocation failed | Insufficient provider capacity | Contact service provider to resolve capacity issue |
 | Round cannot be deleted | The round has proposals, in any state | Rounds with proposals stay on record; only an empty round can be deleted |
+| **Activate** is refused or shows a number of errors | The workflow check found errors | Open the call's **Validation → Check** tab and fix each error from its link |
+| Applicant refused with *You have reached the maximum of N active projects or pending proposals* | The call-managing organization limits proposals per applicant | The applicant waits until a proposal is decided or a project ends, or staff raise **Active proposals per applicant** (see [Limiting proposals per applicant](#limiting-proposals-per-applicant)) |
 | **Applicants learn the decision** cannot be changed | The call holds decisions that have not been published | Publish the results of the rounds that hold them first |
 | **Complete round** is refused | Proposals of the round have no decision, or a held decision failed to publish | Decide them (or set the round's rule to reject them), or publish the results again |
 
@@ -646,7 +841,7 @@ A: No, Waldur supports multiple rounds within a single call, allowing for differ
 A: **Minimum contributions** on an assessment step (**Minimum reviewers** on a decision) is a completion gate: the step cannot be completed with a positive outcome until that many reviews have been submitted, though declining the proposal is always possible. If the step has a duration and its deadline passes first, the step is marked **Overdue** and the workflow moves on to the next step, or rejects the proposal if it was the last one (see [Deadline handling](workflow-configuration.md#deadline-handling)). To avoid this, assign further reviewers in time, or leave the step's duration unset so it waits.
 
 **Q: Can applicants edit their proposals after submission?**
-A: No. Once a proposal is submitted its requested resources and documents are fixed, and an applicant cannot change them any more: what was submitted is what gets evaluated. Call managers and staff can still adjust a proposal at any time. A draft left open at its round's cut-off is the exception only in that it survives into the next round (see [Drafts at the cut-off](#drafts-at-the-cut-off)); it is still a draft until the applicant submits it.
+A: Not on their own. Once a proposal is submitted its requested resources and documents are fixed: what was submitted is what gets evaluated. The exception is a [request for changes](#requesting-changes-from-the-applicant): on a step that allows it, whoever acts on the step can unlock chosen parts for the applicant to change and submit again. Call managers and staff can still adjust a proposal at any time. A draft left open at its round's cut-off is the exception only in that it survives into the next round (see [Drafts at the cut-off](#drafts-at-the-cut-off)); it is still a draft until the applicant submits it.
 
 **Q: Is it possible to transfer allocated resources between approved projects?**
 A: Resource transfer between projects requires administrative approval. Contact your Call manager to request a resource transfer.

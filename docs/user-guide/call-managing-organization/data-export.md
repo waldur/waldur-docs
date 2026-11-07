@@ -13,22 +13,64 @@ Every data table in Waldur supports direct export to multiple formats.
 | Format | Description | Use Case |
 |---|---|---|
 | **CSV** | Comma-separated values | Data analysis in Excel, Google Sheets, or scripts |
-| **Excel (XLSX)** | Microsoft Excel format | Formatted spreadsheets with styling |
+| **Excel** | Microsoft Excel format | Formatted spreadsheets with styling |
 | **PDF** | Portable document format | Reports and printable documents |
-| **Clipboard** | Copy to clipboard | Quick paste into other applications |
+| **JSON** | Structured data | Scripts and other tools |
+| **Copy to clipboard** | Copy to clipboard | Quick paste into other applications |
 
 ### How to export
 
 1. Navigate to any data table (proposals list, users list, reviews, etc.)
 2. Click the **Export** button in the table toolbar
-3. In the export dialog, choose:
-    - **Format**: CSV, Excel, PDF, or Clipboard
-    - **Apply filters**: Export only filtered data (if table has active filters)
+3. In the **Export as** dialog, choose:
+    - **Format**: Copy to clipboard, CSV, PDF, Excel or JSON
     - **All pages**: Export all records or only the current page
 4. Click **Export** to download the file
 
+The export always covers what the table shows: its active filters apply, and
+only the visible columns are written.
+
 !!! tip
-    Apply table filters before exporting to narrow down the data. The "Apply filters" checkbox will include only the filtered subset in the export.
+    Apply table filters before exporting to narrow down the data.
+
+### Full proposal and review reports
+
+On a call's **Manage** page, the **Proposals** and **Reviews** tables offer a
+second kind of export to call managers, call organisers and staff: under
+**Content**, choose **Full report** instead of **Visible columns**. The server
+writes it as a CSV of every page, with the table's filters applied:
+
+- **Proposals** — one row per proposal: identity, created and submitted dates,
+  applicant and organisation, state and current step, science sub-domain,
+  requested duration, **one column per requested offering component** with the
+  amount asked for, the review counts, average score and individual scores, and
+  a column per scoring criterion.
+- **Reviews** — one row per review: the proposal, round, step, reviewer,
+  state, score (and criterion scores), public comment and review deadline.
+
+Reviewers' private notes are never exported, and text that would start a
+spreadsheet formula is written with a leading apostrophe.
+
+### One proposal as a PDF
+
+**Download PDF** on a proposal (on the proposal page, or in a proposal row's
+actions) renders the application as the applicant filled it — fields,
+requested resources, team and the names of its attachments — for archiving or
+a panel meeting. The attachments themselves are not included.
+
+## Call reports
+
+**Call management → Reports** on a call-managing organisation, and the
+**Reports** tab of a call's **Manage** page, summarise the calls you may
+configure. Filter them by call, round and dates, and switch between:
+
+| Report | Answers |
+|---|---|
+| **Portfolio** | Proposals per call and round: how many were submitted, where they stand, how many were accepted, success rate and mean score |
+| **Workflow** | Where proposals wait: proposals at each step now, those past the step deadline, and how long each step takes |
+| **Reviewers** | How reviewers answer their invitations and how fast they review |
+| **Rounds** | How long each round takes from its cut-off to publishing results, and whether results came after the allocation date |
+| **Budgets** | What each resource pool offers, what proposals ask for, and what has been awarded |
 
 ## Saved filters
 

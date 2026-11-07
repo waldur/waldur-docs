@@ -6,7 +6,14 @@ Call management in Waldur enables organizations to manage resource allocation th
 
 ## Introduction
 
-Call management in Waldur is built around structured components: calls, rounds, proposals, and reviews. A call is a defined period during which resources can be allocated. Each call is divided into rounds, where stakeholders can submit and review proposals for resource allocation. Proposals are evaluated through a structured review process. Successful proposals lead to approved allocations, seamlessly integrating into the rest of the Waldur ecosystem. When a proposal is approved, Waldur automatically creates a project under the proposing organization that initiated the call. Allocations are granted to this project, and team members who submitted the proposal are added to the project, ensuring the resources are immediately ready for use.
+Call management in Waldur is built around structured components: calls, rounds, proposals, and reviews. A call is a defined period during which resources can be allocated. Each call is divided into rounds, where stakeholders can submit and review proposals for resource allocation. Proposals are evaluated through a structured review process. Successful proposals lead to approved allocations, seamlessly integrating into the rest of the Waldur ecosystem. When a proposal is approved, Waldur automatically creates a project under the call-managing organization that runs the call. The awarded resources are allocated to this project, and the proposal's team members are added to it with the project roles the call maps their proposal roles to, so the resources are immediately ready for use.
+
+Each call runs its own **evaluation workflow**: an ordered list of named steps — decisions, assessments,
+assignments and applicant actions — that every submitted proposal walks, ending in one allocation
+decision. A call can start blank or from a call template that carries a complete process. A
+call-managing organization can also cap how many proposals one applicant holds with it at a time.
+See [Call management](../../user-guide/call-managing-organization/call_management.md) and
+[Workflow configuration](../../user-guide/call-managing-organization/workflow-configuration.md).
 
 Whether applicants reach calls directly, through offerings, or both is a deployment setting — see
 [Service access modes](../../admin-guide/mastermind-configuration/service-access-modes.md).
@@ -34,8 +41,8 @@ The call management process follows a sequential workflow:
 2. **Call setup**: Creation of call framework by Call organiser and detailed configuration by Call Manager
 3. **Resource preparation**: Request and confirmation of offerings from service providers
 4. **Submission period**: Opening call for proposal submissions
-5. **Evaluation**: Review and assessment of submitted proposals
-6. **Decision**: Acceptance or rejection of proposals
+5. **Evaluation**: Submitted proposals walk the call's workflow steps — checks, assessments and reviews
+6. **Decision**: A person completes the allocation decision step, accepting or rejecting each proposal
 7. **Allocation**: Automatic provisioning of resources for approved proposals
 8. **Monitoring**: Oversight of active allocations and reporting
 
@@ -81,7 +88,7 @@ flowchart TD
         J --> K
         K --> L{Final<br/>Decision}
         L -->|Manager| M[👨‍💼 Accept/<br/>Reject]
-        L -->|Auto| N[🤖 Auto-approve<br/>if Score ≥ Threshold]
+        L -->|Auto| N[🤖 Approve as requested<br/>on reaching the step]
         M --> O{Approved?}
         N --> O
         O -->|Yes| P[🏗️ Create Project &<br/>Allocate Resources]

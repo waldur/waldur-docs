@@ -76,14 +76,20 @@ Avg. review time).
 
 ![Reviewer dashboard on the My reviews tab](../img/reviewer-dashboard-my-reviews.png)
 
-The four tabs organise your workload:
+The tabs organise your workload:
 
 | Tab | Content |
 |---|---|
+| **Tasks** | Everything waiting for you across calls — what is needed, on which proposal, step and round, and when it is due, with overdue items marked |
 | **Reviews** | Reviews assigned to you, with state (*In review*, *Submitted*, *Rejected*) and deadline |
 | **Assignments** | Pending assignment batches to accept or decline |
 | **Invitations** | Pool invitations awaiting your response |
+| **Evaluator roles** | Proposals on which you hold an evaluator role, such as rapporteur; shown only when you hold one |
 | **Calls** | Calls you are pooled for, with review deadlines |
+
+The reviewer tabs appear once you review for a call — you hold a reviewer or
+panel member role, or have been invited to a pool or assigned a review. Without
+them the page shows **Tasks** alone.
 
 Click a review in the **In review** state to open the proposal and start
 evaluating.
@@ -126,7 +132,12 @@ collects your overall assessment:
 
 ![Submit review dialog with score, comments, notes and COI confirmation](../img/reviewer-submit-dialog.png)
 
-- **Rate** — an overall score, set with the star control.
+- **Rate** — an overall score from 1 to 5, set with the star control. When the
+  review step names scoring criteria, the dialog asks you to **Rate each
+  criterion** instead and shows the resulting **Overall score**: the
+  criteria's average, weighted by the share each carries (shown next to a
+  criterion's name when the shares differ). Every criterion must be rated
+  before you can submit.
 - **Comments** — public feedback, shared with the applicant after the decision.
 - **Notes (not visible to user)** — private feedback for the call managers and
   panel only.
