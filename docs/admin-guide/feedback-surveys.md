@@ -40,7 +40,7 @@ Keep the survey short: a handful of questions is answered far more often than a 
 
 ## 2. Create the survey
 
-Go to **Administration > User interface > Feedback surveys**. Each survey's status shows whether users are being asked:
+Go to **Support > Communication > Feedback surveys**. Each survey's status shows whether users are being asked:
 
 - **Open**: the survey is active and inside its window.
 - **Scheduled**: the survey is active, and its window has not started yet.
