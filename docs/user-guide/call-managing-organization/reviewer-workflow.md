@@ -1,14 +1,13 @@
-# Reviewer workflow
+# Reviewing proposals
 
-This guide follows a **reviewer** end to end: accepting an invitation to a call's
-reviewer pool, declaring conflicts of interest, finding assigned proposals,
-evaluating a proposal, and submitting a scored review — including the required
-**conflict-of-interest (COI) confirmation** that some calls enforce before a
-review can be submitted.
+This guide follows a **reviewer** through the review itself: declaring conflicts of interest,
+finding assigned proposals, evaluating a proposal, and submitting a scored review — including
+the required **conflict-of-interest (COI) confirmation** that some calls enforce before a
+review can be submitted — and, on calls that use them, working as a rapporteur.
 
-For the reviewer profile, pool and matching mechanics see the
-[Reviewer guide](reviewer-guide.md); for the call manager's side of the same
-workflow see the [Call manager workflow](call-manager-workflow.md).
+For the reviewer profile, pool invitations and the reviews page see
+[Reviewer profile and invitations](reviewer-guide.md); for the call manager's side of the same
+workflow see [Running the evaluation](call-manager-workflow.md).
 
 !!! note
     Screenshots in this guide use the *2025 Spring HPC Allocation Call* demo
@@ -23,33 +22,14 @@ To review proposals you need:
 
 1. A **published** reviewer profile — see
    [Getting started as a reviewer](reviewer-guide.md#getting-started-as-a-reviewer).
-2. An **accepted** invitation to the call's reviewer pool.
-3. At least one proposal **assigned** to you by the call manager.
+2. An **accepted** invitation to the call's reviewer pool — see
+   [Accepting a pool invitation](reviewer-guide.md#accepting-a-pool-invitation).
+3. At least one proposal **assigned** to you by the call manager, accepted on your
+   [Assignments](reviewer-guide.md#assignments) tab.
 
 ## Accepting a reviewer invitation
 
-When a call manager adds you to a reviewer pool you receive an email with a
-personal acceptance link, and the invitation also appears on the **Invitations**
-tab of your **My reviews** page.
-
-![Reviewer invitations tab with a pending pool invitation](../img/reviewer-invitations.png)
-
-Each invitation shows the call, the date you were invited, and its status.
-Opening the invitation link shows the call, who invited you and when the
-invitation expires, along with the call's **COI policy** so you understand the
-rules before joining, and a note that you will be able to disclose conflicts
-later, when specific proposals are assigned to you. Choose **Accept invitation**
-to join the pool; the status then flips to **Accepted** and the call manager can
-begin assigning you proposals.
-
-!!! tip
-    You must be signed in to open the invitation link, and **Accept invitation**
-    stays disabled until you have a **published** reviewer profile. If you do
-    not, the page prompts you to create or publish one, and you can publish it
-    without leaving the page.
-
-Invitation statuses: **Invitation pending** | **Accepted** | **Declined** |
-**Invitation expired**.
+See [Accepting a pool invitation](reviewer-guide.md#accepting-a-pool-invitation).
 
 ## Declaring a conflict of interest
 
@@ -67,29 +47,18 @@ a management plan, or recuse you from the proposal. The conflict types,
 severities and handling rules are described in
 [COI management](coi-management.md).
 
+Some calls also ask you to confirm that you have no conflict before you submit your review —
+see [Confirming no conflict of interest before submitting](#confirming-no-conflict-of-interest-before-submitting).
+
 ## Finding your assigned proposals
 
 Open **My reviews** from the sidebar. The page opens on the **Reviews** tab,
 which lists every review assigned to you with its proposal, call, due date and
 state, alongside your profile stats (Invitations / In progress / Completed /
-Avg. review time).
+Avg. review time). The other tabs are described under
+[Review dashboard](reviewer-guide.md#review-dashboard).
 
 ![Reviewer dashboard on the My reviews tab](../img/reviewer-dashboard-my-reviews.png)
-
-The tabs organise your workload:
-
-| Tab | Content |
-|---|---|
-| **Tasks** | Everything waiting for you across calls — what is needed, on which proposal, step and round, and when it is due, with overdue items marked |
-| **Reviews** | Reviews assigned to you, with state (*In review*, *Submitted*, *Rejected*) and deadline |
-| **Assignments** | Pending assignment batches to accept or decline |
-| **Invitations** | Pool invitations awaiting your response |
-| **Evaluator roles** | Proposals on which you hold an evaluator role, such as rapporteur; shown only when you hold one |
-| **Calls** | Calls you are pooled for, with review deadlines |
-
-The reviewer tabs appear once you review for a call — you hold a reviewer or
-panel member role, or have been invited to a pool or assigned a review. Without
-them the page shows **Tasks** alone.
 
 Click a review in the **In review** state to open the proposal and start
 evaluating.
@@ -121,9 +90,26 @@ information the call manager expects reviewers to weigh:
 
 ![Resource requests section that a reviewer evaluates](../img/reviewer-proposal-resource-requests.png)
 
+![Proposal review detail](../img/scenario_proposal_reviews_detail.png)
+
 To leave feedback on a specific field, click the **Add comment** action next to
 it. Field-level comments are collected alongside your overall score when you
 submit.
+
+### Access to the proposal
+
+Accepting an assignment is enough to open the proposal and its team — you do not
+need a reviewer role on the call. You see the applicant details the call's
+applicant data visibility settings expose to reviewers. Access lasts while your
+review is in review or submitted; if the review is cancelled or expires, the
+proposal is no longer available to you.
+
+!!! note
+    You do not see the proposal's **Awarded resources** — what the allocation
+    decision grants is for the call managers and the providers. On a call that
+    announces results together for the whole round, you also see the allocation
+    decision as still in progress until the round's results are published, like
+    the applicant does.
 
 ## Scoring and commenting
 
@@ -144,11 +130,15 @@ collects your overall assessment:
 - **I confirm I have no conflict of interest with this proposal** — the COI
   confirmation toggle (only shown on calls that require it, see below).
 
+Together with the field-level comments — on the project title, summary, description,
+duration, supporting documentation, resource requests and team — these make up your review.
+
 ## Confirming no conflict of interest before submitting
 
 When the call's review step is configured with **Conflict of interest
 confirmation** enabled, you must attest that you have no conflict with the
-proposal before you can submit. Until the toggle is on, **Submit review** stays
+proposal before you can submit. It does not stop you from opening the proposal or
+drafting the review. Until the toggle is on, **Submit review** stays
 disabled and explains why — *Confirm absence of conflict of interest to submit*:
 
 ![Submit disabled with COI unchecked and tooltip](../img/reviewer-submit-disabled-coi-tooltip.png)
@@ -161,7 +151,7 @@ Switch **I confirm I have no conflict of interest with this proposal** on and th
 !!! note
     The COI confirmation appears **only** when the call manager has turned on
     **Conflict of interest confirmation** for the review step (see
-    [Configuring a workflow step](call-manager-workflow.md#configuring-a-workflow-step)).
+    [Per-step settings](workflow-configuration.md#per-step-settings)).
     On calls without it, the dialog has no COI toggle. If you do have a
     conflict, do **not** confirm — decline the assignment and notify the call
     manager instead.
@@ -195,7 +185,7 @@ consolidate the individual expert reviews into a collective recommendation. The
 panel step is owned by the **panel member** role and is completed from the call's
 proposal workflow rather than the personal **My reviews** page; a panel member
 does not receive individual expert-review assignments. See
-[The evaluation workflow](call-manager-workflow.md#the-evaluation-workflow) for
+[Workflow configuration](workflow-configuration.md) for
 how the panel step fits into the overall sequence.
 
 ## Working as a rapporteur
@@ -266,7 +256,7 @@ reads instead. A report is released once and cannot be changed afterwards.
 
 ## Related guides
 
-- [Reviewer guide](reviewer-guide.md) — profile, pool invitations and the review dashboard
+- [Reviewer profile and invitations](reviewer-guide.md) — profile, pool invitations and the review dashboard
 - [Reviewer management](reviewer-management.md) — pools, matching and assignment batches (manager side)
 - [COI management](coi-management.md) — conflict types, severities and handling
-- [Call manager workflow](call-manager-workflow.md) — configuring the review step and driving proposals
+- [Running the evaluation](call-manager-workflow.md) — driving proposals through the workflow

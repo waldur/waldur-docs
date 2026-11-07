@@ -7,9 +7,10 @@ through the evaluation workflow, reading technical-assessment feedback when the
 call shares it, responding to the reviews and reading released reports on calls
 that use them, and finally responding to an award.
 
-For the call manager's side of the same workflow see the
-[Call manager workflow](call-manager-workflow.md); for the reviewer's side see
-the [Reviewer workflow](reviewer-workflow.md).
+For the call manager's side of the same workflow see
+[Running the evaluation](call-manager-workflow.md); for the reviewer's side see
+[Reviewing proposals](reviewer-workflow.md). What calls and proposals are is
+summarised in the [overview](overview.md).
 
 !!! note
     Screenshots in this guide use the *2025 Spring HPC Allocation Call* demo
@@ -37,6 +38,12 @@ submission **cutoff**.
 Use **Details** to read a call's full description and eligibility rules, or
 **View all** (or **All calls** in the banner) to browse the complete catalogue.
 When you have found the call you want, click **Apply to call**.
+
+![Public calls listing with active calls](../img/scenario_public_calls.png)
+
+The call's details page offers the same with **Apply to round**.
+
+![Call detail with application button](../img/scenario_call_detail.png)
 
 !!! tip
     The **Calls for proposals** catalogue is also reachable without signing in,
@@ -99,7 +106,7 @@ Which of these fields you see, and which you must fill in, is set per call.
 not asked for at all. A call that does not
 ask for a field simply does not show it, so your form may be shorter than the
 table above. See
-[Project details fields](call_management.md#1a-project-details-fields) for the
+[Project details fields](application-form.md#project-details-fields) for the
 call manager's side of it.
 
 ![Project details step](../img/applicant-project-details.png)
@@ -135,6 +142,12 @@ template, unless several templates use it; then choose one here.
     A request whose template was deleted, or that was not made from one, is
     flagged above the templates. Choose a template and click **Save** to
     replace it; until then the proposal cannot be submitted.
+
+!!! note "Purchase orders"
+    When an offering requires a purchase order, supply its reference or
+    document on the resource request. The request can be saved without one,
+    but the proposal cannot be submitted until it is there — see
+    [Purchase orders in calls](purchase-orders.md).
 
 ### Compliance checklist
 
@@ -178,7 +191,7 @@ the call team can now see it.
     most calls it is not lost either: it moves into the call's next round and
     stays editable, and you are emailed the new deadline. A draft left at the
     last round's cut-off, or on a call that has carry-over turned off, is
-    cancelled — see [Drafts at the cut-off](call_management.md#drafts-at-the-cut-off).
+    cancelled — see [Drafts at the cut-off](call-rounds.md#drafts-at-the-cut-off).
 
 !!! note "Waiting for the round cut-off"
     Some calls evaluate all proposals of a round together. On such a call your
@@ -235,7 +248,7 @@ the moment you submit, and only the call team can change them afterwards —
 unless they ask you to (see [When changes are requested](#when-changes-are-requested)).
 A draft you leave open when the round closes is not affected — it moves into
 the call's next round and stays editable, because it was never submitted (see
-[Drafts at the cut-off](call_management.md#drafts-at-the-cut-off)).
+[Drafts at the cut-off](call-rounds.md#drafts-at-the-cut-off)).
 
 ### When changes are requested
 
@@ -252,7 +265,7 @@ continues with the proposal as it stands.
 
 Which steps appear, and how much of each you can see,
 depends on the call's configuration at the moment you submitted (see
-[The evaluation workflow](call-manager-workflow.md#the-evaluation-workflow)).
+[Workflow configuration](workflow-configuration.md#rules-across-a-calls-steps)).
 Steps that were not part of your proposal's sequence are omitted from the
 stepper, so two proposals in the same call can show different steps if the call
 was reconfigured between their submissions.
@@ -357,7 +370,8 @@ allocation.
 
 ## Related guides
 
-- [Call management](call_management.md) — the call lifecycle and rounds
+- [Calls for proposals overview](overview.md) — calls, roles and lifecycles
 - [Checklists and forms](checklists-and-forms.md) — question types and conditional visibility
-- [Call manager workflow](call-manager-workflow.md) — how call managers drive proposals through the workflow
-- [Reviewer workflow](reviewer-workflow.md) — the reviewer's perspective
+- [Running the evaluation](call-manager-workflow.md) — how call managers drive proposals through the workflow
+- [Reviewing proposals](reviewer-workflow.md) — the reviewer's perspective
+- [Purchase orders in calls](purchase-orders.md) — supplying a purchase order with a resource request

@@ -12,7 +12,8 @@ Each call runs its own **evaluation workflow**: an ordered list of named steps �
 assignments and applicant actions — that every submitted proposal walks, ending in one allocation
 decision. A call can start blank or from a call template that carries a complete process. A
 call-managing organization can also cap how many proposals one applicant holds with it at a time.
-See [Call management](../../user-guide/call-managing-organization/call_management.md) and
+See the [Calls for proposals overview](../../user-guide/call-managing-organization/overview.md), the
+[Call manager's roadmap](../../user-guide/call-managing-organization/call_management.md) and
 [Workflow configuration](../../user-guide/call-managing-organization/workflow-configuration.md).
 
 Whether applicants reach calls directly, through offerings, or both is a deployment setting — see
