@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-08T03:03:57.718402Z
+Generated: 2026-11-09T03:04:12.685675Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -85300,15 +85300,12 @@ export const ChecklistsTable = ({ portal, ...props }) => {
 # Migrating Hand-Rolled Tables
 
 How to move a raw `<table>` off legacy table classes, and how to pick what it
-becomes. Tracked in #563 (part of epic #442); the end goal is #502: deleting the
-legacy `.table-*` rules in `src/styles/legacy/_table-base.scss`.
+becomes. Tracked in #563 (part of epic #442); the end goal was #502: deleting the
+legacy `.table-*` rules in `src/styles/legacy/_table-base.scss` (completed).
 
-Migrating the hand-rolled tables is only half of that goal. `@/table/Table`
-itself still renders `.table.table-list` (`TableView`), and allow-listed form
-grids may carry `.table` too, so `_table-base.scss` can go only once those
-render their own styles as well. The baseline below counts raw `<table>`
-markup, not `.table` usage: zero there does not yet mean the rules can be
-deleted.
+All hand-rolled tables have been migrated to semantic `waldur-ui` Table primitives
+or `PropertyList`, and `src/styles/legacy/_table-base.scss` has been retired.
+`waldur-custom/no-hand-rolled-table` enforces this going forward.
 
 `waldur-custom/no-hand-rolled-table` is an error with a shrinking baseline:
 the raw `<table>`s that predate it are counted per file in
@@ -86743,7 +86740,7 @@ Layouts are Tailwind grid or flex; `no-bootstrap-grid` reports legacy grid class
 
 Prefer standard CSS grid (`grid grid-cols-1 sm:grid-cols-2`, `sm:grid-cols-3`) for fixed column layouts so they stack cleanly on mobile. For dynamic or auto-sizing row items, use flexbox with standard utilities (`flex-1`, `flex-none`, `shrink-0`).
 
-A grid's `gap` replaces gutter padding, so a column's content lines up with the parent's padding. `TableView` keeps its cell padding in `src/styles/legacy/_table-base.scss` in the `bootstrap` cascade layer, so the first/last-cell rules in `src/styles/legacy/_table.scss` still win.
+A grid's `gap` replaces gutter padding, so a column's content lines up with the parent's padding. `TableView` keeps its cell padding in `src/styles/legacy/_table.scss` in the `bootstrap` cascade layer, so the first/last-cell rules still win.
 
 ---
 
