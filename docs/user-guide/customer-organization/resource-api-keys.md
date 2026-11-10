@@ -6,6 +6,10 @@ can reveal and rotate a key, and, where the provider supports it, request new
 keys, hand a key to one person, cap how much it may use, restrict it to some
 models, and pause or delete it.
 
+The provider of the offering sees your keys in its own list, with their state,
+usage and estimated cost, but never a key's value and none of the actions
+below (see [API keys of your offerings](../service-provider-organization/api-keys.md)).
+
 Waldur never generates key material itself. Every change is sent to the
 provider's site agent, which carries it out on the backend and reports back. A
 key therefore shows a transitional state (**Creating**, **Rotating**,
