@@ -45,6 +45,9 @@ on the call. Its sub-tabs are **Users**, **Invitations** and **Team changes**. G
 **Call reviewer** role adds its holder to the call's reviewer pool as accepted; revoking it
 declines their pool entry.
 
+Expanding a call reviewer's row shows their reviewer profile to those who manage the call's
+reviewer pool: its call managers and the call organisers of the managing organisation.
+
 A panel member's row offers **Set as panel chair** and **Set as vice-chair**. Steps can name
 the panel members, or the panel chair or vice-chair, as the role that completes or contributes to them (see
 [Workflow configuration](workflow-configuration.md#per-step-settings)).
