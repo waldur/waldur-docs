@@ -153,8 +153,10 @@ see held decisions, the applicant team included.
 An **award response** is an applicant step right after the allocation decision: an approved
 proposal pauses for the applicant to **Accept award** or **Decline award** before anything is
 provisioned, and a declined award cancels the proposal. A new call has no **Award response**
-step; a call created from a template or imported from a file brings one where it has it.
-Disabling or deleting it lets the allocation decision allocate directly.
+step; add one with **Add award response** above the call's workflow steps, which puts it
+right after the allocation decision. A call created from a template or imported from a file
+brings one where it has it. Disabling or deleting it lets the allocation decision allocate
+directly.
 
 What the applicant sees is described in
 [Responding to an award](applicant-guide.md#responding-to-an-award).

@@ -307,9 +307,8 @@ In v2 they are one list, and the upgrade merges them:
 From then on, granting the role adds the person to the pool, accepting a pool invitation grants the
 role, and revoking the role marks the pool entry declined.
 
-The call's **Team** tab lists only call managers and panel members, so call managers cannot revoke
-the reviewer role from the UI. A call manager or organisation owner revokes it through the API, or
-you do it for them:
+A call manager or organisation owner revokes the role by removing the person from the call's
+**Team** tab, where they are listed as **Call reviewer**. The same can be done through the API:
 
 ```bash
 curl -X POST -H "Authorization: Token <token>" -H "Content-Type: application/json" \

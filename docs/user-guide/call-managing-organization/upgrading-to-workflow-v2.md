@@ -19,10 +19,8 @@ and the role rather than decide for the reviewer.
 
 For each such reviewer, decide which one stands:
 
-- **They are not reviewing**: revoke their reviewer role. The call's **Team** tab does not list
-  reviewers, so ask your operator, or use the API as described in
-  [Reviewer pools and roles](../../admin-guide/proposal-module-v2-migration.md#reviewer-pools-and-roles).
-  Their pool entry stays declined.
+- **They are not reviewing**: revoke their reviewer role by removing them from the call's
+  **Team** tab, where they are listed as **Call reviewer**. Their pool entry stays declined.
 - **They are reviewing after all**: open the call's **Manage → Reviewer pool → Pool**, and choose
   **Force accept invitation** from their row's actions, with a reason. This needs the reviewer to
   have a reviewer profile. A declined invitation cannot be sent again.
