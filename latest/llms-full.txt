@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-11T03:04:08.349776Z
+Generated: 2026-11-11T06:44:56.369476Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -759,8 +759,6 @@ sequenceDiagram
 
 - **waldur-valimo-secret:** Valimo authentication certificates
 
-- **waldur-ssh-key-config:** SSH private keys
-
 - **waldur-script-kubeconfig:** Kubernetes config for script execution
 
 ### Field encryption
@@ -1082,6 +1080,69 @@ no equivalent of `drop_stale_permissions` for roles — it just stops being
 managed. Set `is_active: false` on the entry instead (requires a
 waldur-mastermind image with waldur/waldur-mastermind!6317 — earlier images
 silently ignore `is_active: false`).
+
+---
+
+### Demo presets
+<!-- Source: docs/admin-guide/deployment/helm/docs/demo-presets.md -->
+
+# Demo presets
+
+Demo presets are ready-made demo data sets shipped with Waldur. With demo presets
+enabled, staff can list, preview and load them through the API and the portal.
+
+**Loading a preset deletes every organization, project, offering, user and token
+in the database.** Enable this on demo deployments only.
+
+```yaml
+waldur:
+  demoPresets:
+    enabled: true
+    # Preset names to offer; leave empty to offer every preset.
+    allowed:
+      - hpc_ai_platform
+      - call_management
+```
+
+The chart sets `WALDUR_DEMO_PRESETS_ENABLED` and `WALDUR_DEMO_PRESETS_ALLOWED` on the
+API and the Celery worker. These settings come from the deployment only; they cannot
+be changed from the portal. With `enabled: false` (the default), every demo preset
+endpoint answers 404. The `waldur demo_presets` command in a pod is not affected.
+
+## Deployment presets, overlay and staff password
+
+A deployment can add presets of its own, keep what it needs across every load,
+and stop the published staff passwords from working:
+
+```yaml
+waldur:
+  demoPresets:
+    enabled: true
+    # A ConfigMap with one <name>.json key per preset, mounted at
+    # /etc/waldur/presets. A preset named like a built-in one replaces it.
+    presetsConfigMap: site-presets
+    # Imported after every load that cleans up first; never offered itself.
+    overlay: site-infra
+    # The presets' staff users get this password instead of the published one.
+    staffPassword:
+      existingSecret: demo-staff
+      key: password
+```
+
+```bash
+kubectl create configmap site-presets --from-file=presets/
+kubectl create secret generic demo-staff --from-literal=password='...'
+```
+
+These three settings are set on the API and the worker whether or not `enabled`
+is on, because the `waldur demo_presets` command in a pod uses them too. A
+ConfigMap holds at most 1 MiB, which bounds the size of the presets it carries.
+
+The overlay holds what the deployment needs whatever the demo: offerings backed
+by its own services, the users and API tokens of its agents, the features it
+turns on. A load with `--no-cleanup` does not import it, and a load whose
+overlay is missing fails before anything is deleted. To keep an agent's token
+from expiring, give its user `"token_lifetime": null` in the overlay.
 
 ---
 
@@ -10611,6 +10672,9 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'CREATE_DEFAULT_PROJECT_ON_ORGANIZATION_CREATION': False,
  'DEMO_PRESETS_ALLOWED': [],
  'DEMO_PRESETS_ENABLED': False,
+ 'DEMO_PRESETS_EXTRA_DIRS': [],
+ 'DEMO_PRESETS_OVERLAY': '',
+ 'DEMO_PRESETS_STAFF_PASSWORD': '',
  'EMAIL_CHANGE_MAX_AGE': datetime.timedelta(days=1),
  'ENABLE_ACCOUNTING_START_DATE': False,
  'ENABLE_PROJECT_KIND_COURSE': False,
@@ -10771,6 +10835,24 @@ Names of the demo presets offered when DEMO_PRESETS_ENABLED is on. Empty offers 
 **Type:** bool
 
 Let staff list, preview and load demo presets through the API and the portal. Loading a preset deletes every organization, project, offering, user and token in the database, so enable it only on demo deployments. Set by the deployment only; it is not a Constance setting.
+
+#### DEMO_PRESETS_EXTRA_DIRS
+
+**Type:** List[str]
+
+Directories with the deployment's own demo presets, one JSON file per preset, read by the API and the `waldur demo_presets` command alike. A preset here replaces a built-in one of the same name.
+
+#### DEMO_PRESETS_OVERLAY
+
+**Type:** str
+
+A preset imported, without cleanup, after every load that cleans up first, for what the deployment needs whatever the demo: offerings, agent users and tokens, features. It is never offered as a preset of its own.
+
+#### DEMO_PRESETS_STAFF_PASSWORD
+
+**Type:** str
+
+Password every staff user of a loaded preset gets in place of the one the preset publishes. Never shown by the API.
 
 #### EMAIL_CHANGE_MAX_AGE
 
@@ -11372,7 +11454,6 @@ WALDUR_SLURM = {'ALLOCATION_PREFIX': 'waldur_allocation_',
  'CUSTOMER_PREFIX': 'waldur_customer_',
  'DEFAULT_LIMITS': {'CPU': 16000, 'GPU': 400, 'RAM': 102400000},
  'ENABLED': False,
- 'PRIVATE_KEY_PATH': '/etc/waldur/id_rsa',
  'PROJECT_PREFIX': 'waldur_project_'}
 ```
 
@@ -11399,12 +11480,6 @@ Default limits of account that are set when SLURM account is provisioned.
 **Type:** bool
 
 Enable support for SLURM plugin in a deployment
-
-#### PRIVATE_KEY_PATH
-
-**Type:** str
-
-Path to private key file used as SSH identity file for accessing SLURM master.
 
 #### PROJECT_PREFIX
 
@@ -12823,7 +12898,7 @@ The message to show when an existing account is refused at login because its ema
 
 **Type:** bool
 
-If true, when OIDC login fails to find a user by the primary lookup field, attempt a secondary lookup by email before creating a new user. On successful email match, the user's primary lookup field is updated to the OIDC claim value.
+If true, when OIDC login fails to find a user by the primary lookup field, attempt a secondary lookup by email before creating a new user. On successful email match, the user's primary lookup field is updated to the OIDC claim value. An email the user set themselves (a self-service email change) is not matched; a login that finds only such an account is refused, and staff setting the email makes it matchable.
 
 #### OIDC_ACCESS_TOKEN_ENABLED
 
@@ -64701,6 +64776,7 @@ with `on_negative=cancel`, and passing the last step allocates it.
 | `applicant_visible` | Whether the applicant sees the step |
 | `transition_mode` | `automatic_on_completion` advances to the next step when this one is completed; `manual` waits for a separate advance |
 | `include_award_response`, `allocation_time` | On the allocation decision only: whether the applicant must accept the award (an `award_response` step right after it), and whether allocation happens `on_decision` or on the round's `allocation_date` (`fixed_date`) |
+| `decides_automatically`, `automatic_decision_guard` | On the allocation decision only: approve as the system, with the award as requested, when a proposal reaches the step; a refused approval (score threshold, budget, missing amounts, nothing guarding it) is left to the call managers. The guard says what stops an unsuitable proposal: `earlier_step` (default) needs an enabled earlier step that can reject it, decided on the proposal's path; `provider_fulfilment` needs a person at the provider to act on every order the award places on each accepted offering — the provider reviews it (Basic, site agent, Script with `auto_approve_marketplace_script` off) or a helpdesk ticket fulfils it (Support). Remote offerings never qualify: the system robot approving the orders is let through the provider review |
 
 A new call is seeded with the steps that were once a fixed catalogue, in order:
 `administrative_check`, `technical_assessment`, `expert_review`,
@@ -64974,13 +65050,14 @@ for the call) and the `field` that fixes it, so the UI can open that setting.
 
 - **Errors** mean the call cannot run as configured: no round, no enabled step,
   no or several allocation decisions, an award response before the decision,
-  an unguarded automatic decision, an applicant step without a form, no
-  accepted offering or an offering without a plan (the checks activation always
-  made, with the same messages), and a completer, contributor or delegation
-  target nobody can hold, a run condition naming a missing or later step or an
-  outcome that ends the proposal first, an input read from the same or a later
-  stage, a decision or applicant step inside a parallel stage, and a
-  notification rule that can never reach anyone.
+  an unguarded automatic decision (or, relying on the provider fulfilment, an
+  accepted offering whose orders nobody at the provider acts on), an applicant
+  step without a form, no accepted offering or an offering without a plan (the
+  checks activation always made, with the same messages), and a completer,
+  contributor or delegation target nobody can hold, a run condition naming a
+  missing or later step or an outcome that ends the proposal first, an input
+  read from the same or a later stage, a decision or applicant step inside a
+  parallel stage, and a notification rule that can never reach anyone.
 - **Warnings** never block: durations up to the decision longer than the
   round's time to decision (allocation date minus cut-off, else the call's
   `target_decision_days`, else the review duration), steps without a duration,
@@ -65451,6 +65528,25 @@ sequenceDiagram
     Note over Proj: Automatic role mapping
     RA->>Proj: Apply ProposalProjectRoleMapping
 ```
+
+### Names of allocated projects and resources
+
+The project is named by the call's `project_name_template`
+(`proposal/allocation_names.py`). Without one it is
+`<call reference code or slug> - <round start date> - <proposal name>`.
+Placeholders: `{proposal_name}`, `{proposal_slug}`, `{call_prefix}`,
+`{call_slug}`, `{call_name}`, `{round_start}` (YYYY-MM-DD), `{round_slug}`,
+`{org_slug}`, `{year}`. The call serializer refuses any other placeholder,
+positional fields, lookups, conversions and format specs, and holds the
+template's literal text to `PROJECT_NAME_REGEX`. Only the template is
+formatted: a brace in a proposal name stays a brace. The template is public
+on the call, so the applicant's form previews the project name.
+
+A resource is named by its offering's `plugin_options.resource_name_pattern`,
+as an ordinary order is. A pattern without `{counter}` gets `-2`, `-3`, … on
+further items of the award on the same offering. Without a pattern the
+resource is `<project name> - <offering name>`, with `(n)` on repeated
+offerings. Re-ordering an awarded item names it the same way.
 
 ### Awarded resources
 
@@ -68575,10 +68671,12 @@ Every event an evaluation's actions emit also records why the evaluation ran. `s
 |-------|---------|
 | `trigger` | What started it (`EvaluationTriggers` in `policy/structures.py`, see below) |
 | `trigger_object_uuid` | The object behind the trigger: the invoice item, credit, component usage, policy or resource; absent for the periodic sweep |
-| `initiated_by_uuid`, `initiated_by_username` | The person whose action started it; absent when nobody did, for example the sweep, a usage report from a site agent outside a request, or a background job that runs as a robot account (`ROBOT_USERNAMES`: `system_robot`, `openportal_robot`), which is never recorded as an initiator. Under impersonation the impersonator is the initiator, as for revisions |
-| `initiated_as_username` | Under impersonation only: the account the initiator was acting as |
+| `initiated_by_uuid`, `initiated_by_username` | The person whose action started it; absent when nobody did, for example the sweep, a usage report from a site agent outside a request, or a background job that runs as a robot account (`ROBOT_USERNAMES`: `system_robot`, `openportal_robot`), which is never recorded as an initiator. Under impersonation, the account acted as |
+| `initiated_by_impersonator_uuid`, `initiated_by_impersonator_username` | Under impersonation only: the staff member acting, who is accountable, as for revisions. Like the event user's own `user_impersonator_*`, only staff and support see them, and they are never filled into a message |
 
 The event's own `user_*` fields stay the system robot whenever a person is replaced, so the robot is still recorded as the actor; the `initiated_by_*` fields keep the person.
+
+Events recorded before the `initiated_by_impersonator_*` fields existed name the impersonator in `initiated_by_*` and the account acted as in `initiated_as_username`. Readers who are not staff or support get them in the current shape, with no `initiated_by_uuid`, as the account's uuid was not recorded; a queued Celery task carrying that shape is converted when it starts (`log.upgrade_initiator_fields`).
 
 A new trigger replaces the old one and its object together, so a context that still carries an earlier trigger's object never lends it to an unrelated evaluation. The initiator is the person acting now when there is one; a recorded initiator only carries over while the events are a robot's.
 
@@ -73539,6 +73637,10 @@ Demo User Credentials
 ============================================================
 ```
 
+Where the deployment sets a staff password (see
+[Deployment Presets](#deployment-presets)), staff users show
+`(the deployment's staff password)` in place of the published one.
+
 ### Export Current State
 
 ```bash
@@ -73554,12 +73656,48 @@ GET /api/marketplace-demo-presets/list/
 Authorization: Token <staff_token>
 ```
 
-### Get Preset Details
+### Preview a Preset
 
 ```http
 GET /api/marketplace-demo-presets/info/{name}/
 Authorization: Token <staff_token>
 ```
+
+Shows what loading the preset would do, before anything is deleted. Besides
+the metadata and entity counts that `list` returns, it carries:
+
+| Field | Content |
+|---|---|
+| `users` | Username, email, name, staff, support and active flags, roles with the name of their scope, and the password for active users who are neither staff nor support |
+| `organizations` | Organizations, their projects, and each project's resources |
+| `offerings` | Offering names grouped by type and category |
+| `settings_changes` | Settings the load changes, and every setting the preset sets |
+| `feature_changes` | Features the load changes, and every feature the preset sets |
+| `overlay`, `overlay_contents` | The deployment's overlay preset imported after this one, if any, and what it adds |
+| `warnings` | What would not work after the load |
+
+Setting and feature changes describe a load with cleanup, the default:
+
+- **Values after the load.** Each change has the current value and the value
+  after the load.
+- **`source`.** Where the new value comes from: `preset`, `overlay`,
+  `default` (the load resets it), or `deployment` (the deployment owns the
+  setting, so the preset's value is skipped and `skipped` is true).
+- **Secrets.** A secret's values are always null.
+
+Warnings name unknown settings or features in the preset, setting values
+the load would reject (those keep their default), and an overlay that is
+missing or cannot be read. They also name features turned on without the
+configuration they need: the AI assistant without `AI_ASSISTANT_API_URL` and
+`AI_ASSISTANT_API_TOKEN`, or Matrix chat without `MATRIX_ENABLED`,
+`MATRIX_HOMESERVER_URL` and `MATRIX_APPSERVICE_AS_TOKEN`. This is checked
+against the values after the load: what the deployment owns, plus what the
+preset and overlay set. Anything else set today is reset by the load and
+does not count.
+
+`overlay_contents` lists the users, organizations and offerings the overlay
+adds, never with passwords. Users marked inactive in a preset are listed with
+`is_active: false` and no password.
 
 ### Load Preset
 
@@ -73634,6 +73772,50 @@ It answers `404` unless the deployment enables demo presets.
 once the latest load is done. Users with a staff or support role are never
 listed: their passwords would give anyone portal-wide access.
 
+## Deployment Presets
+
+A deployment can add presets of its own, keep what it needs across every
+load, and stop the published staff passwords from working. All three are set
+in the environment only, and apply to the API and the `waldur demo_presets`
+command alike.
+
+| Variable | `WALDUR_CORE` setting | Effect |
+|---|---|---|
+| `WALDUR_DEMO_PRESETS_EXTRA_DIRS` | `DEMO_PRESETS_EXTRA_DIRS` | Comma-separated directories with more preset files |
+| `WALDUR_DEMO_PRESETS_OVERLAY` | `DEMO_PRESETS_OVERLAY` | Preset imported after every load that cleans up first |
+| `WALDUR_DEMO_PRESETS_STAFF_PASSWORD` | `DEMO_PRESETS_STAFF_PASSWORD` | Password the preset's staff users get |
+
+### Extra Directories
+
+Each `*.json` file in an extra directory is a preset named after the file.
+The directories are searched in the order given, before the built-in one, so
+a deployment's preset replaces a built-in preset of the same name. A missing
+directory is logged and skipped.
+
+### Overlay
+
+The overlay holds what the deployment needs whatever the demo: offerings
+backed by its own services, the users and API tokens of its agents, the
+features it turns on. After a load that cleans up first, the overlay is
+imported without cleanup, before orders, billing and credit history are
+generated, so it is billed once with the rest. It is imported last, so its
+settings and features win over the preset's.
+
+- The API never lists, describes or loads the overlay.
+- A load with `--no-cleanup` imports no overlay.
+- If the overlay is set but its file is missing, the load fails before
+  anything is deleted.
+
+To keep an agent's token from expiring, give its user `"token_lifetime": null`;
+without the key, a new user gets the deployment's default lifetime.
+
+### Staff Password
+
+When set, every staff user of the loaded preset and overlay gets this
+password in place of the one in the preset file, which is public. The API
+never shows it, and staff users are never offered for quick login. A load
+with `skip_users` leaves passwords alone.
+
 ## Preset Contents
 
 Each preset JSON file includes:
@@ -73654,7 +73836,8 @@ Each preset JSON file includes:
 ## Creating Custom Presets
 
 1. Export current state or copy an existing preset
-2. Place JSON file in `src/waldur_mastermind/marketplace/demo_presets/presets/`
+2. Place JSON file in `src/waldur_mastermind/marketplace/demo_presets/presets/`,
+   or in one of the deployment's extra directories
 3. Add `_metadata` section with title, description, version
 4. Ensure all UUIDs are unique 32-character hex strings
 
@@ -83837,6 +84020,63 @@ MR's live k8s preview, while never appearing in a real `Publish` image.
   `INCLUDE_DEPLOY_FALSE_APPS=true`) and deploys the preview one to a live,
   browsable k8s environment at `https://helm-testing.waldur.com/<mr-id>/`.
 
+## Listing an app in the quick shortcuts
+
+The quick shortcuts menu left of the sidebar logo lists the deployment's
+micro-apps (**Apps**) above the staff-managed external links (**Links**,
+Administration → Quick shortcuts). Both open in a new tab, with the same
+external-link icon. The portal and every
+micro-app show the same menu: it is `waldur-shell`'s `QuickShortcutsMenu`,
+which `AppShell` renders and the portal's `WaldurSidebarBrand` uses. In a
+micro-app the portal comes first, to get back, and the app itself is left
+out (pass `appName` to `AppShell`). An app that does not pass it looks for
+the registry under its own path, finds none, and lists neither the apps
+nor the way back to the portal.
+
+Nothing is listed until staff turn on the **`user.show_micro_apps`** feature
+(Administration → Features). Then each app is shown to the users its
+`package.json` names:
+
+```json
+{
+  "waldur": {
+    "deploy": false,
+    "title": "Calls for providers",
+    "description": "Requests, assessments and awards in calls",
+    "visibleTo": {
+      "features": ["marketplace.show_call_management_functionality"],
+      "roles": ["OFFERING.MANAGER", "OFFERING.EVALUATOR"],
+      "staffOnly": false
+    }
+  }
+}
+```
+
+- **`title`** opts the app in: an app without one is never listed.
+- **`features`**: feature flags (`section.key`) that must all be on.
+- **`roles`**: the user must hold one of these roles (any scope); empty
+  means every signed-in user. Staff and support always pass.
+- **`staffOnly`**: staff and support only, whatever `roles` says.
+
+The registry is `micro-apps.json` next to the portal's `index.html`,
+written by `scripts/micro-apps-registry.mjs`:
+
+- **In the image**, the Dockerfile runs it after the `apps/*` loop over
+  `dist/`, so it lists exactly the apps that image holds: an app left out
+  by `waldur.deploy: false` is left out of the menu too. nginx serves it
+  uncached (`docker/nginx-tpl.conf`).
+- **On the dev server**, the root `vite.config.ts` serves it for every
+  `apps/*` member, read again on each request.
+- **On a micro-app's standalone dev server** there is none, and the menu
+  lists only the links.
+
+The visibility rules are evaluated in the browser from `users/me` (the
+user's active roles) and the runtime feature flags; they decide what the
+menu offers, not who may use an app. An app still has to handle a user it
+has nothing for, and the backend still decides what the user may do. The
+registry itself is public, like the apps: anyone, signed in or not, can
+read every app's name, description and rules, `staffOnly` ones included.
+
 ## Adding a new micro-app
 
 1. Create `apps/<name>/` — `package.json` (with `dev`/`build`/`typecheck`
@@ -83861,9 +84101,13 @@ MR's live k8s preview, while never appearing in a real `Publish` image.
 3. Decide whether it ships: omit `"waldur": { "deploy": false }` to ship by
    default, or add it if it's a demo/POC that should stay CI/preview-only
    (see above).
-4. That's it for Dockerfile/nginx/`entrypoint.sh`/CI — all four scan for
+4. To list it in the quick shortcuts, give its `waldur` block a `title`
+   (and `description`, `visibleTo`), and pass its directory name as
+   `appName` to `AppShell` — see
+   [Listing an app in the quick shortcuts](#listing-an-app-in-the-quick-shortcuts).
+5. That's it for Dockerfile/nginx/`entrypoint.sh`/CI — all four scan for
    `apps/*` content, none hand-list app names.
-5. Optional, for local dev convenience: add an entry to `.claude/launch.json`
+6. Optional, for local dev convenience: add an entry to `.claude/launch.json`
    (both the repo-root one and, if working from the `waldur-claude-workspace`
    hub, its own hub-level copy — these can drift out of sync since nothing
    keeps them in sync automatically) so `preview_start` can launch it by
@@ -111848,6 +112092,168 @@ enabling full debug mode.
 
 ---
 
+### Demo presets
+<!-- Source: docs/admin-guide/demo-presets.md -->
+
+# Demo presets
+
+Demo presets are ready-made data sets for showing Waldur: organizations, projects,
+offerings, resources and users, together with the features and settings the demo needs.
+On a demo deployment, staff can preview a preset and load it from the portal, under
+**Administration → System management → Demo presets**. After the load, the sign-in page
+offers one-click sign-in as the preset's demo users.
+
+!!! danger "Demo deployments only"
+    Loading a preset **deletes every organization, project, offering, user and API token**
+    in the database and replaces them with the preset's. Everyone is signed out, the staff
+    user who started the load included. Never enable demo presets on a deployment whose data
+    matters.
+
+## Enabling it
+
+Demo presets are off by default. They are switched on by the deployment only, through
+environment variables: nobody can turn them on from the portal or the settings API. While
+they are off, every demo preset endpoint answers 404 and the portal shows nothing of them.
+The `waldur demo_presets` command works either way.
+
+| Variable | Meaning |
+|---|---|
+| `WALDUR_DEMO_PRESETS_ENABLED` | `true` lets staff list, preview and load presets. |
+| `WALDUR_DEMO_PRESETS_ALLOWED` | Comma-separated preset names to offer; empty offers every preset. |
+| `WALDUR_DEMO_PRESETS_EXTRA_DIRS` | Directories with the deployment's own presets, searched before the built-in ones. |
+| `WALDUR_DEMO_PRESETS_OVERLAY` | A preset imported after every load; see [What a load keeps](#what-a-load-keeps). |
+| `WALDUR_DEMO_PRESETS_STAFF_PASSWORD` | The password the presets' staff users get, in place of the published one. |
+
+=== "Docker Compose"
+
+    Set the variables in `.env`; the API and the Celery worker both read them.
+
+    ```bash
+    WALDUR_DEMO_PRESETS_ENABLED=true
+    WALDUR_DEMO_PRESETS_ALLOWED=hpc_ai_platform,call_management
+    WALDUR_DEMO_PRESETS_STAFF_PASSWORD=<a password of your own>
+    ```
+
+    The deployment's own presets go in `config/waldur-mastermind/presets/`, one
+    `<name>.json` file per preset, mounted at `/etc/waldur/presets`.
+
+=== "Helm"
+
+    ```yaml
+    waldur:
+      demoPresets:
+        enabled: true
+        allowed:
+          - hpc_ai_platform
+          - call_management
+        staffPassword:
+          existingSecret: demo-staff
+          key: password
+    ```
+
+    See the [Helm guide](deployment/helm/docs/demo-presets.md) for the presets
+    ConfigMap and the overlay.
+
+A load runs in the Celery worker, so the worker must be running, and the API and the
+worker must share a cache, as the Docker Compose and Helm deployments do.
+
+!!! warning "Set a staff password on any portal others can reach"
+    The presets are public, and so are the passwords of their staff users. Without
+    `WALDUR_DEMO_PRESETS_STAFF_PASSWORD`, anyone who reads a preset can sign in as staff
+    after it is loaded. With it, every staff user of the preset gets that password instead.
+    The portal never shows the passwords of staff or support users, and quick sign-in never
+    lists them.
+
+## What a load keeps
+
+A load from the portal always cleans up first. In order, it:
+
+1. Deletes the organizations, projects, offerings, resources, users and API tokens, and
+   drops the tasks waiting for the workers.
+2. Returns every feature, and every setting the deployment does not own, to its default.
+3. Imports the preset, with its features and settings.
+4. Imports the deployment's overlay preset, if `WALDUR_DEMO_PRESETS_OVERLAY` names one.
+5. Gives the staff users the deployment's staff password, if one is set.
+
+The deployment keeps everything it owns:
+
+- its environment variables and settings files;
+- settings set by the deployment, locked or managed, and secret settings. A preset that sets
+  one of these is skipped for that setting;
+- the overlay. It holds what the deployment needs whatever the demo: offerings backed by its
+  own services, the users and tokens of its agents, the features it turns on. The overlay is
+  never offered as a preset itself, and a load whose overlay is missing fails before
+  anything is deleted.
+
+## Choosing a preset
+
+The page lists the presets the deployment offers, each with its size.
+
+[Image: Demo presets page]
+
+**Preview** shows what loading the preset would do, before anything is deleted:
+
+- **Overview**: the description, the counts, the overlay, and warnings about anything that
+  would not work after the load. For example, a feature the preset turns on that needs
+  settings the deployment has not set.
+- **Users**: the preset's users with their roles, and the overlay's. Passwords are shown for
+  users without a staff or support role.
+- **Structure**: organizations, their projects and each project's resources.
+- **Offerings**: offerings grouped by type and category.
+- **Settings**: each feature and setting the load changes, its value now and after the load,
+  and where the new value comes from: the preset, the overlay, the default, or the
+  deployment, which keeps its own value.
+
+[Image: Preview: overview]
+
+[Image: Preview: users]
+
+[Image: Preview: settings and features]
+
+## Loading a preset
+
+**Load**, on a card or in the preview, asks you to type the preset's name.
+
+[Image: Load confirmation]
+
+While the preset loads, the API pauses: every request but the status, configuration and
+sign-in endpoints answers 503. Every open portal tab, yours and other users', shows a
+"Resetting the demo" screen until the load finishes.
+
+[Image: Reset screen]
+
+When the load is done, each tab reloads to the sign-in page, with the new preset's
+configuration and features. If the load fails, the screen shows its error and a way back
+to the portal. A failure before the cleanup leaves the data as it was.
+
+Only one load runs at a time: starting another while one runs answers 409.
+
+## Signing in as a demo user
+
+After a load, the sign-in page lists the preset's users without a staff or support role.
+Selecting one signs in as that user.
+
+[Image: Quick sign-in]
+
+Staff sign in with the usual form, with the deployment's staff password when one is set.
+
+## Without the portal
+
+The same presets can be loaded from the command line, which works whether or not
+`WALDUR_DEMO_PRESETS_ENABLED` is set; see
+[`demo_presets`](mastermind-configuration/cli-guide.md#demo_presets):
+
+```bash
+waldur demo_presets list
+waldur demo_presets load hpc_ai_platform
+```
+
+The API is `/api/marketplace-demo-presets/` (list, preview, load) for staff, and the
+public `/api/demo-preset-status/`, which reports the latest load and the users offered for
+quick sign-in.
+
+---
+
 ### Waldur deployment in ArgoCD
 <!-- Source: docs/admin-guide/deployment/argocd/argocd.md -->
 
@@ -112212,7 +112618,7 @@ Check the [hardware requirements](hardware-requirements.md), then install with [
 
 ## Configure
 
-The [configuration options](mastermind-configuration/configuration-guide.md) list every setting; [general configuration](mastermind-configuration/general.md), [email](mastermind-configuration/email.md) and [notifications](mastermind-configuration/notifications.md) are where most deployments start. Optional features such as the [AI assistant](ai-assistant.md), [Matrix chat](matrix-chat.md) and the [web shell](web-shell.md) are configured here too.
+The [configuration options](mastermind-configuration/configuration-guide.md) list every setting; [general configuration](mastermind-configuration/general.md), [email](mastermind-configuration/email.md) and [notifications](mastermind-configuration/notifications.md) are where most deployments start. Optional features such as the [AI assistant](ai-assistant.md), [Matrix chat](matrix-chat.md), the [web shell](web-shell.md) and [demo presets](demo-presets.md) are configured here too.
 
 ## Identity and access
 
@@ -122116,6 +122522,8 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
 - event_consumer_registered_with_broad_credential
 - event_consumer_resync_requested
 - event_consumer_webhook_updated
+- oauth_consent_denied
+- oauth_consent_granted
 - oidc_token_refresh_failed
 - oidc_token_revoked
 - passkey_authentication_failed
@@ -122706,6 +123114,8 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
 - matrix_password_generated
 - matrix_recovery_key_escrowed
 - matrix_recovery_key_viewed
+- oauth_consent_denied
+- oauth_consent_granted
 - oidc_token_refresh_failed
 - oidc_token_revoked
 - passkey_authentication_failed
@@ -125775,6 +126185,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`ResourceDetailsMixin`](#resourcedetailsmixin) | `waldur_mastermind.marketplace.models` | Mixin combining resource details with cost estimation |
 | [`SafeAttributesMixin`](#safeattributesmixin) | `waldur_mastermind.marketplace.models` | Mixin for safe attribute handling |
 | [`MemberSyncFieldsMixin`](#membersyncfieldsmixin) | `waldur_mastermind.marketplace.serializers` | Adds agent-reported sync fields to a UserRole-shaped serializer |
+| [`ResourceEndDateUpdateMixin`](#resourceenddateupdatemixin) | `waldur_mastermind.marketplace.serializers` | Write the end date and who set it, and nothing else |
 | [`UserProfileAttributeFieldsMixin`](#userprofileattributefieldsmixin) | `waldur_mastermind.marketplace.serializers` | Read-only ``user_<attr>`` fields for the personal-data attributes an offering... |
 | [`PresetSettingsTestMixin`](#presetsettingstestmixin) | `waldur_mastermind.marketplace.tests.test_demo_preset_settings` | No description available |
 | [`DerivedLimitsOrderMixin`](#derivedlimitsordermixin) | `waldur_mastermind.marketplace.tests.test_derived_limits` | No description available |
@@ -125796,6 +126207,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`ResourceGlauthAccessMixin`](#resourceglauthaccessmixin) | `waldur_mastermind.marketplace_site_agent.tests.test_glauth_resource_access` | No description available |
 | [`AppserviceErrorCountMixin`](#appserviceerrorcountmixin) | `waldur_mastermind.matrix_chat.views` | Counts the view's 4xx and 5xx answers for the webhook_errors diagnostic |
 | [`MatrixEnabledWriteGuardMixin`](#matrixenabledwriteguardmixin) | `waldur_mastermind.matrix_chat.views` | Reject mutating requests while the Matrix integration is disabled |
+| [`ConsentTestMixin`](#consenttestmixin) | `waldur_mastermind.mcp.tests.test_consent` | No description available |
 | [`OAuthTestMixin`](#oauthtestmixin) | `waldur_mastermind.mcp.tests.test_oauth` | No description available |
 | [`EstimatedCostPolicyMixin`](#estimatedcostpolicymixin) | `waldur_mastermind.policy.models` | Make subclasses preserve the alters_data attribute on overridden methods |
 | [`OfferingPolicySerializerMixin`](#offeringpolicyserializermixin) | `waldur_mastermind.policy.serializers` | This mixin provides several extensions to stock Serializer class:  1 |
@@ -125843,6 +126255,8 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`TenantQuotaMixin`](#tenantquotamixin) | `waldur_openstack.models` | It allows to update both service settings and shared tenant quotas |
 | [`LimitedPerTypeThrottleMixin`](#limitedpertypethrottlemixin) | `waldur_openstack.tasks` | No description available |
 | [`TenantMixin`](#tenantmixin) | `waldur_openstack.tests.factories` | No description available |
+| [`ExternalShareMixin`](#externalsharemixin) | `waldur_openstack.tests.test_external_share_ports` | The owner's network, shared with the consumer's tenant in one cloud |
+| [`TwoProjectsMixin`](#twoprojectsmixin) | `waldur_openstack.tests.test_port_token_bindings` | A user who administers projects A and B, each with a tenant |
 | [`SharedSubnetMixin`](#sharedsubnetmixin) | `waldur_openstack.tests.test_rbac_shared_subnet_actions` | No description available |
 | [`UnmanagedOwnerShareMixin`](#unmanagedownersharemixin) | `waldur_openstack.tests.test_unmanaged_owner_share` | No description available |
 | [`LBaaSAuditMixin`](#lbaasauditmixin) | `waldur_openstack.views` | Emit lifecycle audit events for LBaaS resources on create/update/delete |
@@ -127233,6 +127647,18 @@ which is distinct from any real state.
 
 **Base classes:** `Serializer`
 
+### ResourceEndDateUpdateMixin
+
+**Module:** `waldur_mastermind.marketplace.serializers`
+
+**Description:**
+
+Write the end date and who set it, and nothing else.
+
+A full save would write back every field of the resource as the view loaded
+it, undoing whatever a concurrent request, such as the agent reporting the
+resource OK, changed in between.
+
 ### UserProfileAttributeFieldsMixin
 
 **Module:** `waldur_mastermind.marketplace.serializers`
@@ -127418,6 +127844,14 @@ Reads stay open so the rooms list remains viewable, but a write would only
 enqueue a Celery task against a non-existent homeserver: the row is left
 stranded in a transient state (creating/disabling) that never resolves. The
 frontend hides these actions; this is the backstop for direct or stale calls.
+
+### ConsentTestMixin
+
+**Module:** `waldur_mastermind.mcp.tests.test_consent`
+
+**Description:** No description available.
+
+**Base classes:** `OAuthTestMixin`
 
 ### OAuthTestMixin
 
@@ -127910,6 +128344,22 @@ It allows to update both service settings and shared tenant quotas.
 **Module:** `waldur_openstack.tests.factories`
 
 **Description:** No description available.
+
+### ExternalShareMixin
+
+**Module:** `waldur_openstack.tests.test_external_share_ports`
+
+**Description:**
+
+The owner's network, shared with the consumer's tenant in one cloud.
+
+### TwoProjectsMixin
+
+**Module:** `waldur_openstack.tests.test_port_token_bindings`
+
+**Description:**
+
+A user who administers projects A and B, each with a tenant.
 
 ### SharedSubnetMixin
 
@@ -137338,6 +137788,7 @@ on only for a backend whose agent sets `supports_resource_api_key_lifecycle`.
 | `current_usages` | per-component usage in `usage_period`, the highest figure the agent reported for the month, which never drops; for a component reported per day, the sum of its days |
 | `usage_period` | the month `current_usages` covers (its first day); usage of an earlier month counts against no month limit |
 | `usage_history` | each earlier month's usage per component, `{"2026-09": {"token_cost": 12.5}}`: kept when the next month's usage comes in, and raised, never lowered, by usage reported late for that month; never pruned, as a total limit counts it. Not in the API |
+| `estimated_cost` | what `current_usages` costs at the unit prices of the resource's plan, without discounts, credits or carried-over usage ([below](#estimated-cost)); recomputed on every usage report |
 | `paused_by_limit` | Waldur paused the key because its usage reached a limit; such a key is resumed automatically once under its limits again |
 | `limit_resumes_at` | when every limit that paused the key resets, so that it resumes without a usage report; empty while a reached total holds the key, which then resumes only when that limit is raised or cleared |
 | `models_outdated` | the resource's model selection changed while the key could not take an `update`; Waldur sends one once the key settles ([below](#resource-selection)) |
@@ -137346,11 +137797,15 @@ on only for a backend whose agent sets `supports_resource_api_key_lifecycle`.
 
 The key value is deliberately **not** on `Resource`: it never touches the broad
 `ResourceSerializer`, gets its own permission-gated endpoints, and stays out of
-admin and reversion history. `ResourceSerializer` carries only `has_api_keys`, a
+admin and reversion history. Of the keys, `ResourceSerializer` carries only `has_api_keys`, a
 boolean (an `Exists` annotation on the consumer and provider resource viewsets,
 with a per-instance fallback) so the portal can offer key management without
 knowing the backend —
-`offering_type` cannot tell these backends apart, they are all site-agent offerings.
+`offering_type` cannot tell these backends apart, they are all site-agent offerings —
+and `api_key_counts`, the number of keys per state with `Deleted` keys left out
+(`{"OK": 4, "Paused": 1}`; a state with no keys is absent). A list loads the
+counts for the whole page in one grouped query (`ResourceSerializer.load_page`,
+through `ResourceApiKeyQuerySet.state_counts`), and a single resource counts its own.
 
 **`client_id` is the backend's public identifier, and it is not always stable.**
 Envoy uses a slot, `<resource_backend_id>-<n>`, that survives rotation: only the
@@ -137726,8 +138181,27 @@ All endpoints live under `/api/marketplace-resource-api-keys/`
 (`ResourceApiKeyViewSet`); keys are addressed by their own UUID and filtered per
 resource with `?resource_uuid=`, and further by `state`, `pending_action`,
 `has_pending_action` (`false` for keys with no command in flight), `user_uuid`,
-`offering_uuid` and `modified_before`. A listing leaves out `Deleted` keys
-unless `?state=Deleted` asks for them.
+`offering_uuid`, `provider_uuid`, `customer_uuid` (the consuming organization),
+`project_uuid`, `paused_by_limit` and `modified_before`. A listing leaves out
+`Deleted` keys unless `?state=Deleted` asks for them. `?o=` orders by
+`estimated_cost`, `created`, `issued_at` or `state` (prefix `-` to reverse);
+the default is `created`.
+
+`provider_uuid` (the service provider's organization) is not a plain field
+filter: it lists the keys of that provider's offerings **as the provider
+resource list shows their resources** (`filter_for_service_provider`) — to
+staff, support, a global grant that sees all resources, and a role on the
+provider organization, its service provider or the offering. A consumer of
+those offerings with no provider role gets an empty list, and a provider who
+also consumes other offerings gets none of those keys. It never reveals a
+value: reveal stays consumer-side.
+
+Each key carries the context a list across resources needs: `resource_name`,
+`offering_uuid`, `offering_name`, `customer_uuid` and `customer_name` (the
+consuming organization), `project_uuid` and `project_name`. It also carries
+`resource_plan_uuid` and `resource_spending_limits`, so such a list can show a
+key's usage against its limits as the resource's own *API keys* tab does: the
+plan picks the components, and the resource's limits cap every key of it.
 
 Consumer side. The actions marked *governance* need the offering's
 `enable_api_key_provisioning`; without it they return 400.
@@ -137798,8 +138272,12 @@ Consumer side. The actions marked *governance* need the offering's
 - `DELETE /{uuid}/` *(governance)* — the `delete` command; `202`, since the key
   is gone only once the agent acknowledges. A requested key with no `client_id`
   yet is `Deleted` at once, with no command (see [States](#states)).
-- `GET /usage_totals/?resource_uuid=` — the resource's reported key usage this
-  month, summed per component, deleted keys included.
+- `GET /usage_totals/?resource_uuid=` (or `offering_uuid=`, or `provider_uuid=`)
+  — the reported key usage this month, summed per component, deleted keys
+  included, and `estimated_cost`, the keys' estimated cost summed. One of the
+  three is required, and the other list filters narrow the keys summed. The
+  per-component sums only compare within one offering; `estimated_cost` adds
+  up across offerings.
 
 Every command is gated on `RESOURCE.MANAGE_CONSUMER_API_KEY` (project or customer
 scope). `permissions.yaml` grants it to the organization owner, the project
@@ -137997,6 +138475,25 @@ The Envoy AI Gateway tags requests with a per-key `x-client-id`; per-key numbers
 depend on the usage shipper emitting them per `client_id`. croit-s3 meters the S3
 user directly, so keys never enter usage at all — and it does not declare
 `enable_api_key_provisioning`.
+
+### Estimated cost {#estimated-cost}
+
+Offerings meter different components — `token_cost` in USD, input and output
+tokens, storage — so raw usage cannot rank keys of different offerings. A key's
+`estimated_cost` can: the sum over its `current_usages` of the converted
+quantity times the unit price of that component in the resource's plan
+(`marketplace/api_key_cost.py`), the price and `convert_quantity` that
+`billing_usage` uses for invoice items. It ignores discounts, credits and
+carried-over usage, so it is not an invoice amount. A component the plan does
+not price counts as 0 — a LiteLLM cost cap priced at 0 adds nothing.
+
+It is stored on the key, so a list can sort on it, and recomputed whenever a
+usage report writes `current_usages`; a plan price change therefore shows at
+the key's next report, and keys that existed before the field read 0 until
+then. The API reports it for the current month: a key whose last report is for
+an earlier month reads 0, and sorts as 0, until usage for this month comes in.
+On an offering that no longer has `enable_api_key_provisioning` the field is
+null, like the key's usage, and the key sorts and totals as 0.
 
 ---
 
