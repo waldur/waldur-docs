@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-10T20:20:48.812651Z
+Generated: 2026-11-11T03:04:08.349776Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -14862,6 +14862,10 @@ Enable Data Access tab showing who can access user profile data.
 ## user.show_identity_bridge
 
 Show identity bridge information in user profiles and admin views.
+
+## user.show_micro_apps
+
+List the deployment's micro-apps in the quick shortcuts menu, to the users each app is meant for.
 
 ## user.show_slug
 
@@ -68931,6 +68935,7 @@ The system is composed of several key scripts and GitLab CI configuration files.
   - **Purpose:** To determine the list of applications to test for a given change.
   - **How:** It reads the `dependency_graph.yaml`, gets the list of changed files from Git, and identifies the set of directly changed apps. It does **not** perform transitive dependency checks, for a balance of speed and safety.
   - **Special Case:** If a "core" file (like `pyproject.toml` or `.gitlab-ci.yml`) is changed, it outputs the special string `src` to signal a full test run.
+  - **Feature flags:** Every app imports `src/waldur_core/core/features.py`. A change there that only adds flags defaulting to off, or rewords descriptions, runs `waldur_core.core` alone and no E2E suite. Any other change to the file (a removed or renamed flag, a changed default, a new flag that starts on, other code) fans out as usual.
 
 3. **`generate-pipeline.sh`**
   - **Purpose:** The main "brain" of the planning phase. It generates the child pipeline configuration.
@@ -73218,6 +73223,7 @@ The process begins in the `waldur-mastermind` pipeline in a job named `Generate 
     1. **On a schedule for the `develop` branch**: This ensures we always have an up-to-date schema reflecting the latest development state.
     2. **When a version tag is pushed** (e.g., `1.2.3`): This generates a stable, versioned schema for a specific release.
 - **Output**: The job produces a versioned `waldur-openapi-schema.yaml` file, which is stored as a CI artifact. This artifact becomes the input for all subsequent steps.
+- **Python client check**: The job also builds the Python client from that schema with the generator `waldur/py-client` uses, and fails if the generator removes a schema or skips an endpoint. The generator itself only warns and exits 0, so a client could ship without `Resource` while every job passed. Run the same check locally with `scripts/check_python_sdk_generation.sh waldur-openapi-schema.yaml` (needs `uvx`). The `validate_python_sdk_naming_collisions` hook catches the most common cause earlier, during `waldur spectacular`: two schemas that the client would give the same class name.
 
 ### 2. Automated SDK and Tooling Generation
 
@@ -73570,19 +73576,63 @@ Content-Type: application/json
 }
 ```
 
-Response includes user credentials:
+A load runs in the background. The request answers `202` with the load, or
+`409` while another load is pending or running:
 
 ```json
 {
-  "success": true,
-  "message": "Preset 'minimal_quickstart' loaded successfully",
-  "output": "...",
+  "uuid": "4f1c...",
+  "preset": "minimal_quickstart",
+  "state": "pending",
+  "created": "2026-11-09T12:00:00Z",
+  "started_at": null,
+  "finished_at": null,
+  "error_message": ""
+}
+```
+
+A dry run is answered directly with `200`, its output and the preset's users.
+
+A load with cleanup first (the default) drops every task queued for the
+workers before it queues itself. Presets reuse fixed UUIDs, so a task queued
+before the reset would otherwise act on the object of the same UUID that the
+load creates. Tasks a worker has already taken still finish. The load's output
+records how many tasks it dropped. If the task queue cannot be reached, the
+request answers `503` (without `demo_reset`) and the load is recorded as
+`erred`.
+
+While a load is pending or running, every other `/api/` request answers `503`
+with `{"demo_reset": true, "preset": "<name>"}` and a `Retry-After` header.
+`/api/demo-preset-status/`, `/api/configuration/` and `/api-auth/` keep
+answering, so a browser can follow the load and log in again. A load deletes
+every user and token, the caller's included.
+
+A load that is still active an hour after it started (the task's time limit)
+was abandoned, typically by a deploy restarting the worker. It is reported as
+`erred` and no longer blocks the API or new loads.
+
+### Load Status
+
+```http
+GET /api/demo-preset-status/
+```
+
+Public, with no authentication, because the load deletes the caller's session.
+It answers `404` unless the deployment enables demo presets.
+
+```json
+{
+  "loading": false,
+  "load": {"uuid": "4f1c...", "preset": "minimal_quickstart", "state": "done", "...": "..."},
   "users": [
-    {"username": "staff", "password": "demo", "is_staff": true, "is_support": false},
-    {"username": "owner", "password": "demo", "is_staff": false, "is_support": false}
+    {"username": "owner", "password": "demo", "email": "owner@example.com", "is_staff": false, "is_support": false}
   ]
 }
 ```
+
+`users` lists the loaded preset's users with their passwords for quick login,
+once the latest load is done. Users with a staff or support role are never
+listed: their passwords would give anyone portal-wide access.
 
 ## Preset Contents
 
@@ -90339,7 +90389,7 @@ const filterPosition =
 
 **Form controls (inputs, selects, textareas):**
 
-- Minimum height: 40px for adequate touch/click area
+- Same three heights as buttons (below), so a field and a button of one size line up; textareas grow with their rows
 
 **Buttons:**
 
