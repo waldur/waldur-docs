@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-11T06:44:56.369476Z
+Generated: 2026-11-11T10:23:20.060462Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -91972,8 +91972,10 @@ see held decisions, the applicant team included.
 An **award response** is an applicant step right after the allocation decision: an approved
 proposal pauses for the applicant to **Accept award** or **Decline award** before anything is
 provisioned, and a declined award cancels the proposal. A new call has no **Award response**
-step; a call created from a template or imported from a file brings one where it has it.
-Disabling or deleting it lets the allocation decision allocate directly.
+step; add one with **Add award response** above the call's workflow steps, which puts it
+right after the allocation decision. A call created from a template or imported from a file
+brings one where it has it. Disabling or deleting it lets the allocation decision allocate
+directly.
 
 What the applicant sees is described in
 [Responding to an award](applicant-guide.md#responding-to-an-award).
@@ -93030,6 +93032,9 @@ The **Team** tab grants the **Call manager**, **Call panel member** and **Call r
 on the call. Its sub-tabs are **Users**, **Invitations** and **Team changes**. Granting the
 **Call reviewer** role adds its holder to the call's reviewer pool as accepted; revoking it
 declines their pool entry.
+
+Expanding a call reviewer's row shows their reviewer profile to those who manage the call's
+reviewer pool: its call managers and the call organisers of the managing organisation.
 
 A panel member's row offers **Set as panel chair** and **Set as vice-chair**. Steps can name
 the panel members, or the panel chair or vice-chair, as the role that completes or contributes to them (see
@@ -95628,10 +95633,8 @@ and the role rather than decide for the reviewer.
 
 For each such reviewer, decide which one stands:
 
-- **They are not reviewing**: revoke their reviewer role. The call's **Team** tab does not list
-  reviewers, so ask your operator, or use the API as described in
-  [Reviewer pools and roles](../../admin-guide/proposal-module-v2-migration.md#reviewer-pools-and-roles).
-  Their pool entry stays declined.
+- **They are not reviewing**: revoke their reviewer role by removing them from the call's
+  **Team** tab, where they are listed as **Call reviewer**. Their pool entry stays declined.
 - **They are reviewing after all**: open the call's **Manage → Reviewer pool → Pool**, and choose
   **Force accept invitation** from their row's actions, with a reason. This needs the reviewer to
   have a reviewer profile. A declined invitation cannot be sent again.
@@ -114600,9 +114603,8 @@ In v2 they are one list, and the upgrade merges them:
 From then on, granting the role adds the person to the pool, accepting a pool invitation grants the
 role, and revoking the role marks the pool entry declined.
 
-The call's **Team** tab lists only call managers and panel members, so call managers cannot revoke
-the reviewer role from the UI. A call manager or organisation owner revokes it through the API, or
-you do it for them:
+A call manager or organisation owner revokes the role by removing the person from the call's
+**Team** tab, where they are listed as **Call reviewer**. The same can be done through the API:
 
 ```bash
 curl -X POST -H "Authorization: Token <token>" -H "Content-Type: application/json" \
@@ -126187,6 +126189,8 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`MemberSyncFieldsMixin`](#membersyncfieldsmixin) | `waldur_mastermind.marketplace.serializers` | Adds agent-reported sync fields to a UserRole-shaped serializer |
 | [`ResourceEndDateUpdateMixin`](#resourceenddateupdatemixin) | `waldur_mastermind.marketplace.serializers` | Write the end date and who set it, and nothing else |
 | [`UserProfileAttributeFieldsMixin`](#userprofileattributefieldsmixin) | `waldur_mastermind.marketplace.serializers` | Read-only ``user_<attr>`` fields for the personal-data attributes an offering... |
+| [`DeploymentPresetsMixin`](#deploymentpresetsmixin) | `waldur_mastermind.marketplace.tests.test_demo_preset_deployment` | Built-in presets in one temporary directory and the deployment's in another, ... |
+| [`PreviewTestMixin`](#previewtestmixin) | `waldur_mastermind.marketplace.tests.test_demo_preset_preview` | No description available |
 | [`PresetSettingsTestMixin`](#presetsettingstestmixin) | `waldur_mastermind.marketplace.tests.test_demo_preset_settings` | No description available |
 | [`DerivedLimitsOrderMixin`](#derivedlimitsordermixin) | `waldur_mastermind.marketplace.tests.test_derived_limits` | No description available |
 | [`LimitActionPermissionMixin`](#limitactionpermissionmixin) | `waldur_mastermind.marketplace.tests.test_order_creation_permission` | No description available |
@@ -127673,6 +127677,21 @@ serves both offering users and user role grants. Username, full name and
 email are declared by the serializers themselves.
 
 **Base classes:** `Serializer`
+
+### DeploymentPresetsMixin
+
+**Module:** `waldur_mastermind.marketplace.tests.test_demo_preset_deployment`
+
+**Description:**
+
+Built-in presets in one temporary directory and the deployment's in
+another, set as its extra directory.
+
+### PreviewTestMixin
+
+**Module:** `waldur_mastermind.marketplace.tests.test_demo_preset_preview`
+
+**Description:** No description available.
 
 ### PresetSettingsTestMixin
 
