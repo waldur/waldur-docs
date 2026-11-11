@@ -32,8 +32,9 @@ keys. Deleted keys are left out unless you filter by the **Deleted** state.
   the project.
 - **State** — **OK**, **Paused**, **Paused at limit**, **Erred**, or a
   transitional state while the site agent carries out a change.
-- **Usage this month** — the key's usage per component, against its monthly
-  limit where it has one.
+- **Usage this month** — the key's usage per component, by name and unit,
+  against its monthly limit, or, where the key has none, against the
+  resource's monthly limit that caps it.
 - **Estimated cost** — what the key's usage this month costs at the unit prices
   of the resource's plan.
 - **Paused by limit** — whether Waldur paused the key because its usage reached
