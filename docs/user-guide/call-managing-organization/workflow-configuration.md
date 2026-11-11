@@ -83,7 +83,7 @@ The **Add step** and **Configure** dialogs adapt to the step's kind and show its
 
 | Page | Settings |
 |---|---|
-| **Basics** | Name, description, **Step enabled**, **Runs**, **Allocation decision**, **Decide automatically** |
+| **Basics** | Name, description, **Step enabled**, **Runs**, **Allocation decision**, **Decide automatically**, **What stops an unsuitable proposal** |
 | **Participants** | **Responsible role**, **Assigns roles**, **Contributors**, **One contribution per requested offering**, **Only the lead of this role contributes**, **Can be handed to**, minimum and maximum contributions, conflict-of-interest confirmation |
 | **Outcome and review** | **Outcomes**, **On a negative outcome**, **Minimum reviewers**, **Minimum score threshold**, **Criteria**, **Blind review**, checklist |
 | **Inputs and visibility** | **Input steps**, **Applicant visible**, release of the report, **Collect reviewer suggestions**, **Allow requesting changes**, **Status labels** |
@@ -135,7 +135,7 @@ Settings that depend on the kind:
 | **Assessment** | **Contributors**; **One contribution per requested offering** (with **Allow conditional acceptance**); **Minimum contributions** and **Maximum contributions**; **Can be handed to**; **Minimum score threshold**; **Criteria**; **Blind review**; **Conflict of interest confirmation** (with its **Conflict-of-interest declaration**); **Release the report to the applicant**; **Collect reviewer suggestions**; **Runs once per round** |
 | **Decision** | **Minimum reviewers**; **Minimum score threshold**; **Allocation decision**; **Allocation timing** and **Decide automatically** (on the allocation decision); **Runs once per round** |
 
-On the allocation decision, **Allocation timing** chooses between **On decision**, which starts allocation immediately, and **Fixed date**, which defers it to the round's allocation date. **Decide automatically** awards the proposal as requested as soon as it reaches the step; the call managers decide only when the award cannot be made automatically.
+On the allocation decision, **Allocation timing** chooses between **On decision**, which starts allocation immediately, and **Fixed date**, which defers it to the round's allocation date. **Decide automatically** awards the proposal as requested as soon as it reaches the step; the call managers decide only when the award cannot be made automatically. **What stops an unsuitable proposal** then chooses the guard: **An earlier step that can reject the proposal** (the default) needs an enabled assessment or decision before it that can end the proposal; **The provider fulfilling each order** needs instead that someone at the provider acts on every order an award places — every accepted offering of the call is a helpdesk offering or has its orders reviewed by the provider. See [Example: a paid self-service call](paid-self-service-example.md#why-the-provider-is-the-guard).
 
 **Runs once per round** makes a step a round step, such as a committee meeting after the cut-off: the call managers open it for the round's proposals together from the round's steps, its contributors each write one round report covering their proposals, and it is completed for the round, never on one proposal. A round step needs evaluation to start at the round cut-off, and is never the allocation decision or a per-offering step.
 

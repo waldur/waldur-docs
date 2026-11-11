@@ -41,6 +41,9 @@ own. The step can be declined regardless of scores, but approving is blocked whi
 decision, **Decide automatically** awards the proposal as requested as soon as it reaches the
 step, and **Allocation timing** chooses between allocating **On decision** and on a
 **Fixed date** — the round's allocation date (see [Per-step settings](workflow-configuration.md#per-step-settings)).
+An automatic decision needs something to stop an unsuitable proposal: either an earlier step
+that can reject it, or the provider fulfilling each order. The second suits paid services
+with nothing to evaluate; see [Example: a paid self-service call](paid-self-service-example.md).
 
 Completing it with an *Approved* outcome advances the proposal to the next enabled step.
 Provisioning happens when the **last enabled step** completes, not at the
@@ -163,8 +166,16 @@ What the applicant sees is described in
 
 ## Projects and resources
 
-When a proposal is accepted, Waldur creates a project under the call-managing organisation,
-named `<call reference or slug> - <round start date> - <proposal name>`. The proposal's team
+When a proposal is accepted, Waldur creates a project under the call-managing organisation.
+The call's **Project name template** (under **Call → General**) names it. Without a
+template, the name is `<call reference or slug> - <round start date> - <proposal name>`;
+`{proposal_name}` alone names the project exactly as the proposal. The template can use
+`{proposal_name}`, `{proposal_slug}`, `{call_prefix}`, `{call_slug}`, `{call_name}`,
+`{round_start}`, `{round_slug}`, `{org_slug}` and `{year}`, and the applicant's
+**Create proposal** dialog previews the result. Each resource is named by its offering's
+**Resource name pattern** when the offering has one, as in the marketplace, and otherwise
+`<project name> - <offering name>`. Names are fixed at allocation: changing the template
+renames no existing project. The proposal's team
 members are added to it with the project roles set under
 [Role mapping](call-resources-and-team.md#role-mapping), and each awarded resource becomes an
 order, attributed to the person chosen under **Resource orders created by** (see
