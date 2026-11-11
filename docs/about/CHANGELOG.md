@@ -1,5 +1,82 @@
 # Changelog
 
+## 8.1.5-rc.1 - 2026-11-11
+
+### Highlights
+
+Calls for proposals now run on configurable workflows. Call managers can start a call from a ready-made template, check the workflow before opening the call, and choose what guards an automatic allocation decision. Administrators can now preview and load demo presets from the administration area. The API pauses while a preset loads, and settings the deployment owns are kept. This release also tightens access control across proposals, OpenStack networking and sign-in, and table filters now offer only values that have matching rows.
+
+### What's New
+
+- Calls for proposals run on configurable workflows, with a library of call templates, workflow validation and an award response step that can be added right after the allocation decision.
+- Call managers can choose what guards an automatic allocation decision, including relying on the provider to fulfil each order.
+- A call can set its own logo and a template for naming the projects and resources its accepted proposals create; applicants see a preview of the name.
+- A call-managing organisation can limit how many active proposals an applicant may hold with it at once.
+- The server now renders the proposal PDF and includes only what each reader may read.
+- Administrators can preview and load demo presets from the administration area, and the login page offers quick login as demo users. Presets load in the background while the API is paused, and settings the deployment owns survive a reload.
+- Operators turn demo presets on with a deployment setting, which can also add their own presets, an overlay and a staff password (Helm `waldur.demoPresets`, Docker Compose preset mounts).
+- Service providers get a page listing the API keys of all their offerings, and API key descriptions can now be viewed and edited.
+- List endpoints return filter facets, so filters on resources, orders, offerings, proposals, reviews and support tickets offer only values that have matching rows.
+- A new provider calls micro-app covers requests, demand, proposals and awards, including purchase-order awards. A feature flag lists a deployment's micro-apps in the quick shortcuts menu.
+- A billing mode feature flag switches the invoice, cost and price screens between accounting and billing mode.
+- Resource details can show usage and limits for the whole order period.
+- Waldur can email a configured address when a new release is available, and emails reviewers when an onboarding justification is submitted.
+- MCP gains an OAuth consent bridge API, serves the chat tool registry with the caller's own permissions, and now uses the official MCP SDK.
+- Matrix chat in Waldur shows mentions, an unread count and notification levels, and posts the welcome and role notice only once members have joined.
+- Administration settings show which values the deployment manages.
+
+### Improvements
+
+- Call organisers can read the reviewer profiles of the pools they manage, shown in expanded team and pool rows. Call managers can list the team of a project that their call's award created.
+- Proposal screens show files attached to step answers as named download links, show what an extension asks for and what an approved extension carried out or skipped, and keep a provider's post-award work separate from award orders.
+- Resource requests are checked against the offering's components when they are made, not at allocation.
+- A plan already used by resources can be renamed and described while keeping its billing period. Offering and service provider managers can see the plans of their offerings.
+- Batch-terminating instances now asks about volumes and floating IPs, pending consumer order actions moved into a menu, and "Access resource" is now the main action in the resource header.
+- The AI assistant's offering discovery shares documentation and support links, and names the unmet requirement when a search finds nothing.
+- The user management API timeout is configurable, including through Helm and Docker Compose.
+- The reviewer registry moved to Support › User management, and feedback surveys moved to Support › Communication.
+- The frontend no longer uses Bootstrap. Tables, dialogs, form fields and stat cards now share common components, with consistent control heights, button widths and card hover states, and custom brand colours now darken correctly on hover and press.
+- Gunicorn was upgraded to 26.2.0, and the mastermind image is now built in two stages. The unused SLURM `PRIVATE_KEY_PATH` setting and SSH key mounts were removed from mastermind, Helm and Docker Compose.
+
+### Security and Access Control
+
+- Event messages escape the values put into them and fill placeholders only from the event's context, never from text that users write.
+- SAML2 logout requests must now be signed by the session's identity provider.
+- Waldur no longer finds an account by an email address its user set themselves, either at sign-in or in SCIM matching.
+- In OpenStack, personal access tokens are now held to their bindings when creating ports, setting router gateways and checking network ownership. Ports, instances and router interfaces can no longer be placed on networks shared only as external, and private volume types are shown only to those who may use them.
+- Edited pending orders are now checked the same way as at creation, and checklist answers can no longer point to a stored file uploaded elsewhere.
+- Proposal data is narrower:
+  - A call's reviewer pool is visible only to those who manage its review.
+  - Only a bid's own reviewer can change or withdraw it.
+  - Statistics of a call-managing organisation are visible only to those who may read its reports.
+  - Offering dependents are visible only to those who may change the offering.
+  - Every remaining endpoint now declares who may call it.
+- When an impersonating user triggers a policy evaluation, the impersonator is recorded where only staff and support can read it.
+- oauthlib was upgraded to 4.0.1 for GHSA-3jp2-3mrg-2vxc.
+
+### Bug Fixes
+
+- Prepaid renewals are now invoiced at their quoted price.
+- Offering import now reads fractional prices given as numbers exactly.
+- Resource write-back actions now save only their own fields.
+- The stale-resource reminder now skips resources younger than its window.
+- OpenStack port and router sync now logs the real error and imports Neutron ports with empty fields. Offering pulls now log when the remote Waldur is unreachable.
+- The invoice item consumptions action and the proposal checklist-template route, which could only fail, were removed.
+- Fixed the following frontend problems:
+  - The login error alert layout was broken.
+  - The typed confirmation for RabbitMQ "delete all" and "purge all" was not accepted.
+  - The one-project-manager check did not refresh after a team change.
+  - Tables lost their density after the move to shared components.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [80 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.4...8.1.5-rc.1) - configurable call workflows and templates, demo preset loading, filter facets, a provider API key list, MCP OAuth consent, and broad access-control hardening.
+- **Waldur Homeport**: [100 commits](https://github.com/waldur/waldur-homeport/compare/8.1.4...8.1.5-rc.1) - call workflow screens, demo preset administration, faceted table filters, the provider calls micro-app, a billing mode switch, Matrix chat notifications, and the move away from Bootstrap.
+- **Waldur Helm**: [3 commits](https://github.com/waldur/waldur-helm/compare/8.1.4...8.1.5-rc.1) - `waldur.demoPresets` values, a configurable user management API timeout, and removal of the unused SSH key values and mounts.
+- **Waldur Docker Compose**: [6 commits](https://github.com/waldur/waldur-docker-compose/compare/8.1.4...8.1.5-rc.1) - demo preset mounts and settings, the user management API timeout variable, and removal of the unused SSH key mounts.
+
+---
+
 ## 8.1.4 - 2026-11-06
 
 ### Highlights
