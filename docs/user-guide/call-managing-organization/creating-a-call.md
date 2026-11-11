@@ -69,7 +69,7 @@ The call's **Edit** page groups its settings into tabs:
 
 | Tab | Sub-tabs | Described in |
 |---|---|---|
-| **Call** | **General** (name, description, reference code, proposal slug template, logo), **General configuration**, **Documents** | this page; [Proposal ID configuration](proposal-id-configuration.md) |
+| **Call** | **General** (name, description, reference code, proposal slug template, project name template, logo), **General configuration**, **Documents** | this page; [Proposal ID configuration](proposal-id-configuration.md) |
 | **Rounds** | — | [Rounds](call-rounds.md) |
 | **Application form** | **Project details fields**, **Applicant eligibility**, **Applicant data visibility**, **Resource templates** | [Application form](application-form.md) |
 | **Resources** | the call's offerings | [Resources, role mapping and team](call-resources-and-team.md) |
@@ -87,7 +87,9 @@ one, the **Rounds** tab carries a warning icon.
 ## General settings
 
 The **Call → General** sub-tab holds the call's identity: name, description, reference code,
-and the proposal slug template used to generate human-readable proposal IDs, with a card for the
+the proposal slug template used to generate human-readable proposal IDs, and the **Project name
+template** that names the project an accepted proposal creates (see
+[Projects and resources](allocation-decision.md#projects-and-resources)), with a card for the
 call's logo. On deployments that run their calls outside Waldur (the `marketplace.call_only`
 feature) it also holds the call's **External URL**, which is then required. See
 [Proposal ID configuration](proposal-id-configuration.md) for slug placeholders.

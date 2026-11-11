@@ -36,7 +36,8 @@ finding with its severity and a link that opens the setting to fix:
 
 - **Errors** mean the call cannot run as configured — for example no round, no
   enabled step, no or several allocation decisions, an award response before
-  the decision, a step that nobody can complete, a run condition naming a
+  the decision, an automatic decision with nothing to stop an unsuitable
+  proposal, a step that nobody can complete, a run condition naming a
   missing or later step, an accepted offering missing, or a notification rule
   that can never reach anyone.
 - **Warnings** never block — for example step durations up to the decision
