@@ -8,7 +8,7 @@ Check the [hardware requirements](hardware-requirements.md), then install with [
 
 ## Configure
 
-The [configuration options](mastermind-configuration/configuration-guide.md) list every setting; [general configuration](mastermind-configuration/general.md), [email](mastermind-configuration/email.md) and [notifications](mastermind-configuration/notifications.md) are where most deployments start. Optional features such as the [AI assistant](ai-assistant.md), [Matrix chat](matrix-chat.md) and the [web shell](web-shell.md) are configured here too.
+The [configuration options](mastermind-configuration/configuration-guide.md) list every setting; [general configuration](mastermind-configuration/general.md), [email](mastermind-configuration/email.md) and [notifications](mastermind-configuration/notifications.md) are where most deployments start. Optional features such as the [AI assistant](ai-assistant.md), [Matrix chat](matrix-chat.md), the [web shell](web-shell.md) and [demo presets](demo-presets.md) are configured here too.
 
 ## Identity and access
 
