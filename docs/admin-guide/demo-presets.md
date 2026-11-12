@@ -3,8 +3,8 @@
 Demo presets are ready-made data sets for showing Waldur: organizations, projects,
 offerings, resources and users, together with the features and settings the demo needs.
 On a demo deployment, staff can preview a preset and load it from the portal, under
-**Administration → System management → Demo presets**. After the load, the sign-in page
-offers one-click sign-in as the preset's demo users.
+**Administration → System management → Demo presets**. After the load, the preset's
+demo users sign in with the passwords it gives them.
 
 !!! danger "Demo deployments only"
     Loading a preset **deletes every organization, project, offering, user and API token**
@@ -133,10 +133,14 @@ Only one load runs at a time: starting another while one runs answers 409.
 
 ## Signing in as a demo user
 
-After a load, the sign-in page lists the preset's users without a staff or support role.
-Selecting one signs in as that user.
+The sign-in page does not list the demo users. They sign in with their username and the
+password the preset gives them; the preview lists the preset's users.
 
-![Quick sign-in](img/demo-presets/quick-login.png)
+A demo deployment can offer one-click sign-in through an identity provider of its own
+instead: the provider reads the loaded preset's users from `/api/demo-preset-status/`
+(see [Demo presets](../developer-guide/guides/presets.md)) and lists them on its sign-in
+page. Signing in through the provider also counts as an identity provider sign-in in
+Waldur, which some features, such as chat with single sign-on, require.
 
 Staff sign in with the usual form, with the deployment's staff password when one is set.
 

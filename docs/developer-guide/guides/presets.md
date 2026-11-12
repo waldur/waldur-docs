@@ -254,9 +254,10 @@ It answers `404` unless the deployment enables demo presets.
 }
 ```
 
-`users` lists the loaded preset's users with their passwords for quick login,
-once the latest load is done. Users with a staff or support role are never
-listed: their passwords would give anyone portal-wide access.
+`users` lists the loaded preset's users with their passwords, once the latest
+load is done, for a demo identity provider that offers them one-click sign-in.
+Users with a staff or support role are never listed: their passwords would give
+anyone portal-wide access.
 
 ## Deployment Presets
 
@@ -299,7 +300,7 @@ without the key, a new user gets the deployment's default lifetime.
 
 When set, every staff user of the loaded preset and overlay gets this
 password in place of the one in the preset file, which is public. The API
-never shows it, and staff users are never offered for quick login. A load
+never shows it, and the status endpoint never lists staff users. A load
 with `skip_users` leaves passwords alone.
 
 ## Preset Contents
