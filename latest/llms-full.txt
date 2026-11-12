@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-11T18:08:01.419208Z
+Generated: 2026-11-12T03:03:59.839493Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -14623,6 +14623,10 @@ See [Debugging](../debugging.md) for the Docker Compose equivalent and broader l
 <!-- Source: docs/admin-guide/mastermind-configuration/features.md -->
 
 # Features
+
+## customer.billing_mode
+
+Show costs and prices with VAT included and present monthly invoices instead of accounting records. When off, costs are shown without VAT.
 
 ## customer.payments_for_staff_only
 
@@ -64904,7 +64908,7 @@ with `on_negative=cancel`, and passing the last step allocates it.
 | `applicant_visible` | Whether the applicant sees the step |
 | `transition_mode` | `automatic_on_completion` advances to the next step when this one is completed; `manual` waits for a separate advance |
 | `include_award_response`, `allocation_time` | On the allocation decision only: whether the applicant must accept the award (an `award_response` step right after it), and whether allocation happens `on_decision` or on the round's `allocation_date` (`fixed_date`) |
-| `decides_automatically`, `automatic_decision_guard` | On the allocation decision only: approve as the system, with the award as requested, when a proposal reaches the step; a refused approval (score threshold, budget, missing amounts, nothing guarding it) is left to the call managers. The guard says what stops an unsuitable proposal: `earlier_step` (default) needs an enabled earlier step that can reject it, decided on the proposal's path; `provider_fulfilment` needs a person at the provider to act on every order the award places on each accepted offering — the provider reviews it (Basic, site agent, Script with `auto_approve_marketplace_script` off) or a helpdesk ticket fulfils it (Support). Remote offerings never qualify: the system robot approving the orders is let through the provider review |
+| `decides_automatically`, `automatic_decision_guard` | On the allocation decision only: approve as the system, with the award as requested, when a proposal reaches the step; a refused approval (score threshold, budget, missing amounts, award limits the offering cannot order, nothing guarding it) is left to the call managers. The guard says what stops an unsuitable proposal: `earlier_step` (default) needs an enabled earlier step that can reject it, decided on the proposal's path; `provider_fulfilment` needs a person at the provider to act on every order the award places on each accepted offering — the provider reviews it (Basic, site agent, Script with `auto_approve_marketplace_script` off) or a helpdesk ticket fulfils it (Support). Remote offerings never qualify: the system robot approving the orders is let through the provider review |
 
 A new call is seeded with the steps that were once a fixed catalogue, in order:
 `administrative_check`, `technical_assessment`, `expert_review`,
@@ -65757,9 +65761,18 @@ requests, awards, resource templates and extension requests. A component rule
 keeps the limit period it had when the call took it in (`limit_period`), and
 the pools count awards by it.
 
-Allocation still checks each item as the order endpoint would: the offering
-takes orders, its provider is not blocked, the plan is not archived and the
-limits fit the components. An item that fails is not ordered: it records
+A resource request, a resource template and an award item are each held, when
+their limits are written, to what the order will need
+(`utils.validate_orderable_limits`): limits only on the plan's limit
+components, inside their bounds and precision. Submission refuses requests on
+accepted offerings that no longer fit, such as a draft saved before the
+offering changed its components, naming each offering and what is wrong. An
+automatic decision whose award carries limits the offering cannot order is
+left to the call managers; a paused offering or blocked provider does not stop
+it, as either may be back by allocation. Allocation still checks each item as
+the order endpoint would: the offering takes orders, its provider is not
+blocked, the plan is not archived and the limits fit the components. An item
+that fails is not ordered: it records
 `provision_error`, the call's managers are mailed, and once the provider has
 fixed it a call manager orders it again with
 `POST /api/proposal-proposals/{uuid}/provision_awarded_item/`. An item whose
@@ -76708,6 +76721,7 @@ Guides for working on Waldur HomePort. Start with [development-setup.md](develop
 | [forms.md](forms.md)                                                     | React Final Form, `*Group` / `*EditField` / `*Filter` patterns, `TabbedSection`                                                          |
 | [filter-migration-guide.md](table/filter-migration-guide.md)             | Generated table filters from the OpenAPI schema                                                                                          |
 | [migration-guide.md](table/migration-guide.md)                           | Migrating hand-rolled tables: choosing `Table`, `SimpleTable`, a form grid or a label/value block                                        |
+| [styling-architecture.md](table/styling-architecture.md)                 | How `@/table/Table` is drawn: `--table-*` properties, one row background, `data-state`, the checks to run                                |
 | [theme.md](theme.md)                                                     | Dark mode and theming: semantic utilities, theme-aware tokens, third-party components                                                    |
 | [design-tokens.md](design-tokens.md)                                     | Colour ramps, semantic roles (text scale, surfaces, borders, status matrix, brand), the Tailwind bridge, guards                          |
 | [menu-navigation.md](menu-navigation.md)                                 | Sidebar menu structure and state-based routing                                                                                           |
@@ -87164,13 +87178,7 @@ export const ChecklistsTable = ({ portal, ...props }) => {
 
 # Migrating Hand-Rolled Tables
 
-How to move a raw `<table>` off legacy table classes, and how to pick what it
-becomes. Tracked in #563 (part of epic #442); the end goal was #502: deleting the
-legacy `.table-*` rules in `src/styles/legacy/_table-base.scss` (completed).
-
-All hand-rolled tables have been migrated to semantic `waldur-ui` Table primitives
-or `PropertyList`, and `src/styles/legacy/_table-base.scss` has been retired.
-`waldur-custom/no-hand-rolled-table` enforces this going forward.
+How to replace a raw `<table>`, and how to pick what it becomes.
 
 `waldur-custom/no-hand-rolled-table` is an error with a shrinking baseline:
 the raw `<table>`s that predate it are counted per file in
@@ -87178,9 +87186,9 @@ the raw `<table>`s that predate it are counted per file in
 lint, and one fewer reports the count as stale. After migrating some, run
 `yarn lint:tables:baseline`; never run it to let a new table in.
 
-Not every table should become `@/table/Table`. That goal only needs "no
-legacy table classes", and a short read-only list gains nothing from a fetch
-cycle, a Redux table store and five props to switch its chrome off. Pick the
+Not every table should become `@/table/Table`: a short read-only list gains
+nothing from a fetch cycle, a Redux table store and five props to switch its
+chrome off. Pick the
 target by what the table **is**, not by the fact that it is a `<table>`.
 
 ---
@@ -87391,7 +87399,7 @@ Key props on the primitives:
 - `<Table density="compact" | "normal" | "spacious">`: Controls cell padding and typography.
 - `<Table scrollable={false}>`: Drops the outer overflow wrapper when the parent container (e.g. modal body) already handles scrolling.
 - `<TableRow hoverable={false}>`: Disables row hover highlight for static read-only tables.
-- `<TableRow divided={false}>`: Drops the bottom border (replaces `.table-borderless`).
+- `<TableRow divided={false}>`: Drops the bottom border.
 - `<TableFooter>`: Semantic `<tfoot>` with token borders and background for summary/totals rows.
 
 ## 3. `@/table/Table`
@@ -87766,6 +87774,199 @@ const BulkDeleteButton = ({ rows, refetch }) => {
 
 ---
 
+### Table Styling Architecture
+<!-- Source: docs/developer-guide/ui/table/styling-architecture.md -->
+
+# Table Styling Architecture
+
+How `@/table/Table` is drawn, and why it is built that way. Read this before
+changing a table cell's padding, a row's background, a pinned column, or the
+look of a table nested in something else.
+
+The table styles itself with utilities on its own elements. A context changes
+how it looks by setting a custom property on a container. No stylesheet holds
+table rules.
+
+## Where things live
+
+| File                                                 | Owns                                                                                  |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `src/table/components/content/TableView.tsx`         | The `<table>`: edge spacing for a full-width card, the hover background               |
+| `src/table/TableHeader.tsx`                          | `<colgroup>` and the header row; picks the visible columns                            |
+| `src/table/TableHeaderCell.tsx`                      | A column's `<th>`: title, sort toggle, filter toggle, pin toggle                      |
+| `src/table/TableBody.tsx`                            | Rows: state, selection, the form-field wrapper, group headers                         |
+| `src/table/TableDataCell.tsx`                        | A data `<td>` / row-header `<th>`: ellipsis, copy button, inline filter, the expander |
+| `src/table/TableControlColumn.tsx`                   | The selection column's header and body cells                                          |
+| `src/table/TableActionsColumn.tsx`                   | The actions column's header and body cells                                            |
+| `src/table/TableExpandable.tsx`                      | The expander buttons and the expanded details row                                     |
+| `src/table/styles.ts`                                | Class lists shared by several of the above: pinned cells, header controls, hover      |
+| `packages/design-tokens/src/css/components/card.css` | A table card nested in an expanded row                                                |
+
+The cell files are internal to `src/table`. Nothing outside it imports them; a
+page configures the table through `Table`'s props.
+
+## Decisions
+
+### 1. Utilities on the element, not selectors from a stylesheet
+
+A cell's height, padding, colour and alignment are classes on that cell. There
+is no `.table td` rule behind them, and `table` is not a class.
+
+**Why.** A stylesheet rule outside the cascade layers outranks every utility, so
+a call site that wants a different padding has to answer with a longer selector
+or `!important`. With the styles on the element, the cascade is the class list,
+and what a cell looks like can be read where it is rendered.
+
+### 2. A context sets a custom property; it never reaches into the table
+
+Where a table sits changes how it looks: in a full-width card, in an expanded
+row, in a proposal section. Each of those sets a property on a container, and
+the table's own elements read it.
+
+| Property                             | Read by                          | Default                                | Set by                                                                       |
+| ------------------------------------ | -------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------- |
+| `--table-edge-px`                    | First and last cell of a row     | 9.75px (16px for the selection column) | `TableView` when `fullWidth`; the expanded row; `PROPOSAL_FLUSH_TABLE_CLASS` |
+| `--table-head-bg`                    | The header row                   | `--bg-secondary`                       | The expanded row (`--bg-tertiary`)                                           |
+| `--table-head-border`                | The rule under the header row    | `--border-secondary`                   | The expanded row (`--border-divider`)                                        |
+| `--table-body-bg`                    | A plain body row                 | `--bg-primary`                         | The expanded row (`--bg-secondary`)                                          |
+| `--table-row-bg`                     | The row itself, its pinned cells | set on every row                       | The row, from its state (decision 3)                                         |
+| `--pagination-px`, `--pagination-pt` | waldur-ui `TablePagination`      | 16.25px (0 below `md`), 12px           | `BaseTable` for grid and full-width; the expanded row                        |
+| `--card-surface-bg`                  | waldur-ui `Card`                 | `--bg-primary`                         | `card.css`, for a table card in an expanded row                              |
+
+**Why.** A selector written from outside has to restate the table's structure
+(`[&_[data-slot=card]_td:first-child]:…`) and breaks when that structure
+changes. A property crosses any depth without knowing the structure, and a
+nested table reads the nearest value.
+
+**How to apply.** To make a table look different in a new place, set one of
+these on the container (`className="[--table-edge-px:16.25px]"`). If none fits,
+add a property the table reads, with the current value as its fallback. Do not
+write a selector that names the table's cells from outside `src/table`.
+
+`--card-surface-bg` is registered with `@property … inherits: false`, like the
+other card hooks, so a value set on one card never reaches a card nested in it.
+The `--table-*` properties do inherit: that is how a nested table picks up the
+expanded row's values.
+
+### 3. A row has one background, and exactly one class sets it
+
+Every row sets `--table-row-bg` and paints `bg-[var(--table-row-bg)]`. `TableRow`
+chooses the single class that sets the property:
+
+1. expanded or selected → `--bg-secondary`
+2. else a `rowVariant` → the status background (`ROW_VARIANT_BG_VARS`)
+3. else → `var(--table-body-bg, var(--bg-primary))`
+
+The hover background is set from the `<table>`
+(`[&_tbody>tr[data-slot=table-row]:not([data-state]):hover]`), which is more
+specific than the row's class, and skips expanded and selected rows.
+
+**Why one property.** A pinned cell is `position: sticky` and must cover what
+scrolls under it, so it needs the row's colour as its own background. So does
+the inline-filter chip's surround. A pinned cell paints
+`bg-[var(--table-row-bg)]` and follows the row in every state and both themes.
+
+**Why exactly one class.** Two classes that set the same property have the same
+specificity, so the one emitted later in the stylesheet wins, and Tailwind's
+order is not the order in `className`. A row carrying both the default and an
+override shows whichever the build happens to emit last. Never add a second
+`[--table-row-bg:…]` class to a row; extend the choice in `TableRow`.
+
+For the same reason a row does not also carry `bg-danger-subtle`:
+`ROW_VARIANT_CLASSES` is for elements outside `@/table`.
+
+### 4. State is `data-state` on the row, ARIA on the control
+
+| Marks                           | Attribute                                  |
+| ------------------------------- | ------------------------------------------ |
+| A row is expanded               | `data-state="expanded"` on the `<tr>`      |
+| A row is selected (field table) | `data-state="selected"` on the `<tr>`      |
+| The expander is open            | `aria-expanded` on the expander `<button>` |
+| A column is pinned              | `aria-pressed` on the pin toggle           |
+| A column filter is open         | `aria-expanded` on the filter toggle       |
+| A column is sorted              | `aria-sort` on the `<th>`                  |
+
+**Why.** `aria-expanded` is not allowed on a row outside a treegrid: axe reports
+`aria-conditional-attr`, which fails the integration suite's accessibility
+scan. The button already says it. The row's state is a styling hook, which is
+what `data-state` is for
+([class-names-and-data-attributes.md](../class-names-and-data-attributes.md)).
+
+Carets rotate from their own button (`group/expander` with
+`group-aria-expanded/expander:rotate-180`), not from any expanded ancestor.
+
+### 5. Parts are found by `data-slot`, tests by `data-testid`
+
+| Part                           | Hook                                                                                   |
+| ------------------------------ | -------------------------------------------------------------------------------------- |
+| The scroll container           | `[data-slot="table-responsive"]`                                                       |
+| A data row                     | `[data-slot="table-row"]`                                                              |
+| A group header row             | `[data-slot="table-group-header"]`                                                     |
+| The expanded details           | `[data-slot="expanded-row-content"]`                                                   |
+| A selection cell               | `[data-slot="row-control"]`                                                            |
+| The actions cells              | `[data-slot="row-actions"]`, `[data-slot="header-actions"]`                            |
+| A cell's text beside its tools | `[data-slot="cell-data"]`                                                              |
+| The pager                      | `[data-slot="table-pagination"]`                                                       |
+| The tabs header of the card    | `[data-table-tabs]`                                                                    |
+| Controls, in tests             | `data-testid="inline-filter"`, `"sort-toggle"`, `"row-expander"`, `"pin-toggle-<key>"` |
+
+**Why.** A class that only marks an element styles nothing and reads like one
+that does. A selector that names a part by a class which no longer exists
+matches nothing and fails silently, so when a part is renamed, search for its
+name in `src/**/*.scss`, arbitrary variants (`[&_…]:`) and `e2e*/`.
+
+### 6. Lengths are pixels
+
+Cell padding, the edge spacing and the hover shadow are px (`9.75px`,
+`16.25px`).
+
+**Why.** The root font size is 13px, and 12px below `md`, so a rem length
+changes with the viewport. The repo pins lengths to px
+(`waldur-custom/no-rem-length`; see "Root font size" in
+[design-tokens.md](../design-tokens.md)).
+
+### 7. The hovered row is raised
+
+`hoverShadow` draws a shadow around the hovered row. Rows paint their own
+background (decision 3), which would cover a neighbour's shadow, so the hovered
+row also gets `z-[1]` (`TABLE_HOVER_SHADOW_CLASS`).
+
+### 8. Truncation is per cell
+
+A cell with `ellipsis` (the default) clips to one line at 300px and shows the
+full text as a native tooltip when it is cut. This includes the first column of
+an expandable table, whose text sits in a wrapper beside the expander.
+
+## What must stay true
+
+These are easy to break, and only the checks below will say so.
+
+- A row carries one `[--table-row-bg:…]` class.
+- A pinned cell paints `bg-[var(--table-row-bg)]`, never a fixed colour.
+- No selector outside `src/table` and `card.css` names a table cell.
+- Each cell kind repeats the cell box (`h-[44px] py-0 align-middle`) and the
+  edge rule (`first:ps-[var(--table-edge-px,9.75px)]`). Change them together: a
+  cell kind with a different fallback sits a few pixels off the others.
+
+## How it is checked
+
+| Check                                                                            | Catches                                                                                        |
+| -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `src/table/Table.rowStates.stories.tsx` (play functions)                         | Tinted, selected and expanded backgrounds; a pinned cell's tint; the full-width expanded inset |
+| `src/proposals/flushTable.stories.tsx` (play functions)                          | `PROPOSAL_FLUSH_TABLE_CLASS`: stripped insets, cell edge spacing, the closing rule             |
+| `src/core/CardContext.stories.tsx`                                               | The `--card-*` hooks, including a card in an expanded row                                      |
+| `src/table/TableBody.test.tsx`, `components/content/*.test.tsx`                  | Markup, state attributes, the hover class                                                      |
+| Storybook comparison with `--styles` ([visual-testing.md](../visual-testing.md)) | A computed style that changed without moving enough pixels to show                             |
+| Integration suite: accessibility scan, `docs/screenshots/`                       | ARIA misuse on real pages; hover and layout with real data                                     |
+
+The play functions assert computed values because a pixel comparison cannot see
+these states: `--bg-secondary` and `--bg-primary` differ by less than its
+threshold. For any change here, run the Storybook comparison with `--styles` and
+at `--widths 375,768` as well as the default width: a difference can show only
+below `md` or only in the computed styles.
+
+---
+
 ### Table Component: Visual Customizations
 <!-- Source: docs/developer-guide/ui/table/visual-customizations.md -->
 
@@ -87894,9 +88095,7 @@ For list actions that affect the table globally, instead of using `tableActions`
   ```
 
   Prefer it to `rowClass` for a row that is overdue, failed, just saved or out
-  of play. The Bootstrap `table-danger` / `table-success` / `table-warning`
-  classes it replaces are gone: the first two were defined in no stylesheet and
-  painted nothing at all. For a row of waldur-ui's `Table` primitives, where
+  of play. For a row of waldur-ui's `Table` primitives, where
   there is no `rowVariant` prop, read the same class off
   `ROW_VARIANT_CLASSES` (`@/table/constants`).
 
@@ -87912,12 +88111,12 @@ For list actions that affect the table globally, instead of using `tableActions`
   linter checks, so a class that paints nothing is not reported here. Keep the
   class defined in a stylesheet next to the component that owns it.
 
-- **`rowGroupHeader`**: Pass a callback `({ row, rowIndex, rows }) => ReactNode` to render a full-width header row (`tr.table-group-header > th[colspan]`) above a row that opens a group — a stage, a phase. Return `null` for every other row. The rows stay one list, so expansion and row actions are unchanged; pair it with `rowClass` to mark the group's rows. Don't hide a cell's content to make room for a group: use the header. Reference: `src/proposals/update/workflow-steps/WorkflowStepsSection.tsx`.
+- **`rowGroupHeader`**: Pass a callback `({ row, rowIndex, rows }) => ReactNode` to render a full-width header row (`tr[data-slot="table-group-header"] > th[colspan]`) above a row that opens a group — a stage, a phase. Return `null` for every other row. The rows stay one list, so expansion and row actions are unchanged; pair it with `rowClass` to mark the group's rows. Don't hide a cell's content to make room for a group: use the header. Reference: `src/proposals/update/workflow-steps/WorkflowStepsSection.tsx`.
 
 - **`equalColWidth`**: Set to `true` to give all columns without an explicit width set the exact same width. By default, the first data column is allocated double the width of the remaining columns.
 - **Row & Card Hover Shadows (`hoverShadow`, `hoverable`)**:
   - `hoverShadow`: Defaults to `true`, displaying shadow elevation on cell/card hover. Can be customized with a boolean or a mode config object: `hoverShadow={{ table: true, grid: false }}`.
-  - `hoverable`: Set to `true` to enable row hover background coloring (`.table-hover`). Defaults to `false`.
+  - `hoverable`: Set to `true` to enable row hover background coloring. Defaults to `false`. Expanded and selected rows keep their own background (see [styling-architecture.md](styling-architecture.md), decision 3).
 
 ---
 
@@ -87962,13 +88161,18 @@ To make table integration rules, properties, and layouts easier to navigate, the
 | **[Pillar 3: Column Setup & Configuration](./table/column-setup.md)**   | Column parameters (width, alignment, copying, ellipsis, click blocking), sorting, optional columns, and key fetching.                                                           |
 | **[Pillar 4: Row Actions & Selection](./table/row-actions.md)**         | 3-dots action menus (`ActionsDropdown` + `ActionItem`), row expansion (`isRowExpandable`), multi-select, and bulk toolbars.                                                     |
 | **[Pillar 5: Filters & URL Sync](./table/filters.md)**                  | OpenAPI generated filters, Redux caching, syncing to URL query formatting (`uuid::name`), and cell inline filtering.                                                            |
-| **[Pillar 6: Visual Customizations](./table/visual-customizations.md)** | Grid layouts (`gridItem` + `gridClassName`), custom empty placeholders, header titles, styling class triggers, and standalone mode.                                    |
+| **[Pillar 6: Visual Customizations](./table/visual-customizations.md)** | Grid layouts (`gridItem` + `gridClassName`), custom empty placeholders, header titles, styling class triggers, and standalone mode.                                             |
 | **[Pillar 7: Layout Wrappers & Portals](./table/layout-wrappers.md)**   | Rendering multiple tables within tabs (`TableWithTabs`) and forwarding rendering portals (`portal`).                                                                            |
 | **[Pillar 8: Form Integration](./table/form-integration.md)**           | Embedding tables as input fields in `react-final-form` (`fieldType`, `fieldName`, `rowValidate`).                                                                               |
 
 Replacing a raw `<table>`? Start with the
 **[Migration guide](./table/migration-guide.md)**: it decides whether the list
 becomes `Table`, `SimpleTable`, a form grid or a label/value block.
+
+Changing how the table itself is drawn (cell padding, row backgrounds, pinned
+columns, a table nested in something else)? Read
+**[Table styling architecture](./table/styling-architecture.md)**: the design
+decisions behind the table's markup and custom properties, and what checks them.
 
 ---
 
@@ -88361,7 +88565,7 @@ Use this instead of `SegmentedControl` whenever each option owns a distinct, lar
 
 - **Border widths are Tailwind's.** `border`, `border-x-0`, `border-b-2` … are Tailwind's pixel widths; write them as steps, not arbitrary values (`no-arbitrary-border-width`), and name the colour next to a bare `border` (`require-border-color`).
 - **Anchor tabs and colour.** Give a `TabNav` item a `link`; don't style a bare `<a>` as a tab.
-- **Card bodies in a tab panel keep their top padding.** `_table.scss` drops the top padding of a table card's body, except inside a tab panel. It keys off `[role="tabpanel"]`, which every `TabsContent` has, so no wrapper class is needed; the older `.tab-content` hook still works where it is set by hand. Use `[role="tabpanel"]` in new CSS.
+- **Card bodies in a tab panel keep their top padding.** `card.css` (waldur-design-tokens) drops the top padding of a table card's body, except inside a tab panel. It keys off `[role="tabpanel"]`, which every `TabsContent` has, so no wrapper class is needed; the older `.tab-content` hook still works where it is set by hand. Use `[role="tabpanel"]` in new CSS.
 - **Tab and search params must be `dynamic` in the route.** A tab bar that keeps its state in the URL (`?tab=…`, `useUrlTab`, `TableWithTabs syncWithUrlKey`) writes it with `router.stateService.go(...)`. If the route does not declare the param `dynamic`, UI-Router exits and re-enters the state on every change, so the whole page remounts on each tab switch (and a `?q=` search box loses focus on every keystroke). Declare it once on the route:
 
   ```ts
@@ -88630,7 +88834,7 @@ Layouts are Tailwind grid or flex; `no-bootstrap-grid` reports legacy grid class
 
 Prefer standard CSS grid (`grid grid-cols-1 sm:grid-cols-2`, `sm:grid-cols-3`) for fixed column layouts so they stack cleanly on mobile. For dynamic or auto-sizing row items, use flexbox with standard utilities (`flex-1`, `flex-none`, `shrink-0`).
 
-A grid's `gap` replaces gutter padding, so a column's content lines up with the parent's padding. `TableView` keeps its cell padding in `src/styles/legacy/_table.scss` in the `bootstrap` cascade layer, so the first/last-cell rules still win.
+A grid's `gap` replaces gutter padding, so a column's content lines up with the parent's padding. `TableView`'s cells carry their own padding as utilities, and the first and last cell read `--table-edge-px` (see [table/styling-architecture.md](table/styling-architecture.md)).
 
 ---
 
