@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-12T03:03:59.839493Z
+Generated: 2026-11-12T07:25:06.929396Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -23548,11 +23548,97 @@ Role granted.
 
 ## waldur_core.onboarding
 
+### customer_created_automatically_message.txt (waldur_core.onboarding)
+
+```txt
+
+Hello,
+
+A new organization has been created on {{ site_name }}. It passed automatic validation, so it was not reviewed by staff.
+
+Validated by: {{ validation_method }}
+Created on: {{ created_at }}
+
+View the organization: {{ organization_url }}
+
+This is an automated message from {{ site_name }}. Please do not reply to this email.
+
+```
+
 ### justification_review_notification_subject.txt (waldur_core.onboarding)
 
 ```txt
 
 Update on your organization onboarding application
+
+```
+
+### justification_submitted_message.html (waldur_core.onboarding)
+
+```html
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Organization Onboarding Application</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <p>Hello,</p>
+
+    <p>A new organization onboarding application has been submitted on {{ site_name }} and awaits manual review.</p>
+
+    <div style="background-color: #f5f5f5; border-left: 4px solid #007bff; padding: 15px; margin: 20px 0;">
+        <p style="margin: 5px 0;"><strong>Submitted on:</strong> {{ created_at }}</p>
+    </div>
+
+    <p>
+        <a href="{{ review_url }}">Review the application</a>
+    </p>
+
+    <p><em>This is an automated message from {{ site_name }}. Please do not reply to this email.</em></p>
+
+</body>
+</html>
+
+```
+
+### justification_submitted_subject.txt (waldur_core.onboarding)
+
+```txt
+
+New organization onboarding application awaits review
+
+```
+
+### customer_created_automatically_message.html (waldur_core.onboarding)
+
+```html
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Organization Created</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <p>Hello,</p>
+
+    <p>A new organization has been created on {{ site_name }}. It passed automatic validation, so it was not reviewed by staff.</p>
+
+    <div style="background-color: #f5f5f5; border-left: 4px solid #007bff; padding: 15px; margin: 20px 0;">
+        <p style="margin: 5px 0;"><strong>Validated by:</strong> {{ validation_method }}</p>
+        <p style="margin: 5px 0;"><strong>Created on:</strong> {{ created_at }}</p>
+    </div>
+
+    <p>
+        <a href="{{ organization_url }}">View the organization</a>
+    </p>
+
+    <p><em>This is an automated message from {{ site_name }}. Please do not reply to this email.</em></p>
+
+</body>
+</html>
 
 ```
 
@@ -23574,6 +23660,14 @@ If the application was not approved, it will remain available in your dashboard 
 View details: {{ link_to_homeport_dashboard }}
 
 This is an automated message from {{ site_name }}. Please do not reply to this email.
+
+```
+
+### customer_created_automatically_subject.txt (waldur_core.onboarding)
+
+```txt
+
+New organization created through automatic onboarding
 
 ```
 
@@ -23611,6 +23705,22 @@ This is an automated message from {{ site_name }}. Please do not reply to this e
 
 </body>
 </html>
+
+```
+
+### justification_submitted_message.txt (waldur_core.onboarding)
+
+```txt
+
+Hello,
+
+A new organization onboarding application has been submitted on {{ site_name }} and awaits manual review.
+
+Submitted on: {{ created_at }}
+
+Review the application: {{ review_url }}
+
+This is an automated message from {{ site_name }}. Please do not reply to this email.
 
 ```
 
@@ -73909,9 +74019,10 @@ It answers `404` unless the deployment enables demo presets.
 }
 ```
 
-`users` lists the loaded preset's users with their passwords for quick login,
-once the latest load is done. Users with a staff or support role are never
-listed: their passwords would give anyone portal-wide access.
+`users` lists the loaded preset's users with their passwords, once the latest
+load is done, for a demo identity provider that offers them one-click sign-in.
+Users with a staff or support role are never listed: their passwords would give
+anyone portal-wide access.
 
 ## Deployment Presets
 
@@ -73954,7 +74065,7 @@ without the key, a new user gets the deployment's default lifetime.
 
 When set, every staff user of the loaded preset and overlay gets this
 password in place of the one in the preset file, which is public. The API
-never shows it, and staff users are never offered for quick login. A load
+never shows it, and the status endpoint never lists staff users. A load
 with `skip_users` leaves passwords alone.
 
 ## Preset Contents
@@ -89039,7 +89150,7 @@ Three primitives in `waldur-ui` (`packages/ui/src`) and `Link` in `@/core/Link` 
 - **Integer Heights & Inset Borders**: Decoupled from physical CSS `border-box` calculations via `shadow-[inset_0_0_0_1px_var(...)]`, guaranteeing exact heights: 28px (`sm`), 36px (`md`, default), and 44px (`lg`).
 - **Direct Tooltip Integration**: `buttonVariants` does not declare `disabled:pointer-events-none`; instead, it pairs `disabled:cursor-not-allowed` with matching `data-disabled:*` styles. `<BaseButton>` passes `data-disabled` and wraps `<button>` inside `<Tooltip>` with **zero wrapper `<span>` elements**, eliminating flexbox alignment bugs (`self-center`, `w-100`).
 - **Outline Focus Rings**: Focus indicators use native CSS `outline` (`focus-visible:[outline:2px_solid_var(...)]`) for forced-colors compatibility and resistance to container resets.
-- **Toggles in `ActionsDropdown`**: Dropdown toggles render a direct `<button>` with `buttonVariants()` (rather than `BaseButton`) so the rotating caret (`rotate-toggle-180`) remains an immediate child for CSS animation.
+- **Toggles in `ActionsDropdown`**: Dropdown toggles render a direct `<button>` with `buttonVariants()` (rather than `BaseButton`) and mark themselves `group/toggle`, which `ButtonCaret` flips on while Radix sets `data-state="open"`.
 - **SegmentedControl**: Built on Radix RadioGroup (<kbd>←</kbd>/<kbd>→</kbd> select, single <kbd>Tab</kbd> stop) with `inline-flex self-center` preventing layout stretching.
 
 > [!TIP]
@@ -89807,7 +89918,7 @@ The theme is one attribute: `data-theme="light|dark"` on `<html>`. Everything fo
   specificity as the rule it overrides:
 
 ```scss
-.list-group-item {
+.my-component {
   background-color: var(--bg-primary);
 
   @include dark-theme {
@@ -112704,8 +112815,8 @@ enabling full debug mode.
 Demo presets are ready-made data sets for showing Waldur: organizations, projects,
 offerings, resources and users, together with the features and settings the demo needs.
 On a demo deployment, staff can preview a preset and load it from the portal, under
-**Administration → System management → Demo presets**. After the load, the sign-in page
-offers one-click sign-in as the preset's demo users.
+**Administration → System management → Demo presets**. After the load, the preset's
+demo users sign in with the passwords it gives them.
 
 !!! danger "Demo deployments only"
     Loading a preset **deletes every organization, project, offering, user and API token**
@@ -112834,10 +112945,14 @@ Only one load runs at a time: starting another while one runs answers 409.
 
 ## Signing in as a demo user
 
-After a load, the sign-in page lists the preset's users without a staff or support role.
-Selecting one signs in as that user.
+The sign-in page does not list the demo users. They sign in with their username and the
+password the preset gives them; the preview lists the preset's users.
 
-[Image: Quick sign-in]
+A demo deployment can offer one-click sign-in through an identity provider of its own
+instead: the provider reads the loaded preset's users from `/api/demo-preset-status/`
+(see [Demo presets](../developer-guide/guides/presets.md)) and lists them on its sign-in
+page. Signing in through the provider also counts as an identity provider sign-in in
+Waldur, which some features, such as chat with single sign-on, require.
 
 Staff sign in with the usual form, with the deployment's staff password when one is set.
 
@@ -126841,6 +126956,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`ReviewerSuggestionsTestMixin`](#reviewersuggestionstestmixin) | `waldur_mastermind.proposal.tests.test_proposal_reviewer_suggestions` | No description available |
 | [`EvaluatorRoleTestMixin`](#evaluatorroletestmixin) | `waldur_mastermind.proposal.tests.test_proposal_roles` | A call with a rapporteur role, picked from its panel members in an assignment... |
 | [`ProposalTeamMixin`](#proposalteammixin) | `waldur_mastermind.proposal.tests.test_proposal_team` | No description available |
+| [`ReviewRolesMixin`](#reviewrolesmixin) | `waldur_mastermind.proposal.tests.test_reviewer_pool_visibility` | No description available |
 | [`CallSetupMixin`](#callsetupmixin) | `waldur_mastermind.proposal.tests.test_reviewer_registry` | No description available |
 | [`StepInputsTestMixin`](#stepinputstestmixin) | `waldur_mastermind.proposal.tests.test_step_inputs` | No description available |
 | [`DryRunMixin`](#dryrunmixin) | `waldur_mastermind.proposal.tests.test_workflow_dry_run` | No description available |
@@ -128795,6 +128911,12 @@ assignment step right after the administrative check.
 ### ProposalTeamMixin
 
 **Module:** `waldur_mastermind.proposal.tests.test_proposal_team`
+
+**Description:** No description available.
+
+### ReviewRolesMixin
+
+**Module:** `waldur_mastermind.proposal.tests.test_reviewer_pool_visibility`
 
 **Description:** No description available.
 
