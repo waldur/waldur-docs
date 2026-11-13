@@ -1,0 +1,2726 @@
+{
+  "schema_version": "1.0.0",
+  "version": "8.1.5-rc.2",
+  "date": "2026-11-13",
+  "type": "rc",
+  "summary": "Waldur 8.1.5-rc.2 focuses on account and platform security hardening. Users must now confirm their identity again before sensitive account changes: token lifetime, email, passkey and personal access token changes, and widening a token's allowed networks. After failed password sign-ins, Waldur now locks the affected account instead of the whole source address. A Content-Security-Policy is now sent on every API response, on mastermind's own HTML pages, and on gunicorn, web shell and reverse-proxy error pages. The portal's policy now comes from the homeport image in both Helm and Docker Compose deployments. Revealing a shared resource API key now requires a dedicated permission and is refused for access tokens. Token scopes now also apply when filing end date and limit change requests. Other changes: validated OIDC ID-token claims can be mapped to user attributes, credit top-ups are idempotent and record their channel, and the customer.billing_mode feature is renamed to customer.show_invoices_with_vat. The settings management commands and docs are renamed after the settings store, and the hardcoded AI_ASSISTANT_MODEL default is gone. The release also fixes project digest notifications, demo preset loading and sign-in, number inputs, and several UI details.",
+  "entries": [
+    {
+      "type": "fix",
+      "category": "infrastructure",
+      "title": "Accept the typed confirmation of RabbitMQ delete all and purge all",
+      "description": "The typed confirmation for the RabbitMQ delete all and purge all actions was not accepted. It now is.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "b5df67ac2a"
+      ],
+      "id": "8.1.5-rc.1-1"
+    },
+    {
+      "type": "improvement",
+      "category": "openstack",
+      "title": "Ask about volumes and floating IPs when batch-terminating instances",
+      "description": "Previously, batch-terminating instances did not ask about their volumes and floating IPs. Now, the batch terminate dialog asks how to handle them.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "599d0f0118"
+      ],
+      "id": "8.1.5-rc.1-2"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Build the Mastermind image in two stages",
+      "description": "Previously, the Mastermind image was built in a single stage. Now, it is built in two stages, and the build checks the resulting runtime image.",
+      "scope": "infra",
+      "component": [
+        "docker"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "af37b0717"
+      ],
+      "id": "8.1.5-rc.1-3"
+    },
+    {
+      "type": "improvement",
+      "category": "proposal",
+      "title": "Check a resource request against the offering's components when it is made",
+      "description": "Previously, a proposal's resource request was checked against the offering's components only at allocation. Now, it is checked when the request is made, so a request that does not match the offering's components is refused up front.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "d5295ec89"
+      ],
+      "id": "8.1.5-rc.1-4"
+    },
+    {
+      "type": "feature",
+      "category": "proposal",
+      "title": "Choose what guards an automatic allocation decision",
+      "description": "Previously, an automatic allocation decision could not rely on the provider fulfilling each order. Now, a call manager chooses what guards an automatic allocation decision step, and can let it rely on the provider fulfilling each resulting order. Workflow checks, descriptions and reports reflect the chosen guard.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Proposal migration 0101_callworkflowstep_automatic_decision_guard adds the guard to workflow steps.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "413bc9740",
+        "a0c9726797"
+      ],
+      "id": "8.1.5-rc.1-5"
+    },
+    {
+      "type": "improvement",
+      "category": "auth",
+      "title": "Declare who may call every API endpoint",
+      "description": "Previously, the proposal endpoints and five other endpoints in social auth, marketplace, promotions and Rancher did not declare who may call them. Now, they do, and service provider team management is described as owners may perform it.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "1f01fb877",
+        "d86488f16",
+        "12748a41d"
+      ],
+      "id": "8.1.5-rc.1-6"
+    },
+    {
+      "type": "fix",
+      "category": "proposal",
+      "title": "Disable the proposal checklist-template route, which could only fail",
+      "description": "The proposal checklist-template API route could only fail. It is disabled.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "62d3d1ffd"
+      ],
+      "id": "8.1.5-rc.1-7"
+    },
+    {
+      "type": "feature",
+      "category": "notifications",
+      "title": "Email a configured address when a new Waldur release is available",
+      "description": "Previously, Waldur did not email anyone when a new release became available. Now, a scheduled task emails a configured address when a new Waldur release is available.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Core migration 0055_versionupdatenotification adds the version update notification model.",
+          "automatic": true
+        },
+        {
+          "type": "config",
+          "description": "Set the recipient address for release notifications in the configuration settings to receive these emails.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "d0a4e5243"
+      ],
+      "id": "8.1.5-rc.1-8"
+    },
+    {
+      "type": "feature",
+      "category": "notifications",
+      "title": "Email reviewers when an onboarding justification is submitted",
+      "description": "Previously, reviewers were not emailed when an onboarding justification was submitted. Now, they receive an email when one is submitted.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "fbf0434d6"
+      ],
+      "id": "8.1.5-rc.1-9"
+    },
+    {
+      "type": "security",
+      "category": "openstack",
+      "title": "Enforce personal access token bindings and external-only sharing in OpenStack networking",
+      "description": "Previously, a personal access token was not held to its bindings when creating ports, in the network owner checks or at a router's gateway. A port, instance or router interface could also be put on a network shared only as external. Now, these operations respect the token's bindings, networks shared only as external refuse ports, instances and router interfaces, and the remaining port interface gaps are closed.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_openstack"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "8.1.4 and earlier (first affected release not identified in the commit data)",
+        "exploitability": "Requires an authenticated user who either uses a personal access token bound to narrower scopes or has access to a network shared with their tenant only as external.",
+        "mitigation": "Upgrade to 8.1.5-rc.1 or later."
+      },
+      "commits": [
+        "1782cce0a",
+        "c4077f9a3",
+        "aa6655cdf"
+      ],
+      "id": "8.1.5-rc.1-10"
+    },
+    {
+      "type": "improvement",
+      "category": "ai_assistant",
+      "title": "Expose offering documentation and support links in assistant discovery tools",
+      "description": "Previously, the assistant's offering discovery tools did not expose documentation and support links, and a search that matched nothing did not say why. Now, the tools include an offering's documentation and support links, including for the anonymous persona, and a search that matches nothing names the unmet requirement.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.chat"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "46dd338af",
+        "70b043e1e"
+      ],
+      "id": "8.1.5-rc.1-11"
+    },
+    {
+      "type": "security",
+      "category": "notifications",
+      "title": "Fill event message placeholders only from event context and escape their values",
+      "description": "Previously, placeholders in event message templates could be filled from text that people wrote, and the values put into the templates were not escaped. Now, placeholders are filled only from the event context, inserted values are escaped, and tests check that event messages across core, marketplace, invoices, policy, proposals, support and the OpenStack plugin follow this.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "8.1.4 and earlier (first affected release not identified in the commit data)",
+        "exploitability": "Requires an authenticated user who can write text that ends up in an event message. Placeholders in that text could be filled from the event context, and its values were inserted without escaping.",
+        "mitigation": "Upgrade to 8.1.5-rc.1 or later."
+      },
+      "commits": [
+        "400b67ef3",
+        "068147ba4"
+      ],
+      "id": "8.1.5-rc.1-12"
+    },
+    {
+      "type": "fix",
+      "category": "ui",
+      "title": "Fix login alert, user details, team dialog, tab and brand colour issues",
+      "description": "The login error alert layout was broken, and the roles table did not fit in the user details dialog. The one-project-manager check was not refreshed after a team change. Tab counts did not follow the active tab, embedded tabs did not keep the tallest tab's height, and the ToS row and reviewer profile divider were misdrawn. Custom brand buttons could get a lighter hover than their default colour (brands darker than 0.4 lightness) or a darker 500 step than the brand itself (brands lighter than 0.55). All are fixed, and brand steps now scale from the brand's own lightness where a fixed value would flip their order. Brands near 0.4, including the default green, are unchanged.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "422b31aad0",
+        "09a623feb2",
+        "76b9e7db6d",
+        "5401ea4167",
+        "b6ca4b8907"
+      ],
+      "id": "8.1.5-rc.1-13"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Gate the demo preset API behind a deployment setting",
+      "description": "Previously, the demo preset API had no deployment-level switch. Now, it is available only when the deployment enables it through a setting, exposed in Helm as waldur.demoPresets and passed to Mastermind by docker-compose.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "helm",
+        "docker"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "config",
+          "description": "To use demo presets, enable them in the deployment: set waldur.demoPresets in Helm values, or the demo preset variables in docker-compose's .env.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "006e1871f",
+        "a2ac6ce",
+        "08ec4fc"
+      ],
+      "id": "8.1.5-rc.1-14"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Import fractional prices given as numbers exactly",
+      "description": "Fractional prices given as numbers in an offering import were not imported exactly. They now are.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "358cee8cf"
+      ],
+      "id": "8.1.5-rc.1-15"
+    },
+    {
+      "type": "fix",
+      "category": "invoices",
+      "title": "Invoice prepaid renewals at their quote",
+      "description": "Prepaid renewals were not invoiced at the price quoted for the renewal. They are now invoiced at their quote.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "d7686b84e"
+      ],
+      "id": "8.1.5-rc.1-16"
+    },
+    {
+      "type": "fix",
+      "category": "infrastructure",
+      "title": "Keep per-run task state out of the shared task object",
+      "description": "Background tasks kept per-run state on the shared task object. That state is now kept per run.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "75089ef6d"
+      ],
+      "id": "8.1.5-rc.1-17"
+    },
+    {
+      "type": "fix",
+      "category": "infrastructure",
+      "title": "Keep the Resource model in the generated Python client",
+      "description": "The generated Python client was missing the Resource model. OpenAPI schema generation now keeps it, and CI checks Python SDK generation.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "sdk"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "36f64eb5a"
+      ],
+      "id": "8.1.5-rc.1-18"
+    },
+    {
+      "type": "improvement",
+      "category": "proposal",
+      "title": "Let call organisers read the reviewer profiles of the pools they manage",
+      "description": "Previously, call organisers could not read the profiles of reviewers in the pools they manage. Now, they can, and the reviewer profile is shown when a call team or reviewer pool row is expanded.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "7cb4b2006",
+        "75130d455f"
+      ],
+      "id": "8.1.5-rc.1-19"
+    },
+    {
+      "type": "feature",
+      "category": "proposal",
+      "title": "Limit how many active proposals an applicant may hold with a call-managing organisation",
+      "description": "Previously, an applicant could hold any number of proposals with a call-managing organisation at once. Now, a call-managing organisation can limit how many active proposals an applicant may hold with it at once, set from the organisation's call manager panel.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Proposal migration 0098_callmanagingorganisation_max_active_proposals adds the limit field.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "f52fc2d7f",
+        "c9fe35478e"
+      ],
+      "id": "8.1.5-rc.1-20"
+    },
+    {
+      "type": "feature",
+      "category": "ui",
+      "title": "Limit table filters to values that have rows using backend facets",
+      "description": "Previously, table filters offered every possible value. Now, marketplace, proposal and support list endpoints return filter facets, and frontend tables use them to offer only values that have rows. Filter menus also fit short option lists.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "332e57d81",
+        "59c2d3b22a",
+        "c5f7fbc0fd"
+      ],
+      "id": "8.1.5-rc.1-21"
+    },
+    {
+      "type": "feature",
+      "category": "marketplace",
+      "title": "List the API keys of all a service provider's offerings",
+      "description": "Previously, a service provider could not list API keys across all its offerings. Now, a provider page lists the API keys of all its offerings, with filters and a summary. Provider resource lists show API key counts, each key carries an estimated cost, and a resource API key's description can be shown and edited.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Marketplace migration 0326_resource_api_key_estimated_cost adds the estimated cost to resource API keys.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "eca39ad70",
+        "0ba5239d4b",
+        "63d8824bb3"
+      ],
+      "id": "8.1.5-rc.1-22"
+    },
+    {
+      "type": "feature",
+      "category": "ui",
+      "title": "List the deployment's micro-apps in the quick shortcuts menu",
+      "description": "Previously, the quick shortcuts menu did not list micro-apps. Now, a new feature lists the micro-apps deployed with the frontend in the quick shortcuts menu on desktop and mobile.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "952e12516",
+        "f31f747c86"
+      ],
+      "id": "8.1.5-rc.1-23"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Log an unreachable remote Waldur during offering pull",
+      "description": "Previously, an unreachable remote Waldur was not logged during offering pull. Now, pulling offerings from a remote Waldur logs when the remote cannot be reached.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "none"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.marketplace_remote"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "769ccbacd"
+      ],
+      "id": "8.1.5-rc.1-24"
+    },
+    {
+      "type": "fix",
+      "category": "openstack",
+      "title": "Log the real error on port and router sync and import Neutron ports with null fields",
+      "description": "Port and router sync did not log the real error, and Neutron ports with null fields were not imported. Sync now logs the real error and imports such ports.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_openstack"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "f35968944"
+      ],
+      "id": "8.1.5-rc.1-25"
+    },
+    {
+      "type": "improvement",
+      "category": "identity",
+      "title": "Make the user management API timeout configurable",
+      "description": "Previously, the timeout for requests to the user management API, which course accounts and service accounts use, could not be configured. Now, a deployment setting sets it, with documented bounds. Helm exposes it in its values, and docker-compose exposes it as WALDUR_USER_MANAGEMENT_API_TIMEOUT.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "helm",
+        "docker"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "config",
+          "description": "Optionally set WALDUR_USER_MANAGEMENT_API_TIMEOUT in docker-compose, or the corresponding Helm value, to change the timeout.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "600cb0ea2",
+        "3f4eeee",
+        "b7b3b9f",
+        "33b7831",
+        "2128ccb"
+      ],
+      "id": "8.1.5-rc.1-26"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Move the frontend from Bootstrap to Tailwind and shared waldur-ui components",
+      "description": "Previously, the frontend depended on Bootstrap, hand-rolled tables, separate stat tiles and static inline styles. Now, Bootstrap is removed, and the frontend uses Tailwind and shared waldur-ui components throughout. These cover tables, stat cards, number inputs, attachments and upload zones, code blocks, expandable rows and Matrix chat components. Form fields and buttons follow a named control height scale, dialog footer actions have a width floor and size to their label, row status colours come from tokens, and table density lost during the migration is restored.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "d358d64beb",
+        "7075957df1",
+        "b1b49f0b6d",
+        "f36d88a676",
+        "e08b8a02b2",
+        "14faf7d627",
+        "78f57f0c32",
+        "5fc03cf194",
+        "583c2611b9",
+        "20bf63f446",
+        "a05a6e4c68",
+        "1992b26312",
+        "3e797527ee",
+        "0b27d5f4ef",
+        "63cee01305",
+        "427256ad45",
+        "ed10571eb3",
+        "792c5eb274",
+        "78054f901b",
+        "daebf42fdd",
+        "d4d51bc05a",
+        "3ae33b120a",
+        "ba4a94b481",
+        "fcebdff20b",
+        "cf9e3aeecf",
+        "49f3edb53f",
+        "b353e57fd6",
+        "df3020709f",
+        "55c1ac8687"
+      ],
+      "id": "8.1.5-rc.1-27"
+    },
+    {
+      "type": "improvement",
+      "category": "support",
+      "title": "Move the reviewer registry and feedback surveys under Support",
+      "description": "Previously, the reviewer registry and feedback surveys were managed from the administration. Now, the reviewer registry is under Support > User management, and feedback surveys are under Support > Communication.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "312cf8c65e",
+        "1777d8ffad"
+      ],
+      "id": "8.1.5-rc.1-28"
+    },
+    {
+      "type": "feature",
+      "category": "proposal",
+      "title": "Name the projects and resources created by a call's accepted proposals",
+      "description": "Previously, a call could not name the projects and resources its accepted proposals create. Now, a call manager can set a project name template on the call, and the projects and resources created for accepted proposals are named from it. Applicants see a preview of the resulting project name when they create a proposal.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Proposal migration 0100_call_project_name_template adds the naming template fields.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "d0b4c68bd",
+        "6e0c3afd38"
+      ],
+      "id": "8.1.5-rc.1-29"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Polish marketplace, resource, reporting and tab layouts",
+      "description": "Previously, several screens had inconsistent actions, tabs and card states. Now, pending consumer order actions sit in a three-dots menu, and Access resource is the main action in the resource header. A tab bar holding a single tab is hidden, and the category page drops its header and titles the offerings block with the category. Offering page tabs use shared components, organization tab counts appear as tab counts, and expandable-row tabs size to their tallest tab. Clickable cards share hover, pressed and focus states, and report card headers, user analytics charts and maintenance report filters are aligned.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "9ff6f1ec10",
+        "394ccb51c6",
+        "13160318d8",
+        "30ea3d442c",
+        "3f9f7c7f0e",
+        "201e59b214",
+        "6fb1cc0849",
+        "df362ff445",
+        "a788c3269d",
+        "1823e99243",
+        "56d8375754",
+        "8b7c60f567",
+        "3e7f24a63e"
+      ],
+      "id": "8.1.5-rc.1-30"
+    },
+    {
+      "type": "improvement",
+      "category": "proposal",
+      "title": "Polish the call administration, award and review screens",
+      "description": "Previously, several call management screens had layout and wording issues. Now, the call administration screens have team badges, a read-only Add action, and clearer toasts, header and texts, with Crossref spelled as the vendor spells it. Award screens show budget names, the differs flag and an award edit warning. A proposal count of one uses singular wording, and the proposal runs table sits flush in its section. The award change badge stays whole beside long offering names, and linked stat cards are clickable. Assignment batches list their proposals in the standard table, and Open validation stays on the workflow check's line. Round settings are edited in plain dialogs, with the allocation edit disabled when there is no date.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "cae0c153dd",
+        "43b157445",
+        "d913455d04",
+        "27d0b2d4e9",
+        "25ce2f8791",
+        "ff139d15d3",
+        "3fdac194f4",
+        "867fc18aff",
+        "c3c404da21",
+        "36fb3aeda2",
+        "ba6f92a2b7"
+      ],
+      "id": "8.1.5-rc.1-31"
+    },
+    {
+      "type": "feature",
+      "category": "marketplace",
+      "title": "Preview and load demo presets from the administration",
+      "description": "Previously, demo presets could not be previewed or loaded from the administration. Now, staff can preview a demo preset's contents and load it from the administration. A preset loads in the background while the API is paused and a reset overlay is shown. Loading keeps deployment-owned settings, resets the rest and turns on the features each preset's demo needs. A deployment can add its own presets, an overlay and a staff password, which docker-compose mounts and passes through. The login page offers quick login for demo users.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend",
+        "docker"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Marketplace migration 0325_demo_preset_load adds demo preset load tracking.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "e32d0604c",
+        "20a204f9e",
+        "a3fe3b053",
+        "78230baac",
+        "a61e1e6fa",
+        "30c9b355c5",
+        "d76a10f"
+      ],
+      "id": "8.1.5-rc.1-32"
+    },
+    {
+      "type": "feature",
+      "category": "proposal",
+      "title": "Provider calls micro-app with post-award work told apart from award orders",
+      "description": "Previously, a service provider's post-award work and its award orders were not told apart. Now, the API tells them apart, and a new provider calls micro-app, built on a shared waldur-proposals package, covers a provider's inbox, requests, proposals, demand, team work and awards. It handles purchase-order awards, offers actions only where the provider's permissions allow them, and links to the relevant sections.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "c6cf3f837",
+        "ce99e121fb",
+        "87f00241b8"
+      ],
+      "id": "8.1.5-rc.1-33"
+    },
+    {
+      "type": "improvement",
+      "category": "policy",
+      "title": "Record the impersonator behind a policy evaluation for staff and support only",
+      "description": "Previously, policy evaluation events did not record the impersonating user in a place that only staff and support can read. Now, the impersonator behind a policy evaluation is recorded there.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "99f209257"
+      ],
+      "id": "8.1.5-rc.1-34"
+    },
+    {
+      "type": "security",
+      "category": "marketplace",
+      "title": "Refuse checklist answers that reference a stored file uploaded elsewhere",
+      "description": "Previously, a checklist answer could name a stored file that had been uploaded elsewhere. Now, such an answer is refused.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "8.1.4 and earlier (first affected release not identified in the commit data)",
+        "exploitability": "Requires an authenticated user who can answer a checklist and knows the reference of a stored file uploaded elsewhere. The answer could then point at that file.",
+        "mitigation": "Upgrade to 8.1.5-rc.1 or later."
+      },
+      "commits": [
+        "6d15e4b3a"
+      ],
+      "id": "8.1.5-rc.1-35"
+    },
+    {
+      "type": "fix",
+      "category": "infrastructure",
+      "title": "Refuse frontend API requests with an unfilled path parameter",
+      "description": "The frontend API client could send a request with an unfilled path parameter. It now refuses such requests.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "f2ffaf93d1"
+      ],
+      "id": "8.1.5-rc.1-36"
+    },
+    {
+      "type": "fix",
+      "category": "invoices",
+      "title": "Remove the invoice item consumptions action, which always failed",
+      "description": "The invoice item consumptions API action always failed. It is removed.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "a75fafe7a"
+      ],
+      "id": "8.1.5-rc.1-37"
+    },
+    {
+      "type": "improvement",
+      "category": "slurm",
+      "title": "Remove the unused SLURM PRIVATE_KEY_PATH setting and SSH key mounts",
+      "description": "Previously, Mastermind had an unused SLURM PRIVATE_KEY_PATH setting, and Helm and docker-compose provided and mounted an SSH key pair for it. Now, the setting, the Helm SSH key values, secret, config map and mounts, and the docker-compose id_rsa mounts are removed.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "helm",
+        "docker"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "config",
+          "description": "Drop SSH key values from custom Helm values and the id_rsa files from docker-compose configuration. They are no longer used.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "aef8f92d9",
+        "49c8a24",
+        "20e66ea"
+      ],
+      "id": "8.1.5-rc.1-38"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Rename and describe a plan that resources use",
+      "description": "Previously, a plan used by resources could not be renamed or have its description changed. Now, it can, and the plan form keeps the billing period of a plan in use unchanged.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "f532e6289",
+        "e941a29704"
+      ],
+      "id": "8.1.5-rc.1-39"
+    },
+    {
+      "type": "improvement",
+      "category": "proposal",
+      "title": "Render the proposal PDF on the server",
+      "description": "Previously, the proposal PDF was built in the browser with pdfmake. Now, the server renders it and includes only what the requesting reader may read, and the frontend downloads it from the server.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "6888116dd",
+        "2c593f261c"
+      ],
+      "id": "8.1.5-rc.1-40"
+    },
+    {
+      "type": "security",
+      "category": "auth",
+      "title": "Require signed SAML2 logout requests from the session's identity provider",
+      "description": "Previously, SAML2 logout requests were accepted without requiring a signature from the identity provider of the user's session. Now, a logout request must be signed by that identity provider.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_auth_saml2"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "low",
+        "affected_versions": "8.1.4 and earlier (first affected release not identified in the commit data)",
+        "exploitability": "A logout request that was unsigned or came from another identity provider could end a user's Waldur session.",
+        "mitigation": "Upgrade to 8.1.5-rc.1 or later, and confirm that identity providers sign their logout requests, because unsigned ones are now refused."
+      },
+      "commits": [
+        "a54e93960"
+      ],
+      "id": "8.1.5-rc.1-41"
+    },
+    {
+      "type": "security",
+      "category": "proposal",
+      "title": "Restrict call reviewer pools, organisation statistics, offering dependents and reviewer bids to authorized users",
+      "description": "Previously, a call's reviewer pool was shown beyond those who manage its review. A call-managing organisation's statistics were shown beyond those who may read its reports, what depends on an offering was shown to users who may not change it, and a reviewer's bid could be changed or withdrawn by someone other than that reviewer. Now, each is limited to the users who hold that right. The frontend hides the reviewer pool from users who may not read it, and opens the call list instead of the dashboard for organisation owners without a call role.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "8.1.4 and earlier (first affected release not identified in the commit data)",
+        "exploitability": "Requires an authenticated user with some access to a call, a call-managing organisation or an offering.",
+        "mitigation": "Upgrade to 8.1.5-rc.1 or later."
+      },
+      "commits": [
+        "c8cb7c128",
+        "fdc6dd9479",
+        "9b57c79ca",
+        "dd94e291a8",
+        "2aa8237cc",
+        "4298eb994"
+      ],
+      "id": "8.1.5-rc.1-42"
+    },
+    {
+      "type": "feature",
+      "category": "proposal",
+      "title": "Run calls for proposals on configurable workflows with call templates and validation",
+      "description": "Previously, calls for proposals did not run on configurable workflows. Now, each call runs on a configurable workflow of steps and can be created from one of 21 bundled call templates, such as rapid, regular, beamtime, NAIRR and AI Factory access. Before use, the workflow can be validated, described and dry-run, and it adds new workflow notification emails. Call managers can add the award response step by its key right after the allocation decision, give and take a call team's reviewer role, and edit project details fields through edit buttons. Checklists offer an organization only when calls use them as forms, and staff manage call templates from the administration.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "high"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Proposal migrations 0092-0097 move existing calls onto workflows (expand, backfill, contract), delete empty proposal documents and backfill review submission times.",
+          "automatic": true
+        },
+        {
+          "type": "migration",
+          "description": "Checklist migration 0017 adds an organization to checklists, and configuration migration 0004 drops removed reporting screens.",
+          "automatic": true
+        }
+      ],
+      "highlight": true,
+      "commits": [
+        "a04c0388c",
+        "b04455de53",
+        "84173c774",
+        "072443fd16",
+        "c2dc85fb1e",
+        "2245f8dffc",
+        "7e89907b0d",
+        "07921c6dbe",
+        "7d8278eb6f",
+        "9d77e07b9a"
+      ],
+      "id": "8.1.5-rc.1-43"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Save only their own fields in resource write-back actions",
+      "description": "Resource write-back actions saved more than their own fields, so concurrent changes to other fields could be overwritten. They now save only their own fields.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "82767d0d1"
+      ],
+      "id": "8.1.5-rc.1-44"
+    },
+    {
+      "type": "feature",
+      "category": "ai_assistant",
+      "title": "Serve the chat tool registry over MCP with an OAuth consent bridge",
+      "description": "Previously, the MCP server was built on fastmcp and did not serve the chat tool registry. Now, it uses the official mcp SDK, serves the chat tool registry acting as the calling user, and adds an OAuth consent bridge API. MCP events have their own labelled event group.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.mcp"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "highlight": true,
+      "commits": [
+        "e1ceecd1b",
+        "0a9c0c8b9",
+        "8302baad1",
+        "feb9b72be8"
+      ],
+      "id": "8.1.5-rc.1-45"
+    },
+    {
+      "type": "feature",
+      "category": "proposal",
+      "title": "Set a logo for a call for proposals",
+      "description": "Previously, a call for proposals was shown with its initials. Now, call managers can set a logo for a call. The logo is shown in place of the initials on call cards and the call's pages, and can be edited there.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Proposal migration 0099_call_image adds the call logo field.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "b534c6af4",
+        "7af933f6d",
+        "011949e95e"
+      ],
+      "id": "8.1.5-rc.1-46"
+    },
+    {
+      "type": "feature",
+      "category": "marketplace",
+      "title": "Show a resource's usage and limit for the whole order period",
+      "description": "Previously, a resource's usage was not available for the whole order period. Now, the API exposes a resource's usage for the whole order period, and the resource details show usage and limit for that period, governed by an offering resource display option.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "aa8610950",
+        "167f566d82"
+      ],
+      "id": "8.1.5-rc.1-47"
+    },
+    {
+      "type": "fix",
+      "category": "proposal",
+      "title": "Show files attached to step answers by name and size with download links",
+      "description": "Files attached to workflow step answers were shown as a raw dictionary. They are now shown by name and size and offered as download links, including in project metadata answers.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "aa2d9b989",
+        "f80c14b40e"
+      ],
+      "id": "8.1.5-rc.1-48"
+    },
+    {
+      "type": "feature",
+      "category": "notifications",
+      "title": "Show Matrix chat mentions, unread counts and notification levels in Waldur",
+      "description": "Previously, the chat welcome and role notice did not wait for room members to join, and chat mentions, unread counts and notification levels were not shown inside Waldur. Now, a room's welcome and role notice are posted once its members have joined. Waldur shows chat mentions, an unread count (including in the page title) and notification levels.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_mastermind.matrix_chat"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Matrix chat migration 0014_matrixroom_announced_at records when a room was announced.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "5fea79c93",
+        "e6ce2e7b40"
+      ],
+      "id": "8.1.5-rc.1-49"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Show offering and service provider managers the plans of their offerings",
+      "description": "Offering managers and service provider managers could not see the plans of their offerings. The plans list now includes them.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "ad7d0f542"
+      ],
+      "id": "8.1.5-rc.1-50"
+    },
+    {
+      "type": "fix",
+      "category": "openstack",
+      "title": "Show private OpenStack volume types only to those who may use them",
+      "description": "Private OpenStack volume types were shown to users who could not use them. Volume types now record whether they are public, and private ones are shown only to those who may use them.",
+      "scope": "plugin",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_openstack"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "OpenStack migration 0091_volume_type_is_public adds the public flag to volume types.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "32e1a746d"
+      ],
+      "id": "8.1.5-rc.1-51"
+    },
+    {
+      "type": "improvement",
+      "category": "proposal",
+      "title": "Show round awards and awarded project teams to call managers and results readers",
+      "description": "Previously, the managing organisation's results readers could not see the award of a published round, and a call manager could not list the team of a project that the call's award created. Now, both can. When the project access of an allocation outcome cannot be loaded, the proposal view explains why.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "f3fe1260b",
+        "9ba454c39",
+        "6c8424363e"
+      ],
+      "id": "8.1.5-rc.1-52"
+    },
+    {
+      "type": "improvement",
+      "category": "proposal",
+      "title": "Show what an extension asks for, carried out and skipped",
+      "description": "Previously, the proposal views did not show what an approved extension carried out or skipped, and the state of a resource an extension skipped was not named in plain words. Now, the post-award section shows what an approved extension carried out and what it skipped, with the skipped resource's state named in plain words. The offering assessment card shows what an extension asks of the offering.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "f6eaf84e2",
+        "be900af63f",
+        "8ab5bed158"
+      ],
+      "id": "8.1.5-rc.1-53"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Show which settings the deployment manages",
+      "description": "Previously, the administration did not show which settings the deployment manages. Now, the administration settings, service desk, identity provider, language and Matrix admin screens mark the settings that the deployment manages.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "23f8eaaeef"
+      ],
+      "id": "8.1.5-rc.1-54"
+    },
+    {
+      "type": "fix",
+      "category": "notifications",
+      "title": "Skip resources younger than the window in the stale-resource reminder",
+      "description": "The stale-resource reminder included resources younger than its window. It now skips them.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "bf1a64a36"
+      ],
+      "id": "8.1.5-rc.1-55"
+    },
+    {
+      "type": "security",
+      "category": "auth",
+      "title": "Stop matching accounts by an email address their user set",
+      "description": "Previously, sign-in and SCIM matching could find an existing account by an email address that the account's own user had set. Now, an email address a user set themselves is never used to find an account at sign-in or in SCIM matching, and the email lookups for invitations and OpenPortal access apply the same rule.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "high",
+        "affected_versions": "8.1.4 and earlier (first affected release not identified in the commit data)",
+        "exploitability": "Requires an account whose user can set its own email address. If that user sets it to another person's address, the account could be matched when the other person signs in or is matched over SCIM.",
+        "mitigation": "Upgrade to 8.1.5-rc.1 or later."
+      },
+      "commits": [
+        "8d610ee18"
+      ],
+      "id": "8.1.5-rc.1-56"
+    },
+    {
+      "type": "feature",
+      "category": "invoices",
+      "title": "Switch between accounting and billing mode with a feature flag",
+      "description": "Previously, accounting and billing mode could not be switched with a feature flag. Now, a billing mode feature flag switches the UI between them, adjusting organization cost columns, invoice and billing views, invoice printing, price tooltips and the revenue growth chart.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "25aa0e546",
+        "252df5ee97"
+      ],
+      "id": "8.1.5-rc.1-57"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Upgrade gunicorn from 22.0.0 to 26.2.0",
+      "description": "Previously, Mastermind ran on gunicorn 22.0.0. Now, it runs on gunicorn 26.2.0, with the bundled gunicorn.conf.py updated for it.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "docker"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "359a0c8c8"
+      ],
+      "id": "8.1.5-rc.1-58"
+    },
+    {
+      "type": "security",
+      "category": "auth",
+      "title": "Upgrade oauthlib to 4.0.1 for GHSA-3jp2-3mrg-2vxc",
+      "description": "The bundled oauthlib dependency is upgraded to 4.0.1 to address GHSA-3jp2-3mrg-2vxc.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "Waldur releases bundling oauthlib older than 4.0.1, up to and including 8.1.4",
+        "exploitability": "See GHSA-3jp2-3mrg-2vxc. The commit data does not state whether Waldur's use of oauthlib is exposed.",
+        "mitigation": "Upgrade to 8.1.5-rc.1 or later.",
+        "ghsa": "GHSA-3jp2-3mrg-2vxc"
+      },
+      "commits": [
+        "287f490b6"
+      ],
+      "id": "8.1.5-rc.1-59"
+    },
+    {
+      "type": "security",
+      "category": "marketplace",
+      "title": "Validate an edited pending order as its creation was validated",
+      "description": "Previously, editing a pending marketplace order skipped validation that was applied when the order was created, including personal access token bindings. Now, an edited pending order goes through the same checks as its creation, including in the OpenPortal order processors.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "security": {
+        "urgency": "moderate",
+        "affected_versions": "8.1.4 and earlier (first affected release not identified in the commit data)",
+        "exploitability": "Requires a user who can edit a pending order. The edit could carry values that creation-time validation would have refused.",
+        "mitigation": "Upgrade to 8.1.5-rc.1 or later."
+      },
+      "commits": [
+        "e0a3ca5ad"
+      ],
+      "id": "8.1.5-rc.1-60"
+    },
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Clearer detail views for Identity Bridge, onboarding and provider calls",
+      "description": "Previously, the user's Identity Bridge tab and onboarding application details used a denser layout, and provider calls had no state column of their own. Now, the Identity Bridge tab and onboarding details are shown as plain key/value sections, and provider calls have their own state column and a sectioned expanded row.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "none"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "0d5ec7d621",
+        "12034278c0",
+        "26f3d4dac6"
+      ],
+      "id": "8.1.5-rc.2-1"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Content-Security-Policy on API responses, HTML pages and error pages",
+      "description": "Previously, some API responses, mastermind's own HTML pages, and error pages generated by gunicorn, the web shell and the reverse proxies were served without a Content-Security-Policy. Now, every API response carries a policy, and mastermind's HTML pages carry a page policy. The SAML logout page no longer names an IPv6 address as a source. Gunicorn, the web shell, the Helm ingresses and the Docker Compose Caddy proxy send a policy on their own error pages. The homeport image sends a complete policy for the portal, and both Helm and Docker Compose now take the portal's policy from the image. In Docker Compose, Caddy also sends a policy on any response that lacks one and closes connections for unknown hosts.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend",
+        "helm",
+        "docker"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "review",
+          "description": "Review custom Content-Security-Policy settings in Helm values or the Docker Compose environment: the portal's policy now comes from the homeport image (see the Helm content-security-policy documentation).",
+          "automatic": false
+        }
+      ],
+      "highlight": true,
+      "commits": [
+        "5c52335b9",
+        "e9943e88a",
+        "b0f4a3e20",
+        "01727b0636",
+        "0424647",
+        "51fc93c",
+        "f8a10c6",
+        "d2328f1"
+      ],
+      "id": "8.1.5-rc.2-2"
+    },
+    {
+      "type": "improvement",
+      "category": "invoices",
+      "title": "customer.billing_mode feature renamed to customer.show_invoices_with_vat",
+      "description": "Previously, the feature that controls how invoices are presented was called customer.billing_mode. Now, it is called customer.show_invoices_with_vat. A migration renames the stored feature, the portal reads the invoice presentation from the new name, and the Helm chart maps the billing feature to it. Docker Compose drops the unused homeport config.template.json.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend",
+        "helm",
+        "docker"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Apply core migration 0059_rename_billing_mode_feature, which renames the stored feature.",
+          "automatic": true
+        },
+        {
+          "type": "config",
+          "description": "Update any configuration overrides or scripts that set customer.billing_mode to use customer.show_invoices_with_vat.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "f9f7575bb",
+        "920ef55a25",
+        "3a28295",
+        "9a23d71"
+      ],
+      "id": "8.1.5-rc.2-3"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Demo preset loading and demo user sign-in",
+      "description": "Previously, loading a demo preset broke Waldur's links to Matrix accounts and rooms, demo preset support users did not get the deployment's staff password, and the login page listed demo users. Now, the Matrix links survive a preset load, support users get the staff password too, and the login page no longer lists demo users because they sign in through the demo identity provider.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "17bae44ae",
+        "c147426fa",
+        "811d2ee6a3",
+        "aad6e74fee",
+        "c2367ca60b"
+      ],
+      "id": "8.1.5-rc.2-4"
+    },
+    {
+      "type": "improvement",
+      "category": "invoices",
+      "title": "Idempotent credit top-ups with recorded channel",
+      "description": "Previously, a repeated top-up request could be applied more than once, and the channel a top-up came through was not recorded. Now, top-ups are idempotent and each credit transaction stores its channel, which can be used to filter transactions.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Apply invoices migration 0038_credit_transaction_channel.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "01390da3d"
+      ],
+      "id": "8.1.5-rc.2-5"
+    },
+    {
+      "type": "improvement",
+      "category": "invoices",
+      "title": "Invoices page gated on INVOICE.LIST permission",
+      "description": "Previously, the portal did not check the INVOICE.LIST permission before showing the Invoices page. Now, the page and its navigation tab are shown only to users with that permission.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "175d814067"
+      ],
+      "id": "8.1.5-rc.2-6"
+    },
+    {
+      "type": "improvement",
+      "category": "auth",
+      "title": "Lock accounts instead of whole addresses after failed password sign-ins",
+      "description": "Previously, repeated failed password sign-ins locked out the whole source address. Now, the lockout applies to the affected account, so other users signing in from the same address are not blocked.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "f36e03c61"
+      ],
+      "id": "8.1.5-rc.2-7"
+    },
+    {
+      "type": "feature",
+      "category": "identity",
+      "title": "Map validated OIDC ID-token claims to user attributes",
+      "description": "Previously, user attributes could not be taken from claims in a validated OIDC ID token. Now, these claims can be mapped to user attributes. The identity provider forms in the portal explain where each claim comes from and warn when the email claim is unverified.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_auth_social"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "0ea3db715",
+        "b0a372fe0e"
+      ],
+      "id": "8.1.5-rc.2-8"
+    },
+    {
+      "type": "improvement",
+      "category": "ai_assistant",
+      "title": "No hardcoded default for AI_ASSISTANT_MODEL",
+      "description": "Previously, AI_ASSISTANT_MODEL had a hardcoded default model. Now, the default is gone, so the model must be set explicitly.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": [
+          "AI_ASSISTANT_MODEL"
+        ]
+      },
+      "actions": [
+        {
+          "type": "config",
+          "description": "Deployments that use the AI assistant and relied on the default model should set AI_ASSISTANT_MODEL explicitly.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "6412e291a"
+      ],
+      "id": "8.1.5-rc.2-9"
+    },
+    {
+      "type": "fix",
+      "category": "ui",
+      "title": "Number inputs accept typing, show errors and keep decimals",
+      "description": "Some number inputs could not be typed into, hid validation errors or dropped decimals. This affected component multipliers, the options form, total limit tables, plan quotas, order field editing and the what-if simulator. These inputs now accept typing, show their errors and keep decimals.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "6db60da9ae"
+      ],
+      "id": "8.1.5-rc.2-10"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Permission required to reveal shared resource API keys",
+      "description": "Previously, any role with access to a shared resource API key could reveal it, including when calling with an access token. Now, revealing it requires a dedicated reveal permission and requests made with access tokens are refused. The portal disables Reveal for roles without the permission and lists the permission in role and personal access token scope options. The Request API key dialog now makes choosing the project key an explicit choice.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend",
+        "docker"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Apply permissions migration 0039_reveal_api_key_permission.",
+          "automatic": true
+        },
+        {
+          "type": "review",
+          "description": "Review custom roles that need to reveal shared resource API keys and grant them the new reveal permission.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "40424953c",
+        "c84d40ab24",
+        "49e379d44b"
+      ],
+      "id": "8.1.5-rc.2-11"
+    },
+    {
+      "type": "fix",
+      "category": "ui",
+      "title": "Portal layout and display fixes",
+      "description": "Fixes several display issues in the portal:\n- The chat icon's unread dot now counts live encrypted messages.\n- Header notification dots no longer blink.\n- Long login button labels wrap instead of overflowing.\n- Inline controls stay transparent in an unavailable offering's view.\n- The refresh button stays on the resource name line.\n- The table selection bar sits beside the search box instead of being centred.\n- Paged tables keep their tallest page's height so pagination does not move.\n- Termination dates are formatted in every resource list.\n- The offering partition edit dialog's submit button is labelled Save.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "none"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "c38aa31e24",
+        "9c973bf011",
+        "87d5e558c7",
+        "ec34a773d6",
+        "4bf76bd921",
+        "88f6c5f337",
+        "580f68952d",
+        "f0bd107e04",
+        "7957fd1da1"
+      ],
+      "id": "8.1.5-rc.2-12"
+    },
+    {
+      "type": "fix",
+      "category": "notifications",
+      "title": "Project digest notification switch honoured",
+      "description": "Project digests ignored the project digest notification switch, and a test digest that was not sent gave no feedback. Digests now honour the switch, the API reports when a test digest was not sent, and the project digest settings page warns about it. A migration updates the project digest notification setting.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Apply structure migration 0089_enable_project_digest_notification.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "808416fc5",
+        "8537a6f301"
+      ],
+      "id": "8.1.5-rc.2-13"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Public service provider page no longer crashes without a provider record",
+      "description": "The public service provider details page crashed when the provider had no provider record. The page now renders in that case.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "9c151f69b7"
+      ],
+      "id": "8.1.5-rc.2-14"
+    },
+    {
+      "type": "improvement",
+      "category": "notifications",
+      "title": "Resource-ending mail follows the offering's reminder schedule",
+      "description": "Previously, the mail warning that a resource is ending did not follow the offering's reminder schedule. Now, it is sent on that schedule.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "222f20887"
+      ],
+      "id": "8.1.5-rc.2-15"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Settings commands and docs named after the settings store",
+      "description": "Previously, the commands for dumping and overriding settings were named after Constance (dump_constance_settings, override_constance_settings). Now, the commands and documentation are named after the settings store (dump_settings, override_settings), and the bundled init-whitelabeling and matrix-init scripts are updated to match.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "docker"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "review",
+          "description": "Review custom scripts that call dump_constance_settings or override_constance_settings and switch them to dump_settings and override_settings.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "95f427bc7"
+      ],
+      "id": "8.1.5-rc.2-16"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Shared CPU software builds named after their target machine",
+      "description": "Previously, shared CPU builds in software catalogs were not labelled by the machine they target. Now, they are named after the machine they were built for.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "none"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "dc3121bbb1"
+      ],
+      "id": "8.1.5-rc.2-17"
+    },
+    {
+      "type": "feature",
+      "category": "auth",
+      "title": "Step-up re-authentication for sensitive account changes",
+      "description": "Previously, a signed-in session could change token lifetime, email address, passkeys and personal access tokens, or widen a personal access token's allowed networks, without confirming the user's identity again. Now, these changes require step-up re-authentication, and the portal shows a dialog asking the user to confirm it is them before the change goes through. Pending email change requests are deleted by a migration.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Apply the core migrations 0056_reauthentication, 0057_delete_pending_email_change_requests and 0058_reauthentication_widen_pat_networks, and the passkeys migrations 0003_reauthentication and 0004_reauthentication_widen_pat_networks.",
+          "automatic": true
+        },
+        {
+          "type": "inform_users",
+          "description": "Pending email change requests are deleted on upgrade; users with an unfinished email change must request it again.",
+          "automatic": false
+        }
+      ],
+      "highlight": true,
+      "commits": [
+        "de5ca7e3f",
+        "9ab2d5572",
+        "33e28cf71f",
+        "7c60a1aaa0"
+      ],
+      "id": "8.1.5-rc.2-18"
+    },
+    {
+      "type": "fix",
+      "category": "auth",
+      "title": "Token scopes applied to end date and limit change requests",
+      "description": "Token scopes were not applied when filing project end date, resource end date and resource limit change requests. Waldur now applies them to these requests.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "7ba7c1290"
+      ],
+      "id": "8.1.5-rc.2-19"
+    }
+  ],
+  "since_previous": [
+    {
+      "type": "improvement",
+      "category": "ui",
+      "title": "Clearer detail views for Identity Bridge, onboarding and provider calls",
+      "description": "Previously, the user's Identity Bridge tab and onboarding application details used a denser layout, and provider calls had no state column of their own. Now, the Identity Bridge tab and onboarding details are shown as plain key/value sections, and provider calls have their own state column and a sectioned expanded row.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "none"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "0d5ec7d621",
+        "12034278c0",
+        "26f3d4dac6"
+      ],
+      "id": "8.1.5-rc.2-1"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Content-Security-Policy on API responses, HTML pages and error pages",
+      "description": "Previously, some API responses, mastermind's own HTML pages, and error pages generated by gunicorn, the web shell and the reverse proxies were served without a Content-Security-Policy. Now, every API response carries a policy, and mastermind's HTML pages carry a page policy. The SAML logout page no longer names an IPv6 address as a source. Gunicorn, the web shell, the Helm ingresses and the Docker Compose Caddy proxy send a policy on their own error pages. The homeport image sends a complete policy for the portal, and both Helm and Docker Compose now take the portal's policy from the image. In Docker Compose, Caddy also sends a policy on any response that lacks one and closes connections for unknown hosts.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend",
+        "helm",
+        "docker"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "review",
+          "description": "Review custom Content-Security-Policy settings in Helm values or the Docker Compose environment: the portal's policy now comes from the homeport image (see the Helm content-security-policy documentation).",
+          "automatic": false
+        }
+      ],
+      "highlight": true,
+      "commits": [
+        "5c52335b9",
+        "e9943e88a",
+        "b0f4a3e20",
+        "01727b0636",
+        "0424647",
+        "51fc93c",
+        "f8a10c6",
+        "d2328f1"
+      ],
+      "id": "8.1.5-rc.2-2"
+    },
+    {
+      "type": "improvement",
+      "category": "invoices",
+      "title": "customer.billing_mode feature renamed to customer.show_invoices_with_vat",
+      "description": "Previously, the feature that controls how invoices are presented was called customer.billing_mode. Now, it is called customer.show_invoices_with_vat. A migration renames the stored feature, the portal reads the invoice presentation from the new name, and the Helm chart maps the billing feature to it. Docker Compose drops the unused homeport config.template.json.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend",
+        "helm",
+        "docker"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Apply core migration 0059_rename_billing_mode_feature, which renames the stored feature.",
+          "automatic": true
+        },
+        {
+          "type": "config",
+          "description": "Update any configuration overrides or scripts that set customer.billing_mode to use customer.show_invoices_with_vat.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "f9f7575bb",
+        "920ef55a25",
+        "3a28295",
+        "9a23d71"
+      ],
+      "id": "8.1.5-rc.2-3"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Demo preset loading and demo user sign-in",
+      "description": "Previously, loading a demo preset broke Waldur's links to Matrix accounts and rooms, demo preset support users did not get the deployment's staff password, and the login page listed demo users. Now, the Matrix links survive a preset load, support users get the staff password too, and the login page no longer lists demo users because they sign in through the demo identity provider.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "17bae44ae",
+        "c147426fa",
+        "811d2ee6a3",
+        "aad6e74fee",
+        "c2367ca60b"
+      ],
+      "id": "8.1.5-rc.2-4"
+    },
+    {
+      "type": "improvement",
+      "category": "invoices",
+      "title": "Idempotent credit top-ups with recorded channel",
+      "description": "Previously, a repeated top-up request could be applied more than once, and the channel a top-up came through was not recorded. Now, top-ups are idempotent and each credit transaction stores its channel, which can be used to filter transactions.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Apply invoices migration 0038_credit_transaction_channel.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "01390da3d"
+      ],
+      "id": "8.1.5-rc.2-5"
+    },
+    {
+      "type": "improvement",
+      "category": "invoices",
+      "title": "Invoices page gated on INVOICE.LIST permission",
+      "description": "Previously, the portal did not check the INVOICE.LIST permission before showing the Invoices page. Now, the page and its navigation tab are shown only to users with that permission.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "175d814067"
+      ],
+      "id": "8.1.5-rc.2-6"
+    },
+    {
+      "type": "improvement",
+      "category": "auth",
+      "title": "Lock accounts instead of whole addresses after failed password sign-ins",
+      "description": "Previously, repeated failed password sign-ins locked out the whole source address. Now, the lockout applies to the affected account, so other users signing in from the same address are not blocked.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "f36e03c61"
+      ],
+      "id": "8.1.5-rc.2-7"
+    },
+    {
+      "type": "feature",
+      "category": "identity",
+      "title": "Map validated OIDC ID-token claims to user attributes",
+      "description": "Previously, user attributes could not be taken from claims in a validated OIDC ID token. Now, these claims can be mapped to user attributes. The identity provider forms in the portal explain where each claim comes from and warn when the email claim is unverified.",
+      "scope": "plugin",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [
+          "waldur_auth_social"
+        ],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "0ea3db715",
+        "b0a372fe0e"
+      ],
+      "id": "8.1.5-rc.2-8"
+    },
+    {
+      "type": "improvement",
+      "category": "ai_assistant",
+      "title": "No hardcoded default for AI_ASSISTANT_MODEL",
+      "description": "Previously, AI_ASSISTANT_MODEL had a hardcoded default model. Now, the default is gone, so the model must be set explicitly.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": [
+          "AI_ASSISTANT_MODEL"
+        ]
+      },
+      "actions": [
+        {
+          "type": "config",
+          "description": "Deployments that use the AI assistant and relied on the default model should set AI_ASSISTANT_MODEL explicitly.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "6412e291a"
+      ],
+      "id": "8.1.5-rc.2-9"
+    },
+    {
+      "type": "fix",
+      "category": "ui",
+      "title": "Number inputs accept typing, show errors and keep decimals",
+      "description": "Some number inputs could not be typed into, hid validation errors or dropped decimals. This affected component multipliers, the options form, total limit tables, plan quotas, order field editing and the what-if simulator. These inputs now accept typing, show their errors and keep decimals.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "6db60da9ae"
+      ],
+      "id": "8.1.5-rc.2-10"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Permission required to reveal shared resource API keys",
+      "description": "Previously, any role with access to a shared resource API key could reveal it, including when calling with an access token. Now, revealing it requires a dedicated reveal permission and requests made with access tokens are refused. The portal disables Reveal for roles without the permission and lists the permission in role and personal access token scope options. The Request API key dialog now makes choosing the project key an explicit choice.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend",
+        "docker"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Apply permissions migration 0039_reveal_api_key_permission.",
+          "automatic": true
+        },
+        {
+          "type": "review",
+          "description": "Review custom roles that need to reveal shared resource API keys and grant them the new reveal permission.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "40424953c",
+        "c84d40ab24",
+        "49e379d44b"
+      ],
+      "id": "8.1.5-rc.2-11"
+    },
+    {
+      "type": "fix",
+      "category": "ui",
+      "title": "Portal layout and display fixes",
+      "description": "Fixes several display issues in the portal:\n- The chat icon's unread dot now counts live encrypted messages.\n- Header notification dots no longer blink.\n- Long login button labels wrap instead of overflowing.\n- Inline controls stay transparent in an unavailable offering's view.\n- The refresh button stays on the resource name line.\n- The table selection bar sits beside the search box instead of being centred.\n- Paged tables keep their tallest page's height so pagination does not move.\n- Termination dates are formatted in every resource list.\n- The offering partition edit dialog's submit button is labelled Save.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "none"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "c38aa31e24",
+        "9c973bf011",
+        "87d5e558c7",
+        "ec34a773d6",
+        "4bf76bd921",
+        "88f6c5f337",
+        "580f68952d",
+        "f0bd107e04",
+        "7957fd1da1"
+      ],
+      "id": "8.1.5-rc.2-12"
+    },
+    {
+      "type": "fix",
+      "category": "notifications",
+      "title": "Project digest notification switch honoured",
+      "description": "Project digests ignored the project digest notification switch, and a test digest that was not sent gave no feedback. Digests now honour the switch, the API reports when a test digest was not sent, and the project digest settings page warns about it. A migration updates the project digest notification setting.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Apply structure migration 0089_enable_project_digest_notification.",
+          "automatic": true
+        }
+      ],
+      "commits": [
+        "808416fc5",
+        "8537a6f301"
+      ],
+      "id": "8.1.5-rc.2-13"
+    },
+    {
+      "type": "fix",
+      "category": "marketplace",
+      "title": "Public service provider page no longer crashes without a provider record",
+      "description": "The public service provider details page crashed when the provider had no provider record. The page now renders in that case.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "9c151f69b7"
+      ],
+      "id": "8.1.5-rc.2-14"
+    },
+    {
+      "type": "improvement",
+      "category": "notifications",
+      "title": "Resource-ending mail follows the offering's reminder schedule",
+      "description": "Previously, the mail warning that a resource is ending did not follow the offering's reminder schedule. Now, it is sent on that schedule.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "222f20887"
+      ],
+      "id": "8.1.5-rc.2-15"
+    },
+    {
+      "type": "improvement",
+      "category": "infrastructure",
+      "title": "Settings commands and docs named after the settings store",
+      "description": "Previously, the commands for dumping and overriding settings were named after Constance (dump_constance_settings, override_constance_settings). Now, the commands and documentation are named after the settings store (dump_settings, override_settings), and the bundled init-whitelabeling and matrix-init scripts are updated to match.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "docker"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "review",
+          "description": "Review custom scripts that call dump_constance_settings or override_constance_settings and switch them to dump_settings and override_settings.",
+          "automatic": false
+        }
+      ],
+      "commits": [
+        "95f427bc7"
+      ],
+      "id": "8.1.5-rc.2-16"
+    },
+    {
+      "type": "improvement",
+      "category": "marketplace",
+      "title": "Shared CPU software builds named after their target machine",
+      "description": "Previously, shared CPU builds in software catalogs were not labelled by the machine they target. Now, they are named after the machine they were built for.",
+      "scope": "core",
+      "component": [
+        "frontend"
+      ],
+      "impact": {
+        "risk": "none"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "dc3121bbb1"
+      ],
+      "id": "8.1.5-rc.2-17"
+    },
+    {
+      "type": "feature",
+      "category": "auth",
+      "title": "Step-up re-authentication for sensitive account changes",
+      "description": "Previously, a signed-in session could change token lifetime, email address, passkeys and personal access tokens, or widen a personal access token's allowed networks, without confirming the user's identity again. Now, these changes require step-up re-authentication, and the portal shows a dialog asking the user to confirm it is them before the change goes through. Pending email change requests are deleted by a migration.",
+      "scope": "core",
+      "component": [
+        "backend",
+        "frontend"
+      ],
+      "impact": {
+        "risk": "medium"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "actions": [
+        {
+          "type": "migration",
+          "description": "Apply the core migrations 0056_reauthentication, 0057_delete_pending_email_change_requests and 0058_reauthentication_widen_pat_networks, and the passkeys migrations 0003_reauthentication and 0004_reauthentication_widen_pat_networks.",
+          "automatic": true
+        },
+        {
+          "type": "inform_users",
+          "description": "Pending email change requests are deleted on upgrade; users with an unfinished email change must request it again.",
+          "automatic": false
+        }
+      ],
+      "highlight": true,
+      "commits": [
+        "de5ca7e3f",
+        "9ab2d5572",
+        "33e28cf71f",
+        "7c60a1aaa0"
+      ],
+      "id": "8.1.5-rc.2-18"
+    },
+    {
+      "type": "fix",
+      "category": "auth",
+      "title": "Token scopes applied to end date and limit change requests",
+      "description": "Token scopes were not applied when filing project end date, resource end date and resource limit change requests. Waldur now applies them to these requests.",
+      "scope": "core",
+      "component": [
+        "backend"
+      ],
+      "impact": {
+        "risk": "low"
+      },
+      "relevant_when": {
+        "plugins": [],
+        "feature_flags": [],
+        "settings": []
+      },
+      "commits": [
+        "7ba7c1290"
+      ],
+      "id": "8.1.5-rc.2-19"
+    }
+  ],
+  "base_stable_version": "8.1.4",
+  "previous_version": "8.1.5-rc.1",
+  "stable_target": "8.1.5"
+}
