@@ -11958,6 +11958,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#accounting-records-or-invoices-with-vat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accounting records or invoices with VAT
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#invoice-notifications" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -23680,6 +23691,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#accounting-records-or-invoices-with-vat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accounting records or invoices with VAT
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#invoice-notifications" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -23735,6 +23757,47 @@ can view information for all projects within their organization.</p>
 <p>For configuration details, see <a href="../../user-guide/service-provider-organization/adding-an-offering/#configuring-billing-model-per-component">Configuring billing model per component</a>.</p>
 <p>In addition to that, Waldur offers convenient way for exporting the usage information for visualization <a href="../grafana/">with
 Grafana</a>.</p>
+<h2 id="accounting-records-or-invoices-with-vat">Accounting records or invoices with VAT</h2>
+<p>Each deployment chooses how the portal presents monthly costs to organizations. This setting is global:
+it applies to every organization.</p>
+<ul>
+<li><strong>Accounting records</strong> (the default): costs and prices are shown without VAT, and each month is an
+  accounting record. Use this when the portal tracks consumption and invoicing happens elsewhere.</li>
+<li><strong>Invoices with VAT</strong>: costs and prices include VAT, and each month is an invoice with the issuer and
+  recipient details, invoice and due dates, and a subtotal and tax breakdown.</li>
+</ul>
+<p>To switch, open <strong>Administration → User interface → Features</strong>, select the <strong>Organization workspace</strong>
+tab and turn on <em>Show costs and prices with VAT included and present monthly invoices instead of
+accounting records</em>, then <strong>Save</strong>. The flag is <code>customer.show_invoices_with_vat</code>. Users see the change
+the next time they load the portal.</p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../img/billing/admin-feature-show-invoices-with-vat.png" data-desc-position="bottom"><img alt="The invoice presentation switch in the Features list" src="../img/billing/admin-feature-show-invoices-with-vat.png"></a></p>
+<p>The switch changes the organization's <strong>Accounting</strong> page, the monthly record or invoice view, the
+organization cost columns in the organization list, price tooltips, the offering cost chart, and the
+financial growth report. The amounts stored in Waldur stay the same; only the presentation changes.</p>
+<table>
+<thead>
+<tr>
+<th>Accounting records</th>
+<th>Invoices with VAT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../img/billing/accounting-mode-list.png" data-desc-position="bottom"><img alt="Organization accounting page in accounting record mode" src="../img/billing/accounting-mode-list.png"></a></td>
+<td><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../img/billing/billing-mode-list.png" data-desc-position="bottom"><img alt="Organization accounting page in invoice mode" src="../img/billing/billing-mode-list.png"></a></td>
+</tr>
+<tr>
+<td><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../img/billing/accounting-mode-detail.png" data-desc-position="bottom"><img alt="An accounting record, totals without VAT" src="../img/billing/accounting-mode-detail.png"></a></td>
+<td><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../img/billing/billing-mode-detail.png" data-desc-position="bottom"><img alt="An invoice with issuer details, subtotal and tax" src="../img/billing/billing-mode-detail.png"></a></td>
+</tr>
+</tbody>
+</table>
+<p>In accounting record mode the totals are labelled <em>VAT is not included</em> and the print action is
+<strong>Print record</strong>. In invoice mode, the overview of a finished month adds a VAT line, the invoice list
+gains invoice date, due date, price and tax columns, and the print action is <strong>Print invoice</strong>.</p>
+<p>The issuer details on an invoice come from the <code>WALDUR_INVOICES['ISSUER_DETAILS']</code> setting. On
+Kubernetes, listing <code>billing</code> in the Helm chart's <code>waldur.features</code> fills them in and also turns this flag
+on; see <a href="../deployment/helm/docs/configuration-overrides/">configuration overrides</a>.</p>
 <h2 id="invoice-notifications">Invoice notifications</h2>
 <p>When an invoice is issued, Waldur emails the organization's owners a notification that carries
 the invoice itself as a <strong>PDF attachment</strong> alongside the link to view it in the portal. The
