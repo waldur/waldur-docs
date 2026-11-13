@@ -37,3 +37,12 @@ Keycloak is configured in the user interface, not in `settings.py`.
 
 3. Fill in `Client ID`, `Client secret` and `Discovery URL` from the steps above. For extra
    security, enable SSL, PKCE and post-logout redirect.
+4. Map user attributes in the `… field` inputs. Each takes a space-separated list of claims, and
+   the first claim the user has is used, for example `schac_home_organization affiliation org`.
+   Claims are read from the UserInfo response and the validated ID token, with UserInfo taking
+   precedence. `User claim` and `Extra fields` read UserInfo only. The **Re-discover** entry in
+   the same menu (**Discovery wizard** before the provider is configured) suggests a mapping from
+   the provider's published claims.
+
+The Keycloak card is Waldur's generic OIDC provider, so other OpenID Connect providers are set up
+the same way. See [Microsoft Entra ID](./entra-id.md) for a worked example.

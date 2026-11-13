@@ -7,6 +7,7 @@
 | [FreeIPA](./freeipa.md) | REST API | Support for synchronisation of Waldur identities with open-source Identity Management server |
 | [Keycloak](./keycloak.md) | OIDC | Open-source identity management server |
 | [LDAP](./LDAP.md) | LDAP/S | Support of identity servers over LDAP protocol |
+| [Microsoft Entra ID](./entra-id.md) | OIDC | Microsoft's cloud identity service (formerly Azure AD), configured as the generic OIDC provider |
 | [TARA](./TARA.md) | OIDC | Estonian State Autentication service |
 | [Passkeys](./passkeys.md) | FIDO2/WebAuthn | Phishing-resistant sign-in for local and staff accounts, with no external identity provider |
 
