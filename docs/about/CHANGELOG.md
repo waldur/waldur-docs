@@ -1,5 +1,54 @@
 # Changelog
 
+## 8.1.5-rc.2 - 2026-11-13
+
+### Highlights
+
+This release focuses on account and platform security. Waldur now asks users to confirm their identity before sensitive account changes, and it locks individual accounts after repeated failed password sign-ins instead of blocking a whole network address. Content-Security-Policy headers now cover API responses, Waldur's own HTML pages, the homeport image and proxy error pages in both Helm and Docker Compose deployments. Credit top-ups are also safer to retry, and OIDC identity providers can map validated ID-token claims to user profile attributes.
+
+### What's New
+
+- Users are asked to re-authenticate before changing token lifetime, email address, passkeys or personal access tokens, and before widening the networks a personal access token may be used from. The portal shows a dialog explaining why the confirmation is needed.
+- Validated OIDC ID-token claims can now be mapped to user attributes. The identity provider forms explain where each claim comes from and warn when an email claim is unverified.
+- Revealing a shared resource API key now requires a dedicated permission, and access tokens can no longer reveal one. In the portal, the Reveal button is disabled for roles without that permission.
+- Credit top-ups are idempotent, so a retried request is not applied twice, and each top-up records the channel it came through.
+
+### Improvements
+
+- After repeated failed password sign-ins, Waldur now locks the affected account rather than the whole source address.
+- Content-Security-Policy is now sent on every API response, on Waldur's own HTML pages and on error responses from gunicorn and the web shell. The homeport image ships a complete policy that Helm and Docker Compose deployments now use. Proxy error pages also carry a policy, and Docker Compose closes connections for unknown hosts.
+- The customer billing feature is renamed to `customer.show_invoices_with_vat` in the backend, portal and Helm chart. Docker Compose no longer ships the unused homeport `config.template.json`.
+- The Invoices page now requires the invoice list permission.
+- Resource-ending emails now follow the offering's reminder schedule.
+- Project digest emails respect the project's digest notification switch, and the portal warns when a test digest email was not sent.
+- Token scopes now apply when users file end date and limit change requests.
+- Demo users now sign in through the demo identity provider, and the demo user list is removed from the login page. Demo preset loads keep Waldur's links to Matrix accounts and rooms, and demo support users also get the deployment's staff password.
+- The Request API key dialog now makes choosing a project key an explicit step.
+- Onboarding application details and the user's Identity Bridge tab are now shown as key/value sections. Provider calls get their own state column and a sectioned expanded row.
+- Shared CPU builds in software catalogs are named after the machine they were built for.
+- The hardcoded default for the AI assistant model has been removed.
+- Settings documentation and management commands are now named after the settings store.
+- Several table and layout fixes: paged tables keep their height so pagination stays in place, the selection bar sits beside the table search, and the refresh button stays on the resource name line.
+
+### Bug Fixes
+
+- Fixed number inputs that could not be typed into, hid validation errors or dropped decimals.
+- Fixed a crash on public service provider pages when no provider record exists.
+- Termination dates are now formatted consistently in every resource list.
+- The chat icon's unread dot now counts live encrypted messages, and header notification dots no longer blink.
+- Long login button labels now wrap instead of overflowing the button.
+- Inline controls stay transparent in an unavailable offering's view.
+- The submit button for editing an offering partition is now labelled Save.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [21 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.5-rc.1...8.1.5-rc.2) - Step-up re-authentication, per-account sign-in lockout, Content-Security-Policy coverage, OIDC claim mapping, API key reveal permission and idempotent credit top-ups.
+- **Waldur Homeport**: [47 commits](https://github.com/waldur/waldur-homeport/compare/8.1.5-rc.1...8.1.5-rc.2) - Re-authentication dialog, Content-Security-Policy in the image, identity provider claim guidance, invoice permission gating, number input fixes, the table moved into a shared package and continued Tailwind migration.
+- **Waldur Helm**: [3 commits](https://github.com/waldur/waldur-helm/compare/8.1.5-rc.1...8.1.5-rc.2) - Content-Security-Policy taken from the homeport image and added to proxy error pages, plus the renamed billing feature mapping.
+- **Waldur Docker Compose**: [3 commits](https://github.com/waldur/waldur-docker-compose/compare/8.1.5-rc.1...8.1.5-rc.2) - Content-Security-Policy on all responses, unknown hosts closed and the unused homeport config template removed.
+
+---
+
 ## 8.1.5-rc.1 - 2026-11-11
 
 ### Highlights
