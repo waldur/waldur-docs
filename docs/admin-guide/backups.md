@@ -9,7 +9,8 @@ Of these, only the database needs to be backed up. Uploaded files — organizati
 attachments and the like — are stored in the database too
 (`waldur_core.media.storage.DatabaseStorage`), so a database dump captures them as well.
 
-A typical approach to a backup is:
+The commands below are for [Docker Compose](deployment/docker-compose/index.md); with Helm,
+see [Kubernetes](#kubernetes) further down. A typical approach to a backup is:
 
 ## 1. Create a DB dump
 
@@ -43,7 +44,30 @@ The dumps above are gzipped, so decompress them on the way in:
 zcat waldur-20260819T101500.sql.gz | docker exec -i waldur-db psql -U waldur waldur
 ```
 
-We suggest to make sure that backups are running regularly, e.g. using cron.
+Run the dump on a schedule, for example from cron, and copy it off the server each time.
+
+## Kubernetes
+
+The Helm chart can run the dump for you: `postgresBackup` schedules a `pg_dump` CronJob that
+uploads to S3-compatible storage configured in `backupStorage`, and rotates old dumps. The
+[backup management](deployment/helm/docs/postgres-backup-management.md) guide covers the
+settings and the restore. With a PostgreSQL operator, prefer its own backups: CloudNativePG and
+Zalando archive the write-ahead log continuously, so you can restore to any point in time, not
+only to the last dump ([PostgreSQL operators](deployment/helm/docs/postgres-operator.md)).
+
+## Test the restore
+
+A backup you have not restored is not yet a backup. Restore into a separate environment on a
+schedule, for example every quarter, and after any change to the backup setup:
+
+1. Start an environment of the same Waldur version, with the same encryption key (see below),
+   but with outgoing email disabled and no access to the service providers' APIs, so the copy
+   cannot mail real users or act on real resources.
+2. Restore the newest backup into it, and time the restore: that time is what an outage would
+   cost you.
+3. Sign in, and check that the newest records you expect are there, and that stored credentials
+   can be read (for example, an offering's integration settings open without errors).
+4. Delete the environment, and note the date and the result.
 
 ## Keep the encryption key
 
