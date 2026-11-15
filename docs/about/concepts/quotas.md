@@ -49,13 +49,13 @@ A quota record is `(scope, name, limit, usage)`. Usage is recomputed from the cu
 
 All three can be in play at once. The order of operations is plan → quota → action → policy.
 
-## Operating quotas
+## Operating quotas { data-mentions="feature:customer.show_onboarding" }
 
 - Set per-organization defaults at offering time (provider) or organization onboarding (operator).
 - Override per project to give a team more headroom without inflating the organization-wide cap.
 - Quota usage is exposed in the API and on every project / organization dashboard.
 
-## Related concepts
+## Related concepts { data-corpus="false" }
 
 - [Policies](policies.md) — post-hoc enforcement on cost or usage.
 - [Marketplace](marketplace.md) — where plan limits originate.

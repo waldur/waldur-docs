@@ -1,3 +1,8 @@
+---
+requires:
+  - feature:marketplace.show_call_management_functionality
+---
+
 # Checking and activating a call
 
 **Performed by:** Call manager (or call organiser, or staff)

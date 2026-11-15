@@ -1,3 +1,9 @@
+---
+requires:
+  - feature:project.show_custom_metrics
+  - offering_type:OpenStack.Instance
+---
+
 # Metrics of OpenStack virtual machines and volumes
 
 When your OpenStack provider has turned on instance metrics, Waldur reads your
@@ -74,7 +80,7 @@ A virtual machine is read only while it runs. When it is stopped, the
 question mark says so, and **Update now** and **Faster updates…** are
 unavailable.
 
-## Volumes
+## Volumes { data-requires="offering_type:OpenStack.Volume" }
 
 A volume is read with the virtual machine it is attached to. Its Metrics tab
 shows the volume's own throughput and I/O operations, and the question mark

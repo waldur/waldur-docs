@@ -1,3 +1,8 @@
+---
+requires:
+  - setting:WALDUR_SUPPORT_ENABLED
+---
+
 # Service desk interactions
 
 This guide will help you navigate and effectively use the support system to manage service requests, track tickets, and communicate with users.

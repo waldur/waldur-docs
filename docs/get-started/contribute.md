@@ -1,3 +1,7 @@
+---
+corpus: false
+---
+
 # Contribute to Waldur
 
 Waldur is open source under the MIT license. Fixes, features, documentation and translations are welcome. Read the [contribution guidelines](../about/contributing.md) first: keep each merge request to one clear scope, follow the code conventions, and make sure linters and tests pass.

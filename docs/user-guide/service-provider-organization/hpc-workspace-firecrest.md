@@ -1,3 +1,9 @@
+---
+mentions:
+  - feature:marketplace.display_software_catalog
+  - feature:marketplace.show_posix_id_pools
+---
+
 # HPC workspace with FirecREST
 
 The HPC workspace lets the members of a SLURM allocation work on the cluster
@@ -12,7 +18,7 @@ The workspace is **optional and configured per offering**. An offering without
 FirecREST settings behaves exactly as before; nothing on this page is needed to
 run a SLURM offering through the site agent.
 
-## What users get
+## What users get { data-requires="capability:hpc" }
 
 When an offering is connected, each of its allocations shows these extra tabs to
 members of the allocation's project:

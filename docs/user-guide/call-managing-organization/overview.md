@@ -1,3 +1,8 @@
+---
+mentions:
+  - feature:marketplace.show_call_management_functionality
+---
+
 # Calls for proposals overview
 
 A **call for proposals** is how a call-managing organisation hands out resources through
@@ -55,7 +60,7 @@ In the course of a call you will meet:
 | **Applicant** | Creates and submits a proposal; the proposal's managers (principal investigators) act for its team |
 | **Staff** | Enables call management for an organisation, manages call templates and checklists, and can act anywhere |
 
-## Lifecycle of a call
+## Lifecycle of a call { data-requires="feature:marketplace.show_call_management_functionality" }
 
 1. **Draft** — the call is created, blank or from a template, and configured: rounds,
    application form, offerings, workflow, team. Nobody can apply yet.

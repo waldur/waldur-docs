@@ -1,3 +1,8 @@
+---
+requires:
+  - feature:marketplace.show_call_management_functionality
+---
+
 # Workflow configuration
 
 A call's evaluation workflow is an ordered list of **call steps** that every submitted proposal walks through. The call manager decides which steps the call has, what each is called, in which order they run, who completes them, who contributes to them and what they read from earlier steps. A step is one of four **kinds**, and a call can use a kind as many times as its process needs — two assessments and a decision in a light call, or a dozen steps for a call with rapporteurs, peer review and a committee.

@@ -1,3 +1,8 @@
+---
+requires:
+  - feature:marketplace.show_posix_id_pools
+---
+
 # Your POSIX identity on Linux and HPC offerings
 
 When you get access to a Linux or HPC offering — for example a SLURM cluster

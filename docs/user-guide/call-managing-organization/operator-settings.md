@@ -15,7 +15,7 @@ reach services only through calls for proposals, with no marketplace navigation 
 for the setting and the feature flags it combines with, and
 [How you reach services](../end-users/service-access-modes.md) for what users see.
 
-## Staff settings
+## Staff settings { data-requires="feature:marketplace.show_call_management_functionality" }
 
 | Setting | Where | Described in |
 |---|---|---|

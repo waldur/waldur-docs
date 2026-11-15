@@ -69,7 +69,7 @@ endpoint and does not need a message-queue client.
 Use the filter button to show only webhook consumers (**Delivery** →
 **HTTP webhook**).
 
-## Adding a webhook consumer
+## Add a webhook consumer
 
 1. In the **Event consumers** card, click **Add webhook**.
 2. Fill in the form:

@@ -1,3 +1,9 @@
+---
+mentions:
+  - feature:marketplace.show_call_management_functionality
+  - feature:customer.show_onboarding
+---
+
 # Checklists and forms
 
 Waldur uses a flexible checklist system to create customizable forms for proposals, compliance checks, and onboarding workflows. This guide covers how to configure and manage checklists within call management.
@@ -99,7 +105,7 @@ Questions can be configured to flag answers for review by call managers:
 
 When a triggered answer is submitted, the checklist completion is marked as requiring review.
 
-## Attaching checklists to calls
+## Attaching checklists to calls { data-requires="feature:marketplace.show_call_management_functionality" }
 
 **Performed by:** Call manager
 
@@ -113,7 +119,7 @@ settings instead (see [Workflow configuration](workflow-configuration.md)).
 
 When a proposal is created, the system automatically creates a checklist completion record for that proposal. Submitters must answer all required questions before submitting.
 
-## Checklist completion tracking
+## Checklist completion tracking { data-requires="feature:marketplace.show_call_management_functionality !feature:marketplace.call_only" }
 
 For each proposal with an attached checklist:
 

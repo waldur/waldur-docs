@@ -26,7 +26,7 @@ Loading is idempotent — domains and sub-domains with codes that already exist 
 !!! tip
     Pick one preset that matches your audience and avoid mixing. Codes differ between presets and cannot be remapped automatically.
 
-## Adding domains manually
+## Add domains manually
 
 1. Click **Add** in the top-right of the list.
 2. Fill in **Code** (short identifier, e.g. `1`, `1.1`) and **Name**.

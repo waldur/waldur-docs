@@ -1,3 +1,8 @@
+---
+mentions:
+  - offering_type:VMware.VirtualMachine
+---
+
 # Marketplace
 
 ## Overview
@@ -100,7 +105,7 @@ Orders may be auto-approved, gated by an organization owner, or vetoed by a [pol
 
 Orders and resources have their own state machines — see the dedicated [Lifecycle page](lifecycle.md).
 
-## Related concepts
+## Related concepts { data-corpus="false" }
 
 - [Platform](platform.md) — users, organizations, projects.
 - [Call management](call-management.md) — proposal-driven allocation that ends in marketplace orders.

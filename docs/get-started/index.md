@@ -1,3 +1,7 @@
+---
+corpus: false
+---
+
 # Get started
 
 Pick the path that matches what you want to do.

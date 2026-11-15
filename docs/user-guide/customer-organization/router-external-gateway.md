@@ -1,3 +1,8 @@
+---
+requires:
+  - offering_type:OpenStack.Tenant
+---
+
 # Router external gateway management
 
 OpenStack VPC routers can be connected to an **external network** to give the

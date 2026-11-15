@@ -1,3 +1,8 @@
+---
+requires:
+  - feature:marketplace.show_call_management_functionality
+---
+
 # After the upgrade to workflow v2
 
 When your Waldur is upgraded to version 2 of the proposal module, existing calls and proposals are

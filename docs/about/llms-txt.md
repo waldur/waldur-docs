@@ -1,3 +1,8 @@
+---
+mentions:
+  - setting:AI_ASSISTANT_ENABLED
+---
+
 # LLM-Friendly Documentation (llms.txt)
 
 Waldur documentation supports the [llms.txt standard](https://llmstxt.org/) to provide optimized access for Large Language Models (LLMs) and AI assistants.

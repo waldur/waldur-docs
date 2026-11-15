@@ -1,3 +1,8 @@
+---
+requires:
+  - offering_type:OpenStack.Tenant
+---
+
 # Tenant network topology
 
 The **Topology** tab in an OpenStack tenant gives you a single-screen view of

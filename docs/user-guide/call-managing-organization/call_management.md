@@ -1,3 +1,8 @@
+---
+requires:
+  - feature:marketplace.show_call_management_functionality
+---
+
 # Call manager's roadmap
 
 This page walks through the lifecycle of a call from setup to final resource allocation, one

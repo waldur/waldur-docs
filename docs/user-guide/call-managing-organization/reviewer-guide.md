@@ -1,3 +1,8 @@
+---
+requires:
+  - "!feature:marketplace.call_only"
+---
+
 # Reviewer profile and invitations
 
 This guide covers getting set up as a reviewer in Waldur: managing your reviewer profile, accepting pool invitations and assignments, and finding your way around your reviews page. Reviewing and scoring a proposal, declaring conflicts of interest and working as a rapporteur are described in [Reviewing proposals](reviewer-workflow.md).
@@ -33,7 +38,7 @@ A single **Add** menu in the profile header adds an affiliation, expertise or pu
 !!! tip
     Keep your expertise and affiliations up to date. This data is used for automated reviewer-proposal matching and conflict of interest detection.
 
-### Publishing your profile
+### Publishing your profile { data-requires="setting:REVIEWER_PROFILES_ENABLED" }
 
 Click **Publish profile** when ready to receive review invitations. The status is shown as a badge (**Published** or **Not published**) on the profile and on the reviews page. Unpublished profiles are not visible to call managers and you will not receive new invitations until the profile is published.
 

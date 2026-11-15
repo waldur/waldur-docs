@@ -1,3 +1,8 @@
+---
+requires:
+  - feature:project.show_custom_metrics
+---
+
 # Custom metrics catalogue
 
 Services can report their own metrics to Waldur — course completions, active
@@ -37,7 +42,7 @@ Each definition has:
 - **State** — **Active**, or **Deprecated** when offerings may no longer adopt
   it.
 
-## Adding or editing a definition
+## Add or edit a definition
 
 Choose **Add metric**, or **Edit** in a row's actions menu.
 

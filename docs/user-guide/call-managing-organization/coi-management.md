@@ -1,3 +1,9 @@
+---
+requires:
+  - feature:marketplace.show_call_management_functionality
+  - "!feature:marketplace.call_only"
+---
+
 # Conflict of interest management
 
 Waldur includes a conflict of interest (COI) detection and management system for the call-for-proposals workflow, to ensure fair and unbiased peer review. This guide covers how call managers configure detection, review the conflicts found, and use staff override capabilities when the automated workflow gets blocked. What reviewers see and do is described in [Reviewing proposals](reviewer-workflow.md#declaring-a-conflict-of-interest).
@@ -68,7 +74,7 @@ must additionally attest to being conflict-free before they can submit their
 review — the **Submit review** button stays disabled until they do (see
 [Per-step settings](workflow-configuration.md#per-step-settings)).
 
-## Running COI detection
+## Running COI detection { data-requires="setting:COI_DETECTION_ENABLED" }
 
 1. Open the call's **Reviewer pool** and its **COI** tab, and click **Detect conflicts** (shown only when COI detection is enabled on the platform)
 2. The system runs a batch detection job in the background; the button shows that detection is running, and you are told how many new conflicts were found when it finishes

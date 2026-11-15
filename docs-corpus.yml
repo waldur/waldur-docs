@@ -1,0 +1,122 @@
+# What the AI assistant may search, and what each part of it needs switched on.
+#
+# hooks/docs_corpus.py reads this file on every build. It turns the site's search
+# index into docs-corpus.jsonl.gz, which mastermind's search_docs tool searches
+# (waldur/waldur-docs#37, waldur/waldur-mastermind#1204). See the "Documentation
+# for the AI assistant" section of README.md for how to tag a page.
+#
+# Patterns are regular expressions on the page's source path under docs/.
+
+# Pages the assistant may search. Everything else is left out.
+include:
+  - ^user-guide/
+  - ^get-started/
+  - ^about/
+  - ^integrator-guide/
+  - ^admin-guide/
+exclude:
+  - (^|/)CHANGELOG\.md$
+  - ^integrator-guide/waldur-cli/docs/reference/
+  - ^admin-guide/mastermind-configuration/(templates|notifications|scheduled)\.md$
+  - (^|/)tests/
+  - (^|/)LICENCE\.md$
+
+# Who may get a section. First match wins; the default is everyone.
+audience:
+  - pattern: ^admin-guide/
+    audience: staff
+  - pattern: ^user-guide/staff-users/
+    audience: staff_support
+
+# Ranking weight of a section, over the site search weight (hooks/search_weights.py).
+# The integrator guide explains the API; a user asking how to do something in the
+# portal wants the user guide, which it otherwise outranked for "create project".
+boost:
+  - pattern: ^integrator-guide/
+    boost: 0.6
+
+# Tags for pages synced from other repositories, which cannot carry them in their
+# own front matter. `anchor` (a regular expression on the heading id) limits a rule
+# to sections; without it the rule covers the whole page. `requires` are all
+# required; `mentions` are features a section refers to without depending on them.
+# Every term must be in the vocabulary mastermind publishes (`vocabulary` below).
+tags:
+  # Linked to from the same page, so a heading attribute would break the link check.
+  - pattern: ^user-guide/call-managing-organization/reviewer-management\.md$
+    anchor: generating-suggestions
+    requires: [setting:AUTOMATED_MATCHING_ENABLED]
+  - pattern: ^about/terminology/roles_and_permissions\.md$
+    anchor: user-roles-in-call-management
+    mentions: [feature:marketplace.show_call_management_functionality]
+  - pattern: ^integrator-guide/waldur-cli/docs/1-getting-started\.md$
+    anchor: token-types
+    requires: [setting:PAT_ENABLED]
+  - pattern: ^integrator-guide/waldur-cli/index\.md$
+    mentions: [setting:PAT_ENABLED]
+  - pattern: ^integrator-guide/waldur-cli/docs/4-provisioning-openstack\.md$
+    mentions: [offering_type:VMware.VirtualMachine]
+
+# Keys a `requires` term may name, published by mastermind's
+# `waldur print_docs_requires_vocabulary` and synced with its admin docs.
+vocabulary: admin-guide/mastermind-configuration/docs-requires-vocabulary.json
+
+# How end-user sections refer to features that a portal can switch off. A section
+# for everyone that matches a phrase must either require the term or state that it
+# mentions it on purpose (`data-mentions`); otherwise the build warns, which fails
+# a strict build. Phrases are case-insensitive regular expressions; `(?-i:...)`
+# makes one case-sensitive. `mentions_scope` limits the check to these pages.
+mentions_scope:
+  - ^user-guide/
+  - ^get-started/
+  - ^about/
+  - ^integrator-guide/
+mentions:
+  - term: setting:PAT_ENABLED
+    phrases: ['personal access tokens?', '\bPATs?\b']
+  - term: setting:MATRIX_ENABLED
+    phrases: ['chat encryption', '(?-i:\bMatrix\b)', 'project chat', 'chat rooms?']
+  - term: setting:AI_ASSISTANT_ENABLED
+    phrases: ['AI assistant']
+  - term: setting:AFFILIATES_ENABLED
+    phrases: ['\baffiliates?\b', 'affiliate (program|earnings|link)']
+  - term: feature:invitations.show_course_accounts
+    phrases: ['course accounts?']
+  - term: feature:customer.show_onboarding
+    phrases: ['onboarding wizard', 'organi[sz]ation onboarding', 'onboarding applications?']
+  - term: feature:project.show_custom_metrics
+    phrases: ['custom metrics']
+  - term: feature:marketplace.show_posix_id_pools
+    phrases: ['POSIX ID pools?', 'POSIX identit(y|ies)']
+  - term: feature:marketplace.show_call_management_functionality
+    phrases: ['call management', 'Manage calls']
+  - term: feature:marketplace.display_software_catalog
+    phrases: ['software catalog(ue)?s?']
+  - term: feature:customer.show_project_digest
+    phrases: ['project digest']
+  - term: offering_type:VMware.VirtualMachine
+    phrases: ['VMware', 'vSphere', 'vCenter']
+
+# What a section is for, in the Diátaxis sense. Mastermind weights concept
+# sections up for questions worded as concept questions ("what is",
+# "difference"), and only for those. First match wins; `type:` in a page's front
+# matter replaces it, and `data-kind` on a heading sets it for that section and
+# the ones under it.
+kind:
+  - pattern: ^about/(concepts|terminology)/
+    kind: concept
+  - pattern: ^(user-guide|get-started)/
+    kind: howto
+# A heading in a how-to page that explains rather than instructs makes its
+# section a concept section ("What happens at a limit", "When the end date arrives").
+# "How billing works" and "How resource slugs work" explain; "How to work
+# with volumes" and "How do I work with …" instruct.
+concept_headings: '^(What|When|Why|Who|About|Understanding|Overview|Introduction|Key concepts|Concepts?)\b|^How (?!to\b|do I\b|can I\b|do you\b|can you\b)(\S+ ){1,4}works?\b|\bvs\.?\b|\bdiffer'
+
+# Questions each section answers, in a user's words. They are searched but not
+# shown. scripts/section_questions.py writes them with an LLM for sections that
+# have none or whose text changed; edit them by hand as you like.
+questions: docs-questions.yml
+questions_scope:
+  - ^user-guide/
+  - ^get-started/
+  - ^about/

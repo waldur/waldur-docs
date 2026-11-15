@@ -23,7 +23,7 @@ Each chart has an **Export** menu to download its data.
   <figcaption>Overview tab of the Reporting menu</figcaption>
 </figure>
 
-## Reports for organization owners
+## Reports for organization owners { data-requires="feature:customer.show_organisation_reporting" }
 
 An administrator can enable the `customer.show_organisation_reporting` feature flag, which gives
 **organization owners** their own Reporting menu scoped to the organizations they own. The menu lists

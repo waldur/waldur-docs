@@ -1,3 +1,9 @@
+---
+requires:
+  - setting:AI_ASSISTANT_ENABLED
+  - feature:support.enable_llm_assistant
+---
+
 # AI Assistant
 
 Waldur includes a built-in AI Assistant that helps users manage cloud resources and navigate the platform through natural language conversation.

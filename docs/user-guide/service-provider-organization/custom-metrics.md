@@ -1,3 +1,8 @@
+---
+requires:
+  - feature:project.show_custom_metrics
+---
+
 # Custom metrics
 
 A service can report its own metrics for the resources it provides — courses

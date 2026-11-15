@@ -1,3 +1,9 @@
+---
+requires:
+  - feature:marketplace.show_call_management_functionality
+  - "!feature:marketplace.call_only"
+---
+
 # Allocation decision and award
 
 **Performed by:** The responsible role of the **Allocation decision** step (Call manager by default)

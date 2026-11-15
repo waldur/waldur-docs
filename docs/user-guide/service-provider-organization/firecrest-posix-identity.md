@@ -1,3 +1,8 @@
+---
+requires:
+  - feature:marketplace.show_posix_id_pools
+---
+
 # POSIX identity with OpenLDAP and FirecREST
 
 This page puts the pieces described on
@@ -51,7 +56,7 @@ flowchart LR
 | **Keycloak** with the Waldur username mapper | Puts the person's Waldur offering username into a token claim on every token issued |
 | **FirecREST v2** | Reads that claim as the username and acts on the clusters — SSH and slurmrestd — as that user |
 
-## Configuring Waldur
+## Configuring Waldur { data-requires="feature:marketplace.show_provider_accounts" }
 
 !!! tip "Step by step"
     The Waldur and site-agent parts of this section are covered as an ordered

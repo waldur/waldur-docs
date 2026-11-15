@@ -1,3 +1,8 @@
+---
+requires:
+  - feature:marketplace.show_call_management_functionality
+---
+
 # Rounds
 
 A round schedules one submission period of a call: when proposals can be submitted, how long

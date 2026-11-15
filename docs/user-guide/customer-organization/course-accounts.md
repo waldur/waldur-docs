@@ -1,3 +1,8 @@
+---
+requires:
+  - feature:invitations.show_course_accounts
+---
+
 # Course accounts
 
 Course accounts allow project managers to create temporary user accounts for course participants. Waldur supports both individual account creation and bulk import via CSV.

@@ -87,6 +87,23 @@ Organization that provides services to other organizations.
     | Approves Resource Requests (Orders) | :material-check: | :material-check: | | |
     | Manage Offerings (Service provider-specific) | :material-check: | :material-check: | | | |
 
+### User roles in Project
+
+What a project manager can do compared to a project administrator and a project member, with the
+default permissions (an operator can change them):
+
+| | Project manager | Project administrator | Project member |
+| --- | :----: | :----: | :----: |
+| See the project and its team | :material-check: | :material-check: | :material-check: |
+| Order resources | :material-check: | :material-check: | :material-check: |
+| Request a limit or end date change | :material-check: | :material-check: | :material-check: |
+| Approve, cancel and remove the project's orders | :material-check: | :material-check: | |
+| Manage resources: update, change plan and limits, terminate | :material-check: | :material-check: | |
+| Grant users access to a resource | :material-check: | :material-check: | |
+| Manage the project team: add, remove and change roles | :material-check: | | |
+| Edit the project's details | :material-check: | | |
+| Manage course and service accounts | :material-check: | | |
+
 ### User roles in Call management
 
 | Role name              | Scope           | Description |
@@ -107,10 +124,10 @@ Operators see these names in the administration interface and API payloads.
 |---|---|---|:---:|
 | Organization | Customer owner | Highest-level role in an organization; full administrative control. | Yes |
 | Organization | Customer manager | Managerial role for service providers within an organization. | Yes |
-| Organization | Customer support | Limited support access within an organization. | No |
+| Organization | Customer support | Limited support access within an organization. | Yes |
 | Project | Project administrator | Full control over a project, including resource and order management. | Yes |
 | Project | Project manager | Adds permission-management capabilities on top of administrator. | Yes |
-| Project | Project member | Limited project access. | No |
+| Project | Project member | Limited project access. | Yes |
 | Offering | Offering manager | Manages an offering's configuration and associated resources. | Yes |
 | Service provider | Service provider manager | Manages service-provider-specific settings and operations. | Yes |
 | Call managing organization | Customer call organizer | Organization-specific role for handling calls. | Yes |

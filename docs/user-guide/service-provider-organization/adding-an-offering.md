@@ -1,3 +1,8 @@
+---
+mentions:
+  - offering_type:VMware.VirtualMachine
+---
+
 # Offerings
 
 To create a new Offering in the Marketplace, you need to:
@@ -361,7 +366,7 @@ Pause and downscale are mutually exclusive — an offering uses at most one of t
 !!! note
     For provider backends that enforce these states (such as SLURM via the site agent), pausing blocks further usage and downscaling reduces the resource's share. For other backends the state is recorded and visible, but enforcement depends on the backend.
 
-## Adding custom components
+## Add custom components
 
 Service providers can add custom accounting components to any offering alongside the built-in ones. This is useful for non-infrastructure services like consultancy hours, support packages, or training credits.
 
@@ -385,7 +390,7 @@ Custom components appear alongside built-in components in the order form and pri
 
 ## Built-in components
 
-Every offering has an **Accounting** tab with **Components** and **Plans**, and selecting **Accounting** opens **Components** first. Some offering types come with **built-in components** that their integration defines and relies on — for example Cores, RAM and Storage for OpenStack tenants, CPU, RAM and Disk for VMware virtual machines, and CPU, RAM and Storage hours for Rancher clusters. Other offering types start without components, and you add your own as described in [Adding custom components](#adding-custom-components).
+Every offering has an **Accounting** tab with **Components** and **Plans**, and selecting **Accounting** opens **Components** first. Some offering types come with **built-in components** that their integration defines and relies on — for example Cores, RAM and Storage for OpenStack tenants, CPU, RAM and Disk for VMware virtual machines, and CPU, RAM and Storage hours for Rancher clusters. Other offering types start without components, and you add your own as described in [Add custom components](#add-custom-components).
 
 Because the integration looks built-in components up by their internal name, they are protected:
 
@@ -514,7 +519,7 @@ When you save the input, the pattern must be valid, at most 500 characters long,
     - Spaces are part of the pattern and are not trimmed, and neither is the customer's value: a trailing space makes `[0-9]{6}` fail.
     - Keep patterns simple. A pattern whose checking takes too long is stopped, and the order is rejected with *Value could not be checked against the pattern in time. Please contact the service provider.* Nested repetition such as `(a+)+` is the usual cause.
 
-#### Adding a prefix or suffix, or changing the case
+#### Add a prefix or suffix, or change the case
 
 The same step lets you rewrite the value before it is stored, so that customers do not have to type a fixed part themselves:
 
@@ -635,7 +640,7 @@ When the field is set:
 
 Leave the field empty to remove the restriction and make the offering available to everyone again.
 
-## Embedding images in the offering description
+## Embedding images in the offering description { data-requires="feature:marketplace.allow_display_of_images_in_markdown" }
 
 The **Description** and **Full description** fields use a rich Markdown editor. When image support is enabled, you can embed images directly into these descriptions — for example, an architecture diagram or a screenshot of the service.
 

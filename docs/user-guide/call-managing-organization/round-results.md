@@ -1,3 +1,9 @@
+---
+requires:
+  - feature:marketplace.show_call_management_functionality
+  - "!feature:marketplace.call_only"
+---
+
 # Publishing a round's results
 
 **Performed by:** Call manager

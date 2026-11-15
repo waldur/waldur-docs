@@ -1,8 +1,8 @@
 # Project membership management
 
 Project team contains users with different roles. See
-[Roles and permissions](../../about/terminology/roles_and_permissions.md#user-roles-in-organization)
-for the per-role permission matrix.
+[User roles in Project](../../about/terminology/roles_and_permissions.md#user-roles-in-project)
+for what a project manager, administrator and member can each do.
 
 The team is on the project's **Team** tab. **Active** lists the members and their roles,
 **Invitations** the invitations that are not accepted yet. **Add** offers two ways to add
@@ -13,7 +13,7 @@ someone:
 
 ![Project Team tab with the Add menu open](../img/project-team-add-menu.png)
 
-## Adding project members
+## Add project members
 
 ### New user already has an account in current Waldur instance
 

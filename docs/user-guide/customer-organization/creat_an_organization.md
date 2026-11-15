@@ -1,3 +1,8 @@
+---
+requires:
+  - feature:customer.show_onboarding
+---
+
 # Create an organization
 
 This guide explains how end users can create and register an organization in Waldur.

@@ -1,3 +1,9 @@
+---
+requires:
+  - feature:marketplace.show_call_management_functionality
+  - "!feature:marketplace.call_only"
+---
+
 # Reviewer management
 
 This guide covers the call manager's side of reviewing: building reviewer pools, configuring reviewer-proposal matching, sending assignment batches and managing reviewer capacity. Conflicts of interest are covered in [Conflict of interest management](coi-management.md); the reviewer's side in [Reviewer profile and invitations](reviewer-guide.md) and [Reviewing proposals](reviewer-workflow.md).

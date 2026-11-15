@@ -77,7 +77,7 @@ erred -> terminating
 | Terminating | 5 | Cleanup in progress. |
 | Terminated | 6 | Resource removed from the backend; record retained for billing. |
 
-## Resource status badge
+## Resource status badge { data-mentions="offering_type:VMware.VirtualMachine" }
 
 Resource lists and the resource page show a status badge next to each resource's name. The
 badge draws on up to three sources:
@@ -123,7 +123,7 @@ reports which operation it is running, the tooltip names it.
 
 A staff user can retry an erred order from the UI or via the API. Retry locks the row, re-checks the state inside a transaction, and re-enqueues the backend operation — see the [backend concurrency guidance](../../developer-guide/core-concepts/marketplace-orders.md) for the implementation detail.
 
-## Related concepts
+## Related concepts { data-corpus="false" }
 
 - [Marketplace](marketplace.md) — where orders originate.
 - [Policies](policies.md) — automated reactions to state changes (e.g. terminate on overspend).
