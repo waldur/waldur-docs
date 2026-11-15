@@ -1,3 +1,8 @@
+---
+requires:
+  - feature:marketplace.show_call_management_functionality
+---
+
 # Creating and configuring a call
 
 A call is created as a **draft**, blank or from a template, and configured on its **Edit**

@@ -1,3 +1,8 @@
+---
+requires:
+  - feature:marketplace.show_call_management_functionality
+---
+
 # Dashboards and reports
 
 **Performed by:** Call manager and Call organiser
@@ -37,7 +42,7 @@ call's workflow steps read-only below the figures:
       - Review progress
       - Reviewer pool capacity
 
-## Call reports
+## Call reports { data-requires="!feature:marketplace.call_only" }
 
 **Call management → Reports** on a call-managing organisation, and the
 **Reports** tab of a call's **Manage** page, summarise the calls you may
@@ -54,7 +59,7 @@ configure. Filter them by call, round and dates, and switch between:
 Staff and support find the same reports across every organisation under **Reporting →
 Proposals**, filtered additionally by organisation.
 
-## Admin reviews and proposals
+## Admin reviews and proposals { data-requires="!feature:marketplace.call_only" }
 
 Staff, support, call organisers and call managers find **All reviews** and **All
 proposals** in the calls section of the sidebar. **All reviews** lists reviews across the

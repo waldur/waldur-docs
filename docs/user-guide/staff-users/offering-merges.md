@@ -95,7 +95,7 @@ States a merge goes through:
 | Failed | Execution was rolled back; nothing was written. The record can no longer be edited or deleted, but running the preview again returns it to *Previewed* and unlocks the mappings. The wizard opens a failed merge on its last step. |
 | Undoing, Undone | Undo in progress, or finished. |
 
-### OpenStack duplicate offerings
+### OpenStack duplicate offerings { data-requires="feature:marketplace.show_openstack_duplicate_offerings" }
 
 Below the list, a second panel groups OpenStack offerings that belong to the same tenant
 and are of the same type — the duplicates that auto-creation leaves behind. Each row shows

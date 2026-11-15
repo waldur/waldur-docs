@@ -1,3 +1,8 @@
+---
+requires:
+  - offering_type:OpenStack.Tenant
+---
+
 # IPv6 in OpenStack tenants
 
 Waldur can manage OpenStack tenants that use IPv6, including clouds where
@@ -81,7 +86,7 @@ When writing a rule, give the remote prefix in the same family as the rule's
 ethertype — for example `::/0` for "anywhere" on an IPv6 rule, rather than
 `0.0.0.0/0`.
 
-## Virtual machines
+## Virtual machines { data-requires="offering_type:OpenStack.Instance" }
 
 ### Creating a virtual machine
 

@@ -132,7 +132,7 @@ Contains billing-related configurations:
 
 ![Billing tab of an organization](../img/organization-edit-billing.png)
 
-### Call manager
+### Call manager { data-requires="feature:marketplace.show_call_management_functionality" }
 
 You can make the organization a call manager, which lets it run calls for proposals, by
 switching on **Enable call manager**.

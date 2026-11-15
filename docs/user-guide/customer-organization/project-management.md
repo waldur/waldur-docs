@@ -1,6 +1,11 @@
 # Project management
 
-Project creation is allowed for organization owners in their organizations and staff users.
+Create a project in your organization, change its details, and control what happens when it ends.
+
+## Create a project
+
+Organization owners create projects in their organizations; staff can create them anywhere. To add
+a new project:
 
 !!! note
     User must have an account in Waldur instance to create projects.
@@ -20,14 +25,18 @@ Project creation is allowed for organization owners in their organizations and s
     - **Start date** - once reached, marks the date when prepared user invitations are sent out and triggers the processing of previously made resource orders.
     - **End date** – once reached (plus any configured grace period), triggers the creation of termination orders for the existing resources. If the resources have already been terminated by this time, the project will be removed. The date is inclusive.
 
-4. To change the project's details later, or to set those the dialog did not ask for, open the
-   project and select the **Edit** tab. **General** holds the name, start and end dates and
-   description.
-
-    ![General settings on the project's Edit tab](../img/project-edit-general.png)
-
 !!! note
     Your Waldur administrator may enforce a project name convention (for example, a maximum length). If the name you enter does not meet the requirement, the form shows an error and the project is not created. See [Project name restrictions](../staff-users/project-name-restrictions.md).
+
+## Change a project's details
+
+To change the project's details later, or to set those the creation dialog did not ask for, open
+the project and select the **Edit** tab. **General** holds the name, start and end dates and
+description.
+
+![General settings on the project's Edit tab](../img/project-edit-general.png)
+
+## End dates and resources
 
 !!! note
     1. If a resource has a termination date that comes after the project's end date, the project's end date will automatically become that resource's termination date.
@@ -78,7 +87,7 @@ From the first day after the project's end date, resources of offerings that sup
 !!! warning
     Once the grace period expires (i.e., the resource termination date is reached), all project resources will be scheduled for termination, just as they would on the regular end date.
 
-## Science domain
+## Science domain { data-requires="feature:project.science_domain" }
 
 If staff have configured a science-domain taxonomy and enabled the feature, every project can be tagged with one **Science domain** and one **Science sub-domain**. The tag helps with cross-project reporting and discovery.
 

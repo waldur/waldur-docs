@@ -40,13 +40,19 @@ Click your name in the top-right corner to open the user menu.
 | Entry | What it is for |
 |-------|----------------|
 | **User dashboard** | Your profile, resources and roles |
-| **Credentials** | Password, SSH keys and personal access tokens |
+| **Credentials** | Password and SSH keys |
 | **Resource requests** | Resources you have requested |
 | **My proposals** | Proposals you have submitted to calls |
 | **Permission requests** | Requests to join an organization or project |
 | **Audit logs** | A record of your own actions |
 | **Language**, **Dark theme** | Interface language and colour mode |
 | **API token** | Your token for the REST API, with a copy button |
+
+### Personal access tokens in the user menu { data-requires="setting:PAT_ENABLED" }
+
+Where personal access tokens are enabled, **Credentials** also holds them: scoped,
+time-limited tokens for scripts and integrations. See
+[Personal access tokens](personal-access-tokens.md).
 
 ## Getting help
 

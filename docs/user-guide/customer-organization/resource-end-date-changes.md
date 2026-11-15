@@ -35,7 +35,7 @@ pending one and lets you withdraw it if the date is no longer what you need.
 
 ![An already pending request](../img/resource-end-date-request-pending.png)
 
-### OpenStack
+### OpenStack { data-requires="offering_type:OpenStack.Tenant" }
 
 On OpenStack, the request is made on the **tenant**. Open the tenant's
 **Actions** menu and choose **Show all**: **Request end date change** is listed

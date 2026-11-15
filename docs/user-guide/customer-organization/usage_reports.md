@@ -13,7 +13,7 @@ usage reports.
 
 The usage of a single resource is on the resource's own page.
 
-### Private clouds
+### Private clouds { data-requires="offering_type:OpenStack.Tenant" }
 
 1. Open your project and select the **Resources** tab.
 2. Open the private cloud (VPC) resource.
@@ -46,7 +46,7 @@ The usage of a single resource is on the resource's own page.
 
 7. **Export all** downloads the usage as PNG, PDF, CSV or Excel.
 
-## Including terminated resources
+## Including terminated resources { data-requires="feature:dashboard.usage_include_terminated" }
 
 Usage charts normally count only resources that still exist, so terminating one removes
 its usage from the totals and from a project's own history. An administrator can enable

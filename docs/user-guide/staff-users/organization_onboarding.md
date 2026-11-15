@@ -1,3 +1,8 @@
+---
+requires:
+  - feature:customer.show_onboarding
+---
+
 # Organization onboarding
 
 This guide explains how administrators and staff users configure and manage organization onboarding in Waldur.

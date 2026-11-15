@@ -1,10 +1,15 @@
+---
+requires:
+  - "!feature:marketplace.call_only"
+---
+
 # Requests for changes and withdrawals
 
 A submitted proposal is fixed: what was submitted is what gets evaluated. Two things change
 that during evaluation — a step can send the proposal back to its applicant for changes, and
 the applicant can withdraw it.
 
-## Requesting changes from the applicant
+## Requesting changes from the applicant { data-requires="feature:marketplace.show_call_management_functionality" }
 
 **Performed by:** Whoever acts on the current step (call manager by default)
 

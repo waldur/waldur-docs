@@ -1,3 +1,9 @@
+---
+requires:
+  - feature:marketplace.show_call_management_functionality
+  - "!feature:marketplace.call_only"
+---
+
 # Running the evaluation
 
 **Performed by:** Call manager, and whoever acts on the current step

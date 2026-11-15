@@ -1,3 +1,9 @@
+---
+requires:
+  - feature:project.show_custom_metrics
+  - offering_type:OpenStack.Tenant
+---
+
 # OpenStack instance metrics
 
 Waldur can read the usage figures of the virtual machines in your OpenStack

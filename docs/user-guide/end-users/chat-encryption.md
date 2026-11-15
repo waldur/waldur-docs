@@ -1,3 +1,9 @@
+---
+requires:
+  - setting:MATRIX_ENABLED
+  - feature:project.show_matrix_chat
+---
+
 # Chat encryption
 
 Project chat rooms are end-to-end encrypted. Your browser encrypts a message

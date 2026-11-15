@@ -1,3 +1,8 @@
+---
+requires:
+  - "!feature:marketplace.call_only"
+---
+
 # Purchase orders in calls
 
 Some offerings may not be provisioned until the applicant supplies a purchase order — the authorisation from their organisation to spend the money. When such an offering is part of a call, Waldur collects the purchase order during the proposal rather than after the allocation, so the reviewer sees the authorisation alongside the amounts and the applicant is not asked for it a second time.

@@ -1,3 +1,8 @@
+---
+requires:
+  - feature:marketplace.show_posix_id_pools
+---
+
 # Project groups
 
 A **project group** is the one POSIX group a project gets at your service
@@ -60,7 +65,7 @@ When the project's last resource at your provider is terminated, or the
 project is deleted, the group stays, marked **Not in use**, and keeps its GID.
 A new resource later picks up the same group and GID.
 
-## Rolling out project groups
+## Rolling out project groups { data-requires="feature:marketplace.show_provider_accounts" }
 
 Your directory may already hold groups for some projects, with GIDs that files
 on your storage carry. To keep those GIDs, enable project groups in this order:

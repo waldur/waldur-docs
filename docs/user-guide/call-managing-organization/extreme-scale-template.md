@@ -1,3 +1,8 @@
+---
+requires:
+  - feature:marketplace.show_call_management_functionality
+---
+
 # Extreme Scale call template
 
 The **Extreme Scale Access** template is a ready-made call configuration for allocating the largest partitions of a set of systems to projects of high scientific impact. It configures thirteen evaluation steps, a request for extension and a final report after the award, an evaluator role for rapporteurs, contributor sources, input steps, evaluation forms and notification rules, so a call-managing organisation does not have to build that process by hand. Create a call from it, fill in what is specific to your portal, and adapt the steps to your own allocation process.

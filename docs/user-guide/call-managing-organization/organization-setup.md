@@ -1,3 +1,8 @@
+---
+requires:
+  - feature:marketplace.show_call_management_functionality
+---
+
 # Enabling call management
 
 Before an organisation can run calls, staff turn call management on for it, and its owner

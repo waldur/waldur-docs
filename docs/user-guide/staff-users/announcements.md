@@ -14,7 +14,7 @@ Open **Support → Communication → Announcements**.
 
 ![List of announcements](../img/list_of_announcements.png)
 
-## Adding an announcement
+## Add an announcement
 
 1. Select **Add** from the announcement management page.
 2. Choose the **type** of announcement, as well as the **start** and **end** times.

@@ -1,3 +1,8 @@
+---
+requires:
+  - feature:marketplace.show_call_management_functionality
+---
+
 # Application form
 
 **Performed by:** Call manager

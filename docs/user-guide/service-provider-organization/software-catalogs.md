@@ -1,3 +1,8 @@
+---
+requires:
+  - feature:marketplace.display_software_catalog
+---
+
 # Software Catalogs
 
 Software catalogs allow service providers to associate scientific software environments

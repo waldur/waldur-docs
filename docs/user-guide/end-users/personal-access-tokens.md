@@ -1,3 +1,8 @@
+---
+requires:
+  - setting:PAT_ENABLED
+---
+
 # Personal access tokens
 
 Personal access tokens (PATs) provide a secure way to authenticate with the Waldur API for programmatic access. Unlike session-based authentication, PATs are scoped, time-limited, and can be revoked independently.

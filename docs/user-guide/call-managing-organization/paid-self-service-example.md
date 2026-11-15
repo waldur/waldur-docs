@@ -1,3 +1,8 @@
+---
+requires:
+  - feature:marketplace.show_call_management_functionality
+---
+
 # Example: a paid self-service call
 
 Not every call evaluates science. An organisation may use a call to sell a service, such as

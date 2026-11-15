@@ -100,7 +100,7 @@ X-Result-Count: 1
 The total number of matches is returned in the `X-Result-Count` header, and `Link` carries the
 pagination cursors.
 
-## Site-wide grants
+## Site-wide grants { data-mentions="setting:PAT_ENABLED" }
 
 A deployment can define site-wide roles, whose permissions apply on every object rather than on
 one organization or project. A grant of one appears in `/api/user-permissions/` with

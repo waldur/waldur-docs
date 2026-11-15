@@ -17,7 +17,7 @@ invitation links. **Add** offers three ways to add people:
 
 ![Organization Team tab with the Add menu open](../img/org-team-add-menu.png)
 
-## Adding organization members
+## Add organization members
 
 1. Open the organization and select the **Team** tab.
 2. Click **Add** and select **Invite by mail**.

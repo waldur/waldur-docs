@@ -1,3 +1,8 @@
+---
+requires:
+  - offering_type:VMware.VirtualMachine
+---
+
 # VMware virtual machines
 
 If your service provider offers VMware vSphere, you can order virtual machines from the

@@ -1,3 +1,8 @@
+---
+requires:
+  - feature:support.enable_llm_assistant
+---
+
 # Reviewing AI Assistant chat sessions
 
 This guide helps helpdesk staff review the conversations users have had with the

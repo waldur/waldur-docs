@@ -1,3 +1,8 @@
+---
+requires:
+  - "!feature:marketplace.call_only"
+---
+
 # Applicant guide
 
 This guide follows an **applicant** (a principal investigator or proposal

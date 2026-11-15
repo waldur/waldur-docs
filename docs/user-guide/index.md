@@ -1,3 +1,7 @@
+---
+corpus: false
+---
+
 # User guide
 
 This section contains instructions to typical operations done with Waldur. The section can be used as a basis

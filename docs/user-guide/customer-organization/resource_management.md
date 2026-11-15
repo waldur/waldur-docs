@@ -1,6 +1,6 @@
 # Resource management
 
-## VPC management
+## VPC management { data-requires="offering_type:OpenStack.Tenant" }
 
 A Virtual Private Cloud (VPC) is a private OpenStack cloud, also called a tenant. It has its own
 quota of CPU cores, RAM and storage and its own internal network. Virtual machines and volumes
@@ -66,7 +66,7 @@ Creating the VPC takes a few minutes. When it is done, the state changes to **OK
     **Volume in &lt;VPC name&gt;**. Only the VPC's project can use them, and the virtual machines
     and volumes created from them are charged as part of the VPC.
 
-## VM management
+## VM management { data-requires="offering_type:OpenStack.Instance" }
 
 !!! info
     A virtual machine runs inside a VPC, so its project needs one first. See

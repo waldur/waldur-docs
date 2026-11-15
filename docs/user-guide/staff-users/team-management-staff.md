@@ -1,6 +1,6 @@
 # Team management for staff
 
-## Adding organization members
+## Add organization members
 
 ### New user already has account in current Waldur instance
 

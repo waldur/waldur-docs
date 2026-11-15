@@ -1,3 +1,8 @@
+---
+requires:
+  - "!feature:marketplace.catalogue_only"
+---
+
 # Order management
 
 When a customer requests a resource from your offering, an order is created and

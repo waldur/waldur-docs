@@ -1,3 +1,8 @@
+---
+requires:
+  - offering_type:OpenStack.Tenant
+---
+
 # OpenStack tenant quotas
 
 As a service provider you can raise or lower the OpenStack-enforced resource

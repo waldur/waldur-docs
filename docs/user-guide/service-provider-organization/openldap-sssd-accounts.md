@@ -1,3 +1,8 @@
+---
+mentions:
+  - feature:marketplace.show_posix_id_pools
+---
+
 # Waldur-authoritative accounts in OpenLDAP
 
 Where [GLAuth](glauth-user-accounts.md) renders a directory *from* Waldur on every

@@ -1,3 +1,8 @@
+---
+requires:
+  - feature:marketplace.show_call_management_functionality
+---
+
 # Proposal ID configuration
 
 Waldur allows call managers to configure custom proposal ID patterns per call. This ensures proposals have meaningful, structured identifiers that follow organizational conventions.

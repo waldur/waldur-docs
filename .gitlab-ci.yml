@@ -200,7 +200,68 @@ Test mkdocs:
     # Runs after the environment is synced, not with the fast pre-checks above:
     # importing the sync script pulls in PyYAML.
     - uv run python -m unittest scripts/test_sync_external_docs.py
+    - uv run python -m unittest scripts/test_docs_corpus.py
+    # Structure the AI assistant's search depends on (README, "Documentation
+    # for the AI assistant"): new findings fail, the baseline only shrinks.
+    - uv run python -m unittest scripts/test_lint_docs_structure.py
+    - uv run python scripts/lint_docs_structure.py
     - uv run mkdocs build --strict --site-dir test
+
+# The AI assistant's documentation corpus (hooks/docs_corpus.py, docs-corpus.yml),
+# published to this project's generic package registry as
+# docs-corpus/<version>/docs-corpus.jsonl.gz. Mastermind images download it at
+# build time (waldur/waldur-mastermind#1204): its develop images take `latest`,
+# and a release image takes the version named after its tag. This job runs in
+# `test`, before `Release Waldur Mastermind`, so a release tag's corpus exists
+# by the time mastermind builds that tag. A failure leaves mastermind's images
+# without documentation search, not without a release, so it does not block
+# one.
+Publish docs corpus:
+  image: registry.hpc.ut.ee/mirror/library/python:3.13
+  stage: test
+  interruptible: true
+  rules:
+    - if: '$BUILD_SDK == "true"'
+      when: never
+    - if: '$CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE != "schedule"'
+    - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+(-rc\.\d+)?$/'
+      allow_failure: true
+  needs:
+    - job: "Build OIDC explainer"
+      artifacts: true
+      optional: true
+  variables:
+    UV_CACHE_DIR: "$CI_PROJECT_DIR/.uv-cache"
+    DOCS_CORPUS_OUT: "$CI_PROJECT_DIR/docs-corpus.jsonl.gz"
+  cache:
+    key:
+      files:
+        - uv.lock
+    paths:
+      - .uv-cache/
+    policy: pull
+  script:
+    - *setup_mkdocs_steps
+    - uv run python -m unittest scripts/test_docs_corpus.py
+    - uv run mkdocs build --site-dir corpus-site
+    - |
+      upload() {
+        curl --fail-with-body --silent --show-error \
+          --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
+          --upload-file "$DOCS_CORPUS_OUT" \
+          "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/docs-corpus/$1/docs-corpus.jsonl.gz"
+        echo
+      }
+      if [ -n "$CI_COMMIT_TAG" ]; then
+        upload "$CI_COMMIT_TAG"
+      else
+        upload "$CI_COMMIT_SHA"
+        upload latest
+      fi
+  artifacts:
+    paths:
+      - docs-corpus.jsonl.gz
+    expire_in: 1 week
 
 # The Python client is regenerated from the API schema every night, so its
 # endpoints, enums and models get renamed or dropped without anyone touching

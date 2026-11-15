@@ -1,3 +1,8 @@
+---
+mentions:
+  - feature:marketplace.show_posix_id_pools
+---
+
 # GLAuth (LDAP) user accounts
 
 Linux and HPC offerings provisioned through the Waldur site agent expose their
@@ -129,7 +134,7 @@ shells, and the account never appears in the GLAuth directory. This lets a
 provider run username-only offerings next to full HPC offerings without
 changing any instance-wide setting.
 
-## Per-user overrides
+## Per-user overrides { data-requires="feature:marketplace.show_posix_id_pools" }
 
 The login shell, home directory, **UID** and **primary GID** default from the
 offering-level settings and the [POSIX ID pool allocator](posix-id-pools.md),
@@ -188,7 +193,7 @@ change submitted in the same call is rolled back with it.
 Calling this endpoint requires permission to update offering users on the
 offering's organization.
 
-## Group memberships
+## Group memberships { data-requires="feature:marketplace.show_posix_id_pools" }
 
 Expanding an offering user shows the **project group GIDs** they belong to —
 the shared GIDs emitted in their GLAuth `otherGroups` — each with its owning
@@ -236,7 +241,7 @@ project `team-x` under it whose `ProjectMember` is `bob` yields
 `cluster_<rp-uuid>_member` (member `bob`). Both appear next to the project
 groups under `ou=groups` in the offering's **View GLAuth configuration** viewer.
 
-## Reviewing a user's identifiers
+## Reviewing a user's identifiers { data-requires="feature:marketplace.show_posix_id_pools" }
 
 Expanding an offering user also shows a **POSIX identifiers** table with the
 account's UID and primary GID and, for each, the **POSIX ID pool** it is tracked

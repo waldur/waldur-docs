@@ -1,3 +1,9 @@
+---
+requires:
+  - setting:AFFILIATES_ENABLED
+  - feature:reseller.affiliates
+---
+
 # Affiliate program (staff)
 
 The affiliate program lets one organization (the **affiliate**) earn a fee from

@@ -1,3 +1,8 @@
+---
+requires:
+  - feature:marketplace.show_posix_id_pools
+---
+
 # Managing POSIX ID pools
 
 Linux and HPC offerings provision local accounts and groups for their users —

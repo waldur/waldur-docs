@@ -1,3 +1,8 @@
+---
+requires:
+  - feature:marketplace.show_call_management_functionality
+---
+
 # Resources, role mapping and team
 
 **Performed by:** Call manager

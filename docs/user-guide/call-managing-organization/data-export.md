@@ -1,3 +1,8 @@
+---
+mentions:
+  - feature:marketplace.show_call_management_functionality
+---
+
 # Data export
 
 Waldur provides multiple ways to export data from the platform. This guide covers the export capabilities available for call management. For dashboards and the **Reports** page, see [Dashboards and reports](dashboards-and-reports.md).
@@ -33,7 +38,7 @@ only the visible columns are written.
 !!! tip
     Apply table filters before exporting to narrow down the data.
 
-### Full proposal and review reports
+### Full proposal and review reports { data-requires="feature:marketplace.show_call_management_functionality !feature:marketplace.call_only" }
 
 On a call's **Manage** page, the **Proposals** and **Reviews** tables offer a
 second kind of export to call managers, call organisers and staff: under
@@ -51,7 +56,7 @@ writes it as a CSV of every page, with the table's filters applied:
 Reviewers' private notes are never exported, and text that would start a
 spreadsheet formula is written with a leading apostrophe.
 
-### One proposal as a PDF
+### One proposal as a PDF { data-requires="!feature:marketplace.call_only" }
 
 **Download PDF** on a proposal (on the proposal page, or in a proposal row's
 actions) renders the proposal as one document, for archiving or a panel
@@ -80,7 +85,7 @@ The attachments themselves are not included.
 The round's ranking has its own export and import — see
 [Ranking and meeting notes](round-rankings.md#ranking-and-meeting-notes).
 
-## Call reports
+## Call reports { data-requires="feature:marketplace.show_call_management_functionality !feature:marketplace.call_only" }
 
 The **Reports** page (Portfolio, Workflow, Reviewers, Rounds and Budgets) is described in
 [Dashboards and reports](dashboards-and-reports.md#call-reports).

@@ -4,6 +4,23 @@
 
 Waldur organizes everything around three primitives: **users**, **organizations**, and **projects**. Users get roles inside organizations or projects; resources are grouped under projects; organizations carry the contractual and financial responsibility. Every other Waldur concept — marketplace orders, calls, invoices, policies, quotas — binds to one of these three.
 
+## How organizations and projects differ
+
+An **organization** is the customer: a company, department, faculty or research infrastructure that
+holds the contract and is invoiced for what its projects use. Its owners create its projects, manage
+its team and see its invoices. An organization can also be a service provider, offering services to
+other organizations.
+
+A **project** belongs to one organization and groups the resources a team works with and the people
+who use them. Resources are always ordered into a project. A project has its own team — managers,
+administrators and members — and its own start and end dates; what its resources cost appears on its
+organization's invoice.
+
+In short, the organization is who owns and pays, the project is what is used and by whom. An
+organization usually has many projects, and a user can have roles in several organizations and
+projects. See [Roles and permissions](../terminology/roles_and_permissions.md) for what each role
+may do.
+
 ## Structure
 
 ```d2
@@ -52,7 +69,7 @@ Waldur reuses the same primitives across three common installation types:
 
 The role matrix for each shape — Owner, PI, Service Manager, etc. — is documented in [Roles & permissions](../terminology/roles_and_permissions.md).
 
-## Related concepts
+## Related concepts { data-corpus="false" }
 
 - [Marketplace](marketplace.md) — how a project obtains a resource.
 - [Lifecycle](lifecycle.md) — what happens to that resource over time.

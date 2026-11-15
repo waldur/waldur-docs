@@ -1,3 +1,8 @@
+---
+requires:
+  - "!feature:marketplace.call_only"
+---
+
 # Reviewing proposals
 
 This guide follows a **reviewer** through the review itself: declaring conflicts of interest,

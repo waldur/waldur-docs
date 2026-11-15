@@ -1,3 +1,8 @@
+---
+requires:
+  - feature:project.show_custom_metrics
+---
+
 # Project metrics
 
 Some services report metrics about what they do for your project — how many

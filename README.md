@@ -110,6 +110,99 @@ python3 scripts/regenerate-changelog-entry.py --list-versions
 - Core repository vs SDK separation
 - Professional language formatting
 
+## Documentation for the AI assistant
+
+Waldur's AI assistant answers "how do I…" questions from these pages. Every build
+splits the site into sections (`hooks/docs_corpus.py`, configured in
+`docs-corpus.yml`), and the `Publish docs corpus` CI job publishes them as
+`docs-corpus.jsonl.gz` for mastermind to ship.
+
+A portal can switch features off, and the assistant must not walk an end user
+through a menu their portal does not have. So a page or section that describes a
+feature that can be switched off says what it needs:
+
+```markdown
+---
+requires:
+  - setting:PAT_ENABLED
+---
+
+# Personal access tokens
+```
+
+A section of a page that is otherwise always available is tagged on its heading,
+and the tag covers the headings below it:
+
+```markdown
+## 1. Get a token { data-requires="setting:PAT_ENABLED" }
+```
+
+- Terms are `setting:<KEY>`, `feature:<section.key>`, `!feature:<section.key>` (the
+  flag is off), `offering_type:<type>` and `capability:<name>`. The keys are the ones
+  mastermind publishes in
+  `docs/admin-guide/mastermind-configuration/docs-requires-vocabulary.json`; a term
+  outside it fails the build. Several terms are all required.
+- A section that refers to a gated feature without depending on it (a menu listing,
+  "if your portal offers…") says so with `{ data-mentions="setting:PAT_ENABLED" }`, or
+  for the whole page with `mentions:` in the front matter.
+  The build warns about any end-user section that matches one of the phrases under
+  `mentions:` in `docs-corpus.yml` and carries neither tag; the strict build in CI
+  fails on it.
+- `corpus: false` in the front matter, or `{ data-corpus="false" }` on a heading,
+  keeps a page or section out of the assistant's search, for pages that only link
+  to others.
+- Terms that start with `!` must be quoted in front matter (`- "!feature:x"`): unquoted,
+  YAML reads them as a tag and MkDocs drops the whole front matter. The build warns
+  when that happens.
+- Pages synced from other repositories cannot carry front matter here; give them their
+  tags under `tags:` in `docs-corpus.yml`, by path and, for one section, by anchor.
+  Use the same for a heading that links point to: markdownlint does not read the
+  attribute list, so it reports those links as broken.
+
+How the assistant's search finds a section (measured in waldur/waldur-docs!548 on
+questions the pages were not written for):
+
+- **One task per heading, named with its verb and object**: "Create a project",
+  not "Project management" or "Creation". The search stems words, so "Creating"
+  and "Create" match alike, but nouns ("creation", "membership") do not match the
+  verbs people type, and "Adding" stems to `ad`, which "add" does not match.
+- **A concept question gets its own heading, worded as the question**: "How
+  organizations and projects differ". Headings in a how-to page that explain
+  ("What happens at a limit", "When the end date arrives") are taken as concept
+  sections, which the search weights up for "what is" and "difference" questions.
+  Set a page's kind with `type: concept` (or `howto`, `reference`) in front matter,
+  or a section's with `{ data-kind="concept" }`, where the rules in
+  `docs-corpus.yml` guess wrong.
+- **Questions a section answers** are in `docs-questions.yml`, matched by the search
+  but never shown, so "invite a colleague" finds "Add project members". After
+  changing pages, refresh the entries of new and changed sections with
+  `scripts/section_questions.py` (it needs an OpenAI-compatible LLM; see the
+  script), and correct any question by hand.
+
+`scripts/lint_docs_structure.py` checks these rules on every pipeline, for the
+pages in `questions_scope`:
+
+| Rule | Finds | Instead |
+|------|-------|---------|
+| DS001 | "Adding …": the search stems it to `ad`, which "add" does not match | "Add …" |
+| DS002 | a how-to heading that names a topic: "Project creation" | the task with its verb: "Create a project" |
+| DS003 | a heading that says nothing: "Overview", "Details" | what the section is about |
+| DS004 | over 450 words before the next heading | a heading per task or topic |
+| DS005 | "the table above", "see above": a section is read on its own | name what you refer to |
+| DS006 | a concept page with no section worded as its question | "What is an offering", "How X and Y differ" |
+
+Findings that predate the linter are listed in `docs-structure-baseline.txt` and do
+not fail the build; new ones do. When you fix a listed one, run
+`uv run python scripts/lint_docs_structure.py --update-baseline` to drop its line;
+it never adds one. A finding you mean to keep goes in only with `--accept-new`,
+where reviewers see it in the diff. `--all` lists the baselined findings as well.
+
+To look at the corpus a build produces:
+
+```bash
+DOCS_CORPUS_OUT=/tmp/docs-corpus.jsonl.gz uv run mkdocs build
+```
+
 ## Releasing a New Version
 
 Releases are driven from this repository. Pushing a version tag here triggers the CI pipeline that tags all child repositories, bumps versions in Helm/Docker Compose, and releases SDKs.

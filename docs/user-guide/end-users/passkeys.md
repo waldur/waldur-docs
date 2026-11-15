@@ -12,7 +12,7 @@ it was created for.
 - A device with an authenticator: Touch ID or Face ID on Apple devices,
   Windows Hello, an Android screen lock, or a USB security key.
 
-## Adding a passkey
+## Add a passkey
 
 1. Go to **Profile > Credentials > Passkeys**.
 

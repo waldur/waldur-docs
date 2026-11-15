@@ -1,3 +1,8 @@
+---
+mentions:
+  - setting:AFFILIATES_ENABLED
+---
+
 # Affiliate earnings and volume discounts
 
 If your organization is an **affiliate** — you refer another organization under
@@ -5,7 +10,7 @@ the [affiliate program](../staff-users/affiliate-program.md) — you can track t
 fees you have earned. If your organization receives **volume discounts**, they
 appear on your invoices. Both are visible to organization owners.
 
-## Viewing affiliate earnings
+## Viewing affiliate earnings { data-requires="setting:AFFILIATES_ENABLED feature:reseller.affiliates" }
 
 Open your organization's **Accounting → Affiliate earnings** page. The tab lists
 one row per affiliate link, showing the referred organization, the fee

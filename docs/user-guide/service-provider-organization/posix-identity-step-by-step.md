@@ -1,3 +1,9 @@
+---
+requires:
+  - feature:marketplace.show_posix_id_pools
+  - feature:marketplace.show_provider_accounts
+---
+
 # Shared POSIX identity, step by step
 
 One directory, several SLURM offerings of one provider, and one entry per
