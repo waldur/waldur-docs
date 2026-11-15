@@ -202,6 +202,33 @@ Test mkdocs:
     - uv run python -m unittest scripts/test_sync_external_docs.py
     - uv run mkdocs build --strict --site-dir test
 
+# The Python client is regenerated from the API schema every night, so its
+# endpoints, enums and models get renamed or dropped without anyone touching
+# these pages. Check the integrator-guide examples against the newest build:
+# on MRs that change the pages or the checker, and on scheduled pipelines for
+# changes to the client. The client's dependencies are pinned and only wheels
+# are installed, so nothing downloaded runs at install time.
+Check Python SDK examples:
+  image: registry.hpc.ut.ee/mirror/library/python:3.13
+  stage: test
+  interruptible: true
+  needs: []
+  rules:
+    - if: '$BUILD_SDK == "true"'
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - docs/integrator-guide/**/*
+        - scripts/check_sdk_examples.py
+        - scripts/test_check_sdk_examples.py
+        - scripts/sdk-examples-constraints.txt
+        - .gitlab-ci.yml
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+  script:
+    - 'pip install --quiet --pre --only-binary=:all: -c scripts/sdk-examples-constraints.txt waldur-api-client'
+    - python3 -m unittest scripts/test_check_sdk_examples.py
+    - python3 scripts/check_sdk_examples.py
+
 Test Docker Compose deployment before tagging:
   stage: test
   rules:
