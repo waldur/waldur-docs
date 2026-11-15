@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-15T14:43:46.559506Z
+Generated: 2026-11-15T22:55:31.421709Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -236,6 +236,23 @@ Organization that provides services to other organizations.
     | Approves Resource Requests (Orders) | :material-check: | :material-check: | | |
     | Manage Offerings (Service provider-specific) | :material-check: | :material-check: | | | |
 
+### User roles in Project
+
+What a project manager can do compared to a project administrator and a project member, with the
+default permissions (an operator can change them):
+
+| | Project manager | Project administrator | Project member |
+| --- | :----: | :----: | :----: |
+| See the project and its team | :material-check: | :material-check: | :material-check: |
+| Order resources | :material-check: | :material-check: | :material-check: |
+| Request a limit or end date change | :material-check: | :material-check: | :material-check: |
+| Approve, cancel and remove the project's orders | :material-check: | :material-check: | |
+| Manage resources: update, change plan and limits, terminate | :material-check: | :material-check: | |
+| Grant users access to a resource | :material-check: | :material-check: | |
+| Manage the project team: add, remove and change roles | :material-check: | | |
+| Edit the project's details | :material-check: | | |
+| Manage course and service accounts | :material-check: | | |
+
 ### User roles in Call management
 
 | Role name              | Scope           | Description |
@@ -256,10 +273,10 @@ Operators see these names in the administration interface and API payloads.
 |---|---|---|:---:|
 | Organization | Customer owner | Highest-level role in an organization; full administrative control. | Yes |
 | Organization | Customer manager | Managerial role for service providers within an organization. | Yes |
-| Organization | Customer support | Limited support access within an organization. | No |
+| Organization | Customer support | Limited support access within an organization. | Yes |
 | Project | Project administrator | Full control over a project, including resource and order management. | Yes |
 | Project | Project manager | Adds permission-management capabilities on top of administrator. | Yes |
-| Project | Project member | Limited project access. | No |
+| Project | Project member | Limited project access. | Yes |
 | Offering | Offering manager | Manages an offering's configuration and associated resources. | Yes |
 | Service provider | Service provider manager | Manages service-provider-specific settings and operations. | Yes |
 | Call managing organization | Customer call organizer | Organization-specific role for handling calls. | Yes |
@@ -14768,7 +14785,15 @@ Override keyword arguments merged on top of provider defaults for AI Assistant c
 
 **Default value:** 120
 
-Hard timeout in seconds for a full streaming request including LLM completion.
+Seconds a streaming request may go without receiving anything from the LLM or sending anything to the client before it times out.
+
+#### AI_ASSISTANT_SHOW_REASONING
+
+**Type:** bool
+
+**Default value:** False
+
+Stream and store a thinking model's reasoning for logged-in users, and show what the model says before a tool call as narration. Anonymous users get neither.
 
 #### AI_ASSISTANT_TOKEN_LIMIT_DAILY
 
@@ -56120,7 +56145,7 @@ X-Result-Count: 1
 The total number of matches is returned in the `X-Result-Count` header, and `Link` carries the
 pagination cursors.
 
-## Site-wide grants
+## Site-wide grants { data-mentions="setting:PAT_ENABLED" }
 
 A deployment can define site-wide roles, whose permissions apply on every object rather than on
 one organization or project. A grant of one appears in `/api/user-permissions/` with
@@ -70095,6 +70120,8 @@ Registered block kinds (see `src/waldur_mastermind/chat/components.py`):
 | `resource_list` | Signal to render a paginated marketplace resource table client-side. | yes |
 | `homeport_nav` | Navigation links / call-to-action buttons. | no |
 | `ask_user_form` | Multi-question interactive form emitted by the `ask_user` meta-tool. | no |
+| `reasoning` | A thinking model's reasoning for one model call (`c`). Stored with `duration_ms`; see [Reasoning models](#reasoning-models). | no |
+| `narration` | What the model said before a tool call (`c`); see [Reasoning models](#reasoning-models). | no |
 
 Tools opt into a UI block by setting `ui_component` and `ui_data` in
 their result dict; tools that omit `ui_component` rely on the LLM to
@@ -70131,6 +70158,65 @@ section "AI assistant settings" (around line 2549). Quick reference:
 | `AI_ASSISTANT_HISTORY_LIMIT` | int | Max past messages replayed into context. |
 | `AI_ASSISTANT_SESSION_RETENTION_DAYS` | int | Cleanup cutoff for `cleanup_old_chat_sessions`. `-1` disables. |
 | `AI_ASSISTANT_INJECTION_ALLOWLIST` | str | Comma-separated phrases that bypass injection detection (only when one phrase covers ≥80% of input). |
+| `AI_ASSISTANT_STREAM_TIMEOUT_SECONDS` | int | Seconds a stream may go without receiving anything from the LLM or sending anything to the client before it times out. |
+| `AI_ASSISTANT_SHOW_REASONING` | bool | Stream and store a thinking model's reasoning for logged-in users, and show what the model says before a tool call as narration. Off by default. Anonymous users get neither. |
+
+## Reasoning models
+
+*For operators.* A thinking model (for example Qwen3) reasons before it
+answers, and one answer often takes several model calls. The streamer
+reads the reasoning from the `reasoning` or `reasoning_content` field of
+each streamed delta, whichever the server sends.
+
+- **Logged-in users, with `AI_ASSISTANT_SHOW_REASONING` on** (it is off
+  by default) get the reasoning as `{"k":"reasoning","c":"…"}`
+  frames, grouped into frames of about 100 ms or 80 characters. When the
+  thinking of a model call ends, `{"k":"reasoning","c":"","d":6200}` gives
+  its duration in milliseconds, before any answer text or tool call. Each model
+  call is saved as one `reasoning` block with its `duration_ms`, so a reloaded
+  thread can show "Thought for Ns". At most 20,000 characters of reasoning are
+  stored per reply.
+- **Anonymous users, or `AI_ASSISTANT_SHOW_REASONING` off:** reasoning is
+  neither streamed nor stored. While reasoning streams from the model, the
+  client gets a `{"m":{"status":"thinking"}}` keepalive every 15 seconds. A
+  model that thinks without streaming its reasoning gives nothing to send.
+- `AI_ASSISTANT_STREAM_TIMEOUT_SECONDS` counts from the last chunk received
+  from the model or the last frame sent to the client, so long thinking doesn't
+  time out. Each request is stopped after five times that timeout overall, 10
+  minutes by default, which also ends a model stuck in a reasoning loop.
+- **Narration,** for logged-in users with `AI_ASSISTANT_SHOW_REASONING` on. The
+  first 300 characters of each model call's text are held back. If a tool call
+  comes first, the text was narration ("Let me check your
+  projects…"): it is sent as `{"k":"narration","c":"…"}` and stored as a
+  `narration` block, and clients show it as a status rather than as the start
+  of the answer. Longer text, or text with a code block, streams as usual, and
+  a short answer arrives when the call ends. Narration counts as text for the
+  model history, search and the evaluators. This applies to every model, with
+  or without reasoning. For anyone else, text streams as it arrives and text
+  before a tool call stays in the answer.
+- Reasoning is never sent back to the model, and it is left out of the
+  message search text and the validation evaluators' answer text.
+- Reasoning tokens are counted in `completion_tokens`, so they count
+  against quotas.
+
+Server setup:
+
+- vLLM fills the reasoning field only when started with
+  `--reasoning-parser qwen3`. Without it, thinking arrives inside the
+  answer as `<think>…</think>` and is shown to logged-in users as part of
+  the answer. For anonymous visitors the streamer strips the tags and
+  their content. A chat template that opens the `<think>` tag in the
+  prompt leaves only `</think>` in the output, which the streamer cannot
+  recognise, so that setup needs the parser.
+- Set the effort through `reasoning_effort` or
+  `extra_body.chat_template_kwargs` in `AI_ASSISTANT_COMPLETION_KWARGS`.
+  Qwen3.8 defaults to `xhigh`.
+- Thinking mode needs different sampling from the vLLM defaults in
+  `providers.py`:
+
+  ```json
+  {"temperature": 1.0, "top_p": 0.95, "presence_penalty": 0}
+  ```
 
 ## Scheduled tasks
 
@@ -75236,7 +75322,7 @@ The process begins in the `waldur-mastermind` pipeline in a job named `Generate 
     1. **On a schedule for the `develop` branch**: This ensures we always have an up-to-date schema reflecting the latest development state.
     2. **When a version tag is pushed** (e.g., `1.2.3`): This generates a stable, versioned schema for a specific release.
 - **Output**: The job produces a versioned `waldur-openapi-schema.yaml` file, which is stored as a CI artifact. This artifact becomes the input for all subsequent steps.
-- **Python client check**: The job also builds the Python client from that schema with the generator `waldur/py-client` uses, and fails if the generator removes a schema or skips an endpoint. The generator itself only warns and exits 0, so a client could ship without `Resource` while every job passed. Run the same check locally with `scripts/check_python_sdk_generation.sh waldur-openapi-schema.yaml` (needs `uvx`). The `validate_python_sdk_naming_collisions` hook catches the most common cause earlier, during `waldur spectacular`: two schemas that the client would give the same class name.
+- **Python client check**: The job also builds the Python client from that schema with the generator `waldur/py-client` uses, and fails if the generator removes a schema or skips an endpoint, or if a GET endpoint declares no response body (the client then returns `None` for it; a short allowlist in the script covers login redirects and PDF downloads). The generator itself only warns and exits 0, so a client could ship without `Resource` while every job passed. Run the same check locally with `scripts/check_python_sdk_generation.sh waldur-openapi-schema.yaml` (needs `uvx`). The `validate_python_sdk_naming_collisions` hook catches the most common cause earlier, during `waldur spectacular`: two schemas that the client would give the same class name.
 
 ### 2. Automated SDK and Tooling Generation
 
@@ -80492,7 +80578,7 @@ A hook another repository reads moves in three steps, because each repository's 
 
 ## Exceptions
 
-Some classes have to stay as hooks even though they style nothing, for example react-select's `metronic-select__*`, which stylesheets and the RTL helpers in `src/test/select.ts` read (the E2E suite uses the parts' `data-slot`). List such a class as a pattern in `UNKNOWN_CLASS_HOOKS` in `eslint.config.js`, with a comment saying who reads it. Keep that list short: every entry is a contract with no type check behind it.
+Rarely, a class has to stay as a hook even though it styles nothing, for example one a third-party script reads. List such a class as a pattern in `UNKNOWN_CLASS_HOOKS` in `eslint.config.js`, with a comment saying who reads it. Keep that list short: every entry is a contract with no type check behind it.
 
 ## Checklist
 
@@ -80677,7 +80763,7 @@ Implementation: `packages/eslint-plugin-waldur/lib/class-oracle.js`, reached fro
 
 ### Classes that deliberately style nothing
 
-A class used only as a hook (for a test or a third-party script) should be a `data-*` attribute instead (`data-slot`, `data-testid`); [class-names-and-data-attributes.md](class-names-and-data-attributes.md) says which one. Where it cannot be, list a pattern in the rule's `allow` option in `eslint.config.js`, so each exception is a visible decision. `UNKNOWN_CLASS_HOOKS` there lists the hook classes that style nothing, now only react-select's `metronic-select__*`, which stylesheets, `src/test/select.ts` and the class fallbacks in `waldur-integration-testing` still read. Test files (`*.test.ts(x)`) are exempt because they pass made-up classes to check that a prop is forwarded.
+A class used only as a hook (for a test or a third-party script) should be a `data-*` attribute instead (`data-slot`, `data-testid`); [class-names-and-data-attributes.md](class-names-and-data-attributes.md) says which one. Where it cannot be, list a pattern in the rule's `allow` option in `eslint.config.js`, so each exception is a visible decision. `UNKNOWN_CLASS_HOOKS` there lists the hook classes that style nothing; react-select's parts are not among them, since waldur-ui's Select gives each a `data-slot`. Test files (`*.test.ts(x)`) are exempt because they pass made-up classes to check that a prop is forwarded.
 
 ---
 
@@ -82323,6 +82409,13 @@ Spacing uses standard Tailwind steps (`p-3`, `mb-1.5`, `gap-2`).
 - **No new rem lengths.** A padding, margin, gap, width or offset in rem follows the root; write
   px, or the Tailwind step that equals it (`p-3`, not `p-[0.923rem]`; `calc(var(--spacing) * 3)`
   in a stylesheet). See [Root font size](#root-font-size).
+- **Line height is on the same grid.** `leading-N` is N × 4px, so a pixel line height that
+  lands on a half step is written as that step: `leading-5`, not `leading-[20px]`;
+  `leading-4.5`, not `leading-[18px]` (`waldur-custom/no-arbitrary-leading`, autofix). A
+  `text-*` size already sets its own line height (see [Font size](#font-size)). Odd pixel
+  values (`leading-[17px]`, `leading-[23px]` on the small and large `Input`), unitless ratios
+  (`leading-[1.75]`) and `leading-[inherit]` are left to the rule: they have no equal step, so
+  moving one changes pixels and needs a visual check.
 
 ## Inline styles
 
@@ -82473,6 +82566,7 @@ unnoticed.
 | Font size on the scale; no `fs-*` or inline size        | `waldur-custom/require-font-size-scale` (autofixes `fs-*`), `waldur/font-size-scale` |
 | Font weight on the scale; no `fw-*` or inline weight    | `waldur-custom/require-weight-scale` (autofixes `fw-*`), stylelint                   |
 | Corner radius on the scale; no retired or inline radius | `waldur-custom/enforce-border-radius-tokens` (autofix), stylelint                    |
+| Pixel line heights on the 4px grid written as a step    | `waldur-custom/no-arbitrary-leading` (autofix)                                       |
 | No static inline declarations                           | `waldur-custom/no-static-inline-style`                                               |
 | Every physical colour has a `dark:` counterpart         | `waldur-custom/require-dark-pair`                                                    |
 | No `--bs-*` reads in stylesheets                        | stylelint                                                                            |
@@ -83093,42 +83187,42 @@ Removing or renaming a hook below breaks that suite without failing anything in 
 
 ## Hooks
 
-| Element                                    | Hook                                                                                                                                                         |
-| :----------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Page tabs row, with its actions            | `[data-testid="page-toolbar"]`                                                                                                                               |
-| Page tab row (navigation)                  | `get_by_role("navigation", name="Page tabs")`                                                                                                                |
-| A page tab                                 | `get_by_role("link", name=…)` or `get_by_role("button", name=…)` inside the page toolbar                                                                     |
-| Tab with a submenu                         | its button has `aria-haspopup="menu"`                                                                                                                        |
-| Tab submenu                                | `get_by_role("menu")`                                                                                                                                        |
-| Filter bar under the page tabs             | `[data-testid="filter-bar"]`                                                                                                                                 |
-| Clear button on a filter badge             | `[data-testid="badge-right-icon"] button`                                                                                                                    |
-| App footer                                 | `[data-testid="app-footer"]`                                                                                                                                 |
-| A footer link                              | `get_by_role("link", name=…)` inside the app footer                                                                                                          |
-| Open action menu                           | `[data-testid="actions-menu"]`, or `get_by_role("menu")`                                                                                                     |
-| Action menu row                            | `[data-testid="action-item"]`, or `get_by_role("menuitem")` (every row has the role, inside a menu or not)                                                   |
-| Action menu toggle                         | `[data-testid="actions-toggle"]`; the icon-only kebab is also `get_by_role("button", name="Actions")`                                                        |
-| Table filter toggle                        | `get_by_role("button", name="Set filters")`                                                                                                                  |
-| "Add filter" menu                          | `get_by_role("dialog", name="Add filter")`                                                                                                                   |
-| A filter in that menu                      | `get_by_role("button", name=<filter title>)` inside the dialog                                                                                               |
-| A filter's field                           | `[data-slot="filter-field"]`                                                                                                                                 |
-| Router tab bar (page hero, table sub-tabs) | `nav[aria-label="Tabs"]` (`TAB_BAR`)                                                                                                                         |
-| A router tab                               | `get_by_role("link", name=…)`, or `"button"` for a disabled tab (`tab_item()`)                                                                               |
-| In-page section tabs                       | `[role="tablist"]` with `get_by_role("tab", name=…)` (`SECTION_TABS`)                                                                                        |
-| A dialog                                   | `get_by_role("dialog")`, filtered by name or text; its parts are `[data-slot="modal-body"]` and so on                                                        |
-| A dialog's close button                    | `get_by_role("button", name="Close")` inside the dialog                                                                                                      |
-| Invite dialog's role picker (one row)      | `[data-testid="role-project-select"]`, then `get_by_role("combobox", name="Role for <email>")`                                                               |
-| A role picker option                       | `get_by_role("option", name=…)`, on the page, not scoped to the row                                                                                          |
-| Sign-in callback error                     | the `"Login failed"` heading and its parent                                                                                                                  |
-| Provider offering page body                | `[data-testid="provider-offering"]`                                                                                                                          |
-| Marketplace dialog: category listing       | `[data-testid="category-listing"]`                                                                                                                           |
-| Marketplace dialog: category item          | `[data-testid="category-item"]`                                                                                                                              |
-| Marketplace dialog: category group         | `[data-testid="category-group"]`                                                                                                                             |
-| Marketplace dialog: offering listing       | `[data-testid="offering-listing"]`                                                                                                                           |
-| Marketplace dialog: offering item          | `[data-testid="offering-item"]`                                                                                                                              |
-| Team chat: the open conversation           | `[data-testid="team-chat-conversation"]`                                                                                                                     |
-| A toast                                    | `[data-slot="toast"][data-variant="{status}"]`                                                                                                               |
-| A date field                               | `[data-slot="date-picker-input"]` (`DATE_INPUT`)                                                                                                             |
-| A select's parts (react-select)            | `[data-slot="select"]`, `select-control`, `select-input`, `select-menu`, `select-single-value`, `select-clear-indicator`; options by `get_by_role("option")` |
+| Element                                    | Hook                                                                                                                                                                             |
+| :----------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Page tabs row, with its actions            | `[data-testid="page-toolbar"]`                                                                                                                                                   |
+| Page tab row (navigation)                  | `get_by_role("navigation", name="Page tabs")`                                                                                                                                    |
+| A page tab                                 | `get_by_role("link", name=…)` or `get_by_role("button", name=…)` inside the page toolbar                                                                                         |
+| Tab with a submenu                         | its button has `aria-haspopup="menu"`                                                                                                                                            |
+| Tab submenu                                | `get_by_role("menu")`                                                                                                                                                            |
+| Filter bar under the page tabs             | `[data-testid="filter-bar"]`                                                                                                                                                     |
+| Clear button on a filter badge             | `[data-testid="badge-right-icon"] button`                                                                                                                                        |
+| App footer                                 | `[data-testid="app-footer"]`                                                                                                                                                     |
+| A footer link                              | `get_by_role("link", name=…)` inside the app footer                                                                                                                              |
+| Open action menu                           | `[data-testid="actions-menu"]`, or `get_by_role("menu")`                                                                                                                         |
+| Action menu row                            | `[data-testid="action-item"]`, or `get_by_role("menuitem")` (every row has the role, inside a menu or not)                                                                       |
+| Action menu toggle                         | `[data-testid="actions-toggle"]`; the icon-only kebab is also `get_by_role("button", name="Actions")`                                                                            |
+| Table filter toggle                        | `get_by_role("button", name="Set filters")`                                                                                                                                      |
+| "Add filter" menu                          | `get_by_role("dialog", name="Add filter")`                                                                                                                                       |
+| A filter in that menu                      | `get_by_role("button", name=<filter title>)` inside the dialog                                                                                                                   |
+| A filter's field                           | `[data-slot="filter-field"]`                                                                                                                                                     |
+| Router tab bar (page hero, table sub-tabs) | `nav[aria-label="Tabs"]` (`TAB_BAR`)                                                                                                                                             |
+| A router tab                               | `get_by_role("link", name=…)`, or `"button"` for a disabled tab (`tab_item()`)                                                                                                   |
+| In-page section tabs                       | `[role="tablist"]` with `get_by_role("tab", name=…)` (`SECTION_TABS`)                                                                                                            |
+| A dialog                                   | `get_by_role("dialog")`, filtered by name or text; its parts are `[data-slot="modal-body"]` and so on                                                                            |
+| A dialog's close button                    | `get_by_role("button", name="Close")` inside the dialog                                                                                                                          |
+| Invite dialog's role picker (one row)      | `[data-testid="role-project-select"]`, then `get_by_role("combobox", name="Role for <email>")`                                                                                   |
+| A role picker option                       | `get_by_role("option", name=…)`, on the page, not scoped to the row                                                                                                              |
+| Sign-in callback error                     | the `"Login failed"` heading and its parent                                                                                                                                      |
+| Provider offering page body                | `[data-testid="provider-offering"]`                                                                                                                                              |
+| Marketplace dialog: category listing       | `[data-testid="category-listing"]`                                                                                                                                               |
+| Marketplace dialog: category item          | `[data-testid="category-item"]`                                                                                                                                                  |
+| Marketplace dialog: category group         | `[data-testid="category-group"]`                                                                                                                                                 |
+| Marketplace dialog: offering listing       | `[data-testid="offering-listing"]`                                                                                                                                               |
+| Marketplace dialog: offering item          | `[data-testid="offering-item"]`                                                                                                                                                  |
+| Team chat: the open conversation           | `[data-testid="team-chat-conversation"]`                                                                                                                                         |
+| A toast                                    | `[data-slot="toast"][data-variant="{status}"]`                                                                                                                                   |
+| A date field                               | `[data-slot="date-picker-input"]` (`DATE_INPUT`)                                                                                                                                 |
+| A select's parts (react-select)            | `[data-slot="select"]`, `select-control`, `select-input`, `select-menu`, `select-single-value`, `select-clear-indicator`, `select-option`; or options by `get_by_role("option")` |
 
 ## Notes
 
@@ -94847,7 +94941,7 @@ Questions can be configured to flag answers for review by call managers:
 
 When a triggered answer is submitted, the checklist completion is marked as requiring review.
 
-## Attaching checklists to calls
+## Attaching checklists to calls { data-requires="feature:marketplace.show_call_management_functionality" }
 
 **Performed by:** Call manager
 
@@ -94861,7 +94955,7 @@ settings instead (see [Workflow configuration](workflow-configuration.md)).
 
 When a proposal is created, the system automatically creates a checklist completion record for that proposal. Submitters must answer all required questions before submitting.
 
-## Checklist completion tracking
+## Checklist completion tracking { data-requires="feature:marketplace.show_call_management_functionality !feature:marketplace.call_only" }
 
 For each proposal with an attached checklist:
 
@@ -94975,7 +95069,7 @@ must additionally attest to being conflict-free before they can submit their
 review — the **Submit review** button stays disabled until they do (see
 [Per-step settings](workflow-configuration.md#per-step-settings)).
 
-## Running COI detection
+## Running COI detection { data-requires="setting:COI_DETECTION_ENABLED" }
 
 1. Open the call's **Reviewer pool** and its **COI** tab, and click **Detect conflicts** (shown only when COI detection is enabled on the platform)
 2. The system runs a batch detection job in the background; the button shows that detection is running, and you are told how many new conflicts were found when it finishes
@@ -95288,7 +95382,7 @@ call's workflow steps read-only below the figures:
       - Review progress
       - Reviewer pool capacity
 
-## Call reports
+## Call reports { data-requires="!feature:marketplace.call_only" }
 
 **Call management → Reports** on a call-managing organisation, and the
 **Reports** tab of a call's **Manage** page, summarise the calls you may
@@ -95305,7 +95399,7 @@ configure. Filter them by call, round and dates, and switch between:
 Staff and support find the same reports across every organisation under **Reporting →
 Proposals**, filtered additionally by organisation.
 
-## Admin reviews and proposals
+## Admin reviews and proposals { data-requires="!feature:marketplace.call_only" }
 
 Staff, support, call organisers and call managers find **All reviews** and **All
 proposals** in the calls section of the sidebar. **All reviews** lists reviews across the
@@ -95360,7 +95454,7 @@ only the visible columns are written.
 !!! tip
     Apply table filters before exporting to narrow down the data.
 
-### Full proposal and review reports
+### Full proposal and review reports { data-requires="feature:marketplace.show_call_management_functionality !feature:marketplace.call_only" }
 
 On a call's **Manage** page, the **Proposals** and **Reviews** tables offer a
 second kind of export to call managers, call organisers and staff: under
@@ -95378,7 +95472,7 @@ writes it as a CSV of every page, with the table's filters applied:
 Reviewers' private notes are never exported, and text that would start a
 spreadsheet formula is written with a leading apostrophe.
 
-### One proposal as a PDF
+### One proposal as a PDF { data-requires="!feature:marketplace.call_only" }
 
 **Download PDF** on a proposal (on the proposal page, or in a proposal row's
 actions) renders the proposal as one document, for archiving or a panel
@@ -95407,7 +95501,7 @@ The attachments themselves are not included.
 The round's ranking has its own export and import — see
 [Ranking and meeting notes](round-rankings.md#ranking-and-meeting-notes).
 
-## Call reports
+## Call reports { data-requires="feature:marketplace.show_call_management_functionality !feature:marketplace.call_only" }
 
 The **Reports** page (Portfolio, Workflow, Reviewers, Rounds and Budgets) is described in
 [Dashboards and reports](dashboards-and-reports.md#call-reports).
@@ -95610,7 +95704,7 @@ reach services only through calls for proposals, with no marketplace navigation 
 for the setting and the feature flags it combines with, and
 [How you reach services](../end-users/service-access-modes.md) for what users see.
 
-## Staff settings
+## Staff settings { data-requires="feature:marketplace.show_call_management_functionality" }
 
 | Setting | Where | Described in |
 |---|---|---|
@@ -95804,7 +95898,7 @@ In the course of a call you will meet:
 | **Applicant** | Creates and submits a proposal; the proposal's managers (principal investigators) act for its team |
 | **Staff** | Enables call management for an organisation, manages call templates and checklists, and can act anywhere |
 
-## Lifecycle of a call
+## Lifecycle of a call { data-requires="feature:marketplace.show_call_management_functionality" }
 
 1. **Draft** — the call is created, blank or from a template, and configured: rounds,
    application form, offerings, workflow, team. Nobody can apply yet.
@@ -96254,7 +96348,7 @@ A submitted proposal is fixed: what was submitted is what gets evaluated. Two th
 that during evaluation — a step can send the proposal back to its applicant for changes, and
 the applicant can withdraw it.
 
-## Requesting changes from the applicant
+## Requesting changes from the applicant { data-requires="feature:marketplace.show_call_management_functionality" }
 
 **Performed by:** Whoever acts on the current step (call manager by default)
 
@@ -96344,7 +96438,7 @@ A single **Add** menu in the profile header adds an affiliation, expertise or pu
 !!! tip
     Keep your expertise and affiliations up to date. This data is used for automated reviewer-proposal matching and conflict of interest detection.
 
-### Publishing your profile
+### Publishing your profile { data-requires="setting:REVIEWER_PROFILES_ENABLED" }
 
 Click **Publish profile** when ready to receive review invitations. The status is shown as a badge (**Published** or **Not published**) on the profile and on the reviews page. Unpublished profiles are not visible to call managers and you will not receive new invitations until the profile is published.
 
@@ -97727,7 +97821,7 @@ the [affiliate program](../staff-users/affiliate-program.md) — you can track t
 fees you have earned. If your organization receives **volume discounts**, they
 appear on your invoices. Both are visible to organization owners.
 
-## Viewing affiliate earnings
+## Viewing affiliate earnings { data-requires="setting:AFFILIATES_ENABLED feature:reseller.affiliates" }
 
 Open your organization's **Accounting → Affiliate earnings** page. The tab lists
 one row per affiliate link, showing the referred organization, the fee
@@ -98450,7 +98544,7 @@ A virtual machine is read only while it runs. When it is stopped, the
 question mark says so, and **Update now** and **Faster updates…** are
 unavailable.
 
-## Volumes
+## Volumes { data-requires="offering_type:OpenStack.Volume" }
 
 A volume is read with the virtual machine it is attached to. Its Metrics tab
 shows the volume's own throughput and I/O operations, and the question mark
@@ -98559,7 +98653,7 @@ When writing a rule, give the remote prefix in the same family as the rule's
 ethertype — for example `::/0` for "anywhere" on an IPv6 rule, rather than
 `0.0.0.0/0`.
 
-## Virtual machines
+## Virtual machines { data-requires="offering_type:OpenStack.Instance" }
 
 ### Creating a virtual machine
 
@@ -98680,7 +98774,7 @@ invitation links. **Add** offers three ways to add people:
 
 [Image: Organization Team tab with the Add menu open]
 
-## Adding organization members
+## Add organization members
 
 1. Open the organization and select the **Team** tab.
 2. Click **Add** and select **Invite by mail**.
@@ -98798,7 +98892,12 @@ options.
 
 # Project management
 
-Project creation is allowed for organization owners in their organizations and staff users.
+Create a project in your organization, change its details, and control what happens when it ends.
+
+## Create a project
+
+Organization owners create projects in their organizations; staff can create them anywhere. To add
+a new project:
 
 !!! note
     User must have an account in Waldur instance to create projects.
@@ -98818,14 +98917,18 @@ Project creation is allowed for organization owners in their organizations and s
     - **Start date** - once reached, marks the date when prepared user invitations are sent out and triggers the processing of previously made resource orders.
     - **End date** – once reached (plus any configured grace period), triggers the creation of termination orders for the existing resources. If the resources have already been terminated by this time, the project will be removed. The date is inclusive.
 
-4. To change the project's details later, or to set those the dialog did not ask for, open the
-   project and select the **Edit** tab. **General** holds the name, start and end dates and
-   description.
-
-    [Image: General settings on the project's Edit tab]
-
 !!! note
     Your Waldur administrator may enforce a project name convention (for example, a maximum length). If the name you enter does not meet the requirement, the form shows an error and the project is not created. See [Project name restrictions](../staff-users/project-name-restrictions.md).
+
+## Change a project's details
+
+To change the project's details later, or to set those the creation dialog did not ask for, open
+the project and select the **Edit** tab. **General** holds the name, start and end dates and
+description.
+
+[Image: General settings on the project's Edit tab]
+
+## End dates and resources
 
 !!! note
     1. If a resource has a termination date that comes after the project's end date, the project's end date will automatically become that resource's termination date.
@@ -98876,7 +98979,7 @@ From the first day after the project's end date, resources of offerings that sup
 !!! warning
     Once the grace period expires (i.e., the resource termination date is reached), all project resources will be scheduled for termination, just as they would on the regular end date.
 
-## Science domain
+## Science domain { data-requires="feature:project.science_domain" }
 
 If staff have configured a science-domain taxonomy and enabled the feature, every project can be tagged with one **Science domain** and one **Science sub-domain**. The tag helps with cross-project reporting and discovery.
 
@@ -99093,8 +99196,8 @@ goal, if there is one.
 # Project membership management
 
 Project team contains users with different roles. See
-[Roles and permissions](../../about/terminology/roles_and_permissions.md#user-roles-in-organization)
-for the per-role permission matrix.
+[User roles in Project](../../about/terminology/roles_and_permissions.md#user-roles-in-project)
+for what a project manager, administrator and member can each do.
 
 The team is on the project's **Team** tab. **Active** lists the members and their roles,
 **Invitations** the invitations that are not accepted yet. **Add** offers two ways to add
@@ -99105,7 +99208,7 @@ someone:
 
 [Image: Project Team tab with the Add menu open]
 
-## Adding project members
+## Add project members
 
 ### New user already has an account in current Waldur instance
 
@@ -99882,7 +99985,7 @@ pending one and lets you withdraw it if the date is no longer what you need.
 
 [Image: An already pending request]
 
-### OpenStack
+### OpenStack { data-requires="offering_type:OpenStack.Tenant" }
 
 On OpenStack, the request is made on the **tenant**. Open the tenant's
 **Actions** menu and choose **Show all**: **Request end date change** is listed
@@ -100360,7 +100463,7 @@ usage instead.
 
 # Resource management
 
-## VPC management
+## VPC management { data-requires="offering_type:OpenStack.Tenant" }
 
 A Virtual Private Cloud (VPC) is a private OpenStack cloud, also called a tenant. It has its own
 quota of CPU cores, RAM and storage and its own internal network. Virtual machines and volumes
@@ -100426,7 +100529,7 @@ Creating the VPC takes a few minutes. When it is done, the state changes to **OK
     **Volume in &lt;VPC name&gt;**. Only the VPC's project can use them, and the virtual machines
     and volumes created from them are charged as part of the VPC.
 
-## VM management
+## VM management { data-requires="offering_type:OpenStack.Instance" }
 
 !!! info
     A virtual machine runs inside a VPC, so its project needs one first. See
@@ -100932,7 +101035,7 @@ usage reports.
 
 The usage of a single resource is on the resource's own page.
 
-### Private clouds
+### Private clouds { data-requires="offering_type:OpenStack.Tenant" }
 
 1. Open your project and select the **Resources** tab.
 2. Open the private cloud (VPC) resource.
@@ -100965,7 +101068,7 @@ The usage of a single resource is on the resource's own page.
 
 7. **Export all** downloads the usage as PNG, PDF, CSV or Excel.
 
-## Including terminated resources
+## Including terminated resources { data-requires="feature:dashboard.usage_include_terminated" }
 
 Usage charts normally count only resources that still exist, so terminating one removes
 its usage from the totals and from a project's own history. An administrator can enable
@@ -101399,13 +101502,19 @@ Click your name in the top-right corner to open the user menu.
 | Entry | What it is for |
 |-------|----------------|
 | **User dashboard** | Your profile, resources and roles |
-| **Credentials** | Password, SSH keys and personal access tokens |
+| **Credentials** | Password and SSH keys |
 | **Resource requests** | Resources you have requested |
 | **My proposals** | Proposals you have submitted to calls |
 | **Permission requests** | Requests to join an organization or project |
 | **Audit logs** | A record of your own actions |
 | **Language**, **Dark theme** | Interface language and colour mode |
 | **API token** | Your token for the REST API, with a copy button |
+
+### Personal access tokens in the user menu { data-requires="setting:PAT_ENABLED" }
+
+Where personal access tokens are enabled, **Credentials** also holds them: scoped,
+time-limited tokens for scripts and integrations. See
+[Personal access tokens](personal-access-tokens.md).
 
 ## Getting help
 
@@ -101436,7 +101545,7 @@ it was created for.
 - A device with an authenticator: Touch ID or Face ID on Apple devices,
   Windows Hello, an Android screen lock, or a USB security key.
 
-## Adding a passkey
+## Add a passkey
 
 1. Go to **Profile > Credentials > Passkeys**.
 
@@ -102347,7 +102456,7 @@ Pause and downscale are mutually exclusive — an offering uses at most one of t
 !!! note
     For provider backends that enforce these states (such as SLURM via the site agent), pausing blocks further usage and downscaling reduces the resource's share. For other backends the state is recorded and visible, but enforcement depends on the backend.
 
-## Adding custom components
+## Add custom components
 
 Service providers can add custom accounting components to any offering alongside the built-in ones. This is useful for non-infrastructure services like consultancy hours, support packages, or training credits.
 
@@ -102371,7 +102480,7 @@ Custom components appear alongside built-in components in the order form and pri
 
 ## Built-in components
 
-Every offering has an **Accounting** tab with **Components** and **Plans**, and selecting **Accounting** opens **Components** first. Some offering types come with **built-in components** that their integration defines and relies on — for example Cores, RAM and Storage for OpenStack tenants, CPU, RAM and Disk for VMware virtual machines, and CPU, RAM and Storage hours for Rancher clusters. Other offering types start without components, and you add your own as described in [Adding custom components](#adding-custom-components).
+Every offering has an **Accounting** tab with **Components** and **Plans**, and selecting **Accounting** opens **Components** first. Some offering types come with **built-in components** that their integration defines and relies on — for example Cores, RAM and Storage for OpenStack tenants, CPU, RAM and Disk for VMware virtual machines, and CPU, RAM and Storage hours for Rancher clusters. Other offering types start without components, and you add your own as described in [Add custom components](#add-custom-components).
 
 Because the integration looks built-in components up by their internal name, they are protected:
 
@@ -102500,7 +102609,7 @@ When you save the input, the pattern must be valid, at most 500 characters long,
     - Spaces are part of the pattern and are not trimmed, and neither is the customer's value: a trailing space makes `[0-9]{6}` fail.
     - Keep patterns simple. A pattern whose checking takes too long is stopped, and the order is rejected with *Value could not be checked against the pattern in time. Please contact the service provider.* Nested repetition such as `(a+)+` is the usual cause.
 
-#### Adding a prefix or suffix, or changing the case
+#### Add a prefix or suffix, or change the case
 
 The same step lets you rewrite the value before it is stored, so that customers do not have to type a fixed part themselves:
 
@@ -102621,7 +102730,7 @@ When the field is set:
 
 Leave the field empty to remove the restriction and make the offering available to everyone again.
 
-## Embedding images in the offering description
+## Embedding images in the offering description { data-requires="feature:marketplace.allow_display_of_images_in_markdown" }
 
 The **Description** and **Full description** fields use a rich Markdown editor. When image support is enabled, you can embed images directly into these descriptions — for example, an architecture diagram or a screenshot of the service.
 
@@ -103145,7 +103254,7 @@ flowchart LR
 | **Keycloak** with the Waldur username mapper | Puts the person's Waldur offering username into a token claim on every token issued |
 | **FirecREST v2** | Reads that claim as the username and acts on the clusters — SSH and slurmrestd — as that user |
 
-## Configuring Waldur
+## Configuring Waldur { data-requires="feature:marketplace.show_provider_accounts" }
 
 !!! tip "Step by step"
     The Waldur and site-agent parts of this section are covered as an ordered
@@ -103725,7 +103834,7 @@ shells, and the account never appears in the GLAuth directory. This lets a
 provider run username-only offerings next to full HPC offerings without
 changing any instance-wide setting.
 
-## Per-user overrides
+## Per-user overrides { data-requires="feature:marketplace.show_posix_id_pools" }
 
 The login shell, home directory, **UID** and **primary GID** default from the
 offering-level settings and the [POSIX ID pool allocator](posix-id-pools.md),
@@ -103784,7 +103893,7 @@ change submitted in the same call is rolled back with it.
 Calling this endpoint requires permission to update offering users on the
 offering's organization.
 
-## Group memberships
+## Group memberships { data-requires="feature:marketplace.show_posix_id_pools" }
 
 Expanding an offering user shows the **project group GIDs** they belong to —
 the shared GIDs emitted in their GLAuth `otherGroups` — each with its owning
@@ -103832,7 +103941,7 @@ project `team-x` under it whose `ProjectMember` is `bob` yields
 `cluster_<rp-uuid>_member` (member `bob`). Both appear next to the project
 groups under `ou=groups` in the offering's **View GLAuth configuration** viewer.
 
-## Reviewing a user's identifiers
+## Reviewing a user's identifiers { data-requires="feature:marketplace.show_posix_id_pools" }
 
 Expanding an offering user also shows a **POSIX identifiers** table with the
 account's UID and primary GID and, for each, the **POSIX ID pool** it is tracked
@@ -103869,7 +103978,7 @@ The workspace is **optional and configured per offering**. An offering without
 FirecREST settings behaves exactly as before; nothing on this page is needed to
 run a SLURM offering through the site agent.
 
-## What users get
+## What users get { data-requires="capability:hpc" }
 
 When an offering is connected, each of its allocations shows these extra tabs to
 members of the allocation's project:
@@ -105671,7 +105780,7 @@ When the project's last resource at your provider is terminated, or the
 project is deleted, the group stays, marked **Not in use**, and keeps its GID.
 A new resource later picks up the same group and GID.
 
-## Rolling out project groups
+## Rolling out project groups { data-requires="feature:marketplace.show_provider_accounts" }
 
 Your directory may already hold groups for some projects, with GIDs that files
 on your storage carry. To keep those GIDs, enable project groups in this order:
@@ -106277,7 +106386,7 @@ Open **Support → Communication → Announcements**.
 
 [Image: List of announcements]
 
-## Adding an announcement
+## Add an announcement
 
 1. Select **Add** from the announcement management page.
 2. Choose the **type** of announcement, as well as the **start** and **end** times.
@@ -106853,7 +106962,7 @@ Each definition has:
 - **State** — **Active**, or **Deprecated** when offerings may no longer adopt
   it.
 
-## Adding or editing a definition
+## Add or edit a definition
 
 Choose **Add metric**, or **Edit** in a row's actions menu.
 
@@ -106999,7 +107108,7 @@ endpoint and does not need a message-queue client.
 Use the filter button to show only webhook consumers (**Delivery** →
 **HTTP webhook**).
 
-## Adding a webhook consumer
+## Add a webhook consumer
 
 1. In the **Event consumers** card, click **Add webhook**.
 2. Fill in the form:
@@ -107447,7 +107556,7 @@ States a merge goes through:
 | Failed | Execution was rolled back; nothing was written. The record can no longer be edited or deleted, but running the preview again returns it to *Previewed* and unlocks the mappings. The wizard opens a failed merge on its last step. |
 | Undoing, Undone | Undo in progress, or finished. |
 
-### OpenStack duplicate offerings
+### OpenStack duplicate offerings { data-requires="feature:marketplace.show_openstack_duplicate_offerings" }
 
 Below the list, a second panel groups OpenStack offerings that belong to the same tenant
 and are of the same type — the duplicates that auto-creation leaves behind. Each row shows
@@ -108000,7 +108109,7 @@ Contains billing-related configurations:
 
 [Image: Billing tab of an organization]
 
-### Call manager
+### Call manager { data-requires="feature:marketplace.show_call_management_functionality" }
 
 You can make the organization a call manager, which lets it run calls for proposals, by
 switching on **Enable call manager**.
@@ -108429,7 +108538,7 @@ Each chart has an **Export** menu to download its data.
   <figcaption>Overview tab of the Reporting menu</figcaption>
 </figure>
 
-## Reports for organization owners
+## Reports for organization owners { data-requires="feature:customer.show_organisation_reporting" }
 
 An administrator can enable the `customer.show_organisation_reporting` feature flag, which gives
 **organization owners** their own Reporting menu scoped to the organizations they own. The menu lists
@@ -108495,7 +108604,7 @@ Loading is idempotent — domains and sub-domains with codes that already exist 
 !!! tip
     Pick one preset that matches your audience and avoid mixing. Codes differ between presets and cannot be remapped automatically.
 
-## Adding domains manually
+## Add domains manually
 
 1. Click **Add** in the top-right of the list.
 2. Fill in **Code** (short identifier, e.g. `1`, `1.1`) and **Name**.
@@ -109014,7 +109123,7 @@ Reopening works the same way — pick **Open** from the same menu, and the ticke
 
 # Team management for staff
 
-## Adding organization members
+## Add organization members
 
 ### New user already has account in current Waldur instance
 
@@ -111029,7 +111138,7 @@ erred -> terminating
 | Terminating | 5 | Cleanup in progress. |
 | Terminated | 6 | Resource removed from the backend; record retained for billing. |
 
-## Resource status badge
+## Resource status badge { data-mentions="offering_type:VMware.VirtualMachine" }
 
 Resource lists and the resource page show a status badge next to each resource's name. The
 badge draws on up to three sources:
@@ -111075,7 +111184,7 @@ reports which operation it is running, the tooltip names it.
 
 A staff user can retry an erred order from the UI or via the API. Retry locks the row, re-checks the state inside a transaction, and re-enqueues the backend operation — see the [backend concurrency guidance](../../developer-guide/core-concepts/marketplace-orders.md) for the implementation detail.
 
-## Related concepts
+## Related concepts { data-corpus="false" }
 
 - [Marketplace](marketplace.md) — where orders originate.
 - [Policies](policies.md) — automated reactions to state changes (e.g. terminate on overspend).
@@ -111188,7 +111297,7 @@ Orders may be auto-approved, gated by an organization owner, or vetoed by a [pol
 
 Orders and resources have their own state machines — see the dedicated [Lifecycle page](lifecycle.md).
 
-## Related concepts
+## Related concepts { data-corpus="false" }
 
 - [Platform](platform.md) — users, organizations, projects.
 - [Call management](call-management.md) — proposal-driven allocation that ends in marketplace orders.
@@ -111221,6 +111330,23 @@ Orders and resources have their own state machines — see the dedicated [Lifecy
 ## Overview
 
 Waldur organizes everything around three primitives: **users**, **organizations**, and **projects**. Users get roles inside organizations or projects; resources are grouped under projects; organizations carry the contractual and financial responsibility. Every other Waldur concept — marketplace orders, calls, invoices, policies, quotas — binds to one of these three.
+
+## How organizations and projects differ
+
+An **organization** is the customer: a company, department, faculty or research infrastructure that
+holds the contract and is invoiced for what its projects use. Its owners create its projects, manage
+its team and see its invoices. An organization can also be a service provider, offering services to
+other organizations.
+
+A **project** belongs to one organization and groups the resources a team works with and the people
+who use them. Resources are always ordered into a project. A project has its own team — managers,
+administrators and members — and its own start and end dates; what its resources cost appears on its
+organization's invoice.
+
+In short, the organization is who owns and pays, the project is what is used and by whom. An
+organization usually has many projects, and a user can have roles in several organizations and
+projects. See [Roles and permissions](../terminology/roles_and_permissions.md) for what each role
+may do.
 
 ## Structure
 
@@ -111270,7 +111396,7 @@ Waldur reuses the same primitives across three common installation types:
 
 The role matrix for each shape — Owner, PI, Service Manager, etc. — is documented in [Roles & permissions](../terminology/roles_and_permissions.md).
 
-## Related concepts
+## Related concepts { data-corpus="false" }
 
 - [Marketplace](marketplace.md) — how a project obtains a resource.
 - [Lifecycle](lifecycle.md) — what happens to that resource over time.
@@ -111444,13 +111570,13 @@ A quota record is `(scope, name, limit, usage)`. Usage is recomputed from the cu
 
 All three can be in play at once. The order of operations is plan → quota → action → policy.
 
-## Operating quotas
+## Operating quotas { data-mentions="feature:customer.show_onboarding" }
 
 - Set per-organization defaults at offering time (provider) or organization onboarding (operator).
 - Override per project to give a team more headroom without inflating the organization-wide cap.
 - Quota usage is exposed in the API and on every project / organization dashboard.
 
-## Related concepts
+## Related concepts { data-corpus="false" }
 
 - [Policies](policies.md) — post-hoc enforcement on cost or usage.
 - [Marketplace](marketplace.md) — where plan limits originate.
@@ -124341,6 +124467,7 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
 - call_document_added
 - call_document_removed
 - review_assignment_force_unblocked
+- review_assignments_closed_on_role_revoke
 - reviewer_invitation_force_accepted
 - reviewer_workload_limit_overridden
 
@@ -144116,9 +144243,11 @@ Everything in the Waldur UI goes through the REST API, so anything you can do th
 
 Copy your API token from HomePort, as described in [Authentication](../integrator-guide/APIs/authentication.md#authentication-token-management). It is sent as `Authorization: Token <token>`.
 
-For automation, prefer a [personal access token](../user-guide/end-users/personal-access-tokens.md): it can be limited to specific scopes and given an expiry date. It is sent as `Authorization: Bearer <token>`.
-
 A token carries your permissions, so keep it out of shared scripts and repositories.
+
+### Personal access tokens { data-requires="setting:PAT_ENABLED" }
+
+For automation, prefer a [personal access token](../user-guide/end-users/personal-access-tokens.md) where your portal offers them: it can be limited to specific scopes and given an expiry date. It is sent as `Authorization: Bearer <token>`.
 
 ## 2. List the marketplace offerings
 
