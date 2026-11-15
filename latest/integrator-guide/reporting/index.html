@@ -23863,7 +23863,7 @@ The name of the output file is <code>project-report.csv</code>.</p>
 <span class="p">)</span>
 
 <span class="c1"># Get all customers</span>
-<span class="n">customers</span> <span class="o">=</span> <span class="n">customers_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
+<span class="n">customers</span> <span class="o">=</span> <span class="n">customers_list</span><span class="o">.</span><span class="n">sync_all</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
 <span class="k">if</span> <span class="ow">not</span> <span class="n">customers</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">"No customers found"</span><span class="p">)</span>
     <span class="n">exit</span><span class="p">()</span>
@@ -23876,7 +23876,7 @@ The name of the output file is <code>project-report.csv</code>.</p>
         <span class="n">project_reporting</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">)</span>
 
         <span class="c1"># Get invoice items for the customer</span>
-        <span class="n">items</span> <span class="o">=</span> <span class="n">invoice_items_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="n">invoice_items_list</span><span class="o">.</span><span class="n">sync_all</span><span class="p">(</span>
             <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
             <span class="n">customer_uuid</span><span class="o">=</span><span class="n">customer</span><span class="o">.</span><span class="n">uuid</span><span class="p">,</span>
             <span class="n">year</span><span class="o">=</span><span class="n">CURRENT_YEAR</span><span class="p">,</span>
@@ -23885,8 +23885,8 @@ The name of the output file is <code>project-report.csv</code>.</p>
 
         <span class="k">if</span> <span class="n">items</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">name</span> <span class="ow">and</span> <span class="n">item</span><span class="o">.</span><span class="n">unit_price</span><span class="p">:</span>
-                    <span class="n">project_reporting</span><span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">float</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">unit_price</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">project_name</span> <span class="ow">and</span> <span class="n">item</span><span class="o">.</span><span class="n">price</span><span class="p">:</span>
+                    <span class="n">project_reporting</span><span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">project_name</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">float</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">price</span><span class="p">)</span>
             <span class="c1"># Write to CSV file</span>
             <span class="k">for</span> <span class="n">project_name</span><span class="p">,</span> <span class="n">cost</span> <span class="ow">in</span> <span class="n">project_reporting</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                 <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">([</span>
@@ -23993,18 +23993,13 @@ Org C,OC,Lab1,110
 <span class="normal">80</span>
 <span class="normal">81</span>
 <span class="normal">82</span>
-<span class="normal">83</span>
-<span class="normal">84</span>
-<span class="normal">85</span>
-<span class="normal">86</span>
-<span class="normal">87</span>
-<span class="normal">88</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="normal">83</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.client</span><span class="w"> </span><span class="kn">import</span> <span class="n">AuthenticatedClient</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.customers</span><span class="w"> </span><span class="kn">import</span> <span class="n">customers_list</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.invoice_items</span><span class="w"> </span><span class="kn">import</span> <span class="n">invoice_items_list</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_resources</span><span class="w"> </span><span class="kn">import</span> <span class="n">marketplace_resources_list</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_resources</span><span class="w"> </span><span class="kn">import</span> <span class="n">marketplace_resources_retrieve</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.openstack_tenants</span><span class="w"> </span><span class="kn">import</span> <span class="n">openstack_tenants_list</span>
 
 <span class="c1"># Constants</span>
@@ -24029,7 +24024,7 @@ Org C,OC,Lab1,110
 <span class="p">)</span>
 
 <span class="c1"># Get all customers</span>
-<span class="n">customers</span> <span class="o">=</span> <span class="n">customers_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
+<span class="n">customers</span> <span class="o">=</span> <span class="n">customers_list</span><span class="o">.</span><span class="n">sync_all</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
 <span class="k">if</span> <span class="ow">not</span> <span class="n">customers</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">"No customers found"</span><span class="p">)</span>
     <span class="n">exit</span><span class="p">()</span>
@@ -24040,22 +24035,22 @@ Org C,OC,Lab1,110
 
     <span class="k">for</span> <span class="n">customer</span> <span class="ow">in</span> <span class="n">customers</span><span class="p">:</span>
         <span class="c1"># Get invoice items for the customer</span>
-        <span class="n">items</span> <span class="o">=</span> <span class="n">invoice_items_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="n">invoice_items_list</span><span class="o">.</span><span class="n">sync_all</span><span class="p">(</span>
             <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
             <span class="n">customer_uuid</span><span class="o">=</span><span class="n">customer</span><span class="o">.</span><span class="n">uuid</span><span class="p">,</span>
             <span class="n">year</span><span class="o">=</span><span class="n">CURRENT_YEAR</span><span class="p">,</span>
             <span class="n">month</span><span class="o">=</span><span class="n">CURRENT_MONTH</span>
         <span class="p">)</span>
 
-        <span class="c1"># Create resource costs mapping</span>
+        <span class="c1"># Total cost of each resource in this month's invoice, by resource URL</span>
         <span class="n">resource_costs</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">name</span> <span class="ow">and</span> <span class="n">item</span><span class="o">.</span><span class="n">unit_price</span><span class="p">:</span>
-                <span class="n">resource_costs</span><span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">unit_price</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">resource</span> <span class="ow">and</span> <span class="n">item</span><span class="o">.</span><span class="n">price</span><span class="p">:</span>
+                <span class="n">resource_costs</span><span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">resource</span><span class="p">]</span> <span class="o">=</span> <span class="n">resource_costs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">resource</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">+</span> <span class="nb">float</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">price</span><span class="p">)</span>
 
 
         <span class="c1"># Get tenants for the customer</span>
-        <span class="n">tenants</span> <span class="o">=</span> <span class="n">openstack_tenants_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
+        <span class="n">tenants</span> <span class="o">=</span> <span class="n">openstack_tenants_list</span><span class="o">.</span><span class="n">sync_all</span><span class="p">(</span>
             <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
             <span class="n">customer_uuid</span><span class="o">=</span><span class="n">customer</span><span class="o">.</span><span class="n">uuid</span>
         <span class="p">)</span>
@@ -24064,24 +24059,19 @@ Org C,OC,Lab1,110
             <span class="k">if</span> <span class="ow">not</span> <span class="n">tenant</span><span class="o">.</span><span class="n">marketplace_resource_uuid</span><span class="p">:</span>
                 <span class="k">continue</span>
 
-            <span class="c1"># Get resource details</span>
-            <span class="n">resources</span> <span class="o">=</span> <span class="n">marketplace_resources_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
+            <span class="c1"># Get the marketplace resource of the tenant, for its limits</span>
+            <span class="n">resource</span> <span class="o">=</span> <span class="n">marketplace_resources_retrieve</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
                 <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
                 <span class="n">uuid</span><span class="o">=</span><span class="n">tenant</span><span class="o">.</span><span class="n">marketplace_resource_uuid</span>
             <span class="p">)</span>
-
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">resources</span><span class="p">:</span>
-                <span class="k">continue</span>
-
-            <span class="n">resource</span> <span class="o">=</span> <span class="n">resources</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">limits</span> <span class="o">=</span> <span class="n">resource</span><span class="o">.</span><span class="n">limits</span> <span class="ow">or</span> <span class="p">{}</span>
+            <span class="n">limits</span> <span class="o">=</span> <span class="n">resource</span><span class="o">.</span><span class="n">limits</span><span class="o">.</span><span class="n">additional_properties</span> <span class="k">if</span> <span class="n">resource</span><span class="o">.</span><span class="n">limits</span> <span class="k">else</span> <span class="p">{}</span>
 
             <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">([</span>
                 <span class="n">tenant</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
                 <span class="n">limits</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'cores'</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
                 <span class="n">limits</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'ram'</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
                 <span class="n">limits</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'storage'</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
-                <span class="n">resource_costs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">tenant</span><span class="o">.</span><span class="n">marketplace_resource_uuid</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">),</span>
+                <span class="n">resource_costs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">url</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
                 <span class="n">tenant</span><span class="o">.</span><span class="n">project_name</span><span class="p">,</span>
                 <span class="n">tenant</span><span class="o">.</span><span class="n">customer_name</span><span class="p">,</span>
                 <span class="n">tenant</span><span class="o">.</span><span class="n">customer_abbreviation</span>
@@ -24205,7 +24195,7 @@ will be a file per provider with a short summary of invoice items for the define
 <span class="normal">102</span>
 <span class="normal">103</span>
 <span class="normal">104</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">unicodedata</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">decimal</span><span class="w"> </span><span class="kn">import</span> <span class="n">Decimal</span>
@@ -24216,9 +24206,9 @@ will be a file per provider with a short summary of invoice items for the define
 <span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.invoices</span><span class="w"> </span><span class="kn">import</span> <span class="n">invoices_list</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnexpectedStatus</span>
 
-<span class="c1"># Your Waldur instance data</span>
-<span class="n">WALDUR_HOST</span> <span class="o">=</span> <span class="s1">'example.waldur.com'</span>
-<span class="n">TOKEN</span> <span class="o">=</span> <span class="s1">'SUPPORT_STAFF_SECRET_TOKEN'</span>
+<span class="c1"># Your Waldur instance, e.g. https://waldur.example.com, and a staff or support token</span>
+<span class="n">WALDUR_API_URL</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'WALDUR_API_URL'</span><span class="p">)</span>
+<span class="n">TOKEN</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'WALDUR_API_TOKEN'</span><span class="p">)</span>
 
 <span class="c1"># Date-related constants</span>
 <span class="n">CURRENT_YEAR</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">year</span>
@@ -24243,12 +24233,12 @@ will be a file per provider with a short summary of invoice items for the define
 
 <span class="c1"># Client instance initialization</span>
 <span class="n">client</span> <span class="o">=</span> <span class="n">AuthenticatedClient</span><span class="p">(</span>
-    <span class="n">base_url</span><span class="o">=</span><span class="n">WALDUR_HOST</span><span class="p">,</span>
+    <span class="n">base_url</span><span class="o">=</span><span class="n">WALDUR_API_URL</span><span class="p">,</span>
     <span class="n">token</span><span class="o">=</span><span class="n">TOKEN</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="c1"># Organizations data fetching</span>
-<span class="n">customers</span> <span class="o">=</span> <span class="n">customers_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
+<span class="n">customers</span> <span class="o">=</span> <span class="n">customers_list</span><span class="o">.</span><span class="n">sync_all</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
 
 <span class="n">sp</span> <span class="o">=</span> <span class="p">{}</span>
 
@@ -24268,10 +24258,10 @@ will be a file per provider with a short summary of invoice items for the define
     <span class="k">except</span> <span class="n">UnexpectedStatus</span><span class="p">:</span>
         <span class="k">continue</span>
 
-    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">invoice</span><span class="o">.</span><span class="n">items</span><span class="p">:</span>
-        <span class="c1"># allocate to SP</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">details</span><span class="p">,</span> <span class="s1">'service_provider_name'</span><span class="p">):</span>
-            <span class="n">provider_name</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">details</span><span class="o">.</span><span class="n">service_provider_name</span>
+    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">invoice</span><span class="o">.</span><span class="n">items</span> <span class="ow">or</span> <span class="p">[]:</span>
+        <span class="c1"># allocate to SP; unset fields of SDK models hold UNSET, not None</span>
+        <span class="n">provider_name</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">details</span><span class="o">.</span><span class="n">service_provider_name</span> <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">details</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">provider_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">provider_name</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">provider_name</span> <span class="ow">in</span> <span class="n">sp</span><span class="p">:</span>
                 <span class="n">sp</span><span class="p">[</span><span class="n">provider_name</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">item</span><span class="p">,</span> <span class="n">customer</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>

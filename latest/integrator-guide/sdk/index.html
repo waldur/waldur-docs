@@ -13048,6 +13048,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#calling-an-endpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Calling an endpoint
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#error-handling" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -23719,6 +23730,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#calling-an-endpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Calling an endpoint
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#error-handling" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -23771,12 +23793,13 @@
 It allows you to interact with the Waldur REST API directly from your Python code.
 The SDK is provided as a Python module named <code>waldur_api_client</code>.</p>
 <h2 id="installation">Installation</h2>
-<p>The Waldur SDK is available on PyPI and can be installed using either <code>pip</code> or <code>poetry</code>:</p>
+<p>The Waldur SDK is available on PyPI as <code>waldur-api-client</code> and requires Python 3.9 or newer.
+Install the version that matches your Waldur server, so that the client knows the same endpoints and fields:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
-<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>waldur-api-client
-uv<span class="w"> </span>add<span class="w"> </span>waldur-api-client
-poetry<span class="w"> </span>add<span class="w"> </span>waldur-api-client
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"waldur-api-client==&lt;waldur-version&gt;"</span>
+uv<span class="w"> </span>add<span class="w"> </span><span class="s2">"waldur-api-client==&lt;waldur-version&gt;"</span>
+poetry<span class="w"> </span>add<span class="w"> </span><span class="s2">"waldur-api-client==&lt;waldur-version&gt;"</span>
 </code></pre></div></td></tr></tbody></table></div>
 <p>In order to perform operations, a user needs to create an instance of <code>AuthenticatedClient</code> class:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -23792,34 +23815,50 @@ poetry<span class="w"> </span>add<span class="w"> </span>waldur-api-client
 <span class="p">)</span>
 </code></pre></div></td></tr></tbody></table></div>
 <p>This instance provides interface for further interaction with Waldur and will be used across examples in related documentation.</p>
+<h2 id="calling-an-endpoint">Calling an endpoint</h2>
+<p>Each endpoint is a module under <code>waldur_api_client.api.&lt;tag&gt;</code>, named after the endpoint's operation, for example
+<code>waldur_api_client.api.marketplace_resources.marketplace_resources_list</code>. A module offers up to four functions:</p>
+<ul>
+<li><code>sync(...)</code> returns the parsed response: a model object, a list of them, or <code>None</code>.</li>
+<li><code>sync_detailed(...)</code> returns a <code>Response</code> with <code>status_code</code>, <code>headers</code>, raw <code>content</code> and <code>parsed</code>.</li>
+<li><code>asyncio(...)</code> and <code>asyncio_detailed(...)</code> are the <code>async</code> versions of the two above.</li>
+</ul>
+<p>Endpoints whose response has no body, such as most actions that only change state, have only
+<code>sync_detailed</code> and <code>asyncio_detailed</code>. List endpoints also have <code>sync_all</code> and <code>asyncio_all</code>, which follow the
+pagination and return every page.</p>
+<p>The fields of returned objects are the attributes of the model classes in <code>waldur_api_client.models</code>.</p>
 <h2 id="error-handling">Error handling</h2>
-<p>If the API call fails or returns an unexpected status code, it may raise <code>UnexpectedStatus</code> exception if the client is configured with <code>raise_on_unexpected_status=True</code>. This can be handled using a <code>try...except</code> block. The exception contains both the status code and the response content for debugging purposes.</p>
-<p>Example:</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
-<span class="normal"> 2</span>
-<span class="normal"> 3</span>
-<span class="normal"> 4</span>
-<span class="normal"> 5</span>
-<span class="normal"> 6</span>
-<span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_resources</span><span class="w"> </span><span class="kn">import</span> <span class="n">marketplace_resources_list</span>
+<p>If the API returns a status code that the endpoint does not document, for example <code>400</code> for invalid input or <code>403</code>
+for missing permissions, the SDK raises <code>UnexpectedStatus</code>. The exception carries the status code, the raw response
+content and the URL.</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_resources</span><span class="w"> </span><span class="kn">import</span> <span class="n">marketplace_resources_list</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnexpectedStatus</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">pprint</span>
 
 <span class="k">try</span><span class="p">:</span>
     <span class="n">result</span> <span class="o">=</span> <span class="n">marketplace_resources_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
 <span class="k">except</span> <span class="n">UnexpectedStatus</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Status code: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">status_code</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"Response content:"</span><span class="p">)</span>
-    <span class="n">pprint</span><span class="o">.</span><span class="n">pprint</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Response content: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">errors</span><span class="o">=</span><span class="s1">'ignore'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div></td></tr></tbody></table></div>
-<p>The <code>UnexpectedStatus</code> exception is raised when:</p>
-<ul>
-<li>The API returns a status code that is not documented in the OpenAPI specification</li>
-<li>The <code>raise_on_unexpected_status</code> client setting is enabled (default is disabled)</li>
-</ul>
+<p><code>sync_detailed</code> raises <code>UnexpectedStatus</code> in the same cases. Use it when a successful call needs more than the
+parsed body, for example the response headers or the raw content:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_resources</span><span class="w"> </span><span class="kn">import</span> <span class="n">marketplace_resources_list</span>
+
+<span class="n">response</span> <span class="o">=</span> <span class="n">marketplace_resources_list</span><span class="o">.</span><span class="n">sync_detailed</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"x-result-count"</span><span class="p">))</span>
+<span class="n">resources</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">parsed</span>
+</code></pre></div></td></tr></tbody></table></div>
 <h2 id="disabling-tls-validation-not-recommended">Disabling TLS validation (not recommended!)</h2>
 <p>If you are running your commands against Waldur deployment with broken TLS certificates (e.g. in development),
 the trick below can be used to disable validation of certificates by SDK, beware that <strong>this is a security risk</strong>.</p>
@@ -23827,7 +23866,11 @@ the trick below can be used to disable validation of certificates by SDK, beware
 <span class="normal">2</span>
 <span class="normal">3</span>
 <span class="normal">4</span>
-<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">AuthenticatedClient</span><span class="p">(</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">AuthenticatedClient</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">AuthenticatedClient</span><span class="p">(</span>
     <span class="n">base_url</span><span class="o">=</span><span class="s2">"https://internal_api.example.com"</span><span class="p">,</span>
     <span class="n">token</span><span class="o">=</span><span class="s2">"SuperSecretToken"</span><span class="p">,</span>
     <span class="n">verify_ssl</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -23838,7 +23881,11 @@ the trick below can be used to disable validation of certificates by SDK, beware
 <span class="normal">2</span>
 <span class="normal">3</span>
 <span class="normal">4</span>
-<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">AuthenticatedClient</span><span class="p">(</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">AuthenticatedClient</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">AuthenticatedClient</span><span class="p">(</span>
     <span class="n">base_url</span><span class="o">=</span><span class="s2">"https://internal_api.example.com"</span><span class="p">,</span>
     <span class="n">token</span><span class="o">=</span><span class="s2">"SuperSecretToken"</span><span class="p">,</span>
     <span class="n">verify_ssl</span><span class="o">=</span><span class="s2">"/path/to/certificate_bundle.pem"</span><span class="p">,</span>
@@ -23847,10 +23894,11 @@ the trick below can be used to disable validation of certificates by SDK, beware
 <h2 id="air-gapped-installation">Air gapped installation</h2>
 <p>If your machine from where you run SDK is not connected to the public Internet, you can use the following method
 to transfer required libraries.</p>
-<p>On the machine with access to the Internet:</p>
+<p>On a machine with access to the Internet and the same Python version and platform, download the client and its
+dependencies:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
-<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nb">echo</span><span class="w"> </span><span class="s2">"https://github.com/waldur/py-client/archive/master.zip"</span><span class="w"> </span>&gt;<span class="w"> </span>requirements.txt
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nb">echo</span><span class="w"> </span><span class="s2">"waldur-api-client==&lt;waldur-version&gt;"</span><span class="w"> </span>&gt;<span class="w"> </span>requirements.txt
 mkdir<span class="w"> </span>dependencies
 pip3<span class="w"> </span>download<span class="w"> </span>-r<span class="w"> </span>requirements.txt<span class="w"> </span>-d<span class="w"> </span>dependencies/
 </code></pre></div></td></tr></tbody></table></div>

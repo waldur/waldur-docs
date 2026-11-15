@@ -13218,17 +13218,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#example-paginating-api-results" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example paginating API results
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#filtering-api-response-fields-using-enum-types" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -23996,17 +23985,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#example-paginating-api-results" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example paginating API results
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#filtering-api-response-fields-using-enum-types" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -24145,131 +24123,42 @@
 <h1 id="allocation-lifecycle-management-by-service-provider">Allocation Lifecycle Management by Service Provider</h1>
 <p>This page describes operations to be performed by service provider.</p>
 <h2 id="prerequisites">Prerequisites</h2>
-<p>Please, read <a href="../../sdk/">initial setup for Waldur SDK</a>.</p>
+<p>Please, read <a href="../../sdk/">initial setup for Waldur SDK</a>. Every example below expects a <code>client</code> created as described
+there, with the token of a user who is an owner or manager of the service provider's organization.</p>
+<p>Values in angle brackets, such as <code>&lt;resource-uuid&gt;</code>, are placeholders for your own identifiers.
+The fields of the returned objects are the attributes of the corresponding model class in
+<code>waldur_api_client.models</code>, for example <code>User</code>, <code>SshKey</code> or <code>Resource</code>.</p>
 <h2 id="getting-a-list-of-users">Getting a list of users</h2>
-<p><code>list_users</code> method is used to fetch all users in a Waldur instance.</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
-<span class="normal"> 2</span>
-<span class="normal"> 3</span>
-<span class="normal"> 4</span>
-<span class="normal"> 5</span>
-<span class="normal"> 6</span>
-<span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span>
-<span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span>
-<span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span>
-<span class="normal">17</span>
-<span class="normal">18</span>
-<span class="normal">19</span>
-<span class="normal">20</span>
-<span class="normal">21</span>
-<span class="normal">22</span>
-<span class="normal">23</span>
-<span class="normal">24</span>
-<span class="normal">25</span>
-<span class="normal">26</span>
-<span class="normal">27</span>
-<span class="normal">28</span>
-<span class="normal">29</span>
-<span class="normal">30</span>
-<span class="normal">31</span>
-<span class="normal">32</span>
-<span class="normal">33</span>
-<span class="normal">34</span>
-<span class="normal">35</span>
-<span class="normal">36</span>
-<span class="normal">37</span>
-<span class="normal">38</span>
-<span class="normal">39</span>
-<span class="normal">40</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># The sync function from users_list module is used to fetch all users</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.users</span><span class="w"> </span><span class="kn">import</span> <span class="n">users_list</span>
+<p><code>users_list</code> is used to fetch the users visible to the caller. <code>sync_all</code> follows the pagination and returns every page.</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.users</span><span class="w"> </span><span class="kn">import</span> <span class="n">users_list</span>
 
-<span class="c1"># Initialize your client first (per the SDK guide)</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">users_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
-
-<span class="c1"># The result will be a list of User objects with the following attributes:</span>
-<span class="c1"># - url: str</span>
-<span class="c1"># - uuid: UUID</span>
-<span class="c1"># - username: str</span>
-<span class="c1"># - slug: str</span>
-<span class="c1"># - full_name: str</span>
-<span class="c1"># - native_name: str</span>
-<span class="c1"># - job_title: str</span>
-<span class="c1"># - email: str</span>
-<span class="c1"># - phone_number: str</span>
-<span class="c1"># - organization: str</span>
-<span class="c1"># - civil_number: str</span>
-<span class="c1"># - description: str</span>
-<span class="c1"># - is_staff: bool</span>
-<span class="c1"># - is_active: bool</span>
-<span class="c1"># - is_support: bool</span>
-<span class="c1"># - token: str</span>
-<span class="c1"># - token_lifetime: int</span>
-<span class="c1"># - registration_method: str</span>
-<span class="c1"># - date_joined: datetime</span>
-<span class="c1"># - agreement_date: datetime</span>
-<span class="c1"># - preferred_language: str</span>
-<span class="c1"># - permissions: list[Permission]</span>
-<span class="c1"># - requested_email: str</span>
-<span class="c1"># - affiliations: Any</span>
-<span class="c1"># - first_name: str</span>
-<span class="c1"># - last_name: str</span>
-<span class="c1"># - identity_provider_name: str</span>
-<span class="c1"># - identity_provider_label: str</span>
-<span class="c1"># - identity_provider_management_url: str</span>
-<span class="c1"># - identity_provider_fields: list[str]</span>
-<span class="c1"># - image: str</span>
-<span class="c1"># - identity_source: str</span>
-<span class="c1"># - has_active_session: bool</span>
+<span class="n">users</span> <span class="o">=</span> <span class="n">users_list</span><span class="o">.</span><span class="n">sync_all</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">users</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">username</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">email</span><span class="p">)</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h2 id="getting-a-list-of-ssh-keys">Getting a list of SSH keys</h2>
-<p><code>keys_list</code> method is used to fetch all SSH keys in Waldur.</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
-<span class="normal"> 2</span>
-<span class="normal"> 3</span>
-<span class="normal"> 4</span>
-<span class="normal"> 5</span>
-<span class="normal"> 6</span>
-<span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span>
-<span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span>
-<span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.keys</span><span class="w"> </span><span class="kn">import</span> <span class="n">keys_list</span>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.keys</span><span class="w"> </span><span class="kn">import</span> <span class="n">keys_list</span>
 
-<span class="c1"># List all SSH keys</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">keys_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
-
-<span class="c1"># The result will be a list of SshKey objects with the following attributes:</span>
-<span class="c1"># - url: str</span>
-<span class="c1"># - uuid: UUID</span>
-<span class="c1"># - name: str</span>
-<span class="c1"># - public_key: str</span>
-<span class="c1"># - fingerprint_md5: str</span>
-<span class="c1"># - fingerprint_sha256: str</span>
-<span class="c1"># - fingerprint_sha512: str</span>
-<span class="c1"># - user_uuid: UUID</span>
-<span class="c1"># - is_shared: bool</span>
-<span class="c1"># - type_: str</span>
+<span class="n">keys</span> <span class="o">=</span> <span class="n">keys_list</span><span class="o">.</span><span class="n">sync_all</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">key</span><span class="o">.</span><span class="n">fingerprint_sha256</span><span class="p">)</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h2 id="getting-a-list-of-resource-allocations">Getting a list of resource allocations</h2>
-<p><code>marketplace_resources_list</code> method is used to fetch resources related to offerings, which belong to user's service provider.</p>
-<p>Possible filter options for allocations (each one is optional):</p>
+<p>To get a list of all the resources (allocations) of a service provider, use <code>marketplace_resources_list</code>.
+<code>sync_all</code> follows the pagination and returns every page. It accepts the following filters:</p>
 <ul>
-<li><code>provider_uuid</code> - UUID of a service provider organization;</li>
-<li><code>state</code> - current state of a resource allocation; for valid values please use the associated enum values from MarketplaceResourcesListStateItem;</li>
-<li><code>offering_uuid</code> - UUID of a related resource;</li>
-<li><code>fields</code> - list of fields to return (can be passed as as strings or imported from <code>MarketplaceResourcesListFieldItem</code> enum, which includes fields like <code>name</code>, <code>offering</code>, <code>state</code>, <code>limits</code>, <code>plan</code>, <code>project</code>, <code>url</code>, and many others). Both examples are provided:</li>
+<li><code>provider_uuid</code> - UUID of the service provider's organization;</li>
+<li><code>state</code> - list of resource states, from the <code>ResourceState</code> enum;</li>
+<li><code>offering_uuid</code> - list of offering UUIDs;</li>
+<li><code>field</code> - list of fields to return, from the <code>ResourceFieldEnum</code> enum. Without it, every field is returned.</li>
 </ul>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
@@ -24289,52 +24178,33 @@
 <span class="normal">16</span>
 <span class="normal">17</span>
 <span class="normal">18</span>
-<span class="normal">19</span>
-<span class="normal">20</span>
-<span class="normal">21</span>
-<span class="normal">22</span>
-<span class="normal">23</span>
-<span class="normal">24</span>
-<span class="normal">25</span>
-<span class="normal">26</span>
-<span class="normal">27</span>
-<span class="normal">28</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.models.marketplace_resources_list_state_item</span><span class="w"> </span><span class="kn">import</span> <span class="n">MarketplaceResourcesListStateItem</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.models.marketplace_resources_list_field_item</span><span class="w"> </span><span class="kn">import</span> <span class="n">MarketplaceResourcesListFieldItem</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_resources</span><span class="w"> </span><span class="kn">import</span> <span class="n">marketplace_resources_list</span>
+<span class="normal">19</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_resources</span><span class="w"> </span><span class="kn">import</span> <span class="n">marketplace_resources_list</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ResourceFieldEnum</span><span class="p">,</span> <span class="n">ResourceState</span>
 
-<span class="n">result</span> <span class="o">=</span> <span class="n">marketplace_resources_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
+<span class="n">resources</span> <span class="o">=</span> <span class="n">marketplace_resources_list</span><span class="o">.</span><span class="n">sync_all</span><span class="p">(</span>
     <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
-    <span class="n">provider_uuid</span><span class="o">=</span><span class="s1">'&lt;provider-uuid&gt;'</span><span class="p">,</span>
-    <span class="n">state</span><span class="o">=</span><span class="p">[</span><span class="n">MarketplaceResourcesListStateItem</span><span class="o">.</span><span class="n">CREATING</span><span class="p">],</span>
-    <span class="n">offering_uuid</span><span class="o">=</span><span class="s1">'&lt;offering-uuid&gt;'</span><span class="p">,</span>
+    <span class="n">provider_uuid</span><span class="o">=</span><span class="s2">"&lt;provider-uuid&gt;"</span><span class="p">,</span>
+    <span class="n">state</span><span class="o">=</span><span class="p">[</span><span class="n">ResourceState</span><span class="o">.</span><span class="n">CREATING</span><span class="p">,</span> <span class="n">ResourceState</span><span class="o">.</span><span class="n">OK</span><span class="p">],</span>
+    <span class="n">offering_uuid</span><span class="o">=</span><span class="p">[</span><span class="s2">"&lt;offering-uuid&gt;"</span><span class="p">],</span>
     <span class="n">field</span><span class="o">=</span><span class="p">[</span>
-        <span class="n">MarketplaceResourcesListFieldItem</span><span class="o">.</span><span class="n">NAME</span><span class="p">,</span>
-        <span class="n">MarketplaceResourcesListFieldItem</span><span class="o">.</span><span class="n">STATE</span><span class="p">,</span>
-        <span class="n">MarketplaceResourcesListFieldItem</span><span class="o">.</span><span class="n">LIMITS</span><span class="p">,</span>
-        <span class="n">MarketplaceResourcesListFieldItem</span><span class="o">.</span><span class="n">PLAN</span><span class="p">,</span>
-        <span class="n">MarketplaceResourcesListFieldItem</span><span class="o">.</span><span class="n">PROJECT</span><span class="p">,</span>
-        <span class="n">MarketplaceResourcesListFieldItem</span><span class="o">.</span><span class="n">URL</span>
-    <span class="p">]</span>
+        <span class="n">ResourceFieldEnum</span><span class="o">.</span><span class="n">UUID</span><span class="p">,</span>
+        <span class="n">ResourceFieldEnum</span><span class="o">.</span><span class="n">NAME</span><span class="p">,</span>
+        <span class="n">ResourceFieldEnum</span><span class="o">.</span><span class="n">STATE</span><span class="p">,</span>
+        <span class="n">ResourceFieldEnum</span><span class="o">.</span><span class="n">LIMITS</span><span class="p">,</span>
+        <span class="n">ResourceFieldEnum</span><span class="o">.</span><span class="n">PLAN</span><span class="p">,</span>
+        <span class="n">ResourceFieldEnum</span><span class="o">.</span><span class="n">PROJECT</span><span class="p">,</span>
+    <span class="p">],</span>
 <span class="p">)</span>
-
-
-<span class="c1"># The result will be a list of Resource objects with the following fields:</span>
-<span class="c1"># - name: str</span>
-<span class="c1"># - offering: str</span>
-<span class="c1"># - state: ResourceState</span>
-<span class="c1"># - limits: ResourceLimits</span>
-<span class="c1"># - plan: str</span>
-<span class="c1"># - project: str</span>
-<span class="c1"># - url: str</span>
+<span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">resources</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">resource</span><span class="o">.</span><span class="n">uuid</span><span class="p">,</span> <span class="n">resource</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">resource</span><span class="o">.</span><span class="n">state</span><span class="p">)</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h2 id="approvingrejecting-allocation-order-by-service-provider">Approving/rejecting allocation order by service provider</h2>
-<p>The service provider can either approve or reject order using
-<code>marketplace_orders_approve_by_provider</code> and <code>marketplace_orders_reject_by_provider</code> correspondingly.
-Both of these methods expect as its only argument UUID of an order for the allocation.</p>
-<p>For example, a consumer requested an allocation using <code>Order</code> with <code>CREATE</code> type. After that, an empty allocation with <code>CREATING</code> state has appeared.
-A service provider can change the state to <code>ok</code> (created successfully) using <code>marketplace_orders_approve_by_provider</code> or
-<code>rejected</code> (creation rejected) using <code>marketplace_orders_reject_by_provider</code>.
-In order to get a proper order, SP owner can use <code>marketplace_orders_list</code> method. This action is for order listing and supports filtering by state and allocation.</p>
+<p>When a consumer requests an allocation, Waldur creates an <code>Order</code> of type <code>CREATE</code>, and the allocation appears in
+<code>CREATING</code> state. For an offering that requires the provider's approval, the order waits in <code>pending-provider</code> state.
+The service provider then either approves it with <code>marketplace_orders_approve_by_provider</code>, or rejects it with
+<code>marketplace_orders_reject_by_provider</code>.</p>
+<p>To find orders, use <code>marketplace_orders_list</code>. It can filter by <code>state</code> (from the <code>OrderState</code> enum), by <code>type_</code>
+(from the <code>RequestTypes</code> enum), by <code>provider_uuid</code> and by <code>resource_uuid</code>.</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
 <span class="normal"> 3</span>
@@ -24369,74 +24239,47 @@ In order to get a proper order, SP owner can use <code>marketplace_orders_list</
 <span class="normal">32</span>
 <span class="normal">33</span>
 <span class="normal">34</span>
-<span class="normal">35</span>
-<span class="normal">36</span>
-<span class="normal">37</span>
-<span class="normal">38</span>
-<span class="normal">39</span>
-<span class="normal">40</span>
-<span class="normal">41</span>
-<span class="normal">42</span>
-<span class="normal">43</span>
-<span class="normal">44</span>
-<span class="normal">45</span>
-<span class="normal">46</span>
-<span class="normal">47</span>
-<span class="normal">48</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_orders</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<span class="normal">35</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_orders</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">marketplace_orders_approve_by_provider</span><span class="p">,</span>
-    <span class="n">marketplace_orders_reject_by_provider</span><span class="p">,</span>
     <span class="n">marketplace_orders_list</span><span class="p">,</span>
-    <span class="n">MarketplaceOrdersListStateItem</span>
+    <span class="n">marketplace_orders_reject_by_provider</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.models.marketplace_orders_list_state_item</span><span class="w"> </span><span class="kn">import</span> <span class="n">MarketplaceOrdersListStateItem</span>
-
-<span class="c1"># Service providers can approve or reject orders using:</span>
-<span class="n">marketplace_orders_approve_by_provider</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
-    <span class="n">uuid</span><span class="o">=</span><span class="s2">"&lt;order-uuid&gt;"</span><span class="p">,</span>
-    <span class="n">client</span><span class="o">=</span><span class="n">client</span>
-<span class="p">)</span>
-<span class="n">marketplace_orders_reject_by_provider</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
-    <span class="n">uuid</span><span class="o">=</span><span class="s2">"&lt;order-uuid&gt;"</span><span class="p">,</span>
-    <span class="n">client</span><span class="o">=</span><span class="n">client</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">OrderApproveByProviderRequest</span><span class="p">,</span>
+    <span class="n">OrderProviderRejectionRequest</span><span class="p">,</span>
+    <span class="n">OrderState</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="c1"># To retreive orders with state "executing" with a specific resource uuid</span>
-<span class="n">orders</span> <span class="o">=</span> <span class="n">marketplace_orders_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
+<span class="c1"># Orders of this provider that wait for its decision</span>
+<span class="n">orders</span> <span class="o">=</span> <span class="n">marketplace_orders_list</span><span class="o">.</span><span class="n">sync_all</span><span class="p">(</span>
     <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
-    <span class="n">state</span><span class="o">=</span><span class="p">[</span><span class="n">MarketplaceOrdersListStateItem</span><span class="o">.</span><span class="n">EXECUTING</span><span class="p">],</span>  <span class="c1"># List of order states to filter by</span>
-    <span class="n">resource_uuid</span><span class="o">=</span><span class="s2">"&lt;resource-uuid&gt;"</span>  <span class="c1"># Optional filter by specific resource</span>
+    <span class="n">provider_uuid</span><span class="o">=</span><span class="s2">"&lt;provider-uuid&gt;"</span><span class="p">,</span>
+    <span class="n">state</span><span class="o">=</span><span class="p">[</span><span class="n">OrderState</span><span class="o">.</span><span class="n">PENDING_PROVIDER</span><span class="p">],</span>
 <span class="p">)</span>
 
-<span class="c1"># Example workflow:</span>
-<span class="c1"># 1. Get pending orders</span>
-<span class="n">orders</span> <span class="o">=</span> <span class="n">marketplace_orders_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
-    <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
-    <span class="n">state</span><span class="o">=</span><span class="p">[</span><span class="n">MarketplaceOrdersListStateItem</span><span class="o">.</span><span class="n">EXECUTING</span><span class="p">]</span>
-<span class="p">)</span>
-
-<span class="c1"># 2. Approve orders</span>
-<span class="k">for</span> <span class="n">order</span> <span class="ow">in</span> <span class="n">orders</span><span class="p">:</span>
+<span class="c1"># Approve the first order</span>
+<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">orders</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
     <span class="n">marketplace_orders_approve_by_provider</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
-        <span class="n">uuid</span><span class="o">=</span><span class="n">order</span><span class="o">.</span><span class="n">uuid</span><span class="p">,</span>
-        <span class="n">client</span><span class="o">=</span><span class="n">client</span>
+        <span class="n">uuid</span><span class="o">=</span><span class="n">orders</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">uuid</span><span class="p">,</span>
+        <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
+        <span class="n">body</span><span class="o">=</span><span class="n">OrderApproveByProviderRequest</span><span class="p">(),</span>
     <span class="p">)</span>
 
-<span class="c1"># Available order states can be viewed in client's MarketplaceOrdersListStateItem, supported order states:</span>
-<span class="c1"># - "canceled"</span>
-<span class="c1"># - "done"</span>
-<span class="c1"># - "erred"</span>
-<span class="c1"># - "executing"</span>
-<span class="c1"># - "pending-consumer"</span>
-<span class="c1"># - "pending-project"</span>
-<span class="c1"># - "pending-provider"</span>
-<span class="c1"># - "rejected"</span>
+<span class="c1"># Reject the second one, with an optional explanation for the consumer</span>
+<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">orders</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+    <span class="n">marketplace_orders_reject_by_provider</span><span class="o">.</span><span class="n">sync_detailed</span><span class="p">(</span>
+        <span class="n">uuid</span><span class="o">=</span><span class="n">orders</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">uuid</span><span class="p">,</span>
+        <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
+        <span class="n">body</span><span class="o">=</span><span class="n">OrderProviderRejectionRequest</span><span class="p">(</span>
+            <span class="n">provider_rejection_comment</span><span class="o">=</span><span class="s2">"Not enough capacity this quarter"</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h2 id="cancellation-of-orders-for-allocations">Cancellation of orders for allocations</h2>
-<p>A consumer can also cancel created order and subsequently interrupt the requested operation over allocation.
-For example, this option is suitable if the customer wants to cancel allocation deletion.
-For this, <code>marketplace_orders_cancel</code> method should be used.
-It changes the state of the order to <code>canceled</code>.
-<strong>NB</strong>: this transition is possible only if the order's state is equal to <code>pending-consumer</code> or <code>pending-provider</code> and offering type is basic or support.</p>
+<p>A consumer can also cancel an order and so interrupt the requested operation, for example a request to terminate
+an allocation. For this, use <code>marketplace_orders_cancel</code>. It changes the state of the order to <code>canceled</code>.</p>
+<p><strong>NB</strong>: this is possible only while the order is in <code>pending-consumer</code> or <code>pending-provider</code> state, and only for
+offerings of type basic or support.</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
 <span class="normal"> 3</span>
@@ -24453,29 +24296,34 @@ It changes the state of the order to <code>canceled</code>.
 <span class="normal">14</span>
 <span class="normal">15</span>
 <span class="normal">16</span>
-<span class="normal">17</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_orders</span><span class="w"> </span><span class="kn">import</span> <span class="n">marketplace_orders_list</span><span class="p">,</span> <span class="n">marketplace_orders_cancel</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.models.marketplace_orders_list_state_item</span><span class="w"> </span><span class="kn">import</span> <span class="n">MarketplaceOrdersListStateItem</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.models.marketplace_orders_list_type_item</span><span class="w"> </span><span class="kn">import</span> <span class="n">MarketplaceOrdersListTypeItem</span>
+<span class="normal">17</span>
+<span class="normal">18</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_orders</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">marketplace_orders_cancel</span><span class="p">,</span>
+    <span class="n">marketplace_orders_list</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrderState</span><span class="p">,</span> <span class="n">RequestTypes</span>
 
-<span class="c1"># List orders</span>
-<span class="n">orders</span> <span class="o">=</span> <span class="n">marketplace_orders_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
+<span class="n">orders</span> <span class="o">=</span> <span class="n">marketplace_orders_list</span><span class="o">.</span><span class="n">sync_all</span><span class="p">(</span>
     <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
-    <span class="n">state</span><span class="o">=</span><span class="p">[</span><span class="n">MarketplaceOrdersListStateItem</span><span class="o">.</span><span class="n">EXECUTING</span><span class="p">],</span>
-    <span class="n">type_</span><span class="o">=</span><span class="p">[</span><span class="n">MarketplaceOrdersListTypeItem</span><span class="o">.</span><span class="n">TERMINATE</span><span class="p">]</span>
+    <span class="n">state</span><span class="o">=</span><span class="p">[</span><span class="n">OrderState</span><span class="o">.</span><span class="n">PENDING_CONSUMER</span><span class="p">,</span> <span class="n">OrderState</span><span class="o">.</span><span class="n">PENDING_PROVIDER</span><span class="p">],</span>
+    <span class="n">type_</span><span class="o">=</span><span class="p">[</span><span class="n">RequestTypes</span><span class="o">.</span><span class="n">TERMINATE</span><span class="p">],</span>
 <span class="p">)</span>
 
-<span class="n">order</span> <span class="o">=</span> <span class="n">orders</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-
-<span class="n">result</span> <span class="o">=</span> <span class="n">marketplace_orders_cancel</span><span class="o">.</span><span class="n">sync_detailed</span><span class="p">(</span>
-    <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
-    <span class="n">uuid</span><span class="o">=</span><span class="n">order</span><span class="o">.</span><span class="n">uuid</span>
-<span class="p">)</span>
+<span class="k">for</span> <span class="n">order</span> <span class="ow">in</span> <span class="n">orders</span><span class="p">:</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">marketplace_orders_cancel</span><span class="o">.</span><span class="n">sync_detailed</span><span class="p">(</span>
+        <span class="n">uuid</span><span class="o">=</span><span class="n">order</span><span class="o">.</span><span class="n">uuid</span><span class="p">,</span>
+        <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">uuid</span><span class="p">,</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">)</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h2 id="updating-resource-allocation-with-local-reference-setting-backend_id-field">Updating resource allocation with local reference (setting <code>backend_id</code> field)</h2>
-<p>Each allocation can have a link to a service provider's internal reference using <code>backend_id</code> field. Only users with service provider owner and manager roles can set this value using <code>marketplace_provider_resources_set_backend_id</code> method of the client. It requires the following arguments:</p>
+<p>Each allocation can have a link to a service provider's internal reference using <code>backend_id</code> field.
+Only users with service provider owner and manager roles can set it, with
+<code>marketplace_provider_resources_set_backend_id</code>. It requires the following arguments:</p>
 <ul>
 <li><strong><code>uuid</code></strong> - UUID of a resource allocation;</li>
-<li><strong><code>body</code></strong> - A request parameter of type <code>ResourceBackendIDRequest</code> that contains the <code>backend_id</code> field, which is the unique identifier of the resource in the external system.</li>
+<li><strong><code>body</code></strong> - a <code>ResourceBackendIDRequest</code> with the <code>backend_id</code> field: the identifier of the resource in the
+  external system.</li>
 </ul>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
@@ -24487,21 +24335,17 @@ It changes the state of the order to <code>canceled</code>.
 <span class="normal"> 8</span>
 <span class="normal"> 9</span>
 <span class="normal">10</span>
-<span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_provider_resources</span><span class="w"> </span><span class="kn">import</span> <span class="n">marketplace_provider_resources_set_backend_id</span>
+<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_provider_resources</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">marketplace_provider_resources_set_backend_id</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ResourceBackendIDRequest</span>
 
-<span class="c1"># Set backend ID for a resource</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">marketplace_provider_resources_set_backend_id</span><span class="o">.</span><span class="n">sync_detailed</span><span class="p">(</span>
-    <span class="n">uuid</span><span class="o">=</span><span class="s2">"resource-uuid"</span><span class="p">,</span>  <span class="c1"># The UUID of the resource</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">marketplace_provider_resources_set_backend_id</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
+    <span class="n">uuid</span><span class="o">=</span><span class="s2">"&lt;resource-uuid&gt;"</span><span class="p">,</span>
     <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
-    <span class="n">body</span><span class="o">=</span><span class="n">ResourceBackendIDRequest</span><span class="p">(</span>
-        <span class="n">backend_id</span><span class="o">=</span><span class="s2">"some-backend-id"</span>  <span class="c1"># The new backend ID</span>
-    <span class="p">)</span>
+    <span class="n">body</span><span class="o">=</span><span class="n">ResourceBackendIDRequest</span><span class="p">(</span><span class="n">backend_id</span><span class="o">=</span><span class="s2">"&lt;some-backend-id&gt;"</span><span class="p">),</span>
 <span class="p">)</span>
-
-<span class="c1"># The response will contain a ResourceBackendID object with the updated backend_id</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
 </code></pre></div></td></tr></tbody></table></div>
 <p>In case if SDK usage is not possible, HTTP request can be sent:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
@@ -24514,7 +24358,7 @@ It changes the state of the order to <code>canceled</code>.
 <span class="normal"> 8</span>
 <span class="normal"> 9</span>
 <span class="normal">10</span>
-<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">POST &lt;API-URL&gt;/marketplace-resources/&lt;resource-uuid&gt;/</span>
+<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">POST &lt;API-URL&gt;/api/marketplace-provider-resources/&lt;resource-uuid&gt;/set_backend_id/</span>
 
 <span class="err">{</span>
 <span class="err">    "backend_id": "&lt;some-backend-id&gt;"</span>
@@ -24528,10 +24372,12 @@ It changes the state of the order to <code>canceled</code>.
 </code></pre></div></td></tr></tbody></table></div>
 <h2 id="providing-additional-access-detail-for-resource-allocation">Providing additional access detail for resource allocation</h2>
 <p>For additional details related to allocation access, <code>report</code> data is used.
-In order to provide this information, owners and managers can use <code>marketplace_resource_submit_report</code> method. It requires the following arguments:</p>
+In order to provide this information, owners and managers can use <code>marketplace_provider_resources_submit_report</code>.
+It requires the following arguments:</p>
 <ul>
 <li><strong><code>uuid</code></strong> - UUID of a resource allocation;</li>
-<li><strong><code>report</code></strong> - A list of <code>ReportSectionRequest</code> instances that is wrapped in a <code>ResourceReportRequest</code> object. Each <code>ReportSectionRequest</code> contains a header and body content. The <code>ResourceReportRequest</code> serves as a container for these report sections when submitting the report to the API.</li>
+<li><strong><code>body</code></strong> - a <code>ResourceReportRequest</code> with a <code>report</code>: a list of <code>ReportSectionRequest</code> objects, each with a
+  <code>header</code> and a <code>body</code>.</li>
 </ul>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
@@ -24548,32 +24394,91 @@ In order to provide this information, owners and managers can use <code>marketpl
 <span class="normal">13</span>
 <span class="normal">14</span>
 <span class="normal">15</span>
-<span class="normal">16</span>
-<span class="normal">17</span>
-<span class="normal">18</span>
-<span class="normal">19</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReportSectionRequest</span><span class="p">,</span> <span class="n">ResourceReportRequest</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_provider_resources</span><span class="w"> </span><span class="kn">import</span> <span class="n">marketplace_provider_resources_submit_report</span>
-
-<span class="n">report</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="n">ReportSectionRequest</span><span class="p">(</span><span class="n">header</span><span class="o">=</span><span class="s2">"Header1"</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="s2">"Body1"</span><span class="p">),</span>
-    <span class="n">ReportSectionRequest</span><span class="p">(</span><span class="n">header</span><span class="o">=</span><span class="s2">"Header2"</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="s2">"Body2"</span><span class="p">)</span>
-<span class="p">]</span>
-
-<span class="n">report_request</span> <span class="o">=</span> <span class="n">ResourceReportRequest</span><span class="p">(</span><span class="n">report</span><span class="o">=</span><span class="n">report</span><span class="p">)</span>
+<span class="normal">16</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_provider_resources</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">marketplace_provider_resources_submit_report</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReportSectionRequest</span><span class="p">,</span> <span class="n">ResourceReportRequest</span>
 
 <span class="n">result</span> <span class="o">=</span> <span class="n">marketplace_provider_resources_submit_report</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
-    <span class="n">uuid</span><span class="o">=</span><span class="s2">"your-resource-uuid"</span><span class="p">,</span>
-    <span class="n">body</span><span class="o">=</span><span class="n">report_request</span>
+    <span class="n">uuid</span><span class="o">=</span><span class="s2">"&lt;resource-uuid&gt;"</span><span class="p">,</span>
+    <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
+    <span class="n">body</span><span class="o">=</span><span class="n">ResourceReportRequest</span><span class="p">(</span>
+        <span class="n">report</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">ReportSectionRequest</span><span class="p">(</span><span class="n">header</span><span class="o">=</span><span class="s2">"Login node"</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="s2">"ssh login.example.com"</span><span class="p">),</span>
+            <span class="n">ReportSectionRequest</span><span class="p">(</span><span class="n">header</span><span class="o">=</span><span class="s2">"Support"</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="s2">"support@example.com"</span><span class="p">),</span>
+        <span class="p">]</span>
+    <span class="p">),</span>
 <span class="p">)</span>
-
-<span class="c1"># The result will be a ResourceReport object containing:</span>
-<span class="c1"># - `report`: List of `ReportSection` objects, each with:</span>
-<span class="c1">#   - `header`: The section header</span>
-<span class="c1">#   - `body`: The section content</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h2 id="pagination">Pagination</h2>
-<p>The Waldur API Client SDK supports pagination for list endpoints using <code>page</code> and <code>page_size</code> parameters.</p>
-<h2 id="example-paginating-api-results">Example paginating API results</h2>
+<p>List endpoints return one page at a time. The page is selected with the <code>page</code> and <code>page_size</code> parameters;
+<code>sync_all</code> follows the pagination and returns every page.</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_provider_offerings</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">marketplace_provider_offerings_list</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># The first page, with 10 items</span>
+<span class="n">first_page</span> <span class="o">=</span> <span class="n">marketplace_provider_offerings_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
+    <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">page_size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Every offering, page by page</span>
+<span class="n">offerings</span> <span class="o">=</span> <span class="n">marketplace_provider_offerings_list</span><span class="o">.</span><span class="n">sync_all</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
+</code></pre></div></td></tr></tbody></table></div>
+<h2 id="filtering-api-response-fields-using-enum-types">Filtering API Response Fields Using Enum Types</h2>
+<p>Most list and retrieve endpoints accept a <code>field</code> parameter that selects which fields of each object are returned.
+The allowed values are an enum named after the model, for example <code>ServiceProviderFieldEnum</code> for
+<code>marketplace_service_providers_list</code>. Fields that were not requested are left unset on the returned objects.</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_service_providers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">marketplace_service_providers_list</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ServiceProviderFieldEnum</span>
+
+<span class="n">service_providers</span> <span class="o">=</span> <span class="n">marketplace_service_providers_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
+    <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
+    <span class="n">field</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">ServiceProviderFieldEnum</span><span class="o">.</span><span class="n">CUSTOMER_NAME</span><span class="p">,</span>
+        <span class="n">ServiceProviderFieldEnum</span><span class="o">.</span><span class="n">CUSTOMER_ABBREVIATION</span><span class="p">,</span>
+        <span class="n">ServiceProviderFieldEnum</span><span class="o">.</span><span class="n">DESCRIPTION</span><span class="p">,</span>
+        <span class="n">ServiceProviderFieldEnum</span><span class="o">.</span><span class="n">OFFERING_COUNT</span><span class="p">,</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+<span class="k">for</span> <span class="n">service_provider</span> <span class="ow">in</span> <span class="n">service_providers</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">service_provider</span><span class="o">.</span><span class="n">customer_name</span><span class="p">,</span> <span class="n">service_provider</span><span class="o">.</span><span class="n">offering_count</span><span class="p">)</span>
+</code></pre></div></td></tr></tbody></table></div>
+<h2 id="getting-a-list-of-members-in-a-project-with-active-resource-allocations">Getting a list of members in a project with active resource allocations</h2>
+<p>Service provider owners and managers can list the members of the project that uses a resource allocation,
+with <code>marketplace_resources_team_list</code>. It requires the UUID of the resource allocation.</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
@@ -24581,121 +24486,32 @@ In order to provide this information, owners and managers can use <code>marketpl
 <span class="normal">5</span>
 <span class="normal">6</span>
 <span class="normal">7</span>
-<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_provider_offerings</span><span class="w"> </span><span class="kn">import</span> <span class="n">marketplace_provider_offerings_list</span>
+<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_resources</span><span class="w"> </span><span class="kn">import</span> <span class="n">marketplace_resources_team_list</span>
 
-<span class="c1"># Get first page with 10 items</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">marketplace_provider_offerings_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
-    <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
-    <span class="n">page</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-    <span class="n">page_size</span><span class="o">=</span><span class="mi">10</span>
-<span class="p">)</span>
-</code></pre></div></td></tr></tbody></table></div>
-<h2 id="filtering-api-response-fields-using-enum-types">Filtering API Response Fields Using Enum Types</h2>
-<p>The <code>marketplace_service_providers_list</code> endpoint allows you to specify which fields you want to retrieve from the service provider objects. This is done using the <code>field</code> parameter with enum values from <code>MarketplaceServiceProvidersListFieldItem</code>. The field parameter is present for different API endpoints to allow selective retrieval of specific fields from the response objects.</p>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
-<span class="normal"> 2</span>
-<span class="normal"> 3</span>
-<span class="normal"> 4</span>
-<span class="normal"> 5</span>
-<span class="normal"> 6</span>
-<span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span>
-<span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span>
-<span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span>
-<span class="normal">17</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_service_providers</span><span class="w"> </span><span class="kn">import</span> <span class="n">marketplace_service_providers_list</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.models.marketplace_service_providers_list_field_item</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">MarketplaceServiceProvidersListFieldItem</span><span class="p">,</span>
-<span class="p">)</span>
-
-
-<span class="c1"># List service providers with specific fields</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">marketplace_service_providers_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
-    <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
-    <span class="n">field</span><span class="o">=</span><span class="p">[</span>
-        <span class="n">MarketplaceServiceProvidersListFieldItem</span><span class="o">.</span><span class="n">CUSTOMER_NAME</span><span class="p">,</span>
-        <span class="n">MarketplaceServiceProvidersListFieldItem</span><span class="o">.</span><span class="n">CUSTOMER_ABBREVIATION</span><span class="p">,</span>
-        <span class="n">MarketplaceServiceProvidersListFieldItem</span><span class="o">.</span><span class="n">DESCRIPTION</span><span class="p">,</span>
-        <span class="n">MarketplaceServiceProvidersListFieldItem</span><span class="o">.</span><span class="n">OFFERING_COUNT</span><span class="p">,</span>
-    <span class="p">]</span>
-<span class="p">)</span>
-<span class="c1"># Result will contain only the data for specified fields for each service provider.</span>
-</code></pre></div></td></tr></tbody></table></div>
-<h2 id="getting-a-list-of-members-in-a-project-with-active-resource-allocations">Getting a list of members in a project with active resource allocations</h2>
-<p>Service provider owners and managers can list project members using a resource allocation with <code>marketplace_resources_team_list</code> method.
-It requires the following arguments:</p>
-<ul>
-<li><strong><code>resource_uuid</code></strong> - UUID of a resource allocation.</li>
-</ul>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
-<span class="normal"> 2</span>
-<span class="normal"> 3</span>
-<span class="normal"> 4</span>
-<span class="normal"> 5</span>
-<span class="normal"> 6</span>
-<span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span>
-<span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span>
-<span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span>
-<span class="normal">17</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_resources</span><span class="w"> </span><span class="kn">import</span> <span class="n">marketplace_resources_team_list</span>
-
-<span class="c1"># Get team members for a marketplace resource</span>
 <span class="n">team</span> <span class="o">=</span> <span class="n">marketplace_resources_team_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
-    <span class="n">uuid</span><span class="o">=</span><span class="s2">"resource_uuid"</span><span class="p">,</span>
-    <span class="n">client</span><span class="o">=</span><span class="n">client</span>
+    <span class="n">uuid</span><span class="o">=</span><span class="s2">"&lt;resource-uuid&gt;"</span><span class="p">,</span>
+    <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
 <span class="p">)</span>
-
-<span class="c1"># Each team member is a ProjectUser object with these fields:</span>
-<span class="c1"># - url: str</span>
-<span class="c1"># - uuid: UUID</span>
-<span class="c1"># - username: str</span>
-<span class="c1"># - full_name: str</span>
-<span class="c1"># - role: str</span>
-<span class="c1"># - expiration_time: Optional[datetime]</span>
-<span class="c1"># - offering_user_username: Optional[str]</span>
-<span class="c1"># - email: Optional[str]</span>
+<span class="k">for</span> <span class="n">member</span> <span class="ow">in</span> <span class="n">team</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">member</span><span class="o">.</span><span class="n">username</span><span class="p">,</span> <span class="n">member</span><span class="o">.</span><span class="n">role</span><span class="p">,</span> <span class="n">member</span><span class="o">.</span><span class="n">offering_user_username</span><span class="p">)</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h2 id="reporting-usage-for-a-resource-allocation">Reporting usage for a resource allocation</h2>
 <p>A usage of a resource allocation can be submitted by a corresponding service provider.
 For this, the following methods are used:</p>
 <ul>
-<li><code>marketplace_public_offerings_retrieve</code> - getting offering with components info. Arguments:</li>
-<li>
-<p><strong><code>offering_uuid</code></strong> - UUID of an offering</p>
-</li>
-<li>
-<p><code>marketplace_resources_plan_periods_list</code> - getting current plan periods for resource allocation. Arguments:</p>
-</li>
-<li>
-<p><strong><code>resource_uuid</code></strong> - UUID of a resource</p>
-</li>
-<li>
-<p><code>marketplace_plan_components_list</code> - retrieves the list of components for a specific offering. Arguments:</p>
-</li>
-<li><strong><code>offering_uuid</code></strong> - UUID of the offering to get components for</li>
-<li>
-<p><strong><code>client</code></strong> - API client instance</p>
-</li>
-<li>
-<p><code>marketplace_component_usages_set_usage</code> - creates or updates component usage for the current plan. Arguments:</p>
-</li>
-<li><strong><code>body</code></strong> - parameter of type <code>ComponentUsageCreateRequest</code> containing:<ul>
-<li><strong><code>resource_uuid</code></strong> - UUID of the resource</li>
-<li><strong><code>usages</code></strong> - list of <code>ComponentUsage</code> instances</li>
+<li><code>marketplace_public_offerings_retrieve</code> - gets the offering, including its components. Each component's <code>type_</code>
+  identifies it when reporting usage.</li>
+<li><code>marketplace_component_usages_set_usage</code> - creates or updates the usage of the components for the current
+  billing period. Its <code>body</code> is a <code>ComponentUsageCreateRequest</code> with:<ul>
+<li><strong><code>resource</code></strong> - UUID of the resource;</li>
+<li><strong><code>usages</code></strong> - a list of <code>ComponentUsageItemRequest</code> objects, each with the component <code>type_</code>, the <code>amount</code>
+  and an optional <code>description</code>.</li>
 </ul>
 </li>
+<li><code>marketplace_resources_plan_periods_list</code> - gets the plan periods of the resource, with the usages reported in
+  each.</li>
 </ul>
+<p>Usage can be reported only for components whose billing type is <code>usage</code>.</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
 <span class="normal"> 3</span>
@@ -24741,96 +24557,64 @@ For this, the following methods are used:</p>
 <span class="normal">43</span>
 <span class="normal">44</span>
 <span class="normal">45</span>
-<span class="normal">46</span>
-<span class="normal">47</span>
-<span class="normal">48</span>
-<span class="normal">49</span>
-<span class="normal">50</span>
-<span class="normal">51</span>
-<span class="normal">52</span>
-<span class="normal">53</span>
-<span class="normal">54</span>
-<span class="normal">55</span>
-<span class="normal">56</span>
-<span class="normal">57</span>
-<span class="normal">58</span>
-<span class="normal">59</span>
-<span class="normal">60</span>
-<span class="normal">61</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_public_offerings</span><span class="w"> </span><span class="kn">import</span> <span class="n">marketplace_public_offerings_retrieve</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_plan_components</span><span class="w"> </span><span class="kn">import</span> <span class="n">marketplace_plan_components_list</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_component_usages</span><span class="w"> </span><span class="kn">import</span> <span class="n">marketplace_component_usages_set_usage</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_resources</span><span class="w"> </span><span class="kn">import</span> <span class="n">marketplace_resources_plan_periods_list</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ComponentUsageCreateRequest</span><span class="p">,</span> <span class="n">ComponentUsageItemRequest</span>
+<span class="normal">46</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_component_usages</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">marketplace_component_usages_set_usage</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_public_offerings</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">marketplace_public_offerings_retrieve</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_resources</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">marketplace_resources_plan_periods_list</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BillingTypeEnum</span><span class="p">,</span>
+    <span class="n">ComponentUsageCreateRequest</span><span class="p">,</span>
+    <span class="n">ComponentUsageItemRequest</span><span class="p">,</span>
+<span class="p">)</span>
 
-<span class="c1"># Get offering details</span>
 <span class="n">offering</span> <span class="o">=</span> <span class="n">marketplace_public_offerings_retrieve</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
-    <span class="n">uuid</span><span class="o">=</span><span class="s1">'&lt;offering-uuid&gt;'</span><span class="p">,</span>
-    <span class="n">client</span><span class="o">=</span><span class="n">client</span>
+    <span class="n">uuid</span><span class="o">=</span><span class="s2">"&lt;offering-uuid&gt;"</span><span class="p">,</span>
+    <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="c1"># Get components</span>
-<span class="n">components</span> <span class="o">=</span> <span class="n">marketplace_plan_components_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
-    <span class="n">offering_uuid</span><span class="o">=</span><span class="s1">'&lt;offering-uuid&gt;'</span><span class="p">,</span>
-    <span class="n">client</span><span class="o">=</span><span class="n">client</span>
-<span class="p">)</span>
-
-<span class="c1"># Create component usages</span>
-<span class="n">component_usages</span> <span class="o">=</span> <span class="p">[</span>
+<span class="n">usages</span> <span class="o">=</span> <span class="p">[</span>
     <span class="n">ComponentUsageItemRequest</span><span class="p">(</span>
-        <span class="n">type_</span><span class="o">=</span><span class="n">component</span><span class="o">.</span><span class="n">component_name</span><span class="p">,</span>
+        <span class="n">type_</span><span class="o">=</span><span class="n">component</span><span class="o">.</span><span class="n">type_</span><span class="p">,</span>
         <span class="n">amount</span><span class="o">=</span><span class="s2">"10"</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s1">'Usage'</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"Usage reported by the provider"</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="k">for</span> <span class="n">component</span> <span class="ow">in</span> <span class="n">components</span>
+    <span class="k">for</span> <span class="n">component</span> <span class="ow">in</span> <span class="n">offering</span><span class="o">.</span><span class="n">components</span>
+    <span class="k">if</span> <span class="n">component</span><span class="o">.</span><span class="n">billing_type</span> <span class="o">==</span> <span class="n">BillingTypeEnum</span><span class="o">.</span><span class="n">USAGE</span>
 <span class="p">]</span>
 
-<span class="c1"># Submit usages</span>
-<span class="n">marketplace_component_usages_set_usage</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">marketplace_component_usages_set_usage</span><span class="o">.</span><span class="n">sync_detailed</span><span class="p">(</span>
     <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
     <span class="n">body</span><span class="o">=</span><span class="n">ComponentUsageCreateRequest</span><span class="p">(</span>
-        <span class="n">resource</span><span class="o">=</span><span class="s2">"&lt;resource-uuid&gt;,</span>
-        <span class="n">usages</span><span class="o">=</span><span class="n">component_usages</span>
-    <span class="p">)</span>
+        <span class="n">resource</span><span class="o">=</span><span class="s2">"&lt;resource-uuid&gt;"</span><span class="p">,</span>
+        <span class="n">usages</span><span class="o">=</span><span class="n">usages</span><span class="p">,</span>
+    <span class="p">),</span>
 <span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">)</span>
 
-<span class="c1"># Get plan periods</span>
 <span class="n">plan_periods</span> <span class="o">=</span> <span class="n">marketplace_resources_plan_periods_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
-    <span class="n">uuid</span><span class="o">=</span><span class="s1">'&lt;resource-uuid&gt;'</span><span class="p">,</span>
-    <span class="n">client</span><span class="o">=</span><span class="n">client</span>
+    <span class="n">uuid</span><span class="o">=</span><span class="s2">"&lt;resource-uuid&gt;"</span><span class="p">,</span>
+    <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
 <span class="p">)</span>
-
-<span class="c1"># plan_periods:</span>
-<span class="c1"># [{</span>
-<span class="c1">#     'components': [{</span>
-<span class="c1">#         'created': '2021-08-11T15:36:45.562440Z',</span>
-<span class="c1">#         'date': '2021-08-11T15:37:30.556830Z',</span>
-<span class="c1">#         'description': 'Usage',</span>
-<span class="c1">#         'measured_unit': 'units',</span>
-<span class="c1">#         'name': 'CPU',</span>
-<span class="c1">#         'type_': 'cpu',</span>
-<span class="c1">#         'usage': 10,</span>
-<span class="c1">#         'uuid': 'some-uuid'</span>
-<span class="c1">#     }],</span>
-<span class="c1">#     'end': None,</span>
-<span class="c1">#     'plan_name': 'sample-plan',</span>
-<span class="c1">#     'plan_uuid': 'uuid',</span>
-<span class="c1">#     'start': '2021-08-11T15:20:25.762775Z',</span>
-<span class="c1">#     'uuid': 'uuid'</span>
-<span class="c1"># }]</span>
+<span class="k">for</span> <span class="n">period</span> <span class="ow">in</span> <span class="n">plan_periods</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">usage</span> <span class="ow">in</span> <span class="n">period</span><span class="o">.</span><span class="n">components</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">period</span><span class="o">.</span><span class="n">plan_name</span><span class="p">,</span> <span class="n">usage</span><span class="o">.</span><span class="n">type_</span><span class="p">,</span> <span class="n">usage</span><span class="o">.</span><span class="n">usage</span><span class="p">)</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h2 id="granting-user-access-to-resource">Granting user access to resource</h2>
 <p>An access to a resource can be granted by service provider for a particular user with specification of username.
 A result is represented by triplet [user, resource, username].
-For this purpose, <code>marketplace_offering_users_create</code> should be invoked. This method requires the following arguments:</p>
+For this purpose, <code>marketplace_offering_users_create</code> is used. Its <code>body</code> is an <code>OfferingUserRequest</code> with:</p>
 <ul>
-<li><code>marketplace_offering_users_create</code> - creates a new offering user mapping. Arguments:</li>
-<li><strong><code>body</code></strong> - parameter of type <code>OfferingUserRequest</code> containing:<ul>
-<li><strong><code>offering</code></strong> - URL of the target offering</li>
-<li><strong><code>user</code></strong> - URL of the target user</li>
-<li><strong><code>username</code></strong> - username to be associated with the user in the offering context</li>
+<li><strong><code>offering_uuid</code></strong> - UUID of the target offering</li>
+<li><strong><code>user_uuid</code></strong> - UUID of the target user</li>
+<li><strong><code>username</code></strong> - username of the user in the offering</li>
 </ul>
-</li>
-</ul>
+<p>Instead of the UUIDs, <code>offering</code> and <code>user</code> accept the URLs of the offering (<code>/api/marketplace-provider-offerings/&lt;uuid&gt;/</code>)
+and of the user.</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
 <span class="normal"> 3</span>
@@ -24844,36 +24628,20 @@ For this purpose, <code>marketplace_offering_users_create</code> should be invok
 <span class="normal">11</span>
 <span class="normal">12</span>
 <span class="normal">13</span>
-<span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span>
-<span class="normal">17</span>
-<span class="normal">18</span>
-<span class="normal">19</span>
-<span class="normal">20</span>
-<span class="normal">21</span>
-<span class="normal">22</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_offering_users</span><span class="w"> </span><span class="kn">import</span> <span class="n">marketplace_offering_users_create</span>
+<span class="normal">14</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_offering_users</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">marketplace_offering_users_create</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">OfferingUserRequest</span>
 
-<span class="c1"># Create offering user</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">marketplace_offering_users_create</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
+<span class="n">offering_user</span> <span class="o">=</span> <span class="n">marketplace_offering_users_create</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
     <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
     <span class="n">body</span><span class="o">=</span><span class="n">OfferingUserRequest</span><span class="p">(</span>
-        <span class="n">user</span><span class="o">=</span><span class="s1">'&lt;user-url&gt;'</span><span class="p">,</span>
-        <span class="n">offering</span><span class="o">=</span><span class="s1">'&lt;offering-url&gt;'</span><span class="p">,</span>
-        <span class="n">username</span><span class="o">=</span><span class="s1">'&lt;username&gt;'</span>
-    <span class="p">)</span>
+        <span class="n">offering_uuid</span><span class="o">=</span><span class="s2">"&lt;offering-uuid&gt;"</span><span class="p">,</span>
+        <span class="n">user_uuid</span><span class="o">=</span><span class="s2">"&lt;user-uuid&gt;"</span><span class="p">,</span>
+        <span class="n">username</span><span class="o">=</span><span class="s2">"&lt;username&gt;"</span><span class="p">,</span>
+    <span class="p">),</span>
 <span class="p">)</span>
-
-<span class="c1"># result =&gt; {</span>
-<span class="c1">#  'created': '2021-08-12T15:22:18.993586Z',</span>
-<span class="c1">#  'offering': 'offering_url',</span>
-<span class="c1">#  'offering_name': 'offering_name',</span>
-<span class="c1">#  'offering_uuid': '&lt;offering-uuid&gt;',</span>
-<span class="c1">#  'user': 'user_url',</span>
-<span class="c1">#  'user_uuid': '&lt;user-uuid&gt;',</span>
-<span class="c1">#  'username': 'user_username'</span>
-<span class="c1"># }</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">offering_user</span><span class="o">.</span><span class="n">uuid</span><span class="p">,</span> <span class="n">offering_user</span><span class="o">.</span><span class="n">username</span><span class="p">,</span> <span class="n">offering_user</span><span class="o">.</span><span class="n">state</span><span class="p">)</span>
 </code></pre></div></td></tr></tbody></table></div>
 <p>In case if SDK usage is not possible, HTTP request can be sent:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
@@ -24894,36 +24662,37 @@ For this purpose, <code>marketplace_offering_users_create</code> should be invok
 <span class="normal">16</span>
 <span class="normal">17</span>
 <span class="normal">18</span>
-<span class="normal">19</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">POST &lt;API-URL&gt;/marketplace-offering-users/</span>
+<span class="normal">19</span>
+<span class="normal">20</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="err">POST &lt;API-URL&gt;/api/marketplace-offering-users/</span>
 
 <span class="err">{</span>
-<span class="err">    "offering": "&lt;offering-url&gt;",</span>
-<span class="err">    "user": "&lt;user-url&gt;",</span>
+<span class="err">    "offering_uuid": "&lt;offering-uuid&gt;",</span>
+<span class="err">    "user_uuid": "&lt;user-uuid&gt;",</span>
 <span class="err">    "username": "&lt;username&gt;"</span>
 <span class="err">}</span>
 
 <span class="err">&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;</span>
 
 <span class="err">{</span>
-<span class="err">    "created": "2021-08-12T15:22:18.993586Z",</span>
-<span class="err">    "offering": "offering_url",</span>
-<span class="err">    "offering_name": "offering_name",</span>
+<span class="err">    "uuid": "&lt;offering-user-uuid&gt;",</span>
+<span class="err">    "offering": "&lt;offering-url&gt;",</span>
 <span class="err">    "offering_uuid": "&lt;offering-uuid&gt;",</span>
-<span class="err">    "user": "user_url",</span>
+<span class="err">    "offering_name": "&lt;offering-name&gt;",</span>
+<span class="err">    "user": "&lt;user-url&gt;",</span>
 <span class="err">    "user_uuid": "&lt;user-uuid&gt;",</span>
-<span class="err">    "username": "user_username"</span>
+<span class="err">    "username": "&lt;username&gt;",</span>
+<span class="err">    ...</span>
 <span class="err">}</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h2 id="granting-user-access-to-corresponding-resources-in-batch-manner">Granting user access to corresponding resources in batch manner</h2>
-<p>A service provider can grant access mentioned in the previous section to all resources used in projects including a target user.
-For such access creation or update, <code>marketplace_service_providers_set_offerings_username</code> is used.
-The method requires the following arguments:</p>
+<p>A service provider can grant the access described in the previous section to all of its offerings that a user's
+projects use, in one call: <code>marketplace_service_providers_set_offerings_username</code>. It creates the offering users
+that are missing and updates the username of the existing ones. It requires the following arguments:</p>
 <ul>
-<li><code>marketplace_service_providers_set_offerings_username</code> - sets or updates the username for a user across all offerings of a service provider. Arguments:</li>
 <li><strong><code>uuid</code></strong> - UUID of the service provider</li>
-<li><strong><code>body</code></strong> - parameter of type <code>SetOfferingsUsernameRequest</code> containing:<ul>
+<li><strong><code>body</code></strong> - a <code>SetOfferingsUsernameRequest</code> with:<ul>
 <li><strong><code>user_uuid</code></strong> - UUID of the target user</li>
-<li><strong><code>username</code></strong> - new username to be set for the user across all offerings</li>
+<li><strong><code>username</code></strong> - username to set for the user in all offerings of the service provider</li>
 </ul>
 </li>
 </ul>
@@ -24940,25 +24709,26 @@ The method requires the following arguments:</p>
 <span class="normal">11</span>
 <span class="normal">12</span>
 <span class="normal">13</span>
-<span class="normal">14</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_service_providers</span><span class="w"> </span><span class="kn">import</span> <span class="n">marketplace_service_providers_set_offerings_username</span>
+<span class="normal">14</span>
+<span class="normal">15</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_service_providers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">marketplace_service_providers_set_offerings_username</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">SetOfferingsUsernameRequest</span>
 
-<span class="n">result</span> <span class="o">=</span> <span class="n">marketplace_service_providers_set_offerings_username</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
-    <span class="n">uuid</span><span class="o">=</span><span class="s1">'&lt;service-provider-uuid&gt;'</span><span class="p">,</span>
+<span class="n">response</span> <span class="o">=</span> <span class="n">marketplace_service_providers_set_offerings_username</span><span class="o">.</span><span class="n">sync_detailed</span><span class="p">(</span>
+    <span class="n">uuid</span><span class="o">=</span><span class="s2">"&lt;service-provider-uuid&gt;"</span><span class="p">,</span>
     <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
     <span class="n">body</span><span class="o">=</span><span class="n">SetOfferingsUsernameRequest</span><span class="p">(</span>
-        <span class="n">user_uuid</span><span class="o">=</span><span class="n">UUID</span><span class="p">(</span><span class="s1">'&lt;user-uuid&gt;'</span><span class="p">),</span>
-        <span class="n">username</span><span class="o">=</span><span class="s1">'&lt;username&gt;'</span>
-    <span class="p">)</span>
+        <span class="n">user_uuid</span><span class="o">=</span><span class="s2">"&lt;user-uuid&gt;"</span><span class="p">,</span>
+        <span class="n">username</span><span class="o">=</span><span class="s2">"&lt;username&gt;"</span><span class="p">,</span>
+    <span class="p">),</span>
 <span class="p">)</span>
-<span class="c1"># result =&gt;  {</span>
-<span class="c1">#  'detail': 'Offering users have been set.'</span>
-<span class="c1"># }</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span> <span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+<span class="c1"># 201 b'{"detail":"Offering users have been set."}'</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h2 id="getting-service-provider-for-an-organization">Getting service provider for an organization</h2>
-<p>A user can get service provider details
-using <code>marketplace_service_providers_list</code> with corresponding filter.
-This method is guaranteed to return a list with at most one service provider record.</p>
+<p>A user can get service provider details using <code>marketplace_service_providers_list</code> with the <code>customer_uuid</code> filter.
+An organization has at most one service provider, so the list has at most one item.</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
 <span class="normal"> 3</span>
@@ -24968,131 +24738,44 @@ This method is guaranteed to return a list with at most one service provider rec
 <span class="normal"> 7</span>
 <span class="normal"> 8</span>
 <span class="normal"> 9</span>
-<span class="normal">10</span>
-<span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span>
-<span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span>
-<span class="normal">17</span>
-<span class="normal">18</span>
-<span class="normal">19</span>
-<span class="normal">20</span>
-<span class="normal">21</span>
-<span class="normal">22</span>
-<span class="normal">23</span>
-<span class="normal">24</span>
-<span class="normal">25</span>
-<span class="normal">26</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_service_providers</span><span class="w"> </span><span class="kn">import</span> <span class="n">marketplace_service_providers_list</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.models.marketplace_service_providers_list_field_item</span><span class="w"> </span><span class="kn">import</span> <span class="n">MarketplaceServiceProvidersListFieldItem</span>
-
-<span class="c1"># List service providers</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">marketplace_service_providers_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
-    <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
-    <span class="n">customer_uuid</span><span class="o">=</span><span class="s2">"uuid"</span>
+<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_service_providers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">marketplace_service_providers_list</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="c1"># Result will be a list of ServiceProvider objects with fields:</span>
-
-<span class="c1"># 'created': '2021-09-24T13:42:05.448269Z'</span>
-<span class="c1"># 'customer': '&lt;customer&gt;'</span>
-<span class="c1"># 'customer_abbreviation': '&lt;customer_abbreviation&gt;'</span>
-<span class="c1"># 'customer_country': '&lt;customer_country&gt;'</span>
-<span class="c1"># 'customer_image': '&lt;customer_image_url&gt;'</span>
-<span class="c1"># 'customer_name': '&lt;customer_name&gt;'</span>
-<span class="c1"># 'customer_native_name': '&lt;customer_native_name&gt;'</span>
-<span class="c1"># 'customer_slug': '&lt;customer_slug&gt;'</span>
-<span class="c1"># 'customer_uuid': '&lt;customer_uuid&gt;'</span>
-<span class="c1"># 'description': '&lt;description&gt;'</span>
-<span class="c1"># 'image': '&lt;image_url&gt;'</span>
-<span class="c1"># 'offering_count': 5</span>
-<span class="c1"># 'organization_groups': []</span>
-<span class="c1"># 'url': '&lt;service_provider_url&gt;'</span>
-<span class="c1"># 'uuid': '&lt;service_provider_uuid&gt;'</span>
-</code></pre></div></td></tr></tbody></table></div>
-<h2 id="listing-users-of-service-providers-resources">Listing users of service provider's resources</h2>
-<p>A service provider owner can list users currently using its resources.
-For this, <code>marketplace_service_providers_users_list</code> should be used. It accepts <strong>service_provider_uuid</strong>,
-which can be fetched using <code>marketplace_service_providers_list</code>.</p>
-<ul>
-<li><code>marketplace_service_providers_users_list</code> - retrieves a list of users associated with a service provider's resources. Arguments:</li>
-<li><strong><code>service_provider_uuid</code></strong> - UUID of the service provider</li>
-<li><strong><code>client</code></strong> - API client instance</li>
-</ul>
-<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
-<span class="normal"> 2</span>
-<span class="normal"> 3</span>
-<span class="normal"> 4</span>
-<span class="normal"> 5</span>
-<span class="normal"> 6</span>
-<span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span>
-<span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span>
-<span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span>
-<span class="normal">17</span>
-<span class="normal">18</span>
-<span class="normal">19</span>
-<span class="normal">20</span>
-<span class="normal">21</span>
-<span class="normal">22</span>
-<span class="normal">23</span>
-<span class="normal">24</span>
-<span class="normal">25</span>
-<span class="normal">26</span>
-<span class="normal">27</span>
-<span class="normal">28</span>
-<span class="normal">29</span>
-<span class="normal">30</span>
-<span class="normal">31</span>
-<span class="normal">32</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_service_providers</span><span class="w"> </span><span class="kn">import</span> <span class="n">marketplace_service_providers_users_list</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_service_providers</span><span class="w"> </span><span class="kn">import</span> <span class="n">marketplace_service_providers_list</span>
-
-
-<span class="c1"># First, get the service provider UUID (as shown in your example)</span>
 <span class="n">service_providers</span> <span class="o">=</span> <span class="n">marketplace_service_providers_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
     <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
-    <span class="n">customer_uuid</span><span class="o">=</span><span class="s2">"&lt;customer_uuid&gt;"</span>
+    <span class="n">customer_uuid</span><span class="o">=</span><span class="s2">"&lt;customer-uuid&gt;"</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">service_provider</span> <span class="o">=</span> <span class="n">service_providers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<span class="n">service_provider_uuid</span> <span class="o">=</span> <span class="n">service_provider</span><span class="o">.</span><span class="n">uuid</span>
-
-<span class="c1"># List users of the service provider</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">marketplace_service_providers_users_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
-    <span class="n">service_provider_uuid</span><span class="o">=</span><span class="n">service_provider_uuid</span><span class="p">,</span>
-    <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">service_provider</span><span class="o">.</span><span class="n">uuid</span><span class="p">,</span> <span class="n">service_provider</span><span class="o">.</span><span class="n">customer_name</span><span class="p">,</span> <span class="n">service_provider</span><span class="o">.</span><span class="n">offering_count</span><span class="p">)</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>The examples below take the service provider UUID from this call.</p>
+<h2 id="listing-users-of-service-providers-resources">Listing users of service provider's resources</h2>
+<p>A service provider owner can list users currently using its resources,
+with <code>marketplace_service_providers_users_list</code>.</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_service_providers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">marketplace_service_providers_users_list</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="c1"># The response will be a list of MarketplaceServiceProviderUser objects with fields:</span>
-<span class="c1"># uuid: UUID</span>
-<span class="c1"># username: str</span>
-<span class="c1"># full_name: str</span>
-<span class="c1"># first_name: str</span>
-<span class="c1"># last_name: str</span>
-<span class="c1"># organization: str</span>
-<span class="c1"># email: str</span>
-<span class="c1"># phone_number: str</span>
-<span class="c1"># projects_count: int</span>
-<span class="c1"># registration_method: str</span>
-<span class="c1"># affiliations: Any</span>
-<span class="c1"># is_active: bool</span>
-<span class="c1"># additional_properties: dict[str, Any]</span>
+<span class="n">users</span> <span class="o">=</span> <span class="n">marketplace_service_providers_users_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
+    <span class="n">service_provider_uuid</span><span class="o">=</span><span class="s2">"&lt;service-provider-uuid&gt;"</span><span class="p">,</span>
+    <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">users</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">username</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">full_name</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">email</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">projects_count</span><span class="p">)</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h2 id="listing-ssh-key-for-users-of-service-providers-resources">Listing ssh key for users of service provider's resources</h2>
-<p>A service provider owner can list ssh keys of users currently using its resources.
-For this, <code>list_service_provider_ssh_keys</code> should be used. It accepts <strong>service_provider_uuid</strong>,
-which can be fetched using <code>marketplace_service_providers_list</code>.</p>
-<ul>
-<li><code>marketplace_service_providers_keys_list</code> - retrieves a list of SSH keys associated with users of a service provider's resources. Arguments:</li>
-<li><strong><code>service_provider_uuid</code></strong> - UUID of the service provider</li>
-<li><strong><code>client</code></strong> - API client instance</li>
-</ul>
+<p>A service provider owner can list ssh keys of users currently using its resources,
+with <code>marketplace_service_providers_keys_list</code>.</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
 <span class="normal"> 3</span>
@@ -25102,57 +24785,20 @@ which can be fetched using <code>marketplace_service_providers_list</code>.</p>
 <span class="normal"> 7</span>
 <span class="normal"> 8</span>
 <span class="normal"> 9</span>
-<span class="normal">10</span>
-<span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span>
-<span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span>
-<span class="normal">17</span>
-<span class="normal">18</span>
-<span class="normal">19</span>
-<span class="normal">20</span>
-<span class="normal">21</span>
-<span class="normal">22</span>
-<span class="normal">23</span>
-<span class="normal">24</span>
-<span class="normal">25</span>
-<span class="normal">26</span>
-<span class="normal">27</span>
-<span class="normal">28</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_service_providers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">marketplace_service_providers_list</span><span class="p">,</span>
+<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_service_providers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">marketplace_service_providers_keys_list</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">service_providers</span> <span class="o">=</span> <span class="n">marketplace_service_providers_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
-    <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
-    <span class="n">customer_uuid</span><span class="o">=</span><span class="s2">"&lt;customer_uuid&gt;"</span>
-<span class="p">)</span>
-<span class="n">service_provider</span> <span class="o">=</span> <span class="n">service_providers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<span class="n">service_provider_uuid</span> <span class="o">=</span> <span class="n">service_provider</span><span class="o">.</span><span class="n">uuid</span>
 
-<span class="c1"># List SSH keys of service provider users</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">marketplace_service_providers_keys_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
-    <span class="n">service_provider_uuid</span><span class="o">=</span><span class="n">service_provider_uuid</span><span class="p">,</span>
+<span class="n">keys</span> <span class="o">=</span> <span class="n">marketplace_service_providers_keys_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
+    <span class="n">service_provider_uuid</span><span class="o">=</span><span class="s2">"&lt;service-provider-uuid&gt;"</span><span class="p">,</span>
     <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
 <span class="p">)</span>
-
-<span class="c1"># Reulst will be a list of SshKey objects with fields:</span>
-<span class="c1"># url: str</span>
-<span class="c1"># uuid: UUID</span>
-<span class="c1"># name: str</span>
-<span class="c1"># public_key: str</span>
-<span class="c1"># fingerprint_md5: str</span>
-<span class="c1"># fingerprint_sha256: str</span>
-<span class="c1"># fingerprint_sha512: str</span>
-<span class="c1"># user_uuid: UUID</span>
-<span class="c1"># is_shared: bool</span>
-<span class="c1"># type_: str</span>
+<span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">user_uuid</span><span class="p">,</span> <span class="n">key</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">key</span><span class="o">.</span><span class="n">public_key</span><span class="p">)</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h2 id="listing-projects-with-service-providers-resources">Listing projects with service provider's resources</h2>
-<p>A service provider owner can list all projects, which have its resources.
-For this, <code>list_service_provider_projects</code> should be used. It accepts <strong>service_provider_uuid</strong>,
-which can be fetched using <code>marketplace_service_providers_list</code>.</p>
+<p>A service provider owner can list all projects, which have its resources,
+with <code>marketplace_service_providers_projects_list</code>.</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
 <span class="normal"> 3</span>
@@ -25162,89 +24808,20 @@ which can be fetched using <code>marketplace_service_providers_list</code>.</p>
 <span class="normal"> 7</span>
 <span class="normal"> 8</span>
 <span class="normal"> 9</span>
-<span class="normal">10</span>
-<span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span>
-<span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span>
-<span class="normal">17</span>
-<span class="normal">18</span>
-<span class="normal">19</span>
-<span class="normal">20</span>
-<span class="normal">21</span>
-<span class="normal">22</span>
-<span class="normal">23</span>
-<span class="normal">24</span>
-<span class="normal">25</span>
-<span class="normal">26</span>
-<span class="normal">27</span>
-<span class="normal">28</span>
-<span class="normal">29</span>
-<span class="normal">30</span>
-<span class="normal">31</span>
-<span class="normal">32</span>
-<span class="normal">33</span>
-<span class="normal">34</span>
-<span class="normal">35</span>
-<span class="normal">36</span>
-<span class="normal">37</span>
-<span class="normal">38</span>
-<span class="normal">39</span>
-<span class="normal">40</span>
-<span class="normal">41</span>
-<span class="normal">42</span>
-<span class="normal">43</span>
-<span class="normal">44</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_service_providers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">marketplace_service_providers_list</span><span class="p">,</span>
+<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_service_providers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">marketplace_service_providers_projects_list</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="n">service_providers</span> <span class="o">=</span> <span class="n">marketplace_service_providers_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
-    <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
-    <span class="n">customer_uuid</span><span class="o">=</span><span class="s2">"&lt;customer_uuid&gt;"</span>
-<span class="p">)</span>
-<span class="n">service_provider</span> <span class="o">=</span> <span class="n">service_providers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<span class="n">service_provider_uuid</span> <span class="o">=</span> <span class="n">service_provider</span><span class="o">.</span><span class="n">uuid</span>
-
 <span class="n">projects</span> <span class="o">=</span> <span class="n">marketplace_service_providers_projects_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
-    <span class="n">service_provider_uuid</span><span class="o">=</span><span class="n">service_provider_uuid</span><span class="p">,</span>
+    <span class="n">service_provider_uuid</span><span class="o">=</span><span class="s2">"&lt;service-provider-uuid&gt;"</span><span class="p">,</span>
     <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
 <span class="p">)</span>
-
-<span class="c1"># url: str</span>
-<span class="c1"># uuid: UUID</span>
-<span class="c1"># name: str</span>
-<span class="c1"># slug: str</span>
-<span class="c1"># customer: str</span>
-<span class="c1"># customer_uuid: UUID</span>
-<span class="c1"># customer_name: str</span>
-<span class="c1"># customer_slug: str</span>
-<span class="c1"># customer_native_name: str</span>
-<span class="c1"># customer_abbreviation: str</span>
-<span class="c1"># description: str</span>
-<span class="c1"># created: datetime.datetime</span>
-<span class="c1"># type_: str</span>
-<span class="c1"># type_name: str</span>
-<span class="c1"># type_uuid: UUID</span>
-<span class="c1"># backend_id: str</span>
-<span class="c1"># start_date: datetime.date</span>
-<span class="c1"># end_date: datetime.date</span>
-<span class="c1"># end_date_requested_by: str</span>
-<span class="c1"># oecd_fos_2007_code: OecdFos2007CodeEnum</span>
-<span class="c1"># oecd_fos_2007_label: str</span>
-<span class="c1"># is_industry: bool</span>
-<span class="c1"># image: str</span>
-<span class="c1"># resources_count: int</span>
-<span class="c1"># project_credit: float</span>
-<span class="c1"># marketplace_resource_count: ProjectMarketplaceResourceCount</span>
-<span class="c1"># billing_price_estimate: NestedPriceEstimate</span>
+<span class="k">for</span> <span class="n">project</span> <span class="ow">in</span> <span class="n">projects</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">project</span><span class="o">.</span><span class="n">uuid</span><span class="p">,</span> <span class="n">project</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">project</span><span class="o">.</span><span class="n">customer_name</span><span class="p">)</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h2 id="listing-project-permissions-in-projects-using-service-providers-resources">Listing project permissions in projects using service provider's resources</h2>
-<p>A service provider owner can also list all active projects permissions in projects, which have its resources.
-For this, <code>marketplace_service_providers_project_permissions_list</code> should be used. It accepts <strong>service_provider_uuid</strong>,
-which can be fetched using <code>marketplace_service_providers_list</code>.</p>
+<p>A service provider owner can also list all active projects permissions in projects, which have its resources,
+with <code>marketplace_service_providers_project_permissions_list</code>.</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
 <span class="normal"> 3</span>
@@ -25254,70 +24831,16 @@ which can be fetched using <code>marketplace_service_providers_list</code>.</p>
 <span class="normal"> 7</span>
 <span class="normal"> 8</span>
 <span class="normal"> 9</span>
-<span class="normal">10</span>
-<span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span>
-<span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span>
-<span class="normal">17</span>
-<span class="normal">18</span>
-<span class="normal">19</span>
-<span class="normal">20</span>
-<span class="normal">21</span>
-<span class="normal">22</span>
-<span class="normal">23</span>
-<span class="normal">24</span>
-<span class="normal">25</span>
-<span class="normal">26</span>
-<span class="normal">27</span>
-<span class="normal">28</span>
-<span class="normal">29</span>
-<span class="normal">30</span>
-<span class="normal">31</span>
-<span class="normal">32</span>
-<span class="normal">33</span>
-<span class="normal">34</span>
-<span class="normal">35</span>
-<span class="normal">36</span>
-<span class="normal">37</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_service_providers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">marketplace_service_providers_list</span><span class="p">,</span>
+<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.api.marketplace_service_providers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">marketplace_service_providers_project_permissions_list</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="n">service_providers</span> <span class="o">=</span> <span class="n">marketplace_service_providers_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
-    <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
-    <span class="n">customer_uuid</span><span class="o">=</span><span class="s2">"&lt;customer_uuid&gt;"</span>
-<span class="p">)</span>
-<span class="n">service_provider</span> <span class="o">=</span> <span class="n">service_providers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<span class="n">service_provider_uuid</span> <span class="o">=</span> <span class="n">service_provider</span><span class="o">.</span><span class="n">uuid</span>
-
 <span class="n">permissions</span> <span class="o">=</span> <span class="n">marketplace_service_providers_project_permissions_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
-    <span class="n">service_provider_uuid</span><span class="o">=</span><span class="n">service_provider_uuid</span><span class="p">,</span>
-    <span class="n">client</span><span class="o">=</span><span class="n">client</span>
+    <span class="n">service_provider_uuid</span><span class="o">=</span><span class="s2">"&lt;service-provider-uuid&gt;"</span><span class="p">,</span>
+    <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
 <span class="p">)</span>
-
-<span class="c1"># created: datetime.datetime</span>
-<span class="c1"># expiration_time: datetime.datetime | None</span>
-<span class="c1"># created_by: str | None</span>
-<span class="c1"># created_by_full_name: str</span>
-<span class="c1"># created_by_username: str</span>
-<span class="c1"># project: str</span>
-<span class="c1"># project_uuid: UUID</span>
-<span class="c1"># project_name: str</span>
-<span class="c1"># project_created: datetime.datetime</span>
-<span class="c1"># project_end_date: datetime.datetime</span>
-<span class="c1"># customer_uuid: UUID</span>
-<span class="c1"># customer_name: str</span>
-<span class="c1"># role: str</span>
-<span class="c1"># role_name: str</span>
-<span class="c1"># user: str</span>
-<span class="c1"># user_full_name: str</span>
-<span class="c1"># user_native_name: str</span>
-<span class="c1"># user_username: str</span>
-<span class="c1"># user_uuid: UUID</span>
-<span class="c1"># user_email: str</span>
+<span class="k">for</span> <span class="n">permission</span> <span class="ow">in</span> <span class="n">permissions</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">permission</span><span class="o">.</span><span class="n">project_name</span><span class="p">,</span> <span class="n">permission</span><span class="o">.</span><span class="n">user_username</span><span class="p">,</span> <span class="n">permission</span><span class="o">.</span><span class="n">role_name</span><span class="p">)</span>
 </code></pre></div></td></tr></tbody></table></div>
 <h2 id="creating-offerings">Creating Offerings</h2>
 <p>Service providers can create new offerings using the Waldur SDK. The following example demonstrates how to create a new offering with components and plans.</p>
@@ -25485,57 +25008,9 @@ which can be fetched using <code>marketplace_service_providers_list</code>.</p>
 <span class="normal">162</span>
 <span class="normal">163</span>
 <span class="normal">164</span>
-<span class="normal">165</span>
-<span class="normal">166</span>
-<span class="normal">167</span>
-<span class="normal">168</span>
-<span class="normal">169</span>
-<span class="normal">170</span>
-<span class="normal">171</span>
-<span class="normal">172</span>
-<span class="normal">173</span>
-<span class="normal">174</span>
-<span class="normal">175</span>
-<span class="normal">176</span>
-<span class="normal">177</span>
-<span class="normal">178</span>
-<span class="normal">179</span>
-<span class="normal">180</span>
-<span class="normal">181</span>
-<span class="normal">182</span>
-<span class="normal">183</span>
-<span class="normal">184</span>
-<span class="normal">185</span>
-<span class="normal">186</span>
-<span class="normal">187</span>
-<span class="normal">188</span>
-<span class="normal">189</span>
-<span class="normal">190</span>
-<span class="normal">191</span>
-<span class="normal">192</span>
-<span class="normal">193</span>
-<span class="normal">194</span>
-<span class="normal">195</span>
-<span class="normal">196</span>
-<span class="normal">197</span>
-<span class="normal">198</span>
-<span class="normal">199</span>
-<span class="normal">200</span>
-<span class="normal">201</span>
-<span class="normal">202</span>
-<span class="normal">203</span>
-<span class="normal">204</span>
-<span class="normal">205</span>
-<span class="normal">206</span>
-<span class="normal">207</span>
-<span class="normal">208</span>
-<span class="normal">209</span>
-<span class="normal">210</span>
-<span class="normal">211</span>
-<span class="normal">212</span>
-<span class="normal">213</span>
-<span class="normal">214</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="normal">165</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Union</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">uuid</span><span class="w"> </span><span class="kn">import</span> <span class="n">UUID</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">AuthenticatedClient</span>
@@ -25549,83 +25024,64 @@ which can be fetched using <code>marketplace_service_providers_list</code>.</p>
     <span class="n">marketplace_provider_offerings_create</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnexpectedStatus</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.models.base_provider_plan_request</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseProviderPlanRequest</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.models.billing_type_enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">BillingTypeEnum</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.models.billing_unit</span><span class="w"> </span><span class="kn">import</span> <span class="n">BillingUnit</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.models.country_enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">CountryEnum</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.models.limit_period_enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">LimitPeriodEnum</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.models.offering_component_request</span><span class="w"> </span><span class="kn">import</span> <span class="n">OfferingComponentRequest</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.models.offering_create_request</span><span class="w"> </span><span class="kn">import</span> <span class="n">OfferingCreateRequest</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.models.customer</span><span class="w"> </span><span class="kn">import</span> <span class="n">Customer</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.models.marketplace_category</span><span class="w"> </span><span class="kn">import</span> <span class="n">MarketplaceCategory</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">waldur_api_client.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BaseProviderPlanRequest</span><span class="p">,</span>
+    <span class="n">BillingTypeEnum</span><span class="p">,</span>
+    <span class="n">BillingUnit</span><span class="p">,</span>
+    <span class="n">CountryEnum</span><span class="p">,</span>
+    <span class="n">Customer</span><span class="p">,</span>
+    <span class="n">LimitPeriodEnum</span><span class="p">,</span>
+    <span class="n">MarketplaceCategory</span><span class="p">,</span>
+    <span class="n">OfferingComponentRequest</span><span class="p">,</span>
+    <span class="n">OfferingCreateRequest</span><span class="p">,</span>
+<span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">is_uuid_like</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">UUID</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    Check if value looks like a valid UUID.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        value: Value to check, can be string or UUID</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        bool: True if value is a valid UUID, False otherwise</span>
-<span class="sd">    """</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">is_uuid_like</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">UUID</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Check if value looks like a valid UUID."""</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">UUID</span><span class="p">):</span>
         <span class="k">return</span> <span class="kc">True</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">uuid</span><span class="o">.</span><span class="n">UUID</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
     <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">):</span>
         <span class="k">return</span> <span class="kc">False</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="kc">True</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">get_category</span><span class="p">(</span>
-    <span class="n">client</span><span class="p">:</span> <span class="n">AuthenticatedClient</span><span class="p">,</span> <span class="n">category_identifier</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">UUID</span>
+    <span class="n">client</span><span class="p">:</span> <span class="n">AuthenticatedClient</span><span class="p">,</span> <span class="n">category_identifier</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">UUID</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MarketplaceCategory</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    Get category object from identifier (name or UUID).</span>
-<span class="sd">    """</span>
+<span class="w">    </span><span class="sd">"""Get category object from identifier (title or UUID)."""</span>
     <span class="k">if</span> <span class="n">is_uuid_like</span><span class="p">(</span><span class="n">category_identifier</span><span class="p">):</span>
-        <span class="n">category</span> <span class="o">=</span> <span class="n">marketplace_categories_retrieve</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
-            <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span> <span class="n">uuid</span><span class="o">=</span><span class="n">category_identifier</span>
+        <span class="k">return</span> <span class="n">marketplace_categories_retrieve</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
+            <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span> <span class="n">uuid</span><span class="o">=</span><span class="n">UUID</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">category_identifier</span><span class="p">))</span>
         <span class="p">)</span>
-        <span class="k">if</span> <span class="n">category</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Category with UUID '</span><span class="si">{</span><span class="n">category_identifier</span><span class="si">}</span><span class="s2">' not found"</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">category</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">categories</span> <span class="o">=</span> <span class="n">marketplace_categories_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
-            <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">category_identifier</span>
-        <span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">categories</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Category with name '</span><span class="si">{</span><span class="n">category_identifier</span><span class="si">}</span><span class="s2">' not found"</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">categories</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">categories</span> <span class="o">=</span> <span class="n">marketplace_categories_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
+        <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">category_identifier</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">categories</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Category with title '</span><span class="si">{</span><span class="n">category_identifier</span><span class="si">}</span><span class="s2">' not found"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">categories</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">get_provider</span><span class="p">(</span>
-    <span class="n">client</span><span class="p">:</span> <span class="n">AuthenticatedClient</span><span class="p">,</span> <span class="n">provider_identifier</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">UUID</span>
+    <span class="n">client</span><span class="p">:</span> <span class="n">AuthenticatedClient</span><span class="p">,</span> <span class="n">provider_identifier</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">UUID</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Customer</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    Get provider (customer) object from identifier (name or UUID).</span>
-<span class="sd">    """</span>
+<span class="w">    </span><span class="sd">"""Get provider (customer) object from identifier (name or UUID)."""</span>
     <span class="k">if</span> <span class="n">is_uuid_like</span><span class="p">(</span><span class="n">provider_identifier</span><span class="p">):</span>
-        <span class="n">provider</span> <span class="o">=</span> <span class="n">customers_retrieve</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
+        <span class="k">return</span> <span class="n">customers_retrieve</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
             <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span> <span class="n">uuid</span><span class="o">=</span><span class="n">UUID</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">provider_identifier</span><span class="p">))</span>
         <span class="p">)</span>
-        <span class="k">if</span> <span class="n">provider</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Provider with UUID '</span><span class="si">{</span><span class="n">provider_identifier</span><span class="si">}</span><span class="s2">' not found"</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">provider</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">providers</span> <span class="o">=</span> <span class="n">customers_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">provider_identifier</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">providers</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Provider with name '</span><span class="si">{</span><span class="n">provider_identifier</span><span class="si">}</span><span class="s2">' not found"</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">providers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">providers</span> <span class="o">=</span> <span class="n">customers_list</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">provider_identifier</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">providers</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Provider with name '</span><span class="si">{</span><span class="n">provider_identifier</span><span class="si">}</span><span class="s2">' not found"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">providers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">create_offering</span><span class="p">(</span>
     <span class="n">client</span><span class="p">:</span> <span class="n">AuthenticatedClient</span><span class="p">,</span>
-    <span class="n">provider_identifier</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">UUID</span><span class="p">,</span>
-    <span class="n">category_identifier</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">UUID</span><span class="p">,</span>
+    <span class="n">provider_identifier</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">UUID</span><span class="p">],</span>
+    <span class="n">category_identifier</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">UUID</span><span class="p">],</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">type_</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
@@ -25636,58 +25092,36 @@ which can be fetched using <code>marketplace_service_providers_list</code>.</p>
 <span class="sd">    Required arguments:</span>
 <span class="sd">        client: Authenticated client instance</span>
 <span class="sd">        provider_identifier: Provider name or UUID</span>
-<span class="sd">        category_identifier: Category name or UUID</span>
+<span class="sd">        category_identifier: Category title or UUID</span>
 <span class="sd">        name: Name of the offering</span>
 <span class="sd">        type_: Type of the offering</span>
 
-<span class="sd">    Optional arguments (pass as kwargs):</span>
-<span class="sd">        description: Short description of the offering</span>
-<span class="sd">        full_description: Detailed description</span>
-<span class="sd">        terms_of_service: Terms of service text</span>
-<span class="sd">        terms_of_service_link: Link to terms of service</span>
-<span class="sd">        privacy_policy_link: Link to privacy policy</span>
-<span class="sd">        access_url: Public access URL</span>
-<span class="sd">        vendor_details: Vendor information</span>
-<span class="sd">        getting_started: Getting started guide</span>
-<span class="sd">        integration_guide: Integration guide</span>
-<span class="sd">        shared: Whether the offering is shared with all customers</span>
-<span class="sd">        billable: Whether the offering is billable</span>
-<span class="sd">        country: Country where the offering is available</span>
-<span class="sd">        components: List of offering components</span>
-<span class="sd">        plans: List of offering plans</span>
+<span class="sd">    Optional arguments (pass as kwargs) are the other fields of</span>
+<span class="sd">    OfferingCreateRequest, for example description, full_description,</span>
+<span class="sd">    terms_of_service, access_url, shared, billable, country, components</span>
+<span class="sd">    and plans.</span>
 <span class="sd">    """</span>
-
-    <span class="c1"># Get provider and category objects</span>
     <span class="n">provider</span> <span class="o">=</span> <span class="n">get_provider</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">provider_identifier</span><span class="p">)</span>
     <span class="n">category</span> <span class="o">=</span> <span class="n">get_category</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">category_identifier</span><span class="p">)</span>
 
-    <span class="c1"># Create the offering request</span>
-    <span class="n">offering_request</span> <span class="o">=</span> <span class="n">OfferingCreateRequest</span><span class="p">(</span>
-        <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="n">category</span><span class="o">.</span><span class="n">url</span><span class="p">,</span> <span class="n">type_</span><span class="o">=</span><span class="n">type_</span><span class="p">,</span> <span class="n">customer</span><span class="o">=</span><span class="n">provider</span><span class="o">.</span><span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="n">offering</span> <span class="o">=</span> <span class="n">marketplace_provider_offerings_create</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
+        <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
+        <span class="n">body</span><span class="o">=</span><span class="n">OfferingCreateRequest</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">category</span><span class="o">=</span><span class="n">category</span><span class="o">.</span><span class="n">url</span><span class="p">,</span>
+            <span class="n">type_</span><span class="o">=</span><span class="n">type_</span><span class="p">,</span>
+            <span class="n">customer</span><span class="o">=</span><span class="n">provider</span><span class="o">.</span><span class="n">url</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">),</span>
     <span class="p">)</span>
-
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">response</span> <span class="o">=</span> <span class="n">marketplace_provider_offerings_create</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
-            <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
-            <span class="n">body</span><span class="o">=</span><span class="n">offering_request</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="k">except</span> <span class="n">UnexpectedStatus</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error creating offering: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="k">raise</span> <span class="n">e</span>
-
-    <span class="k">if</span> <span class="n">response</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">"Failed to create offering - no response received"</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">uuid</span>
+    <span class="k">return</span> <span class="n">offering</span><span class="o">.</span><span class="n">uuid</span>
 
 
 <span class="c1"># Example usage:</span>
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
-    <span class="c1"># Note, requires the waldur-api-client package to be installed.</span>
-    <span class="c1"># Environment variables should be set in the environment. Example of environment variables:</span>
-    <span class="c1"># WALDUR_API_URL=https://hpcservicehub.eu</span>
-    <span class="c1"># WALDUR_API_TOKEN=1234567890 ( your token from waldur instance with access to organization )</span>
-
+    <span class="c1"># Requires the waldur-api-client package and two environment variables:</span>
+    <span class="c1"># WALDUR_API_URL=https://waldur.example.com</span>
+    <span class="c1"># WALDUR_API_TOKEN=&lt;your token, of a user with access to the organization&gt;</span>
     <span class="n">api_url</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"WALDUR_API_URL"</span><span class="p">)</span>
     <span class="n">api_token</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"WALDUR_API_TOKEN"</span><span class="p">)</span>
 
@@ -25695,59 +25129,50 @@ which can be fetched using <code>marketplace_service_providers_list</code>.</p>
         <span class="nb">print</span><span class="p">(</span>
             <span class="s2">"Required environment variables not set. Please set WALDUR_API_URL and WALDUR_API_TOKEN"</span>
         <span class="p">)</span>
-        <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 
-    <span class="c1"># Initialize the client</span>
-    <span class="n">client</span> <span class="o">=</span> <span class="n">AuthenticatedClient</span><span class="p">(</span>
-        <span class="n">base_url</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"WALDUR_API_URL"</span><span class="p">),</span>
-        <span class="n">token</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"WALDUR_API_TOKEN"</span><span class="p">),</span>
-        <span class="n">raise_on_unexpected_status</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="p">)</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="n">AuthenticatedClient</span><span class="p">(</span><span class="n">base_url</span><span class="o">=</span><span class="n">api_url</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="n">api_token</span><span class="p">)</span>
 
-    <span class="c1"># Create a component</span>
+    <span class="c1"># A component billed by usage, with a monthly limit</span>
     <span class="n">component</span> <span class="o">=</span> <span class="n">OfferingComponentRequest</span><span class="p">(</span>
         <span class="n">type_</span><span class="o">=</span><span class="s2">"cpu"</span><span class="p">,</span>
         <span class="n">name</span><span class="o">=</span><span class="s2">"CPU"</span><span class="p">,</span>
         <span class="n">measured_unit</span><span class="o">=</span><span class="s2">"hours"</span><span class="p">,</span>
-        <span class="n">billing_type</span><span class="o">=</span><span class="n">BillingTypeEnum</span><span class="o">.</span><span class="n">FIXED</span><span class="p">,</span>
+        <span class="n">billing_type</span><span class="o">=</span><span class="n">BillingTypeEnum</span><span class="o">.</span><span class="n">USAGE</span><span class="p">,</span>
         <span class="n">limit_period</span><span class="o">=</span><span class="n">LimitPeriodEnum</span><span class="o">.</span><span class="n">MONTH</span><span class="p">,</span>
         <span class="n">limit_amount</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="c1"># Create a plan</span>
     <span class="n">plan</span> <span class="o">=</span> <span class="n">BaseProviderPlanRequest</span><span class="p">(</span>
         <span class="n">name</span><span class="o">=</span><span class="s2">"Basic Plan"</span><span class="p">,</span>
         <span class="n">unit_price</span><span class="o">=</span><span class="s2">"10"</span><span class="p">,</span>
-        <span class="n">unit</span><span class="o">=</span><span class="n">BillingUnit</span><span class="o">.</span><span class="n">HOUR</span><span class="p">,</span>
+        <span class="n">unit</span><span class="o">=</span><span class="n">BillingUnit</span><span class="o">.</span><span class="n">MONTH</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">try</span><span class="p">:</span>
-        <span class="c1"># Create the offering using names instead of UUIDs</span>
         <span class="n">offering_uuid</span> <span class="o">=</span> <span class="n">create_offering</span><span class="p">(</span>
             <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
-            <span class="n">provider_identifier</span><span class="o">=</span><span class="s2">"My Org Name"</span><span class="p">,</span>  <span class="c1"># Insert the organization name or UUID</span>
-            <span class="n">category_identifier</span><span class="o">=</span><span class="s2">"HPC"</span><span class="p">,</span>  <span class="c1"># Insert the category name or UUID</span>
-            <span class="n">name</span><span class="o">=</span><span class="s2">"New Offering"</span><span class="p">,</span>  <span class="c1"># Name of the offering</span>
-            <span class="n">type_</span><span class="o">=</span><span class="s2">"Marketplace.Basic"</span><span class="p">,</span>  <span class="c1"># Type of the offering</span>
+            <span class="n">provider_identifier</span><span class="o">=</span><span class="s2">"My Org Name"</span><span class="p">,</span>  <span class="c1"># The organization name or UUID</span>
+            <span class="n">category_identifier</span><span class="o">=</span><span class="s2">"HPC"</span><span class="p">,</span>  <span class="c1"># The category title or UUID</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">"New Offering"</span><span class="p">,</span>
+            <span class="n">type_</span><span class="o">=</span><span class="s2">"Marketplace.Basic"</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">"Offering description"</span><span class="p">,</span>
-            <span class="n">components</span><span class="o">=</span><span class="p">[</span><span class="n">component</span><span class="p">],</span>  <span class="c1"># List of components</span>
-            <span class="n">plans</span><span class="o">=</span><span class="p">[</span><span class="n">plan</span><span class="p">],</span>  <span class="c1"># List of plans</span>
+            <span class="n">components</span><span class="o">=</span><span class="p">[</span><span class="n">component</span><span class="p">],</span>
+            <span class="n">plans</span><span class="o">=</span><span class="p">[</span><span class="n">plan</span><span class="p">],</span>
             <span class="n">shared</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">billable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">country</span><span class="o">=</span><span class="n">CountryEnum</span><span class="o">.</span><span class="n">FR</span><span class="p">,</span>  <span class="c1"># France</span>
+            <span class="n">country</span><span class="o">=</span><span class="n">CountryEnum</span><span class="o">.</span><span class="n">FR</span><span class="p">,</span>
         <span class="p">)</span>
-
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Created offering with UUID: </span><span class="si">{</span><span class="n">offering_uuid</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
-        <span class="c1"># Activate the offering</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Activating offering with UUID: </span><span class="si">{</span><span class="n">offering_uuid</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="c1"># A new offering is a draft until it is activated</span>
         <span class="n">marketplace_provider_offerings_activate</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span>
             <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span>
             <span class="n">uuid</span><span class="o">=</span><span class="n">offering_uuid</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Offering activated with UUID: </span><span class="si">{</span><span class="n">offering_uuid</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">except</span> <span class="p">(</span><span class="n">UnexpectedStatus</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div></td></tr></tbody></table></div>
 
 
