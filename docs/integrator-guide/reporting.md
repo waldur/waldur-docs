@@ -48,7 +48,7 @@ client = AuthenticatedClient(
 )
 
 # Get all customers
-customers = customers_list.sync(client=client)
+customers = customers_list.sync_all(client=client)
 if not customers:
     print("No customers found")
     exit()
@@ -61,7 +61,7 @@ with open(CSV_FILE_PATH, 'w', encoding='UTF8') as out_file:
         project_reporting = defaultdict(lambda: 0.0)
 
         # Get invoice items for the customer
-        items = invoice_items_list.sync(
+        items = invoice_items_list.sync_all(
             client=client,
             customer_uuid=customer.uuid,
             year=CURRENT_YEAR,
@@ -70,8 +70,8 @@ with open(CSV_FILE_PATH, 'w', encoding='UTF8') as out_file:
 
         if items:
             for item in items:
-                if item.name and item.unit_price:
-                    project_reporting[item.name] += float(item.unit_price)
+                if item.project_name and item.price:
+                    project_reporting[item.project_name] += float(item.price)
             # Write to CSV file
             for project_name, cost in project_reporting.items():
                 writer.writerow([
@@ -107,7 +107,7 @@ from datetime import datetime
 from waldur_api_client.client import AuthenticatedClient
 from waldur_api_client.api.customers import customers_list
 from waldur_api_client.api.invoice_items import invoice_items_list
-from waldur_api_client.api.marketplace_resources import marketplace_resources_list
+from waldur_api_client.api.marketplace_resources import marketplace_resources_retrieve
 from waldur_api_client.api.openstack_tenants import openstack_tenants_list
 
 # Constants
@@ -132,7 +132,7 @@ client = AuthenticatedClient(
 )
 
 # Get all customers
-customers = customers_list.sync(client=client)
+customers = customers_list.sync_all(client=client)
 if not customers:
     print("No customers found")
     exit()
@@ -143,22 +143,22 @@ with open(CSV_FILE_PATH, 'w', encoding='UTF8') as out_file:
 
     for customer in customers:
         # Get invoice items for the customer
-        items = invoice_items_list.sync(
+        items = invoice_items_list.sync_all(
             client=client,
             customer_uuid=customer.uuid,
             year=CURRENT_YEAR,
             month=CURRENT_MONTH
         )
 
-        # Create resource costs mapping
+        # Total cost of each resource in this month's invoice, by resource URL
         resource_costs = {}
         for item in items:
-            if item.name and item.unit_price:
-                resource_costs[item.name] = float(item.unit_price)
+            if item.resource and item.price:
+                resource_costs[item.resource] = resource_costs.get(item.resource, 0.0) + float(item.price)
 
 
         # Get tenants for the customer
-        tenants = openstack_tenants_list.sync(
+        tenants = openstack_tenants_list.sync_all(
             client=client,
             customer_uuid=customer.uuid
         )
@@ -167,24 +167,19 @@ with open(CSV_FILE_PATH, 'w', encoding='UTF8') as out_file:
             if not tenant.marketplace_resource_uuid:
                 continue
 
-            # Get resource details
-            resources = marketplace_resources_list.sync(
+            # Get the marketplace resource of the tenant, for its limits
+            resource = marketplace_resources_retrieve.sync(
                 client=client,
                 uuid=tenant.marketplace_resource_uuid
             )
-
-            if not resources:
-                continue
-
-            resource = resources[0]
-            limits = resource.limits or {}
+            limits = resource.limits.additional_properties if resource.limits else {}
 
             writer.writerow([
                 tenant.name,
                 limits.get('cores', 0),
                 limits.get('ram', 0),
                 limits.get('storage', 0),
-                resource_costs.get(str(tenant.marketplace_resource_uuid), 0.0),
+                resource_costs.get(resource.url, 0.0),
                 tenant.project_name,
                 tenant.customer_name,
                 tenant.customer_abbreviation
@@ -208,7 +203,7 @@ will be a file per provider with a short summary of invoice items for the define
 
 ```python
 import csv
-from collections import defaultdict
+import os
 import unicodedata
 import re
 from decimal import Decimal
@@ -219,9 +214,9 @@ from waldur_api_client.api.customers import customers_list
 from waldur_api_client.api.invoices import invoices_list
 from waldur_api_client.errors import UnexpectedStatus
 
-# Your Waldur instance data
-WALDUR_HOST = 'example.waldur.com'
-TOKEN = 'SUPPORT_STAFF_SECRET_TOKEN'
+# Your Waldur instance, e.g. https://waldur.example.com, and a staff or support token
+WALDUR_API_URL = os.environ.get('WALDUR_API_URL')
+TOKEN = os.environ.get('WALDUR_API_TOKEN')
 
 # Date-related constants
 CURRENT_YEAR = datetime.now().year
@@ -246,12 +241,12 @@ def slugify(value, allow_unicode=False):
 
 # Client instance initialization
 client = AuthenticatedClient(
-    base_url=WALDUR_HOST,
+    base_url=WALDUR_API_URL,
     token=TOKEN,
 )
 
 # Organizations data fetching
-customers = customers_list.sync(client=client)
+customers = customers_list.sync_all(client=client)
 
 sp = {}
 
@@ -271,10 +266,10 @@ for customer in customers:
     except UnexpectedStatus:
         continue
 
-    for item in invoice.items:
-        # allocate to SP
-        if hasattr(item.details, 'service_provider_name'):
-            provider_name = item.details.service_provider_name
+    for item in invoice.items or []:
+        # allocate to SP; unset fields of SDK models hold UNSET, not None
+        provider_name = item.details.service_provider_name if item.details else None
+        if isinstance(provider_name, str) and provider_name:
             if provider_name in sp:
                 sp[provider_name].append((item, customer.name))
             else:
