@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-16T10:48:42.511463Z
+Generated: 2026-11-16T20:12:56.415394Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -9757,15 +9757,17 @@ waldur ai_assistant test_evaluation --scenario greeting_no_tool
 waldur ai_assistant test_evaluation --user support --preload-tools
 waldur ai_assistant test_evaluation --preset credit_realistic
 waldur ai_assistant run_all
+waldur ai_assistant docs_evaluation --database waldur_docs_eval
+waldur ai_assistant docs_evaluation --database waldur_docs_eval --judge
 ```
 
 ```bash
 
 usage: waldur ai_assistant
-                           {health,validate_scenarios,test_evaluation,run_all} ...
+                           {health,validate_scenarios,test_evaluation,run_all,docs_evaluation} ...
 
 positional arguments:
-  {health,validate_scenarios,test_evaluation,run_all}
+  {health,validate_scenarios,test_evaluation,run_all,docs_evaluation}
                         Available subcommands
     health              Check the LLM configuration, endpoint and a live
                         request
@@ -9773,6 +9775,8 @@ positional arguments:
     test_evaluation     Put the scenario packs to the live LLM and score the
                         answers
     run_all             health, then validate_scenarios, then test_evaluation
+    docs_evaluation     Score the docs search and the assistant's docs answers
+                        per role
 
 ```
 
@@ -10726,6 +10730,19 @@ positional arguments:
 
 ```
 
+## load_docs_corpus
+
+Load the documentation corpus that the AI assistant's search_docs tool searches. Defaults to the corpus shipped in the image (/usr/share/waldur/docs-corpus/docs-corpus.jsonl.gz, or $WALDUR_DOCS_CORPUS_PATH). Does nothing when there is no corpus file, and writes nothing when the corpus is unchanged. Invalid lines are skipped; a corpus that cannot be read, or has no valid line, leaves the loaded sections as they were. Never fails, so that a bad corpus does not stop a deployment.
+
+```bash
+
+usage: waldur load_docs_corpus [path]
+
+positional arguments:
+  path  Path to docs-corpus.jsonl.gz.
+
+```
+
 ## load_eessi_catalog
 
 Load EESSI software catalog data using the unified catalog loader
@@ -11039,6 +11056,10 @@ options:
   --path, -p PATH  Path to dumped database.
 
 ```
+
+## print_docs_requires_vocabulary
+
+Print, as JSON, every key a documentation section's `requires` term may name: settings, feature flags, offering types and capabilities. Docs CI validates the corpus against it.
 
 ## print_events_enums
 
@@ -14740,6 +14761,14 @@ Enable AI Assistant feature and calls to the inference service.
 **Default value:** disabled
 
 Controls which user roles can access the AI Assistant. 'disabled': No role-based access. 'staff': Staff users only. 'staff_and_support': Staff and support users. 'all': All authenticated users. 'anonymous': All users including anonymous (enables the public anonymous chat endpoint).
+
+#### DOCS_SEARCH_ENABLED
+
+**Type:** bool
+
+**Default value:** True
+
+Let users search the bundled Waldur documentation: the AI assistant's and MCP's search_docs tool, and the /api/docs-search/ endpoint. Turn it off to keep the Waldur documentation out of answers, for example when this portal provides its own documentation to end users.
 
 #### AI_ASSISTANT_BACKEND_TYPE
 
@@ -125762,6 +125791,11 @@ td:nth-child(4) {
 | `recalculate_count_quota` | `Django Signal (post_delete)` | `waldur_vmware.Port` | Recalculate count quota when an instance is created or deleted. |
 | `recalculate_count_quota` | `Django Signal (post_delete)` | `waldur_vmware.Disk` | Recalculate count quota when an instance is created or deleted. |
 | `recalculate_count_quota` | `Django Signal (post_delete)` | `marketplace.Order` | Recalculate count quota when an instance is created or deleted. |
+| `recompute_completions_on_dependency_change` | `Django Signal (post_save)` | `checklist.QuestionDependency` | Adding, changing or removing a dependency changes which questions are shown. |
+| `recompute_completions_on_dependency_change` | `Django Signal (post_delete)` | `checklist.QuestionDependency` | Adding, changing or removing a dependency changes which questions are shown. |
+| `recompute_completions_on_question_change` | `Django Signal (post_save)` | `checklist.Question` | A question that becomes required, or whose dependencies combine |
+| `recompute_completions_on_question_delete` | `Django Signal (post_delete)` | `checklist.Question` | No description |
+| `remember_question_visibility_fields` | `Django Signal (pre_save)` | `checklist.Question` | Keep the fields completion depends on, to tell on save whether they changed. |
 | `remove_cached_template` | `Django Signal (pre_delete)` | `core.NotificationTemplate` | Also wired as a pre_delete receiver on NotificationTemplate (see core/apps.py). |
 | `rename_clones_on_customer_slug_change` | `Django Signal (post_save)` | `structure.Customer` | Keep an organization's cloned role names in sync with its slug. |
 | `revoke_roles_on_project_deletion` | `Django Signal (pre_delete)` | `structure.Project` | When project is deleted, capture user role snapshots before revoking them. |
@@ -126273,12 +126307,12 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 794
+Total unique handlers found: 799
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_auth_social**: 2 handlers
 - **waldur_autoprovisioning**: 2 handlers
-- **waldur_core**: 348 handlers
+- **waldur_core**: 353 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
 - **waldur_mastermind**: 382 handlers
@@ -128207,6 +128241,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`CreateRequiresProjectAdminMixin`](#createrequiresprojectadminmixin) | `waldur_core.structure.views` | Let only those who may change a resource create one |
 | [`ScopeInvitationMixin`](#scopeinvitationmixin) | `waldur_core.users.models` | Mixin for invitations scoped to a Customer with a system Role |
 | [`CheckExtensionMixin`](#checkextensionmixin) | `waldur_freeipa.views` | Raise exception if extension is disabled |
+| [`DocsTestMixin`](#docstestmixin) | `waldur_mastermind.chat.tests.test_search_docs` | No description available |
 | [`LLMConfigurationMixin`](#llmconfigurationmixin) | `waldur_mastermind.chat.views` | Validates that AI Assistant is enabled, the user has the required role, and t... |
 | [`FeedbackTestMixin`](#feedbacktestmixin) | `waldur_mastermind.feedback.tests.test_feedback` | No description available |
 | [`PeriodMixin`](#periodmixin) | `waldur_mastermind.invoices.models` | Make subclasses preserve the alters_data attribute on overridden methods |
@@ -128241,6 +128276,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`SelectiveDNSMockMixin`](#selectivednsmockmixin) | `waldur_mastermind.marketplace_remote.tests.dns_utils` | Mixin class that provides selective DNS mocking for test classes |
 | [`ContainerExecutorMixin`](#containerexecutormixin) | `waldur_mastermind.marketplace_script.utils` | Mixin to execute scripts in containers for marketplace script processing |
 | [`ResourceGlauthAccessMixin`](#resourceglauthaccessmixin) | `waldur_mastermind.marketplace_site_agent.tests.test_glauth_resource_access` | No description available |
+| [`RegisteredScopeMixin`](#registeredscopemixin) | `waldur_mastermind.matrix_chat.tests.test_room_scopes` | Registers Customer, for the test only, as a kind of room scope whose members ... |
 | [`AppserviceErrorCountMixin`](#appserviceerrorcountmixin) | `waldur_mastermind.matrix_chat.views` | Counts the view's 4xx and 5xx answers for the webhook_errors diagnostic |
 | [`MatrixEnabledWriteGuardMixin`](#matrixenabledwriteguardmixin) | `waldur_mastermind.matrix_chat.views` | Reject mutating requests while the Matrix integration is disabled |
 | [`ConsentTestMixin`](#consenttestmixin) | `waldur_mastermind.mcp.tests.test_consent` | No description available |
@@ -129563,6 +129599,12 @@ Raise exception if extension is disabled
 
 **Base classes:** `ConstanceCheckExtensionMixin`
 
+### DocsTestMixin
+
+**Module:** `waldur_mastermind.chat.tests.test_search_docs`
+
+**Description:** No description available.
+
 ### LLMConfigurationMixin
 
 **Module:** `waldur_mastermind.chat.views`
@@ -129884,6 +129926,16 @@ Mixin to execute scripts in containers for marketplace script processing.
 **Module:** `waldur_mastermind.marketplace_site_agent.tests.test_glauth_resource_access`
 
 **Description:** No description available.
+
+### RegisteredScopeMixin
+
+**Module:** `waldur_mastermind.matrix_chat.tests.test_room_scopes`
+
+**Description:**
+
+Registers Customer, for the test only, as a kind of room scope whose
+members are whoever the test puts in ``self.member_ids``; the registry's
+fallback (a role on the customer) does not apply to it then.
 
 ### AppserviceErrorCountMixin
 
