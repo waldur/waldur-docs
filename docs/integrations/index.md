@@ -55,7 +55,7 @@ These integrations allow users to create support requests directly from Waldur, 
 
 ## AI and Automation Integrations
 
-* **Claude Desktop Integration** - Waldur MCP (Model Context Protocol) server enables Claude AI assistant to query Waldur instances for reporting and deep analysis of resources and usage data, enhancing decision-making capabilities.
+* **MCP clients** - Waldur's remote MCP (Model Context Protocol) server lets AI clients such as Claude, ChatGPT, Cursor, VS Code, Atlassian Rovo and Microsoft Copilot Studio read organizations, projects, resources, orders, costs and the marketplace as the signed-in user. See [Connect AI clients over MCP](../user-guide/end-users/mcp-clients.md), and for operators, [Remote MCP server](../admin-guide/mcp-server.md). It supersedes the local [Waldur MCP server package](waldur-mcp-server/README.md) for Claude Desktop.
 
 ## Additional Integrations
 
