@@ -213,9 +213,10 @@ Test mkdocs:
 # build time (waldur/waldur-mastermind#1204): its develop images take `latest`,
 # and a release image takes the version named after its tag. This job runs in
 # `test`, before `Release Waldur Mastermind`, so a release tag's corpus exists
-# by the time mastermind builds that tag. A failure leaves mastermind's images
-# without documentation search, not without a release, so it does not block
-# one.
+# by the time mastermind builds that tag. A failure on a tag does not stop
+# the release stage here: only the mastermind release image fails, since it
+# waits for its tag's corpus and fails without it (docker_build.sh,
+# DOCS_CORPUS_REQUIRED), while homeport and the rest release as usual.
 Publish docs corpus:
   image: registry.hpc.ut.ee/mirror/library/python:3.13
   stage: test
