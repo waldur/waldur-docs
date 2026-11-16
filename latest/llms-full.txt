@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-16T20:12:56.415394Z
+Generated: 2026-11-16T20:54:05.630902Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -531,7 +531,7 @@ graph TB
 | `waldur-mastermind-worker` | Celery workers processing background tasks, provisioning, and long-running operations |
 | `waldur-mastermind-beat` | Celery scheduler managing periodic tasks, cleanup operations, and recurring jobs. When `waldur.initdbEnabled` is true, its init container runs database migrations (`initdb`) |
 
-When `waldur.initdbEnabled` is true, the API, worker, and web-shell Deployments start a `wait-for-migrations` init container before their main process. It polls `waldur migrate --check` and exits only after the beat pod has applied every migration in the new image. Until then the new pods are not Ready, so the Service keeps sending traffic to the previous API pods and new workers do not consume tasks. The wait is bounded by `waldur.initdbWaitTimeout` (default 45 minutes). After that check passes, the previous API pods still serve until the new ones are Ready, so a migration that drops or renames a column can still fail on those old pods. The cleanup and SAML metadata CronJobs are not gated. Set `waldur.initdbEnabled` to false only when migrations are applied out of band before the new pods start; the chart then does not wait.
+When `waldur.initdbEnabled` is true, the API, worker, web-shell, and MCP Deployments start a `wait-for-migrations` init container before their main process. It polls `waldur migrate --check` and exits only after the beat pod has applied every migration in the new image. Until then the new pods are not Ready, so the Service keeps sending traffic to the previous API pods and new workers do not consume tasks. The wait is bounded by `waldur.initdbWaitTimeout` (default 45 minutes). After that check passes, the previous API pods still serve until the new ones are Ready, so a migration that drops or renames a column can still fail on those old pods. The cleanup and SAML metadata CronJobs are not gated. Set `waldur.initdbEnabled` to false only when migrations are applied out of band before the new pods start; the chart then does not wait.
 
 ## Optional Components
 
@@ -580,6 +580,28 @@ When `waldur.initdbEnabled` is true, the API, worker, and web-shell Deployments 
   - Handles payment notifications
 
   - Email notifications for transactions
+
+### 7. Remote MCP Server
+
+**Deployment:** `waldur-mastermind-mcp`
+**Container:** `waldur mcp_server` from the mastermind image
+**Enabled by:** `waldur.mcp.enabled`
+
+- **Responsibilities:**
+
+  - Serves `/mcp` and its OAuth resource metadata on the API host, for AI
+    agent clients acting as the signed-in user
+
+- **Configuration:**
+
+  - Each pod holds up to `waldur.mcp.dbThreads` Postgres connections, so
+    `replicas × dbThreads` counts against `max_connections`
+
+  - Runs read-only, without a service account token. Its environment holds
+    only the database, broker, key, Sentry and proxy credentials; the shared
+    settings file can hold more ([Remote MCP server](mcp.md))
+
+  - Routes, CORS and the `MCP_ENABLED` setting: [Remote MCP server](mcp.md)
 
 ## Dependencies
 
@@ -741,6 +763,8 @@ sequenceDiagram
 - **waldur-metrics-exporter:** ClusterIP service on port 8080
 
 - **waldur-uvk-everypay:** ClusterIP service on port 8000
+
+- **waldur-mastermind-mcp:** ClusterIP service on port 80
 
 ### External Access
 
@@ -2000,7 +2024,9 @@ gatewayAPI:
 
 HTTPRoute names to target with `targetRefs` (each is `metadata.name` of the corresponding
 `templates/httproute-*.yaml`): `api-httproute`, `api-admin-httproute`, `homeport-httproute`,
-`rabbitmq-ws-httproute`, `uvk-everypay-httproute`, `matrix-httproute`. The admin-specific IP
+`rabbitmq-ws-httproute`, `uvk-everypay-httproute`, `matrix-httproute`, and with the
+[remote MCP server](mcp.md) `mcp-httproute` and `mcp-oauth-httproute`; an API allow-list must
+target those two as well, or `/mcp` and the OAuth endpoints stay open. The admin-specific IP
 allow-list (the ingress path's separate `whitelistSourceRangeAdmin`) is just another
 `SecurityPolicy` targeting `api-admin-httproute`.
 
@@ -2213,6 +2239,8 @@ Outline:
 
 - [Gateway API](gateway-api.md)
 
+- [Remote MCP server](mcp.md)
+
 - [Outgoing email](mail.md)
 
 - [White-labeling](whitelabeling.md)
@@ -2250,6 +2278,7 @@ ingress:
 ```
 
 Given this value, only IPs from `192.168.22.0/24` subnet are able to access Waldur Mastermind APIs.
+With the [remote MCP server](mcp.md) enabled, it also covers `/mcp` and the OAuth endpoints.
 
 In case you want to limit access to `/api/admin/` endpoint specifically, there is another option called `ingress.whitelistSourceRangeAdmin`:
 
@@ -2266,15 +2295,18 @@ In case of multiple subnets/IPs, comma separated list can be used as a value. E.
 
 **Note**: this page covers the Ingress path. [Gateway API](gateway-api.md) has no standard
 resource for IP allow-listing -- see the `extraPolicies` section of that doc for the
-implementation-specific equivalent (e.g. Envoy Gateway's `SecurityPolicy`).
+implementation-specific equivalent (e.g. Envoy Gateway's `SecurityPolicy`). A policy covers
+only the routes it targets, so with the remote MCP server it must also target
+`mcp-httproute` and `mcp-oauth-httproute`.
 
 ## Client addresses behind a load balancer
 
 Mastermind reads the client address from `X-Forwarded-For` in two ways:
 
-- The limit on failed passwords per address, and the address the sign-in
-  lockout records, take the entry `waldur.trustedProxyCount` places from the
-  right (mastermind's default is 1).
+- The limit on failed passwords per address, the address the sign-in
+  lockout records, and the throttle on new OAuth clients of the
+  [remote MCP server](mcp.md) take the entry `waldur.trustedProxyCount`
+  places from the right (mastermind's default is 1).
 
 - Personal access token network restrictions (`allowed_networks`), organization
   access subnets, resource network rules and the event log take the **first**
@@ -3906,6 +3938,148 @@ media plane are the external operator's responsibility. The chart adds the
 `publicUrl` origin to `CSP_MATRIX_CALL_URL` on the homeport container, which puts
 it in the portal's Content-Security-Policy `connect-src`, so the browser is
 allowed to open the signalling websocket to it; nothing needs configuring for that.
+
+---
+
+### Remote MCP server
+<!-- Source: docs/admin-guide/deployment/helm/docs/mcp.md -->
+
+# Remote MCP server
+
+AI agent clients connect to `/mcp` on the API host over the Model Context
+Protocol and read Waldur data as the signed-in user. They sign in with OAuth,
+or with a personal access token. A separate `waldur-mastermind-mcp`
+Deployment runs `waldur mcp_server`; the API serves the OAuth endpoints.
+
+## Enabling
+
+```yaml
+waldur:
+  mcp:
+    enabled: true
+    replicas: 1
+    # Threads that run database calls, each holding one Postgres connection.
+    dbThreads: 4
+    resources: {}
+```
+
+Then turn on the `MCP_ENABLED` setting, in the admin UI or through
+`waldur.settingsOverrides`. Until then, `/mcp` and the OAuth endpoints answer
+404.
+
+The chart then:
+
+- runs `waldur mcp_server` pods and a `waldur-mastermind-mcp` Service. The
+  server is stateless, so replicas need no session affinity;
+- routes these paths on the API hosts (`apiHostname`, or `localApiHostname`,
+  and `apiExtraHosts`), through an Ingress or an HTTPRoute:
+
+  | Path | Served by |
+  |------|-----------|
+  | `/mcp` | MCP pods |
+  | `/.well-known/oauth-protected-resource` | MCP pods |
+  | `/.well-known/oauth-authorization-server` | API |
+  | `/oauth/authorize`, `/oauth/token`, `/oauth/revoke_token`, `/oauth/register` | API |
+
+  `/oauth/consent` is not among them: it's the portal page where users
+  approve a client, and the portal often shares the API's host;
+- seeds `MCP_RESOURCE_URLS` with `<apiScheme>://<host>/mcp` for
+  `apiHostname` and then each of `apiExtraHosts`, space-separated. Clients
+  reject resource metadata that names another host than the one they
+  connected to. While the setting is empty, Waldur issues no OAuth token and
+  clients can only use personal access tokens. To set it yourself, put the
+  whole value in `waldur.settingsOverrides`, which then wins. Like every
+  seeded setting, it is applied by the init-whitelabeling hook, which runs
+  only while `waldur.initdbEnabled` is true; otherwise set it in the admin
+  UI;
+- adds a NetworkPolicy for the MCP pods when `networkPolicy.enabled` is set.
+  The API pods already allow outbound HTTPS, which they need to fetch the
+  metadata of clients that identify themselves by URL.
+
+## What the pods get
+
+The MCP pods face the internet, so they get less than the API pods:
+
+- of the mounted files, only the settings file (`override.conf.py`), none of
+  the SSH keys, kubeconfig or other files the API pods mount;
+- of the environment variables the chart gives mastermind pods, only the
+  database, the RabbitMQ broker, the Django and field encryption keys, Sentry
+  and the outbound proxy. Not the mail, LDAP, eduTEAMS or DataCite
+  credentials. The list is an allowlist (`waldur.mcp.credentials` in
+  `_helpers.tpl`), so a variable the chart adds later stays out until it is
+  named there;
+- no service account token, no Linux capabilities, no privilege escalation, a
+  read-only root filesystem and the `RuntimeDefault` seccomp profile. The
+  server can write only to `/tmp`. The `wait-for-migrations` init container
+  gets the same restrictions and variables, and no writable path.
+
+Every mastermind pod mounts the same settings file, so secrets the chart
+writes into it reach the MCP pods too:
+
+- `waldur.ldap.password` and the eduTEAMS `clientSecret`, `refreshToken` and
+  `sshApiPassword`. Set them through `waldur.ldap.passwordExistingSecret` and
+  `waldur.remoteEduteams.existingSecret` instead, and they stay out;
+- the `tokenSecret` of `customInvitations`, `serviceAccountApiIntegration`
+  and `courseAccountApiIntegration`, which have no Secret option.
+
+The pods run as the image's `waldur` user. The chart sets no `runAsNonRoot`:
+the image names that user rather than a UID, which the kubelet can't check.
+
+## Database connections
+
+Each MCP pod holds up to `dbThreads` Postgres connections.
+`replicas × dbThreads` counts against Postgres `max_connections`, on top of
+the API and Celery pods.
+
+## CORS
+
+Browser-based MCP clients call these routes from their own origin. Clients
+that call `/mcp` from a server or a desktop app don't need CORS.
+
+- **OAuth endpoints.** Waldur answers them with
+  `Access-Control-Allow-Origin: *` and no credentials, and that answer has to
+  reach the browser. On nginx they are on their own Ingress,
+  `mcp-oauth-ingress`, without `enable-cors`: ingress-nginx would answer
+  preflights itself and swap `*` for the caller's origin plus
+  `Allow-Credentials`. Traefik's `api-cors` middleware and HAProxy's
+  `cors-enable` answer with `*` and no credentials too, and allow the
+  `MCP-Protocol-Version` header.
+- **`/mcp` and its metadata.** The MCP server answers CORS itself, with
+  `Access-Control-Allow-Origin: *`, no credentials, any request header, and
+  `WWW-Authenticate` exposed so that a browser can read the 401 challenge.
+  `mcp-ingress` adds no CORS of its own on any controller: on Traefik it goes
+  through `mcp-chain`, which is `api-chain` without `api-cors`. Images up to
+  8.1.5-rc.2 send no CORS there, so a client that calls `/mcp` from a web
+  page needs a later mastermind image.
+- **Gateway API.** The chart adds no CORS. Don't add a CORS policy to
+  `mcp-httproute` or `mcp-oauth-httproute` in `gatewayAPI.extraPolicies`: it
+  would replace Waldur's own answer.
+
+## IP allow-listing
+
+On the Ingress path, `ingress.whitelistSourceRange` covers the MCP routes as
+it covers the API. On the Gateway API path, an allow-list policy in
+`gatewayAPI.extraPolicies` covers only the routes it targets: add
+`mcp-httproute` and `mcp-oauth-httproute` next to `api-httproute`, or `/mcp`
+and the OAuth endpoints stay open to everyone.
+
+## Behind more than one proxy
+
+The throttle on new OAuth clients keys on an `X-Forwarded-For` entry, as the
+limit on failed passwords does. `waldur.trustedProxyCount` sets both; see
+[IP whitelisting](ip-whitelisting.md).
+
+## Checking it
+
+With `MCP_ENABLED` on, the resource metadata names the seeded URL:
+
+```bash
+curl -s https://<apiHostname>/.well-known/oauth-protected-resource/mcp
+# {"resource": "https://<apiHostname>/mcp", "authorization_servers": [...], ...}
+```
+
+A request to `/mcp` without a token answers 401, with a `WWW-Authenticate`
+header that points at that metadata.
 
 ---
 
@@ -6748,6 +6922,14 @@ A secret can be created trough [CLI](https://kubernetes.io/docs/tasks/configure-
 
 Configuration documentation: [index](docs/index.md)
 
+## Remote MCP server
+
+`waldur.mcp.enabled` runs `waldur mcp_server` and routes `/mcp` and the OAuth
+endpoints on the API host; see [docs/mcp.md](docs/mcp.md). Each MCP pod holds
+up to `waldur.mcp.dbThreads` Postgres connections, so
+`waldur.mcp.replicas × waldur.mcp.dbThreads` counts against Postgres
+`max_connections`, on top of the API and Celery pods.
+
 ## Extension hooks
 
 Each application deployment (`api`, `worker`, `beat`, `homeport`) exposes
@@ -6974,10 +7156,11 @@ checkout` refuses to overwrite them. Keep those changes as commits on a local
 branch instead, and bring each release in with `git merge <new release tag>`,
 resolving any conflict in favour of your settings plus the release's new ones.
 
-With the Matrix chat add-on, set `COMPOSE_PROFILES` in `.env` as described in
-`docs/matrix-chat-add-on.md`, or pass the same `--profile` flags to each of
+With an optional profile on, such as the Matrix chat add-on (see
+`docs/matrix-chat-add-on.md`) or the [MCP server](#mcp-server), list it in
+`COMPOSE_PROFILES` in `.env`, or pass the same `--profile` flags to each of
 these commands. Without the profiles, `pull` and `up -d` neither update nor
-restart the Matrix services.
+restart those services.
 
 ### Config folder changes
 
@@ -7326,6 +7509,14 @@ To pass on the client address the balancer reports:
    WALDUR_CORE["TRUSTED_PROXY_COUNT"] = 2
    ```
 
+   With the [MCP server](#mcp-server), set the same count for the limit on new
+   OAuth clients, which reads its own setting. At its default of 1, every
+   client's registrations would count against the balancer's address:
+
+   ```python
+   MCP_OAUTH_TRUSTED_PROXY_COUNT = 2
+   ```
+
 3. Apply both. `docker compose up -d` recreates Caddy, whose environment
    changed, but not the mastermind containers: `override.conf.py` is mounted
    from the host, so editing it changes nothing Compose compares, and each
@@ -7336,9 +7527,9 @@ To pass on the client address the balancer reports:
    docker compose restart waldur-mastermind-api waldur-mastermind-worker waldur-mastermind-beat
    ```
 
-   Add `waldur-mastermind-web-shell` and `waldur-matrix-bot` to the restart
-   when their profiles are on. The one-shot services read the file on their
-   next run.
+   Add `waldur-mastermind-web-shell`, `waldur-matrix-bot` and
+   `waldur-mastermind-mcp` to the restart when their profiles are on. The
+   one-shot services read the file on their next run.
 
 Check it: after a failed sign-in, **Django admin → Axes → Access attempts**
 shows your own address, not the balancer's.
@@ -7529,6 +7720,83 @@ docker compose --profile web-shell up -d
 ```
 
 Caddy routes `/webshell/` to the `waldur-mastermind-web-shell` service (`config/caddy-includes/web-shell.conf`). That service mounts only the settings files: it deliberately has no access to the Docker socket, so a shell session cannot control the host.
+
+## MCP server
+
+AI agent clients, such as Claude, ChatGPT, Cursor or VS Code, can connect to
+Waldur over the Model Context Protocol and act as the signed-in user, with a
+personal access token or by signing in with OAuth. The optional `mcp` profile
+runs the server, and Caddy serves it on the portal's own domain
+(`config/caddy-includes/mcp.conf`):
+
+- `/mcp` and `/.well-known/oauth-protected-resource/mcp` go to the
+  `waldur-mastermind-mcp` service;
+- `/.well-known/oauth-authorization-server` and the OAuth endpoints under
+  `/oauth/` go to the API. The consent page, `/oauth/consent`, stays with the
+  portal.
+
+The routes are always present. Without the profile, `/mcp` answers 502, and
+the OAuth endpoints answer 404 while `MCP_ENABLED` is off.
+
+Caddy adds no CORS headers of its own on these paths: the MCP server and the
+API answer with `Access-Control-Allow-Origin: *` and no credentials. Images up
+to 8.1.5-rc.2 send none on `/mcp` and its metadata, so a client that calls
+them from a web page needs a later mastermind image. Clients that call from a
+server, such as Claude, ChatGPT, Cursor and VS Code, are not affected.
+
+Images up to 8.1.5-rc.2 accept only personal access tokens on `/mcp`. OAuth
+sign-in needs later mastermind and homeport images.
+
+1. Start the stack with the profile:
+
+   ```bash
+   docker compose --profile mcp up -d
+   ```
+
+   Or add `mcp` to `COMPOSE_PROFILES` in `.env`, so that every
+   `docker compose` command, upgrades included, also updates the service.
+
+2. As staff, open **Administration → Configuration → Personal access
+   tokens** in the portal and, in the **MCP server** group:
+   - turn on `MCP_ENABLED`;
+   - set `MCP_RESOURCE_URLS` to the endpoint's public URL,
+     `https://<WALDUR_DOMAIN>/mcp`, with the port if `WALDUR_HTTPS_PORT` is
+     not 443. While it is empty, no OAuth token is issued, so clients can
+     connect only with a personal access token.
+
+   Personal access tokens also need `PAT_ENABLED`, on the same page, and
+   each user who creates one needs the **Personal access tokens** option,
+   which staff turn on when editing the user.
+
+3. Check that `HOMEPORT_URL`, under **Administration → User interface →
+   Branding**, is the portal's address, `https://<WALDUR_DOMAIN>/`, with the
+   port if `WALDUR_HTTPS_PORT` is not 443. The OAuth sign-in sends the browser
+   to the consent page there, and the default, `https://example.com/`, leads
+   elsewhere.
+
+The service faces the internet, so it gets less than the other mastermind
+containers:
+
+- of the settings files, only `override.conf.py` and `logging.conf.py`, and
+  not the Docker socket;
+- of the environment, only the database, RabbitMQ, the secret and field
+  encryption keys, Sentry and telemetry. Not the mail, Keycloak or demo
+  preset credentials;
+- a read-only filesystem apart from `/tmp`, no Linux capabilities, no
+  privilege escalation, and the image's own user and group instead of
+  `DOCKER_GROUP_ID`.
+
+Secrets written into `override.conf.py` itself, rather than read from the
+environment, still reach it. A variable that `override.conf.py` reads for the
+server must be added to the service's `environment` in
+`docker-compose.override.yml`.
+
+The server holds up to `WALDUR_MCP_DB_THREADS` Postgres connections (4 by
+default), one per database thread. They count against Postgres's
+`max_connections`, 100 by default, on top of the API and Celery.
+
+Behind a load balancer, also set `MCP_OAUTH_TRUSTED_PROXY_COUNT`, as described
+in [Behind a load balancer](#behind-a-load-balancer).
 
 ## Integration with SLURM
 
@@ -66998,6 +67266,76 @@ as a technical assessment the call managers check before it moves on. The
 round's `round_steps` field lists each step's due date, proposals before, at
 and after it, and the state of its reports.
 
+### Step discussions
+
+A call manager can give a step a tracked discussion (`has_discussion`): an
+end-to-end encrypted Matrix room for the people working on it, kept with the
+step's record (`StepDiscussion`). It is off by default and in every shipped
+template, can be switched on only while Matrix chat is enabled, and never on
+a `blind_review` step or an applicant step. A step keeps it when chat is
+disabled later; a call imported while chat is disabled loses it, with a
+warning, and the workflow check warns about it.
+
+- **Scope.** One discussion per proposal on a proposal's step. On a round
+  step one per round, and one per panel on a call with panels.
+- **Participants.** The holders of an open or submitted contribution to the
+  step who still hold the standing it came through (the evaluator or call
+  role, a role on the offering, a delegation they may still take over), its
+  completers, the call's managers as observers when
+  `discussion_call_managers` (default on), and the panel's members when
+  `discussion_panel_members` (the proposal's panel, the discussion's panel on
+  a round step, the call's panel members on a call without panels).
+  Never anyone on the applicant team of, author of, or with a conflict of
+  interest recorded with the proposal; for a round discussion, with any
+  proposal of the round on its panel (of the round, on a call without
+  panels), whatever that proposal's state -- the rule that keeps them from
+  the round's ranking and notes. A round discussion records every proposal
+  it has covered and never forgets one: a proposal moved to another panel
+  keeps its people out of the old panel's room and record, and moving it
+  back admits nobody. Completers and the panel chair moderate.
+  Membership is synced again when contributions, evaluator roles, conflicts,
+  panels, the proposal's panel, or roles on the call or a requested
+  offering change.
+- **Opening.** `POST /api/proposal-step-discussions/open/` with
+  `proposal_step_uuid` (on a round step, the round's discussion of the
+  proposal's panel) or `round_step_uuid` and `panel_uuid`. The first open
+  creates the room (`201`), later ones return the same discussion (`200`).
+  One is open at a time: a step that runs again after its discussion closed
+  -- reactivated, or a round step whose proposals came back to it -- opens a
+  new one with a new room (`201`), and the closed ones stay on record with
+  their exports. The step shows its latest (`discussion.uuid`); `closed`
+  with `can_open` means opening starts the new one.
+  Anyone not taking part is refused with `403` first, whatever the step's
+  state -- also for a round step with a panel of another call, or none on
+  a call with panels. Participants are refused with `400` when the step has none or chat
+  is disabled, `409` when the step is not active or the discussion has
+  closed. Step instances (`discussion`) and round steps (`discussions`)
+  tell their viewer whether they may open it.
+- **A closed room still active** (closed while chat was off, or its export
+  failed) keeps those who took part and are still in it, but no one who
+  has since joined a covered proposal's team or been found in conflict
+  with one; nobody is brought in.
+- **Closing.** When the proposal's step ends (completed, expired, withdrawn,
+  skipped, or the proposal rejected or withdrawn), or the round's last
+  proposal of the panel is done with the round step, the discussion records
+  who took part and closes. Its room's history is exported -- whatever the
+  periodic export setting says -- before anyone is removed, and the room
+  archived. If the export cannot be made (the bot is down), the room stays
+  open with its members and the nightly export closes it again. A
+  discussion deleted with its step, proposal or round has its room closed
+  and exported the same way. The export is on
+  the record (`export_uuid`) for the call's managers, staff and support.
+- **Reading.** Participants (in the room now, or who took part once closed)
+  and those who may update the call read a discussion -- with a personal
+  access token, as a participant only with `PROPOSAL.LIST` and within its
+  bindings to calls and proposals, as a manager only where its scopes allow
+  `CALL.UPDATE` -- never one they are kept out of as a participant by the
+  rule above. Staff read all; support read all but those they are kept out
+  of, and neither read their exports nor join their rooms.
+  Opening one gives no read of its own. `mine=true` lists one's own.
+- **Switching it off.** Switching `has_discussion` off closes the step's open
+  discussions as if the step ended, so a step made blind keeps no room.
+
 ## Checking a Workflow and Its History
 
 ### Workflow check before activation
@@ -70025,6 +70363,70 @@ memory.
   own, named on the command line. The workspace script
   `scripts/docs-search-eval.sh` builds or downloads a corpus, creates that
   database and holds the LLM token there for the run only.
+
+### Quick prompts
+
+`GET /api/chat/suggestions/` returns the ids of the quick prompts to offer
+on an empty thread, most relevant first. The catalog is in
+`chat/suggestions.py`; homeport holds the wording and icon for each id and
+skips ids it does not know. An entry is offered only when all of these hold:
+
+- **Its tools are in the caller's tool set**, computed as
+  `get_tool_set_for_user(user, is_delegated(request))`, as the stream does.
+  So a quick prompt never leads to a tool the caller lacks: no HPC prompts
+  without an endpoint or in a delegated session, no "Search docs" without a
+  loaded corpus or with `DOCS_SEARCH_ENABLED` off.
+- **The portal has what it needs switched on**, written as
+  `deployment_profile` terms, the vocabulary the documentation sections use:
+  `offering_type:OpenStack.Instance` for creating a VM, `capability:hpc`,
+  `feature:marketplace.display_software_catalog`,
+  `!feature:marketplace.conceal_prices` for invoices and cost charts,
+  `!feature:marketplace.catalogue_only` for creating a VM and pending orders,
+  `!feature:marketplace.call_only` for proposal help and reviews, and
+  `feature:marketplace.show_call_management_functionality` for call insights.
+  `marketplace.hide_marketplace_from_end_users` hides "Find a service" from
+  everyone but staff and support.
+- **The caller has the data it is about**, for some: a paused resource, a
+  pending review or a reviewer profile (`REVIEWER_PROFILES_ENABLED`), a
+  draft proposal, a pending order, a credit, a resource with usage-based
+  components, an HPC allocation, an open call. Pending orders are the ones
+  `list_orders` shows, so also those waiting on the caller's approval. For
+  staff and support, who can see the whole deployment, these checks look only
+  at their own projects and organizations. Each check is one query, so the
+  endpoint's cost does not grow with the caller's organizations.
+
+Prompts about the caller's own state (a paused resource, pending reviews, a
+draft proposal) come first. The endpoint sits behind the same switches as
+the stream (`AI_ASSISTANT_ENABLED`, `AI_ASSISTANT_ENABLED_ROLES`).
+
+### What the prompt says about the portal and the user
+
+The system prompt ends with two blocks built in `chat/prompt_context.py`:
+
+- **Platform context**, the same for every user of a deployment: the date,
+  the currency, `SITE_DESCRIPTION`, the service categories with an offering
+  anyone may see, what the portal offers (virtual machines, HPC, calls,
+  reviewing) and the rules the model must keep: `marketplace.conceal_prices`
+  (never state prices), `marketplace.catalogue_only` (nothing can be ordered)
+  and `marketplace.call_only` (proposals run elsewhere).
+- **Current user**, last: the user's organizations and the projects they can
+  see (also through an organization role), with their role in each, at most
+  10 of each with a total, terminated projects left out; and whether they
+  review proposals, have a paused resource or an HPC allocation. Staff and
+  support get counts only. Names are user-editable, so they sit in a block
+  marked as data, one JSON-quoted entry per line, normalized, cut to 80
+  characters, without angle brackets or `===` runs: a name can neither leave
+  the block nor pose as another entry. No e-mail addresses or other people's
+  data.
+
+The categories and "virtual machines" come from offerings every user may see
+(shared, not restricted to roles), whether or not anonymous visitors may
+browse the catalogue. Calls and reviewing are named only where calls run in
+Waldur, and reviewing only while a call is active.
+
+Everything before the user block is the same for two users of the same tier,
+so providers can cache it; the date sits in the platform block rather than the
+persona so the cached prefix does not change every day.
 
 ## Security guards
 
@@ -80570,7 +80972,7 @@ Rules:
 - **Never add ARIA just to get a hook.** ARIA changes what assistive technology announces. A role or state that is not true misleads users, and no ARIA is better than wrong ARIA. For a styling or test hook, use `data-*`.
 - **Do not mirror ARIA in `data-*`.** Style and test against `aria-expanded`, not a `data-expanded` you keep in sync with it. Radix is the one exception: it sets `data-state="open"` alongside `aria-expanded`, and `data-[state=…]:` is fine for its components, especially for states ARIA cannot express, such as a closing animation.
 - **Tests check the ARIA attribute**, not its `data-*` twin: `expect(trigger).toHaveAttribute('aria-expanded', 'true')`.
-- **A visual marker still needs an accessible counterpart.** `FormSteps`' `data-error` only colours a step's title; `aria-invalid` would be wrong on a navigation link. The error must also reach assistive technology some other way, such as an icon with an accessible name, or text linked with `aria-describedby`.
+- **A visual marker still needs an accessible counterpart.** `StepNav`'s `data-error` only colours a step's title; `aria-invalid` would be wrong on a navigation link. The error must also reach assistive technology some other way, such as an icon with an accessible name, or text linked with `aria-describedby`.
 
 ## Class names
 
@@ -80639,7 +81041,7 @@ For state that assistive technology should know, use the native attribute or ARI
 - **Style it with Tailwind's data variants.** On the element itself: `data-[state=open]:…`, `data-[selected]:…`. From an ancestor marked `group`: `group-data-[state=open]:…`. From the parent onto a child: `[&_[data-error]]:…`.
 
 ```tsx
-// FormSteps: a step title marks itself while its section is invalid…
+// StepNav: a step title marks itself while its section is invalid…
 const title = (
   <div data-error={hasErrors ? '' : undefined} className="flex items-center">
     {step.label}
@@ -80900,46 +81302,47 @@ The application features a comprehensive set of reusable UI components organized
 
 ### Tables and Data Display
 
-| Component               | Location                            | Description                | Key Features                                                |
-| ----------------------- | ----------------------------------- | -------------------------- | ----------------------------------------------------------- |
+| Component               | Location                                     | Description                | Key Features                                                |
+| ----------------------- | -------------------------------------------- | -------------------------- | ----------------------------------------------------------- |
 | **Table**               | `packages/table/src/Table.tsx`               | Main table component       | Filtering, sorting, pagination, column visibility, export   |
 | **ActionsDropdown**     | `packages/table/src/ActionsDropdown.tsx`     | Dropdown for table actions | Row actions with `ActionItem`; a wrapper over `ActionsMenu` |
 | **ExpandableContainer** | `packages/table/src/ExpandableContainer.tsx` | Collapsible row details    | Table row expansion, detail views                           |
-| **TablePagination**     | `waldur-ui`                         | Pagination controls        | Page navigation, size selection                             |
+| **TablePagination**     | `waldur-ui`                                  | Pagination controls        | Page navigation, size selection                             |
 
 ### Menus and Popovers
 
-| Component       | Location                              | Description                          | Key Features                                                                                    |
-| --------------- | ------------------------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| **Menu**        | `packages/ui/src/Menu/` (`waldur-ui`) | Every dropdown menu                  | `nav` and `actions` looks, `density` / `tone` on the panel, submenus, radio rows, `openOnHover` |
-| **MenuPopover** | `packages/ui/src/Menu/` (`waldur-ui`) | Menu surface for panels with inputs  | Filter and picker popovers with menu rows, `forceMount`; panels with no rows use `Popover`      |
-| **ActionsMenu** | `packages/table/src/ActionsDropdown.tsx`       | Action menu with its trigger         | Kebab, labeled, "Add" or custom toggle; `actions-menu` / `action-item` test ids                 |
-| **ActionItem**  | `src/resource/actions/ActionItem.tsx` | An action row                        | Icon, tooltip, staff indicator; filtered by `ActionList`                                        |
-| **NavMenuLink** | `src/navigation/NavMenu.tsx`          | A nav menu row that is a router link | ui-router `state`/`params`                                                                      |
+| Component       | Location                                 | Description                          | Key Features                                                                                    |
+| --------------- | ---------------------------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| **Menu**        | `packages/ui/src/Menu/` (`waldur-ui`)    | Every dropdown menu                  | `nav` and `actions` looks, `density` / `tone` on the panel, submenus, radio rows, `openOnHover` |
+| **MenuPopover** | `packages/ui/src/Menu/` (`waldur-ui`)    | Menu surface for panels with inputs  | Filter and picker popovers with menu rows, `forceMount`; panels with no rows use `Popover`      |
+| **ActionsMenu** | `packages/table/src/ActionsDropdown.tsx` | Action menu with its trigger         | Kebab, labeled, "Add" or custom toggle; `actions-menu` / `action-item` test ids                 |
+| **ActionItem**  | `src/resource/actions/ActionItem.tsx`    | An action row                        | Icon, tooltip, staff indicator; filtered by `ActionList`                                        |
+| **NavMenuLink** | `src/navigation/NavMenu.tsx`             | A nav menu row that is a router link | ui-router `state`/`params`                                                                      |
 
 See the [menus guide](menus.md) for when to use which, recipes and how the looks work.
 
 ### Forms and Input Components
 
-| Component                            | Location                          | Description            | Key Features                                                                      |
-| ------------------------------------ | --------------------------------- | ---------------------- | --------------------------------------------------------------------------------- |
-| **WizardForm**                       | `src/wizard/WizardForm.tsx`       | Multi-step form wizard | Step navigation, validation, progress indicator                                   |
-| **VStepperFormStepCard**             | `src/wizard/VStepperFormStep.tsx` | Card-based form step   | Loading state, disabled state with tooltip                                        |
-| **Checkbox / Radio / Switch**        | `waldur-ui`                       | Check controls         | `label`/`description`/`tooltip` props, `md`/`sm`, `checked` + `onCheckedChange`   |
-| **RadioGroup**                       | `waldur-ui`                       | Set of radio options   | Options in, value out; fieldset + legend, `orientation`                           |
-| **Input / Textarea**                 | `waldur-ui`                       | Text controls          | Native props + ref, `invalid` (sets `aria-invalid`), `solid`, `md`/`sm` in px     |
-| **InputGroup**                       | `waldur-ui`                       | Adornments in a field  | `start` / `end` nodes, `invalid` icon, `align`; measures them so padding fits     |
-| **NumberInput / SecretInput**        | `waldur-ui`                       | Number, secret inputs  | Steppers + unit + clamp on blur; show/hide button                                 |
-| **RangeInput**                       | `waldur-ui`                       | Range slider           | Token-coloured track filled to the thumb                                          |
-| **FormField / FormLabel / FormText** | `waldur-ui`                       | Field, label, help     | `controlId` links label and control; `required`; `as="td"`                        |
-| **NativeSelect**                     | `waldur-ui`                       | Browser `<select>`     | `<option>` children, `sm`/`md`/`lg`, `fit`, caret icon; `Select` for search/multi |
-| **SelectField**                      | `src/form/SelectField.tsx`        | Dropdown selection     | Options, search, validation                                                       |
-| **StringField**                      | `src/form/StringField.tsx`        | Text input field       | RFF adapter over `Input`; validation, placeholder, leading `icon`                 |
-| **NumberField**                      | `src/form/NumberField.tsx`        | Numeric input          | Min/max validation, step control                                                  |
-| **DateField**                        | `src/form/DateField.tsx`          | Date picker            | Date selection, validation                                                        |
-| **FileUploadField**                  | `src/form/FileUploadField.tsx`    | File upload            | Drag & drop, validation                                                           |
-| **MarkdownEditor**                   | `src/form/MarkdownEditor.tsx`     | Markdown editor        | Preview, syntax highlighting                                                      |
-| **SecretField**                      | `src/form/SecretField.tsx`        | Password/secret input  | Show/hide toggle, validation                                                      |
+| Component                            | Location                       | Description            | Key Features                                                                      |
+| ------------------------------------ | ------------------------------ | ---------------------- | --------------------------------------------------------------------------------- |
+| **WizardForm**                       | `waldur-wizard`                | Multi-step form wizard | Step navigation, validation, progress indicator                                   |
+| **StepCard / StepLock**              | `waldur-ui`                    | Card-based form step   | Loading state; `disabled` locks the step (`inert`) and shows `disabledReason`     |
+| **StepNav**                          | `waldur-ui`                    | Side nav of form steps | A status per step (`locked`/`error`/`warning`/`complete`/`required`), scroll spy  |
+| **Checkbox / Radio / Switch**        | `waldur-ui`                    | Check controls         | `label`/`description`/`tooltip` props, `md`/`sm`, `checked` + `onCheckedChange`   |
+| **RadioGroup**                       | `waldur-ui`                    | Set of radio options   | Options in, value out; fieldset + legend, `orientation`                           |
+| **Input / Textarea**                 | `waldur-ui`                    | Text controls          | Native props + ref, `invalid` (sets `aria-invalid`), `solid`, `md`/`sm` in px     |
+| **InputGroup**                       | `waldur-ui`                    | Adornments in a field  | `start` / `end` nodes, `invalid` icon, `align`; measures them so padding fits     |
+| **NumberInput / SecretInput**        | `waldur-ui`                    | Number, secret inputs  | Steppers + unit + clamp on blur; show/hide button                                 |
+| **RangeInput**                       | `waldur-ui`                    | Range slider           | Token-coloured track filled to the thumb                                          |
+| **FormField / FormLabel / FormText** | `waldur-ui`                    | Field, label, help     | `controlId` links label and control; `required`; `as="td"`                        |
+| **NativeSelect**                     | `waldur-ui`                    | Browser `<select>`     | `<option>` children, `sm`/`md`/`lg`, `fit`, caret icon; `Select` for search/multi |
+| **SelectField**                      | `src/form/SelectField.tsx`     | Dropdown selection     | Options, search, validation                                                       |
+| **StringField**                      | `src/form/StringField.tsx`     | Text input field       | RFF adapter over `Input`; validation, placeholder, leading `icon`                 |
+| **NumberField**                      | `src/form/NumberField.tsx`     | Numeric input          | Min/max validation, step control                                                  |
+| **DateField**                        | `src/form/DateField.tsx`       | Date picker            | Date selection, validation                                                        |
+| **FileUploadField**                  | `src/form/FileUploadField.tsx` | File upload            | Drag & drop, validation                                                           |
+| **MarkdownEditor**                   | `src/form/MarkdownEditor.tsx`  | Markdown editor        | Preview, syntax highlighting                                                      |
+| **SecretField**                      | `src/form/SecretField.tsx`     | Password/secret input  | Show/hide toggle, validation                                                      |
 
 ### Button Components
 
@@ -81170,7 +81573,7 @@ export const MyEditButton = ({ row, refetch }) => (
 | **CopyToClipboard**       | `src/core/CopyToClipboard.tsx`        | Copy functionality | Click to copy, success feedback |
 | **CopyToClipboardButton** | `src/core/CopyToClipboardButton.tsx`  | Copy button        | Icon button, tooltip            |
 | **Tooltip**               | `packages/ui/src/Tooltip/Tooltip.tsx` | Tooltip wrapper    | Help text, positioning          |
-| **ProgressSteps**         | `src/wizard/ProgressSteps.tsx`        | Step indicator     | Multi-step processes, progress  |
+| **ProgressSteps**         | `waldur-ui`                           | Step indicator     | Multi-step processes, progress  |
 
 ## Component Design Principles
 
@@ -81218,7 +81621,8 @@ interface DeployPageProps {
 ### Step Definition Structure
 
 ```js
-interface VStepperFormStep<T = VStepperFormStepProps> {
+// StepDefinition, from waldur-wizard
+interface StepDefinition<T = StepComponentProps> {
   label: string;                    // Display name
   id: string;                      // Unique identifier
   component: React.ComponentType<T>; // React component to render
@@ -83910,6 +84314,50 @@ catch (e) {
   // Error handled, no re-throw needed
 }
 ```
+
+## Where the wizard lives
+
+Multi-step forms are split by what they depend on, so micro-apps
+([micro-apps.md](micro-apps.md)) use the same ones:
+
+- **`waldur-ui`** (`packages/ui/src/Steps`) holds the step primitives, which
+  know no form library and no router: `StepCard` and `StepLock` (one step of a
+  long form, lockable), `StepNav` and `getStepNavItems` (the side nav with a
+  status per step), `ProgressSteps`, `VerticalProgressSteps` and
+  `StepLoading`, plus `StepperLayout` (`Container`, `Header`, `Body`,
+  `Aside`), the page of a long form with its sticky side column.
+- **`waldur-wizard`** (`packages/wizard`) holds what runs on react-final-form:
+  `Wizard`, `WizardModal`, `WizardForm`, `WizardFormContainer`,
+  `WizardButtons`, `WizardStepIndicator`, `WizardTabs`, `useWizard`, and for
+  long forms `StepDefinition` with `useStepStatuses`, which turns the form's
+  errors into the statuses `StepNav` draws.
+
+Homeport imports them from the packages too: there is no `@/wizard` module
+any more (ESLint points such an import to the packages). The old names are
+gone with it: `VStepperFormStepCard` is `StepCard`, `StepContent` is
+`StepLock`, `VStepperFormStep` is `StepDefinition` and `VStepperFormStepProps`
+is `StepComponentProps`. What stays in the app is `FormSteps`
+(`@/wizard/FormSteps`), which routes its nav links through UI-Router, and
+`SidebarLayout` (`@/form/SidebarLayout`), which is `StepperLayout` in the
+portal's page frame.
+
+`StepperLayout.Aside` sticks below whatever sticks above the page, read from
+two CSS variables the app's chrome sets on an ancestor:
+
+- `--layout-sticky-top`: where sticky content sticks inside its scroller
+  (default `0px`). The portal's `Layout` measures it (header, breadcrumb bar,
+  page tabs; `src/navigation/chromeHeights.ts`).
+- `--layout-sticky-height`: the scroller's visible height there (default
+  `100vh` less `--layout-sticky-top`, right while the window scrolls, as in
+  the portal). waldur-shell's `AppShell` scrolls an inner pane below its top
+  bar instead, so it makes that pane a size container and sets it to
+  `100cqh`.
+
+A micro-app imports from the package entry points (`import { StepCard,
+StepNav } from 'waldur-ui'`, `import { Wizard, useStepStatuses } from
+'waldur-wizard'`) and adds `packages/wizard/src` to its Tailwind `@source`
+list. Like `waldur-table`, the package may import nothing from `@/…` or a
+router; ESLint enforces it.
 
 ## Modal Form Architecture
 
@@ -92279,16 +92727,39 @@ const isWide = useBreakpointUp('xl'); // >= 1200px
 const cannotHover = useMediaQuery('(hover: none)');
 ```
 
-### 11.2 Filter Position Adaptation
+### 11.2 Page Width vs Window Width
+
+The window's width and the page's are not the same: a drawer docked beside the page makes the page narrower while the window stays wide. Page content lays itself out by the **page**; the app's chrome by the window.
+
+| What                                                                                                                                       | Lays out by | Use                                                                                                        |
+| :----------------------------------------------------------------------------------------------------------------------------------------- | :---------- | :--------------------------------------------------------------------------------------------------------- |
+| Page content: heroes, page tabs, cards, tables, forms on a page                                                                            | the page    | `page-sm:` … `page-2xl:`, `page-max-sm:` … `page-max-xl:`; `usePageBreakpointUp` / `usePageBreakpointDown` |
+| The chrome: sidebar, header, drawers and dialogs themselves; whatever is about the screen's edge (a card bleeding to the edges on a phone) | the window  | `sm:` … `2xl:`, `max-*:`; `useBreakpointUp` / `useBreakpointDown`                                          |
+
+- The `page-*` variants are container queries on the nearest `page` container, at the same widths as the screens (576/768/992/1200/1400). Inside the layout that is its page region (`src/navigation/Layout.tsx`): the region left of a docked drawer, sidebar included. Everywhere else it is `<body>` (`design-tokens/.../variants.css`): drawers and dialogs, which portal to `<body>`, the micro-apps and Storybook all lay out by the window as before.
+- `usePageBreakpointUp` / `usePageBreakpointDown` measure the same boxes (`PageWidthProvider` in the layout, `<body>` elsewhere), so a class and a hook on the same component always agree. They re-render only when a breakpoint is crossed.
+- Both read a width that leaves out a classic scrollbar (Windows, Linux, macOS set to always show scrollbars), so with no drawer docked a `page-*` variant switches up to a scrollbar's width (~15px) of window later than its screen variant. The sidebar's auto-collapse adds the scrollbar back and keeps its window thresholds exactly.
+- The sidebar collapses to its icon rail by the page region's width, so beside a docked drawer the page behaves as in a window of that width. One difference: below `lg` a window turns the sidebar into a sheet opened from the header; beside a docked drawer it stays a rail, since the header, which goes by the window, shows no button to open the sheet.
+- Content portaled out of the page (a popover, a menu) reads the layout's width in a hook but `<body>`'s in CSS: keep `page-*` classes out of portaled content, or use the hook there.
 
 ```tsx
-// Automatically converts 'menu' to 'sidebar' on small screens
-const isSm = useBreakpointDown('sm');
+import { usePageBreakpointDown } from 'waldur-ui';
+
+const isSm = usePageBreakpointDown('sm'); // the page is < 576px wide
+
+<div className="grid grid-cols-1 page-md:grid-cols-2 gap-x-5">…</div>;
+```
+
+### 11.3 Filter Position Adaptation
+
+```tsx
+// Automatically converts 'menu' to 'sidebar' on a narrow page
+const isSm = usePageBreakpointDown('sm');
 const filterPosition =
   isSm && originalPosition === 'menu' ? 'sidebar' : originalPosition;
 ```
 
-### 11.3 Interactive Element Sizing
+### 11.4 Interactive Element Sizing
 
 **Form controls (inputs, selects, textareas):**
 
@@ -101648,6 +102119,649 @@ to approve, invitations to accept, requests to review. It is empty when there is
 
 ---
 
+### Connect AI clients over MCP
+<!-- Source: docs/user-guide/end-users/mcp-clients.md -->
+
+# Connect AI clients over MCP
+
+AI clients such as Claude, ChatGPT, Cursor and VS Code can read your Waldur data over the
+Model Context Protocol (MCP). Ask them about your organizations, projects, resources,
+orders, costs and the marketplace, and they call Waldur's tools to answer. The tools
+only read: a client can't change anything in Waldur.
+
+A client acts as you. It sees what you see in the portal, with your roles in
+organizations and projects. For the tools it can call, see [MCP tools](mcp-tools.md).
+
+## What you need to connect a client
+
+- **The server URL.** It is `/mcp` on your portal's API address, such as
+  `https://api.example.com/mcp`. Ask your Waldur administrator if you don't know the API
+  address. Enter the URL exactly, without a slash at the end.
+- **A way to sign in.** Most clients sign in with OAuth: they open Waldur in your
+  browser, and you approve them there. Some clients take a personal access token
+  instead. See [Sign in with OAuth or a personal access token](#sign-in-with-oauth-or-a-personal-access-token).
+
+Some clients connect from the vendor's cloud rather than from your computer: Claude.ai
+and Claude Desktop's connectors, ChatGPT, Atlassian Rovo and Microsoft Copilot Studio. They reach Waldur only if your
+portal's API is reachable from the internet.
+
+## Sign in with OAuth or a personal access token
+
+**OAuth** is the default for most clients. The client opens Waldur's consent page in your
+browser. Sign in to the portal if asked. Check the **Application** name, and the
+address under **Sends you back to**, which should belong to the client you are
+connecting. Then select **Allow**. The client renews its access by itself, and loses it
+after 30 days without use.
+
+**A personal access token** suits clients that take a fixed `Authorization` header. Not
+every token works on `/mcp`. See
+[Use a personal access token](#use-a-personal-access-token).
+
+## Connect Claude.ai or Claude Desktop
+
+Add Waldur as a custom connector in Claude. A connector you add works in Claude.ai, Claude
+Desktop and the Claude mobile apps. Claude connects to Waldur from Anthropic's cloud,
+and only on port 443, the default for HTTPS.
+
+On a personal plan:
+
+1. Open **Customize > Connectors**.
+2. Select **Add**, then **Add custom connector**.
+3. Enter a name, such as `Waldur`, and the server URL. Select **Continue**.
+4. Keep the authentication options marked **Detected**, and select **Add**.
+5. Select **Connect**, and approve Claude on Waldur's consent page.
+
+On a Team or Enterprise plan, an owner adds the connector once, under **Organization
+settings > Connectors**, with **Add > Custom > Web**. Members then open **Customize >
+Connectors**, find the connector marked **Custom**, and select **Connect**. Each member
+approves it with their own Waldur account.
+
+## Connect ChatGPT
+
+Custom MCP servers are available on some ChatGPT plans only, and in a workspace an admin
+may have to allow you to add them. ChatGPT connects to Waldur from OpenAI's cloud.
+
+1. Open [chatgpt.com/plugins](https://chatgpt.com/plugins), select **+**, then **Add
+   custom MCP server**.
+2. Enter a name, such as `Waldur`.
+3. Under **Connection**, enter the server URL.
+4. For authentication, choose **OAuth**.
+5. Select **I understand and want to continue**, then **Create as a plugin**.
+6. Install the plugin, and approve ChatGPT on Waldur's consent page.
+
+ChatGPT can't send a fixed `Authorization` header, so it always signs in with OAuth.
+
+## Connect Claude Code
+
+Add the server from a terminal:
+
+```bash
+claude mcp add --transport http waldur https://api.example.com/mcp
+```
+
+Then, in Claude Code, run `/mcp`, select `waldur`, and sign in. Claude Code opens Waldur's
+consent page in your browser.
+
+By default, the server is available in the current project only. Add `--scope user` to
+use it in all your projects, or `--scope project` to share it with your team in the
+project's `.mcp.json`. Each team member then signs in with their own account.
+
+### Give Claude Code a token { data-requires="setting:PAT_ENABLED" }
+
+To use a personal access token instead of signing in, pass it as a header:
+
+```bash
+claude mcp add --transport http waldur https://api.example.com/mcp \
+  --header "Authorization: Bearer $WALDUR_TOKEN"
+```
+
+In a shared `.mcp.json`, refer to an environment variable, so that the token stays out
+of the file:
+
+```json
+{
+  "mcpServers": {
+    "waldur": {
+      "type": "http",
+      "url": "https://api.example.com/mcp",
+      "headers": { "Authorization": "Bearer ${WALDUR_TOKEN}" }
+    }
+  }
+}
+```
+
+## Connect Cursor
+
+Add the server to `~/.cursor/mcp.json` for all your projects, or to `.cursor/mcp.json`
+in one project:
+
+```json
+{
+  "mcpServers": {
+    "waldur": {
+      "url": "https://api.example.com/mcp"
+    }
+  }
+}
+```
+
+Cursor's MCP settings then show that the server needs you to sign in. Start the sign-in
+there, and approve Cursor on Waldur's consent page.
+
+### Give Cursor a token { data-requires="setting:PAT_ENABLED" }
+
+To use a personal access token instead of signing in, add a header that reads it from an
+environment variable:
+
+```json
+{
+  "mcpServers": {
+    "waldur": {
+      "url": "https://api.example.com/mcp",
+      "headers": { "Authorization": "Bearer ${env:WALDUR_TOKEN}" }
+    }
+  }
+}
+```
+
+## Connect VS Code
+
+These steps are for GitHub Copilot in VS Code. In a Copilot Business or Enterprise
+organization, an administrator must turn on the **MCP servers in Copilot** policy first.
+
+1. Open the Command Palette and run **MCP: Add Server**.
+2. Choose **HTTP (HTTP or Server-Sent Events)**.
+3. Enter the server URL, and a name such as `waldur`.
+4. When VS Code asks, allow it to sign in, and approve it on Waldur's consent page. If
+   it doesn't ask, start the sign-in with the server's **Authenticate** action.
+
+### Give VS Code a token { data-requires="setting:PAT_ENABLED" }
+
+To use a personal access token instead of signing in, add a `headers` entry with
+`"Authorization": "Bearer <token>"` to the server's configuration. Read the token from an
+environment variable or a VS Code input variable, rather than writing it into the file.
+
+## Connect Atlassian Rovo
+
+An Atlassian organization admin adds Waldur to Rovo once, in Atlassian Administration:
+
+1. Select the organization, go to **Apps > Sites**, select the site, then **Connected
+   apps**.
+2. Open the menu next to **Explore apps**, and select **Add external MCP server**.
+3. Select **Agree and continue**, then **Custom MCP server**, then **Next**.
+4. Enter the server URL and a name, such as `Waldur`, and finish the installation.
+5. Under **View app details > Tools selection**, choose the Waldur tools Rovo may use.
+
+To use the tools, add them to an agent in Rovo Studio: open the agent's **Details**,
+select **Edit**, then **Tools > Add tools**. Each user connects their own Waldur account
+the first time they use the tools, on Waldur's consent page. Rovo connects to Waldur from
+Atlassian's cloud.
+
+## Connect Microsoft Copilot Studio
+
+1. On your agent's **Tools** page, select **Add a tool**, then **New tool**, then **Model
+   Context Protocol**.
+2. Enter a **Server name**, a **Server description** that tells the agent what Waldur
+   holds, and the **Server URL**.
+3. For authentication, choose **OAuth 2.0**, then **Dynamic discovery**.
+4. Select **Create**. Under **Add tool**, select **Create a new connection**, approve
+   Copilot Studio on Waldur's consent page, then select **Add to agent**.
+
+Copilot Studio connects to Waldur from Microsoft's cloud.
+
+If the sign-in fails with **Dynamic discovery**, ask your Waldur administrator to
+register a client for Copilot Studio, and choose **Manual** instead. Enter the client ID
+and secret you get, and these values:
+
+| Field | Value |
+|-------|-------|
+| **Authorization URL** | `https://api.example.com/oauth/authorize/` |
+| **Token URL template** | `https://api.example.com/oauth/token/` |
+| **Refresh URL** | `https://api.example.com/oauth/token/` |
+| **Scopes** | `mcp:read` |
+
+Give the administrator the callback URL that Copilot Studio shows.
+
+### Give Copilot Studio a token { data-requires="setting:PAT_ENABLED" }
+
+To use a personal access token instead, choose **API key** for authentication, with the
+type **Header** and the header name `Authorization`. Whoever uses the agent then enters
+`Bearer` and a space, followed by their token.
+
+## Connect another MCP client
+
+Other clients that support remote MCP servers over Streamable HTTP, such as the MCP
+Inspector, connect the same way. Give the client the server URL, and it finds Waldur's
+sign-in by itself. Waldur accepts clients that register themselves through Dynamic Client
+Registration, and clients that identify themselves with a client ID metadata document.
+Neither needs any setup in Waldur.
+
+If a client asks for OAuth settings instead, ask your Waldur administrator for a client ID
+and secret, and enter these values:
+
+| Setting | Value |
+|---------|-------|
+| Authorization URL | `https://api.example.com/oauth/authorize/` |
+| Token URL | `https://api.example.com/oauth/token/` |
+| Scope | `mcp:read` |
+
+### Give another client a token { data-requires="setting:PAT_ENABLED" }
+
+A client that sends a fixed header can use a personal access token instead, with the
+header `Authorization: Bearer <your token>`.
+
+## Reconnect as a staff or support user
+
+A staff or support user's first OAuth connection works only after a second approval:
+
+1. On the first consent page, Waldur warns **This app will not work for your account
+   yet**, because the client didn't ask for your staff or support access. Select
+   **Allow** anyway.
+2. The client's first call fails with `insufficient_scope`. Most clients then start the
+   sign-in again by themselves. If yours doesn't, reconnect it.
+3. This time the client asks for the `mcp:staff` or `mcp:support` scope, and the consent
+   page warns **This app asks for staff access** or **This app asks for support
+   access**. The client will be able to see what your account can see anywhere in the
+   portal, not only in your own organizations and projects. Select **Allow** only if
+   you trust the client with that.
+
+A client never gets your staff or support access without that second approval.
+
+## Manage connected apps
+
+Open **Profile > Credentials > Connected apps** to see the clients you have approved.
+Each row shows the client's name and host, how it registered with Waldur, its scopes,
+when you first authorized it and when it last called Waldur.
+
+To end a client's access, select **Revoke** on its row. Waldur deletes the client's
+tokens at once, and the client has to ask for your approval again to reconnect.
+
+Only you see your connected apps. They can't be managed while you are signed in with a
+token.
+
+## Use a personal access token
+
+Create a token under **Profile > Credentials > Personal access tokens**, as described in
+[Personal access tokens](personal-access-tokens.md), and give the client this header:
+
+```text
+Authorization: Bearer <your token>
+```
+
+The token works on `/mcp` like on the REST API, except that Waldur refuses:
+
+- a token limited to particular organizations, projects or other entities, under
+  **Restrict to specific entities**;
+- a staff user's token without the **Access staff** scope (`STAFF.ACCESS`);
+- a support user's token without **Access support** (`SUPPORT.ACCESS`) or
+  **Access staff**.
+
+The token's scopes also limit the tools the client lists. Its **Allowed networks**
+apply too: the address Waldur checks is that of the client, which for a client in the
+vendor's cloud is not your own.
+
+## Fix a client that doesn't connect
+
+| What the client reports | What to do |
+|-------------------------|------------|
+| 404 Not Found | The MCP server is off, or the URL is wrong. Check the URL, and ask your administrator whether the MCP server is turned on. |
+| 401 with `invalid_token` | The token has expired or was revoked, or Waldur refuses it. Sign in again, or check the token against [Use a personal access token](#use-a-personal-access-token). |
+| 403 with `insufficient_scope` | You are a staff or support user. Reconnect the client, as in [Reconnect as a staff or support user](#reconnect-as-a-staff-or-support-user). |
+| The browser shows "Invalid sign-in request" | The client's sign-in request is malformed, or names a server that this portal doesn't serve. Check the URL. |
+| A tool answers "Unable to process this request. Please try rephrasing." | Waldur's input checks refused the tool's arguments, for example text that reads like instructions to the model, or a secret such as a private key. Ask again in other words, and leave secrets out. |
+| A tool answers "An error occurred while executing the tool." | The tool failed, or took too long. Ask for less at once, such as one project rather than all of them. If it keeps failing, tell your administrator. |
+| The client signs in but lists fewer tools than [MCP tools](mcp-tools.md) | Some tools depend on your role, your token's scopes and the portal's settings. See [Which tools your client lists](mcp-tools.md#which-tools-your-client-lists). |
+
+---
+
+### MCP tools
+<!-- Source: docs/user-guide/end-users/mcp-tools.md -->
+
+# MCP tools
+
+An AI client connected to Waldur's MCP server can call the tools on this page. To connect
+one, see [Connect AI clients over MCP](mcp-clients.md).
+
+Every tool only reads. None of them changes anything in Waldur. A tool sees what you
+see in the portal, with your roles in organizations and projects. Your client lists each
+tool with its full input and output schemas, so this page only summarizes them.
+
+## Which tools your client lists
+
+Your client may list fewer tools than this page:
+
+- `get_user_overview` is listed only for staff and support users.
+- With a personal access token, a tool is listed only if the token holds the
+  permissions the same REST call needs. `get_user_overview` needs `SUPPORT.ACCESS`
+  or `STAFF.ACCESS`. Every other tool works with any token the server accepts.
+- `chart_costs` is not listed when the portal hides prices.
+- `search_docs` is not listed when documentation search is turned off, or when no
+  documentation is loaded.
+
+## How tools match names and limit results
+
+- An input ending in `_uuid`, or named `uuid`, matches exactly.
+- An input ending in `_name`, or named `search`, matches part of the name, ignoring case,
+  unless its description says the name must be exact. When a name matches several
+  projects or resources, `get_project` and `get_resource` return them in `matches`, so
+  your client can ask you which one you mean.
+- Most lists return at most 15 items. When more match, `_truncated` is true and
+  `_total_count` gives the number. Narrow the request with more inputs to see the rest.
+- A result has a one-line summary, the data as JSON text, and the same data as
+  structured content that follows the tool's output schema.
+
+## Organizations and projects
+
+### `list_organizations`
+
+Lists the organizations you have access to.
+
+| Input | Type | Description |
+|-------|------|-------------|
+| `search` | string | Part of the name or abbreviation. |
+| `uuid` | string | One organization's UUID. |
+
+**Returns** `organizations`, each with its UUID, name, abbreviation and your role, and
+`total`.
+
+### `list_projects`
+
+Lists the projects you have access to.
+
+| Input | Type | Description |
+|-------|------|-------------|
+| `organization_uuid` | string | Only this organization's projects. |
+| `organization_name` | string | The organization's name, when its UUID is not known. |
+| `search` | string | Part of the project name. |
+| `uuid` | string | One project's UUID. |
+
+**Returns** `projects`, each with its UUID, name, organization and your role, and `total`.
+
+### `get_project`
+
+Shows one project: its organization, dates, and team members with their roles.
+
+| Input | Type | Description |
+|-------|------|-------------|
+| `project_uuid` | string | The project's UUID. |
+| `project_name` | string | The project's name, when its UUID is not known. |
+
+**Returns** `project`, `organization` and `team`. When you may not see the project's
+team, `team` is null and `restricted_fields` lists `team`: the team is hidden from you,
+which doesn't mean it has no members.
+
+### `get_project_quota`
+
+Shows a project's quota limits and current usage.
+
+| Input | Type | Description |
+|-------|------|-------------|
+| `project_uuid` | string | The project's UUID. |
+| `project_name` | string | The project's name, when its UUID is not known. |
+
+**Returns** `project` and `quotas`, each with its name, limit and usage.
+
+## Resources
+
+### `get_project_resources`
+
+Lists resources with their state, offering and backend ID. Terminated resources are left
+out.
+
+| Input | Type | Description |
+|-------|------|-------------|
+| `project_uuid` | string | Only this project's resources. |
+| `project_name` | string | The project's name, when its UUID is not known. |
+| `search` | string | Part of the resource name or backend ID. |
+| `uuid` | string | One resource's UUID. |
+
+**Returns** `resources`, each with its UUID, name, state, offering, category, project,
+backend ID, plan and creation date, and `total`.
+
+### `get_resource`
+
+Shows one resource: its state, offering, plan, limits, project, last error message and
+recent events.
+
+| Input | Type | Description |
+|-------|------|-------------|
+| `resource_uuid` | string | The resource's UUID. |
+| `resource_name` | string | The resource's name, when its UUID is not known. Terminated resources are skipped. |
+| `project_name` | string | Narrows a `resource_name` search to one project. |
+
+**Returns** `resource`, `offering`, `plan`, `project`, `organization` and
+`recent_events`.
+
+### `get_resource_usage`
+
+Shows a resource's usage of each component, such as CPU hours or storage, in the current
+billing period.
+
+| Input | Type | Description |
+|-------|------|-------------|
+| `resource_uuid` | string | The resource's UUID. |
+| `resource_name` | string | The resource's name, when its UUID is not known. |
+
+**Returns** `resource`, `components` and the billing `period`. When you may not see the
+usage, `components` is null and `restricted_fields` lists `components`.
+
+### `explain_resource_paused_reason`
+
+Explains why a resource is paused: a cost policy, SLURM usage over its grace limit, the
+project's grace period, or a manual pause. It also says when the resource is not paused,
+and when its project has ended although the resource is not paused.
+
+| Input | Type | Description |
+|-------|------|-------------|
+| `resource_uuid` | string | The resource's UUID. |
+| `resource_name` | string | The resource's name, when its UUID is not known. |
+| `project_name` | string | Tells resources with the same name apart. |
+
+**Returns** `resource`, `project` with its end date and grace period, `primary_cause`,
+and the numbers behind it in `attribution` and `policy_details`.
+
+## Orders
+
+### `list_orders`
+
+Lists marketplace orders to create, update or terminate resources.
+
+| Input | Type | Description |
+|-------|------|-------------|
+| `project_uuid` | string | Only orders in this project. |
+| `project_name` | string | The project's name, when its UUID is not known. |
+| `resource_uuid` | string | Only orders for this resource. |
+| `customer_uuid` | string | Only orders placed by this organization. |
+| `customer_name` | string | The organization's name, when its UUID is not known. |
+| `offering_uuid` | string | Only orders for this offering. |
+| `offering_name` | string | The offering's name, when its UUID is not known. |
+| `state` | array of strings | Only orders in these states: `pending-consumer`, `pending-provider`, `pending-project`, `pending-start-date`, `executing`, `done`, `erred`, `canceled` or `rejected`. `pending` stands for every `pending-*` state. |
+
+**Returns** `orders`, each with its UUID, type, state, offering, resource, project,
+organization, cost, creator, creation date and error message, and `total`.
+
+### `get_order`
+
+Shows one order: its state, error message, who created and reviewed it, and when.
+
+| Input | Type | Description |
+|-------|------|-------------|
+| `order_uuid` | string | Required. The order's UUID. |
+
+**Returns** `order`, `created_by`, `consumer_reviewed_by`, `provider_reviewed_by`,
+`offering`, `plan`, `resource`, `project` and `organization`.
+
+## Costs, invoices and credit
+
+### `chart_costs`
+
+Shows an organization's or a project's monthly costs: the cost incurred, the credit and
+compensation applied, and the net cost. The last month is the current one, as an
+estimate.
+
+| Input | Type | Description |
+|-------|------|-------------|
+| `customer_uuid` | string | The organization's UUID. |
+| `customer_name` | string | The organization's name, when its UUID is not known. |
+| `project_uuid` | string | The project's UUID. |
+| `project_name` | string | The project's name, when its UUID is not known. |
+| `months` | integer | How many months, from 1 to 24. Default 12. |
+
+With both an organization and a project, the organization only narrows which project is
+meant.
+
+**Returns** the organization or project, `currency`, `months` with the costs of each
+month, and `total_price`.
+
+### `list_invoices`
+
+Lists monthly invoices with their state and totals.
+
+| Input | Type | Description |
+|-------|------|-------------|
+| `customer_uuid` | string | Only this organization's invoices. |
+| `customer_name` | string | The organization's name, when its UUID is not known. |
+| `year` | integer | Only invoices for this year. |
+| `month` | integer | Only invoices for this month, from 1 to 12. |
+| `state` | array of strings | Only invoices in these states: `pending`, `pending_finalization`, `created`, `paid` or `canceled`. `created` means issued and not paid. |
+
+**Returns** `invoices`, each with its UUID, number, organization, year, month, state,
+price, tax, total, invoice date and due date, and `total`.
+
+### `explain_invoice_compensations`
+
+Explains the credit compensations and manual adjustments on a project's invoice, and
+counts terminated resources that still added to it.
+
+| Input | Type | Description |
+|-------|------|-------------|
+| `project_uuid` | string | The project's UUID. |
+| `project_name` | string | The project's name, when its UUID is not known. |
+| `year` | integer | The invoice's year. Default: the latest invoice. |
+| `month` | integer | The invoice's month. Default: the latest invoice. |
+
+**Returns** `project`, `invoice_summary`, `per_resource` with each resource's gross cost,
+compensation and net cost, `manual_adjustments` and `concealed_resource_count`.
+
+### `explain_project_credit_balance`
+
+Explains a project's credit: how much was allocated, how much has been spent this month
+and in total, and whether the project is overdrawn. It also shows the organization's
+credit.
+
+| Input | Type | Description |
+|-------|------|-------------|
+| `project_uuid` | string | The project's UUID. |
+| `project_name` | string | The project's name, when its UUID is not known. |
+
+**Returns** `project`, `customer`, `project_credit` and `customer_credit`.
+
+### `get_customer_credit_overview`
+
+Shows an organization's credit, and each of its projects' credit, spending, balance and
+whether it is overdrawn.
+
+| Input | Type | Description |
+|-------|------|-------------|
+| `customer_uuid` | string | The organization's UUID. |
+| `customer_name` | string | The organization's name, when its UUID is not known. |
+
+**Returns** `customer`, `customer_credit`, `projects` and `overdrawn_count`. When the
+project list is cut short, `_total_project_count` gives the number of projects.
+
+### `list_overdrawn_projects`
+
+Lists projects that have spent more than their credit.
+
+| Input | Type | Description |
+|-------|------|-------------|
+| `customer_name` | string | Only this organization's projects. Without it, all the projects you can see. |
+
+**Returns** `overdrawn_projects`, each with its project, organization, credit, spending
+to date and the amount it is over by.
+
+## Marketplace
+
+These tools cover the offerings you could order in the portal. For staff and support
+users, that is every active or paused offering.
+
+### `list_categories`
+
+Lists the marketplace categories that hold at least one offering you could order. It
+takes no inputs, and returns every such category.
+
+**Returns** `categories`, each with its UUID, title and number of offerings.
+
+### `search_offerings`
+
+Searches the marketplace offerings by keyword.
+
+| Input | Type | Description |
+|-------|------|-------------|
+| `keyword` | string | Required. One word or term, matched against names, descriptions, categories, tags, plans and components. |
+| `category_uuid` | string | Only offerings in this category. |
+| `category_name` | string | The category's exact title, when its UUID is not known. |
+| `type` | string | Only offerings of this type, such as `OpenStack.Tenant`. |
+| `limit` | integer | How many offerings to return, up to 15. |
+
+**Returns** `offerings`, each with its name, UUID, category, provider, country,
+description, starting price and portal link, and `total`. `has_access_url` marks the
+offerings that also publish a direct access link.
+
+### `get_offering`
+
+Shows one offering, with its plans, components, attributes and links.
+
+| Input | Type | Description |
+|-------|------|-------------|
+| `uuid` | string | The offering's UUID. |
+| `name` | string | The offering's exact name, when its UUID is not known. |
+
+**Returns** `offering`, with its description, plans, components, attributes, tags, access
+URL, getting-started text, documentation, helpdesk and privacy policy links, and portal
+link.
+
+### `compare_offerings`
+
+Compares two or more offerings by provider, category, description and starting price.
+
+| Input | Type | Description |
+|-------|------|-------------|
+| `uuids` | array of strings | The offerings' UUIDs. |
+| `names` | array of strings | The offerings' exact names, when their UUIDs are not known. |
+
+**Returns** `offerings`, and in `missing` the ones it did not find.
+
+## Documentation
+
+### `search_docs`
+
+Searches the Waldur user and administrator documentation, which is this site.
+
+| Input | Type | Description |
+|-------|------|-------------|
+| `query` | string | Required. English keywords for the feature or task, up to 300 characters. |
+
+**Returns** `sections`, each with its title, breadcrumb, excerpt, link and whether the
+feature it describes is on in your portal, and in `switched_off_here` the features that
+are off.
+
+## Support
+
+### `get_user_overview`
+
+Shows another user's organizations and projects with their roles, resource counts,
+pending orders and recent errors. Only staff and support users get this tool.
+
+| Input | Type | Description |
+|-------|------|-------------|
+| `user_email` | string | Required. The user's email address. |
+
+**Returns** `user`, `organizations`, `projects`, `resources`, `pending_orders` and
+`recent_errors`.
+
+---
+
 ### Passkeys
 <!-- Source: docs/user-guide/end-users/passkeys.md -->
 
@@ -109531,7 +110645,7 @@ These integrations allow users to create support requests directly from Waldur, 
 
 ## AI and Automation Integrations
 
-* **Claude Desktop Integration** - Waldur MCP (Model Context Protocol) server enables Claude AI assistant to query Waldur instances for reporting and deep analysis of resources and usage data, enhancing decision-making capabilities.
+* **MCP clients** - Waldur's remote MCP (Model Context Protocol) server lets AI clients such as Claude, ChatGPT, Cursor, VS Code, Atlassian Rovo and Microsoft Copilot Studio read organizations, projects, resources, orders, costs and the marketplace as the signed-in user. See [Connect AI clients over MCP](../user-guide/end-users/mcp-clients.md), and for operators, [Remote MCP server](../admin-guide/mcp-server.md). It supersedes the local [Waldur MCP server package](waldur-mcp-server/README.md) for Claude Desktop.
 
 ## Additional Integrations
 
@@ -110785,6 +111899,14 @@ MIT — Copyright (c) 2025-2026 OpenNode OÜ.
 <!-- Source: docs/integrations/waldur-mcp-server/README.md -->
 
 # Waldur MCP server
+
+!!! warning "Superseded by the remote MCP server"
+    This page describes the local `waldur-mcp-server` package, which runs on your computer
+    next to Claude Desktop. Waldur now serves MCP itself, on `/mcp` on the API's host:
+    Claude, ChatGPT, Cursor, VS Code and other clients connect to it with OAuth sign-in or a
+    personal access token, and nothing needs installing. Use it instead. See
+    [Connect AI clients over MCP](../../user-guide/end-users/mcp-clients.md), and for
+    operators, [Remote MCP server](../../admin-guide/mcp-server.md).
 
 Waldur MCP server enables integration between Waldur instance and Claude Desktop by implementing the Model Context Protocol (MCP). This allows Claude to interact with your Waldur instance directly.
 
@@ -115838,6 +116960,267 @@ them in the room: an active role on the room's project, or an organization
 role with `MATRIX_ROOM.CREATE`. Staff and support who only used **Join room**
 get the same answer. In a room that is not active, the bot answers no
 commands at all.
+
+---
+
+### Remote MCP server
+<!-- Source: docs/admin-guide/mcp-server.md -->
+
+# Remote MCP server
+
+AI clients such as Claude, ChatGPT, Cursor, VS Code, Atlassian Rovo and Microsoft Copilot
+Studio can connect to Waldur over the Model Context Protocol (MCP). They call read-only
+tools on `/mcp`, on the API's host, and act as the user who connected them. Users sign
+them in with OAuth, or give them a personal access token.
+
+For users' instructions, see [Connect AI clients over MCP](../user-guide/end-users/mcp-clients.md).
+For the tools, see [MCP tools](../user-guide/end-users/mcp-tools.md).
+
+## How the MCP server works
+
+- **A separate process serves `/mcp`.** `waldur mcp_server` runs apart from the API
+  workers, on port 8091 by default. It answers `POST /mcp`, the OAuth resource
+  metadata under `/.well-known/oauth-protected-resource`, and `/health`, with CORS
+  headers for browser-based clients. It keeps no sessions, so replicas need no session
+  affinity.
+- **The API is the OAuth authorization server.** It serves the authorization server
+  metadata, and the authorize, token, revoke and client registration endpoints under
+  `/oauth/`. The authorize endpoint sends the browser to the portal's consent page,
+  `/oauth/consent` under `HOMEPORT_URL`, where the user approves the client.
+- **Clients register themselves.** A client either registers through Dynamic Client
+  Registration (RFC 7591), or uses an HTTPS URL as its client ID and publishes its
+  details there (Client ID Metadata Document, CIMD). No staff action is needed.
+- **Tokens act as the user.** An OAuth access token lasts one hour and its refresh
+  token 30 days. Each refresh replaces the refresh token. A personal access token works
+  as on the REST API, within the rules in
+  [Personal access tokens on /mcp](#personal-access-tokens-on-mcp).
+- **No language model runs in Waldur.** The client brings its own model, so the MCP
+  server needs neither the AI assistant nor its settings.
+
+Images up to 8.1.5-rc.2 accept only personal access tokens on `/mcp`. OAuth sign-in
+needs later mastermind and homeport images.
+
+## Enable the MCP server
+
+1. Run the server:
+    - **Helm:** set `waldur.mcp.enabled`. See [Remote MCP server](deployment/helm/docs/mcp.md)
+      in the Helm guide.
+    - **Docker Compose:** start the `mcp` profile. See the
+      [MCP server](deployment/docker-compose/index.md#mcp-server) section of the Docker
+      Compose guide.
+    - **Elsewhere:** run `waldur mcp_server --host 0.0.0.0 --port 8091` from the
+      mastermind image, and route the paths in
+      [Route the MCP endpoints through your proxy](#route-the-mcp-endpoints-through-your-proxy).
+2. As staff, open **Administration > Configuration > Personal access tokens**. In the
+   **MCP server** group:
+    - turn on `MCP_ENABLED`;
+    - set `MCP_RESOURCE_URLS` to the public URL of `/mcp`, such as
+      `https://api.example.com/mcp`. See
+      [Serve /mcp on the API's host](#serve-mcp-on-the-apis-host). The Helm chart
+      seeds it from its API hosts while `waldur.initdbEnabled` is on, unless
+      `waldur.settingsOverrides` sets it.
+3. Check that `HOMEPORT_URL`, under **Administration > User interface > Branding**, is
+   the portal's address. The OAuth sign-in sends the browser to the consent page there.
+4. For personal access tokens, also turn on `PAT_ENABLED` on the same page. Each user
+   who creates a token also needs the **Personal access tokens** option, which staff
+   turn on when editing the user.
+
+While `MCP_ENABLED` is off, `/mcp`, its metadata and the OAuth endpoints answer 404, and
+the portal hides **Connected apps**.
+
+### Check the MCP server
+
+The resource metadata names the URL from `MCP_RESOURCE_URLS`:
+
+```bash
+curl -s https://api.example.com/.well-known/oauth-protected-resource/mcp
+# {"resource": "https://api.example.com/mcp", "authorization_servers": ["https://api.example.com"], ...}
+```
+
+A request to `/mcp` without a token answers 401. Its `WWW-Authenticate` header points
+at the resource metadata, which is how clients find where to sign in:
+
+```bash
+curl -si -X POST https://api.example.com/mcp | grep -i '^www-authenticate'
+# www-authenticate: Bearer resource_metadata="https://api.example.com/.well-known/oauth-protected-resource/mcp"
+```
+
+## Serve /mcp on the API's host
+
+`MCP_RESOURCE_URLS` lists the public URLs of `/mcp`, separated by spaces:
+
+- **OAuth tokens are bound to these URLs.** Waldur issues a token only for a listed URL,
+  or for the first one when the client names none. While the setting is empty, Waldur
+  issues no OAuth tokens, and clients can connect only with a personal access token.
+- **Serve `/mcp` on the API's origin.** The resource metadata names that origin as the
+  authorization server, and clients look for the OAuth endpoints there. On a separate
+  host, such as `mcp.example.com`, clients can't find where to sign in.
+- **List every host users connect to.** The metadata names the URL on the host the client
+  reached, and clients reject metadata that names another host. If the API answers on
+  several hosts, list `/mcp` on each.
+- **List the path your proxy uses.** If a proxy serves `/mcp` under another path, such as
+  `https://example.com/waldur/mcp`, list that URL. The server answers the metadata for each
+  listed path, under `/.well-known/oauth-protected-resource/<path>`.
+- **Removing a URL ends its sessions.** Tokens issued for it stop working, and clients
+  can't refresh them.
+
+Give users the URL without a trailing slash. Images up to 8.1.5-rc.2 redirect `/mcp/` to
+`http://`, because the server sees plain HTTP behind a TLS proxy. Later images serve
+`/mcp/` like `/mcp`.
+
+## Route the MCP endpoints through your proxy
+
+The Helm chart and the Compose stack set up these routes. Other deployments route them
+on the API's host:
+
+| Path | Served by |
+|------|-----------|
+| `/mcp` | MCP server |
+| `/.well-known/oauth-protected-resource` and the paths below it | MCP server |
+| `/.well-known/oauth-authorization-server` | API |
+| `/oauth/authorize/`, `/oauth/token/`, `/oauth/revoke_token/` | API |
+| `/oauth/register/` and the paths below it | API |
+
+`/oauth/consent` is a portal page. If the portal shares the API's host, don't send it
+to the API.
+
+Browser-based MCP clients call these endpoints from their own origin. The API answers the
+OAuth endpoints, and the MCP server answers `/mcp` and its metadata, with
+`Access-Control-Allow-Origin: *`, no credentials, and `WWW-Authenticate` exposed. Those
+answers have to reach the browser unchanged: a proxy that adds its own CORS headers can
+replace `*` with the caller's origin and allow credentials. Images up to 8.1.5-rc.2 send
+no CORS headers on `/mcp`. The Helm guide's [CORS section](deployment/helm/docs/mcp.md#cors)
+explains what the chart does on each route. Clients that call `/mcp` from a server or from
+the user's computer, such as those in the user guide, don't need CORS.
+
+The API limits how many OAuth clients one address can register: 60 an hour, registered
+through DCR or CIMD alike. It reads the address from `X-Forwarded-For`, counting the
+proxies in `MCP_OAUTH_TRUSTED_PROXY_COUNT` from the right. The default, 1, fits one proxy
+in front of the API. Set it in the settings file, `override.conf.py`, to the number of
+proxies that add to the header, or to 0 when the API is reached without a proxy. Helm sets
+it from `waldur.trustedProxyCount`.
+
+## Let cloud-hosted clients reach Waldur
+
+Claude.ai, Claude Desktop's connectors, ChatGPT, Atlassian Rovo and Microsoft Copilot
+Studio connect from their vendors' clouds, not from the user's computer. For them, `/mcp`
+and the OAuth endpoints must be reachable from the internet, over HTTPS with a valid
+certificate:
+
+- Claude connects only on port 443.
+- An IP allow-list in front of the API, and a personal access token's allowed networks,
+  must let the vendor's addresses in. The vendors publish them.
+
+Clients that run on the user's computer, such as Claude Code, Cursor and VS Code, need
+only what the user's browser needs to reach the portal.
+
+## Allow outbound HTTPS for client metadata
+
+A client that uses a URL as its client ID publishes its name and redirect URIs at that
+URL. The API fetches the document over HTTPS when the client first signs in, and again
+when its cached copy expires, after 5 minutes to 24 hours.
+
+- The API connects directly, not through `HTTPS_PROXY`, and only to public addresses.
+- A fetch times out after 5 seconds, and a document over 16 KB is refused.
+- Without outbound HTTPS from the API, these clients can't sign in. Clients that
+  register through DCR, and personal access tokens, still work.
+
+## See and revoke OAuth clients
+
+Users see the clients they approved under **Profile > Credentials > Connected apps**,
+and can revoke each one there. Revoking deletes the client's tokens and pending codes
+for that user. Only the user sees their connected apps, not staff.
+
+Staff see every registered client in the Django admin, in the **Django OAuth Toolkit**
+section:
+
+- **Applications** lists every client, with its **Registration source**: **Dynamic
+  Client Registration**, **Client ID Metadata Document**, or **Manual** for clients an
+  administrator added. Deleting a client deletes its tokens for every user.
+- **Access tokens** and **Refresh tokens** list each user's sessions. Deleting both for a
+  user and client ends that session.
+
+When a user is deactivated, Waldur deletes their OAuth tokens and pending codes. A daily
+task removes expired tokens, and CIMD clients whose metadata has expired and that hold
+no live tokens. Such a client is registered again on its next sign-in.
+
+## Register an OAuth client by hand
+
+Most clients register themselves. For one that needs a client ID and secret from you,
+such as Microsoft Copilot Studio with **Manual** authentication, register it in the
+Django admin:
+
+1. Under **Django OAuth Toolkit > Applications**, select **Add application**.
+2. Set **Client type** to **Confidential** and **Authorization grant type** to
+   **Authorization code**.
+3. Enter the callback URL the client shows under **Redirect URIs**, and a **Name**. The
+   consent page shows the name to users.
+4. Copy the **Client ID** and **Client secret** before you save. Waldur stores only a
+   hash of the secret.
+5. Leave **Skip authorization** off, so that every user approves the client.
+
+The client then uses `https://<api host>/oauth/authorize/` to sign in and
+`https://<api host>/oauth/token/` for tokens, with the scope `mcp:read`. Waldur requires
+PKCE with S256 from every client. When a sign-in request from such a client is invalid,
+Waldur sends the error back to its redirect URI, which it doesn't do for clients that
+registered themselves.
+
+## Personal access tokens on /mcp
+
+A personal access token that works on the REST API works on `/mcp`, except:
+
+- a token restricted to particular organizations or projects;
+- a staff user's token without the `STAFF.ACCESS` permission;
+- a support user's token without `SUPPORT.ACCESS` or `STAFF.ACCESS`.
+
+The tools only see the user, so `/mcp` can't apply those restrictions, and refuses these
+tokens rather than giving them more than they hold. A token's permissions also limit the
+tools it lists. Its network rules apply as on the REST API.
+
+## Staff and support access over OAuth
+
+A staff or support user's first OAuth connection fails once, with `insufficient_scope`.
+The client then asks again for `mcp:staff` or `mcp:support`, and the consent page
+warns the user that the client will act with their staff or support access.
+A plain connection never carries that access.
+
+## Audit events
+
+| Event | Group | When |
+|-------|-------|------|
+| `mcp_tool_called` | `mcp` | A client called a tool. It names the user, the client and the tool, but not the arguments. |
+| `oauth_consent_granted` | `auth` | A user approved a client. It names the client, its client ID, the host the browser was sent back to, and the scopes. |
+| `oauth_consent_denied` | `auth` | A user refused a client. |
+| `oauth_connected_app_revoked` | `auth` | A user revoked a connected app. |
+| `pat_authentication_rejected` | `auth` | `/mcp` refused a personal access token for one of the reasons in [Personal access tokens on /mcp](#personal-access-tokens-on-mcp): `mcp_entity_bound`, `mcp_staff_access_missing` or `mcp_support_access_missing`. |
+| `chat_injection_detected` | `chat` | A tool's arguments looked like a prompt injection, at high severity. |
+| `chat_pii_detected` | `chat` | A tool's arguments held personal data or a secret, such as a private key, at high severity. |
+
+The last two come from the input checks the MCP server shares with the AI assistant.
+When the checks block a call, the client gets "Unable to process this request. Please try
+rephrasing." The `chat` group is offered for subscription only while
+`AI_ASSISTANT_ENABLED` is on, so with only the MCP server on, these events are recorded
+but nobody can subscribe to them.
+
+A personal access token also raises its own events, such as `pat_used_from_new_ip`,
+since `/mcp` checks it on every request, as the REST API does.
+
+## Size the database connections
+
+Each MCP server process holds up to four Postgres connections, one per database thread.
+Set the number with `--db-threads`: `waldur.mcp.dbThreads` in Helm, or
+`WALDUR_MCP_DB_THREADS` in Docker Compose. Replicas times threads counts against
+Postgres's `max_connections`, on top of the API and Celery.
+
+### Limit how long database statements run
+
+The MCP server cancels any database statement that runs for more than 30 seconds, so a
+slow tool can't hold a database thread that other clients' token checks wait for. The
+client then gets "An error occurred while executing the tool.", and the call's audit
+event is kept.
+
+Change the limit with `--statement-timeout <seconds>`, or turn it off with `0`. Neither
+the Helm chart nor the Compose stack sets the option, so both use the default.
 
 ---
 
