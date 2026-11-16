@@ -496,6 +496,7 @@ class ConceptHeadingsTest(unittest.TestCase):
         for title in (
             "How billing works",
             "How resource slugs work",
+            "How the order approval flow for providers works",
             "What happens at a limit",
             "Quotas vs policies",
         ):
@@ -503,6 +504,9 @@ class ConceptHeadingsTest(unittest.TestCase):
         for title in (
             "How to work with volumes",
             "How do I work with keys",
+            "How do we work with volumes",
+            "How can we work with tokens",
+            "How should I work with quotas",
             "Create a project",
         ):
             self.assertFalse(pattern.search(title), title)
