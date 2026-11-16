@@ -213,12 +213,10 @@ Test mkdocs:
 # build time (waldur/waldur-mastermind#1204): its develop images take `latest`,
 # and a release image takes the version named after its tag. This job runs in
 # `test`, before `Release Waldur Mastermind`, so a release tag's corpus exists
-# by the time mastermind builds that tag. On a release tag it must succeed:
-# a mastermind release image waits for its tag's corpus and fails without it
-# (waldur/waldur-mastermind docker_build.sh, DOCS_CORPUS_REQUIRED), so a
-# failure here stops the release stage, where the cause is, instead of 15
-# minutes into the mastermind image build. On master it may fail: develop
-# images then build without documentation search.
+# by the time mastermind builds that tag. A failure on a tag does not stop
+# the release stage here: only the mastermind release image fails, since it
+# waits for its tag's corpus and fails without it (docker_build.sh,
+# DOCS_CORPUS_REQUIRED), while homeport and the rest release as usual.
 Publish docs corpus:
   image: registry.hpc.ut.ee/mirror/library/python:3.13
   stage: test
@@ -227,8 +225,8 @@ Publish docs corpus:
     - if: '$BUILD_SDK == "true"'
       when: never
     - if: '$CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE != "schedule"'
-      allow_failure: true
     - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+(-rc\.\d+)?$/'
+      allow_failure: true
   needs:
     - job: "Build OIDC explainer"
       artifacts: true
