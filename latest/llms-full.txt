@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-17T03:04:00.164244Z
+Generated: 2026-11-17T05:14:13.320136Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -11000,14 +11000,17 @@ positional arguments:
 
 ## load_docs_corpus
 
-Load the documentation corpus that the AI assistant's search_docs tool searches. Defaults to the corpus shipped in the image (/usr/share/waldur/docs-corpus/docs-corpus.jsonl.gz, or $WALDUR_DOCS_CORPUS_PATH). Does nothing when there is no corpus file, and writes nothing when the corpus is unchanged. Invalid lines are skipped; a corpus that cannot be read, or has no valid line, leaves the loaded sections as they were. Never fails, so that a bad corpus does not stop a deployment.
+Load the documentation corpus that the AI assistant's search_docs tool searches. Defaults to the corpus shipped in the image (/usr/share/waldur/docs-corpus/docs-corpus.jsonl.gz, or $WALDUR_DOCS_CORPUS_PATH). Does nothing when there is no corpus file, and writes nothing when the corpus is unchanged. Invalid lines are skipped; a corpus that cannot be read, or has no valid line, leaves the loaded sections as they were. Never fails, so that a bad corpus does not stop a deployment; --strict fails instead, for tools that must know what is loaded.
 
 ```bash
 
-usage: waldur load_docs_corpus [path]
+usage: waldur load_docs_corpus [--strict] [path]
 
 positional arguments:
-  path  Path to docs-corpus.jsonl.gz.
+  path      Path to docs-corpus.jsonl.gz.
+
+options:
+  --strict  Fail when the file is missing or cannot be loaded.
 
 ```
 
@@ -11132,6 +11135,7 @@ Serve the remote MCP endpoint (/mcp), its OAuth resource metadata and /health. A
 ```bash
 
 usage: waldur mcp_server [--host HOST] [--port PORT] [--db-threads DB_THREADS]
+                         [--statement-timeout STATEMENT_TIMEOUT]
 
 options:
   --host HOST
@@ -11139,6 +11143,9 @@ options:
   --db-threads DB_THREADS
                         Threads that run database calls; each holds one
                         connection.
+  --statement-timeout STATEMENT_TIMEOUT
+                        Seconds a database statement may run before it is
+                        cancelled; 0 turns the limit off.
 
 ```
 
@@ -23467,6 +23474,7 @@ td:nth-child(4) {
 | `cleanup-system-logs` | `waldur_core.logging.cleanup_system_logs` | 15 minutes | Enforce row count limit per source (across all instances).<br><br>Keeps newest logs, deletes oldest when count exceeds the configured limit.<br>Runs periodically to maintain log volume within limits. |
 | `cleanup_stale_offering_users` | `waldur_mastermind.marketplace.cleanup_stale_offering_users` | 1 day | Periodic task to clean up offering users who no longer have project access. |
 | `cleanup_usage_poll_records` | `waldur_mastermind.marketplace.cleanup_usage_poll_records` | 1 day | Delete ComponentUsagePollRecord entries older than the retention period. |
+| `close-stale-step-discussions` | `waldur_mastermind.proposal.close_stale_step_discussions` | 1 day | Close the step discussions whose step has ended without closing them,<br>as when it ends: nightly, the backstop for an event that was missed. |
 | `core-reset-updating-resources` | `waldur_core.reset_updating_resources` | 10 minutes | Reset resources stuck in UPDATING state when their Celery tasks are completed. |
 | `create_customer_permission_reviews` | `waldur_core.structure.create_customer_permission_reviews` | 1 day | Create customer permission reviews for customers that need periodic review of user permissions. |
 | `create_project_permission_reviews` | `waldur_core.structure.create_project_permission_reviews` | 1 day | Create project permission reviews for projects that need periodic review of user permissions. |
@@ -23594,7 +23602,7 @@ td:nth-child(4) {
 | `waldur-matrix-chat-cleanup-expired-ticket-drafts` | `waldur_mastermind.matrix_chat.cleanup_expired_ticket_drafts` | Cron: `*/5 * * * * (m/h/dM/MY/d)` | Close support ticket drafts nobody sent or cancelled in time. |
 | `waldur-matrix-chat-cleanup-old-history-exports` | `waldur_mastermind.matrix_chat.cleanup_old_history_exports` | Cron: `30 3 * * * (m/h/dM/MY/d)` | Delete history exports, files included, past the retention period.<br><br>Exports are full copies of the history, made daily, and keep messages<br>that were redacted in the room afterwards. |
 | `waldur-matrix-chat-cleanup-outbox-messages` | `waldur_mastermind.matrix_chat.cleanup_old_outbox_messages` | Cron: `20 3 * * * (m/h/dM/MY/d)` | Prune sent and failed outbox messages older than the retention window. |
-| `waldur-matrix-chat-periodic-history-export` | `waldur_mastermind.matrix_chat.periodic_history_export` | Cron: `0 2 * * * (m/h/dM/MY/d)` | Periodically export history for all active rooms. |
+| `waldur-matrix-chat-periodic-history-export` | `waldur_mastermind.matrix_chat.periodic_history_export` | Cron: `0 2 * * * (m/h/dM/MY/d)` | Periodically export history for all active rooms; and first, whatever<br>the export setting, export and archive the rooms whose scope ended while<br>Matrix chat could not close them (close_rooms_of_ended_scopes), and<br>sync the members of the other registered scopes' rooms that stay open<br>(resync_scope_rooms_nightly). |
 | `waldur-matrix-chat-prune-web-devices` | `waldur_mastermind.matrix_chat.prune_all_web_devices` | Cron: `45 3 * * * (m/h/dM/MY/d)` | Prune the idle web devices of every user who may still have one, daily.<br><br>Pruning on session start never reaches users who do not come back, and a<br>homeserver without access_token_ttl leaves their tokens valid for a week.<br>Users with no web device left are not asked about. |
 | `waldur-matrix-chat-scrub-expired-temporary-passwords` | `waldur_mastermind.matrix_chat.scrub_expired_temporary_passwords` | Cron: `*/10 * * * * (m/h/dM/MY/d)` | Replace any reset password whose scrub task was lost or kept failing. |
 | `waldur-mcp-clear-expired-cimd-applications` | `waldur_mastermind.mcp.clear_expired_cimd_applications` | 1 day | No description available |
@@ -70302,8 +70310,11 @@ memory.
   offered only while sections are loaded.
 - **Search.** Postgres full-text search (weighted title > breadcrumb >
   text, multiplied by `boost`) returns the top five sections, each with an
-  excerpt of about 800 characters and a link under `DOCS_URL` (or
-  docs.waldur.com). Sections matching every word come first
+  excerpt of about 800 characters and a link to the page on
+  docs.waldur.com, under the version the corpus was built from: `/<release>/`
+  on a release image, `/latest/` on any other build. `DOCS_URL` is not used:
+  it is the header's link, and the bare docs.waldur.com path of a page is a
+  404. Sections matching every word come first
   (`websearch_to_tsquery`); when there are fewer than five, the rest are
   sections matching any of the words. Questions rarely use the guide's own
   words: on the model's real queries in an evaluation, every-word matching
@@ -74456,11 +74467,12 @@ Configure automated updates through the settings:
 The `update_software_catalogs` task runs daily at 3 AM and:
 
 1. **Updates only existing catalogs**: The task never creates new catalog records. If no catalog exists in the database for a given name/type, the task skips it with a warning. Create catalogs first via the API, management commands, or the `discover` / `import_catalog` endpoints.
-2. **Multi-version catalogs**: When several rows share a name/type (EESSI releases such as `2023.06` / `2026.06`, or Spack snapshot dates), **each version is refreshed independently**. The version string is never rewritten; import a new upstream version to add another row.
-3. **Independent Processing**: Each catalog source is updated independently - failures don't affect other sources
-4. **Configuration Validation**: Validates settings before attempting updates
-5. **Error Isolation**: Individual catalog failures are logged but don't prevent other updates
-6. **Comprehensive Logging**: Detailed logging for monitoring and troubleshooting
+2. **Per-catalog opt-out**: Catalogs with `auto_update_enabled` set to `false` are skipped. If every catalog of a source is opted out, the task reports it as skipped with reason `auto_update_disabled`.
+3. **Multi-version catalogs**: When several rows share a name/type (EESSI releases such as `2023.06` / `2026.06`, or Spack snapshot dates), **each version is refreshed independently**. The version string is never rewritten; import a new upstream version to add another row.
+4. **Independent Processing**: Each catalog source is updated independently - failures don't affect other sources
+5. **Configuration Validation**: Validates settings before attempting updates
+6. **Error Isolation**: Individual catalog failures are logged but don't prevent other updates
+7. **Comprehensive Logging**: Detailed logging for monitoring and troubleshooting
 
 `import_catalog` creates the upstream-detected version when that exact `(name, version, type)` is not already stored. Another EESSI/Spack version already in the database does **not** block the import.
 
@@ -74471,9 +74483,12 @@ The `update_software_catalogs` task runs daily at 3 AM and:
 The `cleanup_old_software_catalogs` task runs daily at 4 AM (after updates) when `SOFTWARE_CATALOG_CLEANUP_ENABLED` is true:
 
 1. **True duplicates only**: Rows that share the same `(name, version, catalog_type)` — for example two EESSI `2026.06` catalogs — are collapsed to the newest row. Offering links are remapped when safe. **Distinct versions are never collapsed** (EESSI `2023.06` and `2026.06` both remain).
-2. **Retention**: Catalogs whose `last_successful_update` is older than `SOFTWARE_CATALOG_RETENTION_DAYS` are deleted. Keep auto-update enabled (or re-load periodically) for every version you still need on offerings.
+2. **Retention**: A catalog whose `last_successful_update` is older than `SOFTWARE_CATALOG_RETENTION_DAYS` is deleted only if all of these hold:
+    - no offering or partition links to it;
+    - its source's daily update is enabled (`SOFTWARE_CATALOG_EESSI_UPDATE_ENABLED` / `SOFTWARE_CATALOG_SPACK_UPDATE_ENABLED`);
+    - its `auto_update_enabled` is `true`.
 
-Sites that expose multiple EESSI stacks on one offering should leave cleanup enabled only if those catalogs stay within the retention window via daily updates.
+    A catalog that nothing refreshes keeps its import date, so it is treated as pinned rather than stale. A linked catalog that has fallen out of the retention window is kept, and the task logs a warning for it.
 
 ### Manual Trigger
 
@@ -74620,6 +74635,20 @@ Use the response when linking a catalog to an offering. Store `cpu_family` in `e
 `full_arch` is the hardware path from the map (for example `x86_64/intel/graniterapids`). When a map value points at a different build, `cpu_microarchitecture` follows that build so package filters still match imported targets.
 
 Catalogs without an architectures map, including Spack, return `[]`. The same empty list is returned when `catalog.version` is not a key in `architectures_map`.
+
+### Software offered in the HPC workspace and AI assistant
+
+When a user looks for software for a job, Waldur offers a version from a linked EESSI catalog only if it will load on the chosen partition:
+
+- The link's `enabled_cpu_family` and `enabled_cpu_microarchitectures` limit which builds count. Short values saved by older clients (`zen3`) match the full subtype (`amd/zen3`).
+- The partition's `cpu_arch` is resolved through the catalog's `architectures_map` to the build EESSI loads on those nodes (in EESSI 2023.06, `x86_64/amd/zen5` uses the `x86_64/amd/zen4` build), and the version needs a target for that build. A target without a microarchitecture counts as a build for the whole family. A CPU the map lists with no build gets no EESSI software; a CPU the map does not list (or a catalog without a map) is matched on its family only.
+- When the partition declares `gpu_arch`, versions with GPU builds must include it. CPU-only versions are still offered.
+
+For other catalogs, a version built only for other CPU families is not offered; versions without CPU targets, such as Spack recipes, always are.
+
+A catalog counts as EESSI when its type is `binary_runtime` and either its name is `EESSI` or its metadata carries the loader's `architectures_map`. Renaming an imported catalog therefore keeps its `module load EESSI/<version>` line and its daily refresh.
+
+Before a job is submitted, Waldur warns (without blocking) when the job loads more than one EESSI version, and when a `module load` or `spack load` line names catalog software that is not offered on the partition. A bare name (`GROMACS`) or a version without its toolchain suffix (`GROMACS/2024.1`) counts as offered when a matching build is. Modules the linked catalogs do not know, such as the site's own, are not checked.
 
 `supports_cpu_target_restrictions` on the catalog (list, retrieve, and the nested catalog inside an offering) is `true` only for `binary_runtime`. Spack (`source_package`) is `false`. Use that flag to show or hide the CPU fields. An empty `cpu_targets` list on a catalog where the flag is `true` means this version has no map entries, not that CPU restrictions do not apply.
 
@@ -111900,14 +111929,6 @@ MIT — Copyright (c) 2025-2026 OpenNode OÜ.
 
 # Waldur MCP server
 
-!!! warning "Superseded by the remote MCP server"
-    This page describes the local `waldur-mcp-server` package, which runs on your computer
-    next to Claude Desktop. Waldur now serves MCP itself, on `/mcp` on the API's host:
-    Claude, ChatGPT, Cursor, VS Code and other clients connect to it with OAuth sign-in or a
-    personal access token, and nothing needs installing. Use it instead. See
-    [Connect AI clients over MCP](../../user-guide/end-users/mcp-clients.md), and for
-    operators, [Remote MCP server](../../admin-guide/mcp-server.md).
-
 Waldur MCP server enables integration between Waldur instance and Claude Desktop by implementing the Model Context Protocol (MCP). This allows Claude to interact with your Waldur instance directly.
 
 ## Quickstart
@@ -127306,6 +127327,7 @@ td:nth-child(4) {
 | `close_assignments_on_leaving_pool` | `Django Signal (post_save)` | `proposal.CallReviewerPool` | A pool entry that stops being accepted, by whatever path, ends the |
 | `close_course_accounts_after_project_removal` | `Django Signal (pre_delete)` | `structure.Project` | No description |
 | `close_customer_service_accounts_on_customer_deletion` | `Django Signal (pre_delete)` | `structure.Customer` | Close service accounts associated with a customer when the customer is deleted. |
+| `close_deleted_scope_room` | `Django Signal (pre_delete)` | `proposal.StepDiscussion` | Close the room of a registered scope that is being deleted: kick its |
 | `close_resource_plan_period_when_resource_is_terminated` | `Django Signal (post_save)` | `marketplace.Resource` | Handle case when resource has been terminated by service provider. |
 | `close_service_accounts_on_project_deletion` | `Django Signal (pre_delete)` | `structure.Project` | Close service accounts associated with a project when the project is deleted. |
 | `create_carried_over_usage_if_invoice_has_been_created` | `Django Signal (post_save)` | `invoices.Invoice` | Materialize usage for the new billing period from the previous one. |
@@ -127373,6 +127395,11 @@ td:nth-child(4) {
 | `evaluate_usage_limit_on_daily_usage_report` | `Django Signal (post_save)` | `marketplace.ComponentDailyUsage` | Re-evaluate a resource with spending limits when a day's usage changes. |
 | `evaluate_usage_limit_on_resource_limit_change` | `Django Signal (post_save)` | `marketplace.Resource` | Re-evaluate a resource's usage-limit restriction when its limits change. |
 | `evaluate_usage_limit_on_usage_report` | `Django Signal (post_save)` | `marketplace.ComponentUsage` | Pause or downscale a resource when reported usage reaches a component limit. |
+| `follow_call_chairs_for_discussions` | `Django Signal (post_save)` | `proposal.Call` | The call's panel chair or vice-chair changed. |
+| `follow_discussion_settings` | `Django Signal (post_save)` | `proposal.CallWorkflowStep` | A step whose discussion is switched off closes its open discussions, |
+| `follow_panel_for_discussions` | `Django Signal (post_save)` | `proposal.CallPanel` | A panel added to the call, or its chair changed (as |
+| `follow_proposal_for_discussions` | `Django Signal (post_save)` | `proposal.Proposal` | A proposal rejected or withdrawn closes its discussions; one moved to |
+| `follow_step_for_discussions` | `Django Signal (post_save)` | `proposal.ProposalWorkflowStepInstance` | A proposal's step that is no longer active closes its discussion, and |
 | `forget_ended_connection` | `Django Signal (pre_save)` | `oauth2_provider.Grant` | Before a new code, drop the record of the client's connection if it has |
 | `forward_attachment_to_children` | `Django Signal (post_save)` | `support.Attachment` | Forward new attachments from parent issues to child issues. |
 | `forward_comment_to_children` | `Django Signal (post_save)` | `support.Comment` | Forward new public comments from parent issues to child issues. |
@@ -127484,11 +127511,22 @@ td:nth-child(4) {
 | `release_posix_allocations_on_consumer_deletion` | `Django Signal (post_delete)` | `marketplace.OfferingUserGroup` | Mark the deleted POSIX id consumer's identity as released. |
 | `release_posix_allocations_on_consumer_deletion` | `Django Signal (post_delete)` | `marketplace.OfferingRoleGroup` | Mark the deleted POSIX id consumer's identity as released. |
 | `release_provider_project_group_gid` | `Django Signal (post_delete)` | `marketplace.ServiceProviderProjectGroup` | Release a deleted project group's GID, never to be recycled. |
+| `remember_discussion_settings` | `Django Signal (pre_save)` | `proposal.CallWorkflowStep` | Note a call step's discussion settings before it is saved, for |
 | `remember_panel_chair` | `Django Signal (pre_save)` | `proposal.CallPanel` | Note the chair a panel had before it is saved, for |
 | `request_offering_user_deletion_when_project_access_lost` | `Custom Signal (role_revoked)` | `—` | Schedule task to request offering user deletion when project access is lost. |
 | `resource_has_been_changed` | `Django Signal (post_save)` | `marketplace.Resource` | Log resource changes. |
 | `resource_options_have_been_changed` | `Django Signal (post_save)` | `marketplace.Resource` | Handle script execution when marketplace resource options are changed. |
 | `resource_state_has_been_changed` | `Django Signal (post_save)` | `marketplace.Resource` | Handle resource state changes. |
+| `resync_discussions_on_assignment` | `Django Signal (post_save)` | `proposal.ProposalRoleAssignment` | An evaluator role assigned, revoked or its lead moved. |
+| `resync_discussions_on_conflict` | `Django Signal (post_save)` | `proposal.ConflictOfInterest` | A conflict of interest recorded, recused for, dismissed or waived. |
+| `resync_discussions_on_contribution` | `Django Signal (post_save)` | `proposal.StepContribution` | A contribution given, taken, handed on, declined or withdrawn. |
+| `resync_discussions_on_contribution` | `Django Signal (post_delete)` | `proposal.StepContribution` | A contribution given, taken, handed on, declined or withdrawn. |
+| `resync_discussions_on_panel_members` | `Django Signal (m2m_changed)` | `CallPanel_members` | Members joined or left a panel: its discussions that take in the |
+| `resync_discussions_on_requested_offering` | `Django Signal (post_save)` | `proposal.RequestedOffering` | A requested offering accepted, or no longer: the offering managers of |
+| `resync_discussions_on_requested_resource` | `Django Signal (post_save)` | `proposal.RequestedResource` | A proposal requested an offering, or dropped one: its offering teams |
+| `resync_discussions_on_requested_resource` | `Django Signal (post_delete)` | `proposal.RequestedResource` | A proposal requested an offering, or dropped one: its offering teams |
+| `resync_discussions_on_role_change` | `Custom Signal (role_granted)` | `—` | A role on a call -- its managers, panel members, reviewers -- on a |
+| `resync_discussions_on_role_change` | `Custom Signal (role_revoked)` | `—` | A role on a call -- its managers, panel members, reviewers -- on a |
 | `revoke_api_keys_of_deleted_user` | `Django Signal (pre_delete)` | `core.User` | Withdraw the API keys assigned to a user before the account is deleted. |
 | `revoke_oauth_tokens_on_deactivation` | `Django Signal (post_save)` | `core.User` | Delete a user's OAuth sessions when the user is deactivated. |
 | `revoke_roles_on_offering_deletion` | `Django Signal (pre_delete)` | `marketplace.Offering` | Revoke active user roles bound to an offering before it is deleted. |
@@ -127690,7 +127728,7 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 799
+Total unique handlers found: 816
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_auth_social**: 2 handlers
@@ -127698,7 +127736,7 @@ Total unique handlers found: 799
 - **waldur_core**: 353 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 382 handlers
+- **waldur_mastermind**: 399 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 15 handlers
 - **waldur_openstack_replication**: 1 handlers
@@ -129664,6 +129702,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`MatrixEnabledWriteGuardMixin`](#matrixenabledwriteguardmixin) | `waldur_mastermind.matrix_chat.views` | Reject mutating requests while the Matrix integration is disabled |
 | [`ConsentTestMixin`](#consenttestmixin) | `waldur_mastermind.mcp.tests.test_consent` | No description available |
 | [`OAuthTestMixin`](#oauthtestmixin) | `waldur_mastermind.mcp.tests.test_oauth` | No description available |
+| [`CorsAssertionsMixin`](#corsassertionsmixin) | `waldur_mastermind.mcp.tests.test_server` | No description available |
 | [`EstimatedCostPolicyMixin`](#estimatedcostpolicymixin) | `waldur_mastermind.policy.models` | Make subclasses preserve the alters_data attribute on overridden methods |
 | [`OfferingPolicySerializerMixin`](#offeringpolicyserializermixin) | `waldur_mastermind.policy.serializers` | This mixin provides several extensions to stock Serializer class:  1 |
 | [`SlurmFlagTestMixin`](#slurmflagtestmixin) | `waldur_mastermind.policy.tests.test_slurm_flag_keepers` | A resource on an offering that pauses and downscales, with SLURM usage per po... |
@@ -131352,6 +131391,12 @@ frontend hides these actions; this is the backstop for direct or stale calls.
 ### OAuthTestMixin
 
 **Module:** `waldur_mastermind.mcp.tests.test_oauth`
+
+**Description:** No description available.
+
+### CorsAssertionsMixin
+
+**Module:** `waldur_mastermind.mcp.tests.test_server`
 
 **Description:** No description available.
 
