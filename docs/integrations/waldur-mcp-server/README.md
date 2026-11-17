@@ -1,13 +1,5 @@
 # Waldur MCP server
 
-!!! warning "Superseded by the remote MCP server"
-    This page describes the local `waldur-mcp-server` package, which runs on your computer
-    next to Claude Desktop. Waldur now serves MCP itself, on `/mcp` on the API's host:
-    Claude, ChatGPT, Cursor, VS Code and other clients connect to it with OAuth sign-in or a
-    personal access token, and nothing needs installing. Use it instead. See
-    [Connect AI clients over MCP](../../user-guide/end-users/mcp-clients.md), and for
-    operators, [Remote MCP server](../../admin-guide/mcp-server.md).
-
 Waldur MCP server enables integration between Waldur instance and Claude Desktop by implementing the Model Context Protocol (MCP). This allows Claude to interact with your Waldur instance directly.
 
 ## Quickstart
