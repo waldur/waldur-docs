@@ -422,6 +422,9 @@ The offering's **Integration → Resource display options** control the tab:
   Limits keys already hold are kept when it is turned off.
 - **Hide API keys tab** removes the tab from the offering's resources.
 
+On Ceph S3 offerings, a resource's keys can also be used to browse its buckets
+from the portal; see [Resource buckets](resource-s3-buckets.md).
+
 A key's all-time usage adds up the figures the site agent reports for it month
 by month. Its last report of a month leaves out the usage between that report
 and midnight, so the site agent sends each key's figures for the previous
