@@ -1,5 +1,67 @@
 # Changelog
 
+## 8.1.5-rc.3 - 2026-11-19
+
+### Highlights
+
+AI clients can now connect to Waldur through MCP with OAuth sign-in. Users approve each client on a consent page and can revoke it later from their profile. The AI assistant can search the Waldur documentation, chart costs, show its reasoning as it works, and suggest quick prompts that fit the user's role and data. Call managers get tracked discussions on workflow steps and more control over proposals and reviews. Award handling in OpenPortal now keeps credit, usage and project details correct when an award moves between projects.
+
+### What's New
+
+- **MCP access for AI clients**: MCP clients can sign in with OAuth after the user approves them on a new consent page. Users can see and revoke connected apps from their profile, and OAuth clients only get read-only tools. The MCP server handles CORS itself and limits how long its database queries can run. Helm and Docker Compose deployments get an optional MCP service with locked-down container settings.
+- **Documentation search in the AI assistant**: The assistant can search the bundled Waldur documentation, filtered by the user's role and the site's configuration. It tells users when a feature they ask about is turned off on their site and links to the docs pages for the matching release. The search is also available over REST, and staff can turn it off with `DOCS_SEARCH_ENABLED`.
+- **AI assistant cost charts**: The assistant can draw an organization's or project's monthly costs and credits as a chart, for users who are allowed to see costs.
+- **AI assistant quick prompts**: The suggestions on an empty thread now come from the backend. They depend on the user's tools, the site's configuration and the user's own data, such as paused resources, pending reviews or draft proposals.
+- **Visible model reasoning**: The AI assistant shows the model's reasoning as it streams, summarised in one status line. Reasoning tags are removed from answers given to anonymous visitors.
+- **S3 bucket browser**: S3 storage resources have a new Buckets tab where users can browse, create and manage buckets and objects. The tab also shows instructions for connecting an S3 client.
+- **Discussions on workflow steps**: Call managers can give a workflow step a tracked Matrix discussion, and the people involved can open it from the proposal and review pages.
+- **More call settings**: A call can require a minimum number of supporting documents and can set the description of projects created from accepted proposals. Call managers can also create reviewer assignment batches from a CSV file of proposal IDs and reviewer emails.
+- **Dark-theme login logo**: The new `LOGIN_LOGO_DARK` setting sets the logo shown on the login page in dark mode.
+- **Metrics breakdowns**: A metric figure can now be broken down by several attributes at once.
+- **Project date filters**: Projects can be filtered by start and end date, active period and grace period.
+
+### Improvements
+
+- **Reviewer workflow**: When a proposal is decided, its open reviews and assignments are closed. A reviewer who leaves a call's reviewer pool has their pending assignments closed too. In protected rounds, reviewers see only their own reviews, and star scores appear only for submitted reviews.
+- **Award handling in OpenPortal**: Credit, total usage and storage reports now cover only the current award, across every project the award was attached to. Award updates apply to live projects, and only allocation increases are held for review. Membership rules for awards are now also enforced when the team is changed locally.
+- **OpenPortal administration**: Users can set their own OpenPortal short name. The Managed projects list has search and working column sorting. Usage reports still render when a name mapping is missing.
+- **Terms of service**: Activating a new version of an offering's terms of service deactivates the active one, and the dialog warns about this before you confirm.
+- **Drawers**: Drawers can be resized by dragging their edge, and the AI assistant drawer can be docked beside the page.
+- **Page layout**: Page content now adapts to the page's width instead of the window's.
+- **AI assistant settings**: The settings page is now split into tabs by topic.
+- **Settings audit**: Changes to settings are now recorded in the system log.
+- **Checklist progress**: Checklist completion now counts only the questions shown for the given answers.
+- **HPC software**: The HPC workspace and the AI assistant offer only software that runs on the selected partition. Software catalogs that offerings use are no longer removed by retention cleanup.
+- **Background jobs**: Background syncs no longer run for inactive service settings or terminated tenants.
+- **Performance**: User lists and the SLURM periodic sync now run fewer database queries.
+- **Interface consistency**: Many screens now use standard tables and property lists, including plan details, change limits, order components, accounting months, the version history dialog and the HPC Insights tabs.
+
+### Bug Fixes
+
+- Values that look like spreadsheet formulas are now neutralized in CSV and clipboard exports, and names are escaped in chart tooltips.
+- A component limit of zero is now billed and enforced as zero.
+- The end date of a project can now be changed while the project is in its grace period, and end dates count to the last usable day.
+- Organization owners who are not staff can use bulk VM start, stop and restart again.
+- A sign-in with an invalid or already used OIDC state now goes to the login-failed page.
+- Delegated AI assistant sessions are only offered tools they are allowed to run.
+- Offering pages now open even when no plugin matches the offering type.
+- Plain-text notification emails no longer contain runs of blank lines.
+- Excel exports stay readable when text contains control characters.
+
+### Deployment
+
+- **Helm**: The chart fixes autoscaling (HPA), backup secrets and trusted-proxy settings for production deployments. Bundled PostgreSQL is updated to 17.12, RabbitMQ to 4.3.8, tuwunel to v1.9.4 and LiveKit to v1.13.11.
+- **Docker Compose**: Keycloak is updated to 26.8.2 for security fixes, and its health check is fixed. Docker logs are now rotated for every container. `DOCKER_GROUP_ID` replaces the old advice to make the Docker socket world-writable (`chmod 666`). Caddy now passes Waldur only the client address it resolves from trusted proxies. The README has new guidance for production setups.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [94 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.5-rc.2...8.1.5-rc.3) - MCP OAuth access, AI assistant documentation search, cost charts and quick prompts, S3 bucket browser API, proposal workflow features, and OpenPortal award fixes
+- **Waldur Homeport**: [80 commits](https://github.com/waldur/waldur-homeport/compare/8.1.5-rc.2...8.1.5-rc.3) - MCP consent and connected apps pages, S3 Buckets tab, workflow step discussions, resizable and dockable drawers, export escaping, and UI consistency work
+- **Waldur Helm**: [4 commits](https://github.com/waldur/waldur-helm/compare/8.1.5-rc.2...8.1.5-rc.3) - MCP deployment, production fixes and updated bundled services
+- **Waldur Docker Compose**: [32 commits](https://github.com/waldur/waldur-docker-compose/compare/8.1.5-rc.2...8.1.5-rc.3) - Optional MCP service, Keycloak security update, log rotation, and production setup guidance
+
+---
+
 ## 8.1.5-rc.2 - 2026-11-13
 
 ### Highlights
