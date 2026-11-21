@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-21T03:47:17.679241Z
+Generated: 2026-11-21T15:19:52.980267Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -102042,6 +102042,10 @@ Click **Request for a change** to submit it. The change is an order, so it follo
 
 [Image: Change resource limits dialog with new limits and price difference]
 
+A provider can allow some limits only to grow, typically storage that is already in use.
+Such a limit shows **Can only be increased** under its input and cannot be set below its
+current value, here or anywhere else you change limits. To reduce it, contact the provider.
+
 Users who may not change the limits themselves can ask for new ones on offerings
 that enable it, see [Requesting resource limit changes](resource-limit-change-requests.md).
 
@@ -104330,6 +104334,34 @@ your hands:
     reported such a backend. Its absence is not a guarantee: if no agent has registered
     yet, Waldur has nothing to go on.
 
+### Allowing only increases
+
+Some limits stand for capacity that cannot safely be taken back once it is in use, such as
+a storage volume or a quota a customer has filled. Turn on **Increase only** on the
+component edit dialog to let customers raise the limit but never lower it.
+
+[Image: Increase only on the component edit dialog]
+
+While it is on, a customer cannot lower the limit in any way: **Change limits**, a size
+on the resource's **Options** tab, a renewal, a plan switch, editing a pending order,
+moving the limit to another resource, or a limit change request. The forms use the current
+limit as the smallest value and say why:
+
+[Image: Change limits refusing a lower storage value]
+
+A request that would still lower it, for example through the API, is refused with an
+error naming the component, its current limit and the requested value. A request must
+include every limit: leaving out an increase-only component counts as lowering it.
+
+Service providers and staff can still lower the limit, so a reduction the customer agrees
+with goes through you. Awards and proposal allocations, and limits reported by a site
+agent, are not affected.
+
+!!! note
+    The setting applies to limit-based and pre-paid components. When a size is calculated
+    from an order option (see [Calculating limits from one answer](#calculating-limits-from-one-answer)),
+    turn it on for the calculated component: a new value that would lower it is refused.
+
 ## Offering a limit-based and a usage-based plan side by side
 
 The accounting type on a component applies to every plan of the offering. To sell
@@ -104671,6 +104703,8 @@ The ordered value is then shown on the resource's **Options** tab, where custome
 
 !!! note
     A Component Sum cannot be a resource option: it follows the components it adds up.
+
+To stop customers from shrinking or removing such a size, turn on **Increase only** on the calculated component — see [Allowing only increases](#allowing-only-increases).
 
 ## Offering management
 
