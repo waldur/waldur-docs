@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-21T03:03:53.847698Z
+Generated: 2026-11-21T03:47:17.679241Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -570,6 +570,12 @@ When `waldur.initdbEnabled` is true, the API, worker, web-shell, and MCP Deploym
   - Main container: UVK payment processor
 
   - Sidecar container: HTTP API bridge
+
+- **Images:** `opennode/waldur-uvk-everypay` and
+  `opennode/waldur-uvk-everypay-sidecar`, both at `waldur.uvkEverypay.imageTag`
+  (a release such as `0.2.0`). The newest release is rebuilt weekly in place,
+  and `waldur.uvkEverypay.imagePullPolicy` (default `Always`) makes each pod
+  start pick up the rebuild.
 
 - **Responsibilities:**
 
@@ -4216,7 +4222,8 @@ Backup configuration values (`postgresBackup` prefix):
 - `image` - Docker image containing the `postgres` client tools and the MinIO client (`mc`). Its Postgres major version must match the server's: `pg_dump` refuses to dump a newer server
 
   ([opennode/postgres-minio](https://hub.docker.com/r/opennode/postgres-minio)
-  by default)
+  by default; its `17` tag is rebuilt weekly in place, and `imagePullPolicy`
+  (default `Always`) makes every job run pick up the rebuild)
 
 ## Backup storage
 
@@ -14589,7 +14596,7 @@ How long, in minutes, an address that reached PASSWORD_FAILURES_PER_ADDRESS_LIMI
 
 **Type:** bool
 
-If true, user email in Waldur database and in invitatation must strictly match.
+If true, the email of the user accepting an invitation must match the invitation's (ignoring case), with no exceptions: staff accepting for a named user cannot bypass it with allow_email_mismatch. If false, users may accept with another address of their own, and staff accepting for a named user with a different address must pass allow_email_mismatch.
 
 #### INVITATION_DISABLE_MULTIPLE_ROLES
 
@@ -24280,6 +24287,7 @@ The sync process determines which entitlements a user should have based on:
 4. **Offering Users**: Offering users must be in `OK` state with usernames
 5. **Offering opt-in**: The offering must set `plugin_options.enable_scim_entitlements` to `true`
 6. **Login nodes**: The offering must list bare hostnames in `plugin_options.scim_login_nodes` (for example `login.example.org`). These are not access endpoints and do not appear in the resource access dropdown.
+7. **SSH port**: Optional `plugin_options.scim_login_port` is the port clients should use for every login host of the offering. When unset, use 22. The entitlement URN does not include it, and changing it does not run a sync.
 
 The sync process:
 1. Fetches current entitlements from SCIM service
@@ -24308,7 +24316,7 @@ Configure these settings in the Waldur admin (*Configuration → Settings*):
 | `SCIM_API_KEY` | Secret | API key for `X-API-Key` header authentication |
 | `SCIM_URN_NAMESPACE` | String | URN namespace for entitlements (e.g., `urn:ietf:dev`) |
 
-The setting is deployment-wide. Each offering must also opt in via `plugin_options.enable_scim_entitlements` and list its login hosts in `plugin_options.scim_login_nodes`. An access endpoint alone does not include the offering in entitlement sync. After enabling the option on an existing offering, trigger a full sync (`POST /api/users/scim_sync_all/`) so current users pick up the change. Changing the login-node list schedules a sync for that offering's users.
+The setting is deployment-wide. Each offering must also opt in via `plugin_options.enable_scim_entitlements` and list its login hosts in `plugin_options.scim_login_nodes`. Set `plugin_options.scim_login_port` when those hosts listen on a port other than 22; clients that open the SSH connection read it, and the sync ignores it. An access endpoint alone does not include the offering in entitlement sync. After enabling the option on an existing offering, trigger a full sync (`POST /api/users/scim_sync_all/`) so current users pick up the change. Changing the login-node list schedules a sync for that offering's users.
 
 ### Prerequisites
 
@@ -60713,7 +60721,9 @@ Public group invitations are a special type of group invitation that can be view
 - `GET /api/user-invitations/{uuid}/` - Retrieve invitation details
 - `POST /api/user-invitations/{uuid}/send/` - Resend invitation
 - `POST /api/user-invitations/{uuid}/cancel/` - Cancel invitation
-- `POST /api/user-invitations/{uuid}/accept/` - Accept invitation (authenticated)
+- `POST /api/user-invitations/{uuid}/accept/` - Accept invitation (authenticated).
+  Staff may pass `user` to accept for that user instead, and `allow_email_mismatch`
+  for a user whose email differs from the invitation's (see [Email Validation](#email-validation))
 - `POST /api/user-invitations/{uuid}/delete/` - Delete invitation (staff only)
 - `POST /api/user-invitations/approve/` - Approve invitation (token-based)
 - `POST /api/user-invitations/reject/` - Reject invitation (token-based)
@@ -61303,11 +61313,41 @@ When `civil_number` is provided:
 
 ### Email Validation
 
-Multiple levels of email validation:
+Whether the accepting user's email must match the invitation's depends on who
+accepts and on two settings. Matching always ignores case.
 
-1. **Loose matching** (default): Case-insensitive email comparison
-2. **Strict validation**: Exact email matching when `ENABLE_STRICT_CHECK_ACCEPTING_INVITATION=True`
-3. **Pattern matching**: Group invitations validate against email patterns
+| Accepted by | `ENABLE_STRICT_CHECK_ACCEPTING_INVITATION` off (default) | on |
+|---|---|---|
+| The user, for themselves | Any email: a user may accept with another address of their own | Must match |
+| Staff, for a named user (`user`) | Must match, unless `allow_email_mismatch: true` | Must match, no exceptions |
+
+- `VALIDATE_INVITATION_EMAIL` (`WALDUR_CORE`) is stricter still: an invitation
+  is only found for a user whose email matches it, so a mismatch is a 404 for
+  everyone, `allow_email_mismatch` included.
+- Group invitations validate against email patterns instead.
+
+#### Accepting for another user
+
+Staff, typically an identity system's service account, can accept an invitation
+for a user who registered elsewhere:
+
+```http
+POST /api/user-invitations/{uuid}/accept/
+{"user": "<user uuid>"}
+```
+
+The role goes to the named user, and the `role_granted` event records the staff
+caller as `acting_user`. Only staff may name a user (a personal access token
+needs the `STAFF_ACCESS` scope), and the call cannot be combined with the
+impersonation header.
+
+When the person already has an account under a different address, for example a
+personal address or a previous institution's, and the caller has verified their
+identity itself, it adds `"allow_email_mismatch": true`. Sending the flag without
+naming another user is a 400. When a mismatch is actually bypassed, the
+`role_granted` event's reason ends in "(email check bypassed)" and its context
+carries `email_check_bypassed: true`, `invitation_uuid` and `invitation_email`,
+so bypassed accepts can be found and reviewed.
 
 ### Token Security
 
@@ -79565,6 +79605,7 @@ Guides for working on Waldur HomePort. Start with [development-setup.md](develop
 | [tables.md](tables.md)                                                   | `useTable`, columns, filters, row actions, export                                                                                        |
 | [property-rendering-guide.md](property-rendering-guide.md)               | Property rendering guide: PropertyList, PropertyItem, PropertyCard, propVal.* formatters, and linting                                    |
 | [property-fields.md](property-fields.md)                                 | Read-only rows: typed formatters (`propVal.date`, `propVal.currency`, …) and the `prefer-typed-property` lint                            |
+| [date-formatting.md](date-formatting.md)                                 | Dates: `dateUtils` formatters (Intl presets), `getDateLocale`, `parseCalendarDate`, the `no-display-date-tokens` lint                    |
 | [forms.md](forms.md)                                                     | React Final Form, `*Group` / `*EditField` / `*Filter` patterns, `TabbedSection`                                                          |
 | [filter-migration-guide.md](table/filter-migration-guide.md)             | Generated table filters from the OpenAPI schema                                                                                          |
 | [migration-guide.md](table/migration-guide.md)                           | Migrating hand-rolled tables: choosing `Table`, `SimpleTable`, a form grid or a label/value block                                        |
@@ -82991,6 +83032,78 @@ When asking an LLM to add configuration:
 2. **Specify group name**: "The settings are in the 'Reporting' group."
 3. **Reference template**: "Use `AdministrationSshKeys.tsx` as a template."
 4. **Target file**: "Register the route in `src/administration/routes.ts`."
+
+---
+
+### Date formatting
+<!-- Source: docs/developer-guide/ui/date-formatting.md -->
+
+# Date formatting
+
+Dates are shown through the formatters in `src/core/dateUtils.ts`. Each one
+renders an Intl preset in the **date locale**, never a Luxon token string.
+
+## The date locale
+
+`getDateLocale()` (`waldur-i18n-runtime`, re-exported from
+`@/i18n/LanguageUtilsService`) is the UI language, with plain English mapped
+to `en-GB` so English dates read day-first (`26 Feb 2027`). Luxon's
+`Settings.defaultLocale`, the date-fns calendar locale (`useCalendarLocale`)
+and every direct `Intl`/`toLocaleDateString` call take their locale from it.
+Never pass `undefined` (the browser's locale) or `getUserLocale()` to a date
+call: those ignore the language the user picked, or keep English month-first.
+
+## Formatters
+
+| Helper                 | en-GB                         | Use for                   |
+| ---------------------- | ----------------------------- | ------------------------- |
+| `formatDate`           | 26 Feb 2027                   | a date                    |
+| `formatLongDate`       | 26 February 2027              | a date in prose           |
+| `formatDateTime`       | 26 Feb 2027, 14:05            | a timestamp               |
+| `formatMediumDateTime` | 26 February 2027 at 14:05 EET | a timestamp with its zone |
+| `formatTime`           | 14:05                         | a time of day             |
+| `formatDayMonth`       | 26 Feb                        | chart axes within a year  |
+| `formatDayMonthTime`   | 26 Feb, 14:05                 | schedule slots            |
+| `formatMonth`          | February 2027                 | a month                   |
+| `formatShortMonth`     | Feb 2027                      | month axes and ranges     |
+| `formatMonthName`      | February                      | a month without a year    |
+| `formatRelative`       | in 3 days                     | distance from now         |
+| `formatUptime`         | 2d 3h                         | elapsed time              |
+
+Other locales get their own pattern: `formatDate` is `26 февр. 2027 г.` in
+Russian, `26.2.2027` in Finnish and `2027-02-26` in Lithuanian. That is
+intended. No token string is right everywhere: `MMMM` is the genitive ("of
+February") and wrong for a month on its own, and `LLL` turns into a bare
+number in Lithuanian.
+
+British English writes September short as `Sept` (`29 Sept 2026`). In tests,
+build the expected string with the formatter (`formatDate('2026-09-29')`)
+rather than hard-coding a month abbreviation, since CLDR revises them.
+
+A missing value (`null`/`undefined`) formats as a dash, and `parseDate(null)`
+is an invalid `DateTime`, not now. Pass `DateTime.now()` when you mean now.
+
+## Calendar dates and instants
+
+A value like `2026-09-30` is a day, not an instant. `parseCalendarDate` reads
+one as the start of that day in the local zone, and it keeps the date a
+timestamp names in its own offset, so `2026-09-30T00:00:00Z` stays 30 Sep west
+of UTC. `formatRelative`, `lastAccessDate` and `daysUntilAccessEnds` use it.
+Never `new Date('2026-09-30')`: that is UTC midnight, the 29th in the Americas.
+
+## Lint: `no-display-date-tokens`
+
+`.toFormat()` with a display token, given as a literal or a `const` (`MMM`, `LLL`, `MMMM`, weekday names, the
+`D`/`t`/`T` macros, `a`) or a numeric date not starting with the year
+(`dd.MM.yyyy`, `MM/yyyy`) is an error. Machine formats stay allowed:
+`yyyy-MM`, `yyyy-MM-dd`, `yyyy-MM-dd HH:mm`, `HH:mm`, a Duration's `hh:mm:ss`.
+
+## Lint: `no-browser-locale-date`
+
+`toLocaleDateString` / `toLocaleTimeString`, `toLocaleString` with date
+options or on a `new Date(…)`, and `Intl.DateTimeFormat` are errors when the locale is missing,
+`undefined` or `getUserLocale()`. Prefer a `dateUtils` formatter; where a
+native call is needed (a custom option set), pass `getDateLocale()`.
 
 ---
 
@@ -111170,7 +111283,7 @@ Prerequisites:
    pip3 install -r refresher/requirements.txt
    ```
 
-2. Install the glauth binary to `/usr/bin/glauth`. Use the same version as pinned by `GLAUTH_VERSION` in the [Dockerfile](https://github.com/waldur/glauth/blob/main/Dockerfile), e.g.:
+2. Install the glauth binary to `/usr/bin/glauth`. Use the same version as pinned by `GLAUTH_VERSION` in the [Dockerfile](../Dockerfile), e.g.:
 
    ```bash
    wget -O /usr/bin/glauth https://github.com/glauth/glauth/releases/download/GLAuth-v2.5.0/glauth-linux-amd64
