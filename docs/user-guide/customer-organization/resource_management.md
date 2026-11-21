@@ -234,6 +234,10 @@ Click **Request for a change** to submit it. The change is an order, so it follo
 
 ![Change resource limits dialog with new limits and price difference](../img/resource-change-limits.png)
 
+A provider can allow some limits only to grow, typically storage that is already in use.
+Such a limit shows **Can only be increased** under its input and cannot be set below its
+current value, here or anywhere else you change limits. To reduce it, contact the provider.
+
 Users who may not change the limits themselves can ask for new ones on offerings
 that enable it, see [Requesting resource limit changes](resource-limit-change-requests.md).
 
