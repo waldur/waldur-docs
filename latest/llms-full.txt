@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-20T03:04:08.271710Z
+Generated: 2026-11-21T03:03:53.847698Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -127830,7 +127830,7 @@ td:nth-child(4) {
 | `scrub_logged_request` | `Custom Signal (bind_extra_request_finished_metadata)` | `—` | Mask credentials in the query of the request django-structlog logs. |
 | `scrub_logged_request` | `Custom Signal (bind_extra_request_failed_metadata)` | `—` | Mask credentials in the query of the request django-structlog logs. |
 | `set_default_token_lifetime` | `Django Signal (post_save)` | `core.User` | Set the default token lifetime for a new user. |
-| `setting_updated` | `Custom Signal (setting_updated)` | `—` | Clear the API configuration cache when a setting is updated. |
+| `setting_updated` | `Custom Signal (setting_updated)` | `—` | Clear the API configuration cache and log the change of a setting. |
 | `start_request` | `Unknown Signal` | `—` | No description |
 | `stash_customer_slug` | `Django Signal (pre_save)` | `structure.Customer` | Remember the persisted slug before save so the change can be detected. |
 | `update_customer_users_count` | `Custom Signal (recalculate_quotas)` | `—` | Update the user count for all customers. |
@@ -130312,6 +130312,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`ConcealmentMixin`](#concealmentmixin) | `waldur_mastermind.marketplace_openstack.tests.test_plugin_resource_concealment` | No description available |
 | [`SelectiveDNSMockMixin`](#selectivednsmockmixin) | `waldur_mastermind.marketplace_remote.tests.dns_utils` | Mixin class that provides selective DNS mocking for test classes |
 | [`ContainerExecutorMixin`](#containerexecutormixin) | `waldur_mastermind.marketplace_script.utils` | Mixin to execute scripts in containers for marketplace script processing |
+| [`AgentConfigurationTestMixin`](#agentconfigurationtestmixin) | `waldur_mastermind.marketplace_site_agent.tests.test_agent_configuration` | No description available |
 | [`ResourceGlauthAccessMixin`](#resourceglauthaccessmixin) | `waldur_mastermind.marketplace_site_agent.tests.test_glauth_resource_access` | No description available |
 | [`RegisteredScopeMixin`](#registeredscopemixin) | `waldur_mastermind.matrix_chat.tests.test_room_scopes` | Registers Customer, for the test only, as a kind of room scope whose members ... |
 | [`AppserviceErrorCountMixin`](#appserviceerrorcountmixin) | `waldur_mastermind.matrix_chat.views` | Counts the view's 4xx and 5xx answers for the webhook_errors diagnostic |
@@ -131958,6 +131959,12 @@ class MyTestClass(SelectiveDNSMockMixin, test.APITransactionTestCase):
 **Description:**
 
 Mixin to execute scripts in containers for marketplace script processing.
+
+### AgentConfigurationTestMixin
+
+**Module:** `waldur_mastermind.marketplace_site_agent.tests.test_agent_configuration`
+
+**Description:** No description available.
 
 ### ResourceGlauthAccessMixin
 
@@ -148714,6 +148721,38 @@ for a VM.
 
 This powerful abstraction keeps the Ansible playbook clean and simple, hiding the complexity of the underlying
 API. The user only needs to provide the list of names, and the resolver handles the rest.
+
+### `facts` Plugin Options for Identifiers, Actions and Secrets
+
+- **UUID-only identifier.** The identifier (`identifier_param`, `name` by default) accepts a name only when
+  the list operation has a `name_exact` query parameter. Otherwise the API would ignore the name and return
+  every object, so the generated module documents the identifier as a UUID and fails when given anything
+  else. A module with no list operation (only `operations.retrieve`) is UUID-only as well.
+
+- **Non-GET retrieve operation.** `operations.retrieve` may name a POST action that returns data without
+  changing it, such as revealing a secret. The runner sends the operation's own HTTP method and still
+  reports `changed: false`. In check mode such a request is not sent: the module exits with
+  `changed: false`, `skipped: true` and nothing else, because the request has a side effect on the server
+  (an audit event). GET retrieves run in check mode as before.
+
+- **`sensitive_fields`.** A list of fields of the returned object that hold secrets. Each one must exist in
+  the retrieve operation's response schema, or generation fails. In the RETURN documentation the field loses
+  its sample and is described as a secret to be handled with `no_log: true`, and the generated example runs
+  the task with `no_log: true` and does not print the result.
+
+    ```yaml
+    - name: resource_api_key_reveal
+      plugin: facts
+      resource_type: "resource API key"
+      identifier_param: "uuid"
+      operations:
+        retrieve: "marketplace_resource_api_keys_reveal"   # POST .../reveal/
+      sensitive_fields:
+        - api_key
+    ```
+
+An operation named explicitly in `operations` must exist in the API specification; generation fails
+otherwise instead of producing a module without it.
 
 ## The Unified Update Architecture
 
