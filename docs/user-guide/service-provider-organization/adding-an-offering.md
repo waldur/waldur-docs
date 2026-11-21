@@ -252,6 +252,34 @@ your hands:
     reported such a backend. Its absence is not a guarantee: if no agent has registered
     yet, Waldur has nothing to go on.
 
+### Allowing only increases
+
+Some limits stand for capacity that cannot safely be taken back once it is in use, such as
+a storage volume or a quota a customer has filled. Turn on **Increase only** on the
+component edit dialog to let customers raise the limit but never lower it.
+
+![Increase only on the component edit dialog](../img/component-increase-only.png)
+
+While it is on, a customer cannot lower the limit in any way: **Change limits**, a size
+on the resource's **Options** tab, a renewal, a plan switch, editing a pending order,
+moving the limit to another resource, or a limit change request. The forms use the current
+limit as the smallest value and say why:
+
+![Change limits refusing a lower storage value](../img/change-limits-increase-only.png)
+
+A request that would still lower it, for example through the API, is refused with an
+error naming the component, its current limit and the requested value. A request must
+include every limit: leaving out an increase-only component counts as lowering it.
+
+Service providers and staff can still lower the limit, so a reduction the customer agrees
+with goes through you. Awards and proposal allocations, and limits reported by a site
+agent, are not affected.
+
+!!! note
+    The setting applies to limit-based and pre-paid components. When a size is calculated
+    from an order option (see [Calculating limits from one answer](#calculating-limits-from-one-answer)),
+    turn it on for the calculated component: a new value that would lower it is refused.
+
 ## Offering a limit-based and a usage-based plan side by side
 
 The accounting type on a component applies to every plan of the offering. To sell
@@ -593,6 +621,8 @@ The ordered value is then shown on the resource's **Options** tab, where custome
 
 !!! note
     A Component Sum cannot be a resource option: it follows the components it adds up.
+
+To stop customers from shrinking or removing such a size, turn on **Increase only** on the calculated component — see [Allowing only increases](#allowing-only-increases).
 
 ## Offering management
 
