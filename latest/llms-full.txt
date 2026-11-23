@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-23T13:29:50.800159Z
+Generated: 2026-11-23T14:53:22.616245Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -36215,10 +36215,11 @@ its sensitive ones (`keycloak.keycloak_url`) and of its sensitive component fiel
 publishes it as the `plugin-catalogue.json` artifact of the `Export plugin catalogue` job on
 `main` and on tags, which is where Waldur takes it from.
 
-### Python 3.9 compatibility
+### Python 3.10 compatibility
 
-Plugins must run on Python 3.9. Set `model_config = ConfigDict(...)` rather than a
-`ClassVar` dict, and use `Optional[X]` / `Union[X, Y]` instead of `X | Y` in field annotations.
+Plugins must run on Python 3.10. Set `model_config = ConfigDict(...)` rather than a
+`ClassVar` dict, and write `X | None` / `X | Y` rather than `Optional[X]` / `Union[X, Y]` in
+field annotations.
 
 ---
 
@@ -36242,7 +36243,9 @@ offering without any `*_backend` loads without error but is not served: `order_p
 at least one entry under [`backend_components`](#backend-components) to provision limits or
 report usage. Everything else on this page — global settings, event processing, resource
 management, backend-specific `backend_settings`, and the optional component fields — has a
-working default and can be added when you actually need it.
+working default and can be added when you actually need it. An offering with
+[`configuration_source: waldur`](#configuration_source) takes all of this from Waldur and holds only
+how to reach Waldur and its secrets.
 
 Unknown keys are **ignored silently**, at the top level and inside an offering, so a misspelt
 optional setting quietly keeps its default. See [Configuration Validation](configuration-validation.md)
@@ -36400,6 +36403,7 @@ section below.
 | Key | Type | Required | Default | Description |
 |---|---|---|---|---|
 | [`name`](#name) | `str` | yes | — | Human-readable name for the offering |
+| [`configuration_source`](#configuration_source) | `Literal['local', 'waldur']` | no | `local` | Where the offering's configuration comes from: this file (local) or Waldur (waldur), in which case the file holds only how to reach Waldur and secrets |
 | [`waldur_api_url`](#waldur_api_url) | `str` | yes | — | Base URL for the Waldur API endpoint |
 | [`waldur_api_token`](#waldur_api_token) | `str` | no | `""` | Authentication token for Waldur API |
 | [`waldur_offering_uuid`](#waldur_offering_uuid) | `str` | yes | — | UUID of the offering in Waldur |
@@ -36424,6 +36428,7 @@ section below.
 | [`preserve_unmanaged_backend_users`](#preserve_unmanaged_backend_users) | `bool` | no | `false` | If False (default), membership sync removes any backend user who is not on the Waldur resource team. If True, users Waldur has ever known as offering users of this offering (any state, including DELETED and restricted) are removed once they leave the team; accounts Waldur has never seen are kept. Applies to local-username backends; ignored for identity-bridge / federation. |
 | [`verify_ssl`](#verify_ssl) | `bool` | no | `true` | Verify SSL certificates |
 | [`omit_anomalous_usage_components`](#omit_anomalous_usage_components) | `bool` | no | `false` | If False (default), a decreasing component blocks the whole set_usage payload. If True, only the decreasing components are omitted and the rest are still reported. Use True for backends whose meters are independent (e.g. Waldur-to-Waldur). |
+| [`policy_settings`](#policy_settings) | `dict[str, Any]` | no | — | Periodic usage policy of the offering as Waldur describes it; informational, the agent does not apply it |
 
 ### Basic Settings
 
@@ -36461,6 +36466,14 @@ starting with `w_` as `Authorization: Bearer`; this needs a site agent release t
 as `Token` and Waldur answers `401 Invalid token.` STOMP event processing works with a PAT too:
 Waldur uses the PAT as the RabbitMQ password.
 
+**Use the `site_agent` token template** where Waldur offers it (the release that includes
+[waldur-mastermind#1276][mm-1276]): in Homeport, open the offering's Integration → Credentials →
+Actions → **Create agent token**, or use `GET /api/personal-access-tokens/templates/` and
+`template_targets`. The template fills in the scopes below and binds the token to the offering, so
+you do not need to choose them by hand.
+
+[mm-1276]: https://code.opennodecloud.com/waldur/waldur-mastermind/-/issues/1276
+
 A PAT's scopes only narrow what its user may do; they grant nothing on their own. The user still
 needs the **OFFERING.MANAGER** role above, and each scope applies only where that role holds the
 permission. Scopes are checked wherever Waldur checks a permission: on every action that changes
@@ -36478,9 +36491,12 @@ Scopes for order processing, membership sync and usage reporting:
 | `RESOURCE.SET_BACKEND_METADATA` | Setting backend metadata, endpoints and membership sync status |
 | `RESOURCE.SET_USAGE` | Reporting total and per-user usage |
 | `OFFERING.UPDATE_USER` | Offering user state changes and updates, the user attribute config |
-| `OFFERING.UPDATE` | Agent identity and STOMP registration, `check_backend_id_uniqueness`, agent status |
+| `OFFERING.MANAGE_AGENT` | Agent identity, STOMP registration, `check_backend_id_uniqueness`, `site_agent_config` |
 
-Without `OFFERING.UPDATE` the agent cannot register its identity. In polling mode it still processes
+Waldur releases before [waldur-mastermind#1276][mm-1276] check `OFFERING.UPDATE` instead of
+`OFFERING.MANAGE_AGENT`.
+
+Without `OFFERING.MANAGE_AGENT` the agent cannot register its identity. In polling mode it still processes
 orders, but the offering's agent status in Waldur stops updating. In event mode it opens no STOMP
 connection, so orders and membership changes are picked up only by the periodic reconciliation
 (every 60 minutes by default).
@@ -36495,31 +36511,34 @@ Scopes for optional features:
 | `OFFERING.UPDATE_INTEGRATION` | The backend reads the offering's `secret_options` or `service_attributes` |
 | `SERVICE_PROVIDER.LIST_PROJECTS` | The backend mirrors source project metadata (see the limits below) |
 | `SERVICE_PROVIDER.LIST_KEYS` | The backend resolves SSH keys from resource attributes (see the limits below) |
-| `OFFERING.CREATE` | The token user owns the provider organization instead of managing the offering |
+| `OFFERING.CREATE` | Before #1276: the token user owns the provider organization instead of managing the offering |
 
 Plugins can call further endpoints (for example the Waldur-to-Waldur and Rancher plugins); check a
 plugin's own documentation for what its token needs.
 
 Without `OFFERING.UPDATE_INTEGRATION` Waldur leaves `secret_options` and `service_attributes` out of
-the offering it returns, without an error. `OFFERING.CREATE` replaces `OFFERING.UPDATE` for agent
-identity and STOMP registration when the token user is an organization owner.
+the offering it returns, without an error. On releases before #1276, `OFFERING.CREATE` replaces
+`OFFERING.UPDATE` for agent identity and STOMP registration when the token user is an organization
+owner; from #1276 on, `OFFERING.MANAGE_AGENT` covers both.
 
 Binding: a binding limits the PAT to the bound entity and what lies below it. Which one works
 depends on where the token user's role is:
 
 - **Leave the PAT unbound** unless you need a binding. This always works: its scopes and the user's
   roles still limit it.
-- **Do not bind it to the offering alone.** At startup the agent looks up the offering's service
-  provider, and an offering-bound PAT cannot list it, so the agent stops before processing
-  anything.
+- **Bind it to the offering** on a Waldur release that includes [waldur-mastermind#1276][mm-1276]; a
+  `site_agent` template token is bound this way. The binding lets the token read the offering's
+  service provider record, which the agent looks up at startup, and an organization owner's role
+  counts for it too. On earlier releases an offering-bound PAT cannot list the service provider, so
+  the agent stops before processing anything: use one of the options below instead.
 - **Offering manager who also manages the service provider**: from the Waldur release that includes
   [waldur-mastermind#907](https://code.opennodecloud.com/waldur/waldur-mastermind/-/issues/907),
   binding the PAT to the service provider works. Creating that binding needs a role on the service
   provider or its organization that holds one of the requested scopes. On earlier releases such a
   binding authorises nothing on the provider's offerings.
-- **Owner of the provider organization**: leave the PAT unbound. Waldur checks the binding on the
-  organization, where the owner's role is, so a binding on the offering or the service provider is
-  refused on provider actions, and a binding on the organization does not cover resources ordered
+- **Owner of the provider organization**, on releases before #1276: leave the PAT unbound. Waldur
+  checks the binding on the organization, where the owner's role is, so a binding on the offering
+  or the service provider is refused on provider actions, and a binding on the organization does not cover resources ordered
   by other organizations
   ([waldur-mastermind#919](https://code.opennodecloud.com/waldur/waldur-mastermind/-/issues/919)).
 - A binding on the provider organization reaches **less** than one on its service provider, even
@@ -36588,6 +36607,113 @@ offerings:
   [Agent Identity Registration Is Refused](deployment.md#agent-identity-registration-is-refused).
   The set of accepted types is a property of the Waldur server, so it can differ between Waldur
   versions.
+
+### Configuration from Waldur
+
+#### `configuration_source`
+
+- **Type**: `local` or `waldur`
+- **Default**: `local`
+- **Description**: Where the offering's configuration comes from. With `local` (the default and
+  the behaviour of every earlier release) the file holds it all. With `waldur` the agent reads the
+  offering's roles, event settings, agent settings, `backend_settings`, `backend_components` and
+  `policy_settings` from Waldur when it starts, from the agent configuration set on the offering in
+  Waldur, and the file keeps only what the agent needs to reach Waldur and the secrets Waldur never
+  stores.
+
+An offering with `configuration_source: waldur` may hold only these keys in the file:
+
+- `waldur_api_url`, `waldur_offering_uuid`, and `waldur_api_token` or the three `oidc_*` settings;
+- `verify_ssl`;
+- `configuration_source`, and optionally `name` (Waldur's offering name otherwise);
+- `backend_settings` holding **secrets only**: the secret settings Waldur lists for the offering,
+  or that its plugins declare secret, at the same paths (for SLURM with LDAP,
+  `ldap.bind_password`).
+
+Any other key, at the offering level or inside `backend_settings`, fails the load with an error
+naming it: a value that looks configured in the file but would be replaced by Waldur's is never
+accepted silently.
+
+```yaml
+timezone: "UTC"
+offerings:
+  - name: "HPC cluster"
+    configuration_source: waldur
+    waldur_api_url: "https://waldur.example.com/api/"
+    waldur_api_token: "<token>"
+    waldur_offering_uuid: "<offering UUID>"
+    backend_settings:
+      ldap:
+        bind_password: "<secret>"
+```
+
+`examples/waldur-site-agent-config-from-waldur.yaml.example` is a complete bootstrap file.
+
+At startup, for each such offering, the agent calls
+`GET marketplace-provider-offerings/<uuid>/site_agent_config/` with the offering's credentials
+(through `global_proxy`, honouring `verify_ssl`), merges the local secrets into
+`backend_settings`, checks that every secret Waldur lists as required is set and not empty (a
+secret marked *required with parent* only when its block, such as `ldap`, is configured), and then
+validates the result exactly like a local configuration. It logs the offering, the configuration
+`version` Waldur reports and the source.
+
+The token needs **OFFERING.MANAGE_AGENT** on the offering, which a `site_agent` template token
+carries, or permission to update the offering's integration, which **OFFERING.MANAGER** has. Reading
+the configuration with `OFFERING.MANAGE_AGENT` needs a Waldur release that includes
+[waldur-mastermind#1287](https://code.opennodecloud.com/waldur/waldur-mastermind/-/issues/1287)'s
+token fix; with an older Waldur, use the API token of the offering's manager.
+Waldur answers 400 for an offering that is not a site agent offering.
+
+**Failure is loud.** If Waldur is unreachable or answers 400, 401, 403, 404 or any other error, if
+the file holds a key that is not allowed, or if a required secret is missing, the agent stops at
+startup with a non-zero exit status and one error line naming the offering and the cause, for
+example:
+
+```text
+Cannot load the configuration from /etc/waldur/waldur-site-agent-config.yaml: Offering 'HPC cluster'
+(<uuid>): Waldur answered HTTP 403 (the token needs OFFERING.MANAGE_AGENT on the offering, or
+permission to update its integration) for its configuration at https://waldur.example.com/api/marketplace-provider-offerings/<uuid>/site_agent_config/:
+{"detail": "You do not have permission to perform this action."}
+```
+
+There is no cached fallback: an agent that cannot reach Waldur cannot process orders or report
+usage either, and the service manager restarts it.
+
+**Changes apply on restart.** The configuration is read once per process, as the file is. After
+changing the agent configuration in Waldur, restart the agent processes of the offering.
+
+**Drift warning for local offerings.** When the agent starts, each offering with
+`configuration_source: local` is compared with what Waldur would serve for it, best effort. Every
+difference is logged as one warning naming the offering and what differs: per component
+`accounting_type`, `unit_factor`, `unit_factor_reporting` and `limit` (and a component Waldur does
+not have) and per backend role, with both values; per non-secret `backend_settings` key (a key the
+file leaves out counts as its plugin default), by key only — a setting's value is never logged, as
+a plugin may keep a credential under a key it does not mark secret. A Waldur without the endpoint,
+a token without the permission or an unreachable Waldur only produces a debug message; the check
+never stops the agent.
+
+Waldur never decides how the agent reaches it: `waldur_api_url`, `waldur_offering_uuid`, the
+credentials, `verify_ssl` and `configuration_source` are always the local file's, and any of them
+in Waldur's response is dropped with a warning.
+
+**Who controls the agent.** With `configuration_source: waldur`, whoever may change the offering's
+agent configuration in Waldur decides, at the agent's next restart, where it connects, what it runs
+and what access it grants — and therefore where the secrets kept in the local file are sent. For
+example:
+
+- an LDAP `uri` changed in Waldur receives the local `ldap.bind_password`;
+- a token file path (such as SLURM's `rest_api.token_file`) makes the agent read that file on its
+  host and send its content to the configured endpoint;
+- `stomp_ws_host` with `websocket_use_tls: false` receives the agent's API token in plain text.
+
+With a local file, a person copying the generated file sees such a change before the agent acts on
+it; here nobody does. Waldur guards these settings with the **OFFERING.UPDATE_AGENT_CONFIGURATION**
+permission, which by default every role that may update the offering's integration holds:
+organization owners, service provider managers and offering managers. Treat that permission as
+control over the agent host: grant those roles, and any API token carrying the permission, only to
+people you would let edit the agent's configuration file. If that is too broad, keep the offering
+on `configuration_source: local`, or remove the permission from the roles in Waldur that should not
+have it.
 
 ### Backend Configuration
 
@@ -36731,6 +36857,15 @@ for <offering>` for it, and `report` stops the whole process with the same error
   filtered offering-user list for that pass; departed or restricted users
   stay on the backend until the unfiltered list is reachable again, and the
   agent logs which removals were deferred.
+
+#### `policy_settings`
+
+- **Type**: Mapping
+- **Default**: none
+- **Description**: The offering's periodic usage policy as Waldur describes it (`limit_type`,
+  `grace_ratio`, `carryover_enabled`, …). Waldur writes it into the configurations it generates and
+  serves; the agent keeps it on the offering but does not apply it, as the policy is enforced from
+  Waldur.
 
 ## Common Backend Settings
 
@@ -37302,9 +37437,13 @@ Validate your configuration:
 # offering's order processing backend (for SLURM: the binaries and `sinfo -V`).
 waldur_site_diagnostics -c /etc/waldur/waldur-site-agent-config.yaml
 
-# Create the offering's components in Waldur from backend_components
+# Create the offering's components in Waldur from backend_components (deprecated)
 waldur_site_load_components -c /etc/waldur/waldur-site-agent-config.yaml
 ```
+
+`waldur_site_load_components` is deprecated: configure the components in Waldur and use
+[`configuration_source: waldur`](#configuration_source) instead. It skips offerings whose
+configuration comes from Waldur, which already has their components.
 
 `waldur_site_diagnostics` is designed to exit 1 when an order processing backend's own diagnostics
 fail or its `cluster_name` does not match the offering's `backend_id` in Waldur. Waldur API errors
@@ -37362,6 +37501,38 @@ The agent can run in 4 different modes, deployed as separate systemd services:
 - agent-report
 
 **Note**: Only one combination can be active at a time.
+
+## One-shot usage report
+
+`waldur_site_report -c /etc/waldur/waldur-site-agent-config.yaml` runs the same usage report as
+`agent-report` and exits. The exit status is non-zero when any offering fails, so a timer
+or cron job can alert on it. Use it when the report has to run at a fixed time, and leave
+`waldur-agent-report.service` disabled. Running both pushes usage twice.
+
+The command does not write the liveness heartbeat. On a host that also runs a daemon,
+that run must not refresh the daemon's heartbeat file, or a stalled daemon keeps
+looking alive.
+
+Waldur leaves a usage-reporting agent Active between runs. The report service
+does not go idle, and the offering's usage-reporting integration does not go
+disconnected, however long the gap is. The processor's last run and the
+integration row's last request time are the record of the last report. The
+other agent services still go idle after 10 minutes without a processor run,
+and the other integration rows still go disconnected after an hour without a
+request. A failed report is this command's non-zero exit, which the timer or
+cron can alert on.
+
+A systemd timer that starts a oneshot service does not start a second run while the
+first is still active. Cron does not. Wrap the command so a slow run cannot overlap
+the next one:
+
+```bash
+15 6 * * * flock -n /run/waldur-site-report.lock \
+  waldur_site_report -c /etc/waldur/waldur-site-agent-config.yaml
+```
+
+`flock -n` does not start the report when the lock is held, and it exits non-zero.
+An alert on any non-zero status also fires while a run is still going.
 
 ## Systemd Service Setup
 
@@ -37911,6 +38082,7 @@ Config: the `WALDUR_E2E_*_CONFIG` variable the file reads (`CONFIG` =
 | File | Config | Job | What it validates |
 |------|--------|-----|-------------------|
 | `test_e2e_api_optimizations.py` | CONFIG | REST | Order lifecycle, membership sync, reporting |
+| `test_e2e_config_from_waldur.py` | CONFIG ⁴ | REST | `configuration_source: waldur` |
 | `test_e2e_benchmark.py` | CONFIG | REST | API call counts and response sizes; scales to N resources |
 | `test_e2e_default_account_policy.py` | CONFIG | REST | `default_account_policy` sets the DefaultAccount |
 | `test_e2e_membership_stale.py` | MEMBERSHIP | REST | Which backend users membership sync removes or keeps |
@@ -37933,6 +38105,9 @@ Config: the `WALDUR_E2E_*_CONFIG` variable the file reads (`CONFIG` =
 `sacct` on the same state); no agent config.
 ³ `WALDUR_E2E_LDAP_CONFIG`, `WALDUR_E2E_LDAP_INVERTED_CONFIG` and
 `WALDUR_E2E_LDAP_PROJECT_GROUPS_CONFIG`.
+⁴ Only the Waldur URL and token come from the config; the test writes the agent configuration of
+its own offering (`E2E SLURM Config from Waldur`) and loads it from Waldur. It needs a Waldur with
+`GET marketplace-provider-offerings/{uuid}/site_agent_config/` (waldur/waldur-mastermind#1287).
 
 ### ldap-roles (`plugins/ldap-roles/tests/e2e/`)
 
@@ -38294,11 +38469,28 @@ For the pip install below, use `/opt/waldur-agent/venv/bin/python` instead.
 
 ### Alternative: a virtual environment with pip
 
-If uv is not an option, use a virtual environment (Python 3.9.2 or newer) and link the
-commands into `/usr/local/bin`:
+If uv is not an option, use a virtual environment (Python 3.10 or newer) and link the
+commands into `/usr/local/bin`. Rocky Linux 9's `python3` is 3.9, which is too old:
+pip would not fail but quietly install the last release that still supported 3.9, so
+create the environment with Python 3.12 there:
+
+=== "Ubuntu 24.04"
+
+    ```bash
+    sudo apt install -y python3-venv
+    sudo python3 -m venv /opt/waldur-agent/venv
+    ```
+
+=== "Rocky Linux 9"
+
+    ```bash
+    sudo dnf install -y python3.12
+    sudo python3.12 -m venv /opt/waldur-agent/venv
+    ```
+
+Then install the agent and its plugins into it:
 
 ```bash
-sudo python3 -m venv /opt/waldur-agent/venv
 sudo /opt/waldur-agent/venv/bin/pip install \
   waldur-site-agent waldur-site-agent-slurm waldur-site-agent-basic-username-management
 sudo ln -sf /opt/waldur-agent/venv/bin/waldur_* /usr/local/bin/
@@ -38520,7 +38712,7 @@ class CustomUsernameBackend(AbstractUsernameManagementBackend):
         # Custom logic here
         return generated_username
 
-    def get_username(self, offering_user: OfferingUser) -> Optional[str]:
+    def get_username(self, offering_user: OfferingUser) -> str | None:
         """Retrieve existing username from local identity provider."""
         # Custom lookup logic here
         return existing_username
@@ -39368,7 +39560,7 @@ config via `username_management_backend`.
 | Method | Purpose |
 |---|---|
 | `generate_username(offering_user) -> str` | Create a new local username. Return `""` if generation is not supported. |
-| `get_username(offering_user) -> Optional[str]` | Look up the existing local username for the user, or `None`. |
+| `get_username(offering_user) -> str \| None` | Look up the existing local username for the user, or `None`. |
 
 `get_or_create_username` is provided by the base class and calls
 `get_username` first, then `generate_username` only if no username is
@@ -39981,7 +40173,7 @@ of them.
 `scripts/generate_reference_docs.py --check` (run by `tests/test_reference_docs.py`)
 fails when a top-level field of your settings schema is not mentioned in the
 plugin README. It does not descend into a nested model: a
-`prometheus: Optional[PrometheusSettingsSchema]` field is checked as the single
+`prometheus: PrometheusSettingsSchema | None` field is checked as the single
 name `prometheus`, and the nested model's own fields are invisible to it.
 Document those by hand in the plugin README, and give the nested model
 `model_config = ConfigDict(extra="forbid")` so a misspelt key is reported against
@@ -40733,7 +40925,7 @@ committing, and tagging. CI takes care of publishing.
   `main` is behind or has diverged.
 - The [Claude CLI][claude-cli] is installed (used for
   changelog generation).
-- Python 3.9+ and [uv](https://docs.astral.sh/uv/) are available.
+- Python 3.10+ and [uv](https://docs.astral.sh/uv/) are available.
 
 [claude-cli]: https://docs.anthropic.com/en/docs/claude-code
 
@@ -41645,9 +41837,9 @@ A complete reference example showing both subsystems is in
 ## Caveats and known inconsistencies
 
 - **`HomedirQuotaConfig.block_softlimit` / `block_hardlimit` are typed as
-  `Optional[str]`** (to allow XFS suffixes like `"900g"`), while
+  `str | None`** (to allow XFS suffixes like `"900g"`), while
   `LustreQuotaConfig.block_softlimit` / `block_hardlimit` are typed as
-  `Optional[int]`. Use integers (kilobytes) for `project_directory.lustre_quota`
+  `int | None`. Use integers (kilobytes) for `project_directory.lustre_quota`
   even if you use string-with-suffix for `homedir_quota` on Lustre.
 - **`group_owner_source` and `group_name`** are accepted by the runtime but
   are not declared fields of `ProjectDirectoryConfig` (they pass through via
@@ -41705,7 +41897,7 @@ the current billing period and reporting it at regular intervals.
 ### System Requirements
 
 - Linux system with access to SLURM cluster head node
-- Python 3.9.2 or higher
+- Python 3.10 or higher
 - `uv` package manager installed
 - An OS account that can read every user's job records (root, `SlurmUser`, or
   a user with `AdminLevel=Operator` or higher when `PrivateData` hides jobs)
@@ -42935,11 +43127,16 @@ waldur_site_agent -m <mode> -c <config-file>
 | `waldur_sync_resource_limits` | Reconcile resource limits once — by default the backend's limits are written to Waldur |
 | `waldur_site_test_order` | Generate an order from a template and run it through a mock (or, with `--use-real-backend`, the real) backend |
 | `waldur_site_load_historical_usage` | Backfill historical usage into Waldur |
+| `waldur_site_report` | Run one usage report and exit |
 | `waldur_site_export_plugin_catalogue` | Write the catalogue of installed plugins (roles, settings schemas, secret settings) that Waldur vendors; see [Secret settings and roles](docs/configuration-validation.md#secret-settings-and-roles-the-plugin-catalogue) |
 
 The utility commands accept `-c` for the configuration file like the agent does;
 `waldur_site_healthz` spells it `--config-file` (plus `--max-age`, `--heartbeat-path` and
 `--liveness-only`). Run any of them with `--help`.
+
+`waldur_site_report` runs the same usage report as `-m report` and then exits. The exit
+status is non-zero when any offering fails. Schedule it from cron or a systemd timer in
+place of the long-running report agent, not next to it.
 
 ## Logging
 
@@ -56098,6 +56295,10 @@ When a user cannot be resolved on Waldur B:
 
 Resolved user UUIDs are cached for the lifetime of the backend instance to minimize API calls.
 
+With `identity_bridge`, staff, support and identity-manager accounts on Waldur B
+cannot be resolved by a non-staff agent, so their project roles are not synced. See
+[Privileged Accounts on Waldur B](#privileged-accounts-on-waldur-b).
+
 ### Choosing the Right Combination
 
 | Scenario | `user_resolve_method` | `user_match_field` | Notes |
@@ -56178,6 +56379,41 @@ This ensures users exist on Waldur B before the agent tries to resolve and add t
 2. For each offering user on Waldur A, it sends `POST /api/identity-bridge/` to Waldur B
 3. Identity Bridge creates the user if they don't exist, or updates attributes if they do
 4. Users that disappear from the offering are deactivated via `POST /api/identity-bridge/remove/`
+
+### Privileged Accounts on Waldur B
+
+Since Waldur 8.1.4, the Identity Bridge only lets a **staff** caller push or remove an
+existing account that is **staff, support or an identity manager** on Waldur B. Anyone
+else gets `403 Only staff may push or remove staff, support or identity manager
+accounts.` This stops an ISD from claiming a privileged account, overwriting its
+attributes and then deactivating it.
+
+The agent normally runs as an identity manager, so for such users:
+
+- their profile is not pushed and their project roles on Waldur B are **not synced**
+  (not added, changed or removed);
+- the agent logs one `WARNING` per user per sync cycle, naming the user, with no
+  traceback. Other Identity Bridge failures are still logged as errors;
+- within a cycle, the agent asks the bridge about each such user at most once.
+  The answer is kept until shortly before the next membership sync
+  (`WALDUR_SITE_AGENT_MEMBERSHIP_SYNC_PERIOD_MINUTES`), so an account that loses its
+  privileges is picked up again on the next cycle;
+- with `user_not_found_action: fail`, resolving them raises a `BackendError`.
+
+Looking these users up in the user list does not work either: a non-staff caller
+never sees staff users on Waldur B.
+
+To handle them, either:
+
+- **Manage their project roles on Waldur B by hand.** Staff can reach every
+  project anyway; support and identity-manager users need explicit roles.
+- **Run the agent with a staff token on Waldur B.** If it is a personal access token,
+  it needs the `STAFF.ACCESS` scope (see
+  [Using a personal access token](../../docs/configuration.md#using-a-personal-access-token)).
+  This removes the limit, but the agent then has full control of Waldur B: a leaked
+  token, or a compromised Waldur A pushing bad data, can change or deactivate any
+  account there, privileged ones included. Prefer the manual option unless you accept
+  that risk.
 
 ### Identity Bridge Configuration
 
@@ -65596,6 +65832,13 @@ can_update_projects = get_connected_projects_by_permission(
 | `OFFERING.DELETE` | Delete offerings |
 | `OFFERING.PAUSE/UNPAUSE` | Control offering availability |
 | `OFFERING.MANAGE_USER_GROUP` | Manage offering user groups |
+| `OFFERING.MANAGE_AGENT` | Run the offering's site agent: register it, its services and queues, read its configuration, and report SLURM policy commands, without being able to edit the offering |
+
+`OFFERING.MANAGE_AGENT` was split out of `OFFERING.CREATE` (on the organization)
+and `OFFERING.UPDATE` (on the offering). When `permissions-override.yaml` drops
+one of those and the role holds neither any more, `OFFERING.MANAGE_AGENT` is
+dropped from it too, so a drop list written before the split keeps its effect.
+List it under `add_permissions` to keep it.
 
 ### Resource Permissions
 
@@ -109070,10 +109313,9 @@ To create one:
    and this offering already selected.
 3. Finish the wizard and copy the token into the agent's file as `waldur_api_token`.
 
-The item is enabled when Waldur can make a working agent token for you on this offering, as it
-can for the offering's managers. If it cannot, for example for an organization owner who is not
-the offering's manager, the item is disabled and suggests adding yourself as the offering's
-manager.
+The item is shown to the offering's managers and to the owners of its organization, when that
+organization is a service provider. Waldur offers no agent token for an offering whose organization
+is not a service provider, so the item does not appear there.
 
 Through the API, the template's endpoints are `GET /api/personal-access-tokens/templates/` and
 `GET /api/personal-access-tokens/template_targets/?template=site_agent`. See
@@ -127782,6 +128024,7 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
 - auth_login_failed_with_saml2
 - auth_login_failed_with_username
 - auth_login_failed_with_valimo
+- dedicated_user_created
 - event_consumer_registered_with_broad_credential
 - event_consumer_resync_requested
 - event_consumer_webhook_updated
@@ -127809,6 +128052,7 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
 - reauthentication_granted
 - reauthentication_refused
 - reauthentication_waived
+- service_account_signed_in
 - token_created
 - token_lifetime_updated
 - token_viewed
@@ -128373,6 +128617,7 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
 - auth_login_failed_with_saml2
 - auth_login_failed_with_username
 - auth_login_failed_with_valimo
+- dedicated_user_created
 - event_consumer_registered_with_broad_credential
 - event_consumer_resync_requested
 - event_consumer_webhook_updated
@@ -128412,6 +128657,7 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
 - reauthentication_granted
 - reauthentication_refused
 - reauthentication_waived
+- service_account_signed_in
 - ssh_key_creation_succeeded
 - ssh_key_deletion_succeeded
 - token_created
@@ -130291,13 +130537,15 @@ Creates or updates a user based on CUID (username). The caller specifies which I
 }
 ```
 
+**Privileged accounts**: only staff may change a staff, support or identity manager account. When anyone else pushes an existing one, the account is returned unchanged: `created` is `false` and `updated_fields` is empty. Its attributes, `active_isds` and `attribute_sources` stay as they are. The account does not have to belong to the caller's ISD: any identity manager, for any ISD it manages, can learn the UUID of any active privileged account whose username it knows or guesses (`admin`, say). That UUID is what lets an ISD agent give the account project roles. Removing such an account is still refused (see below).
+
 **Error responses**:
 
 | Status | Condition |
 |--------|-----------|
 | 400 | Invalid source format, disallowed fields, or deactivated user |
 | 401 | Not authenticated |
-| 403 | Feature disabled, insufficient permissions, source not in `managed_isds`, or a non-staff caller naming a staff, support or identity manager account |
+| 403 | Feature disabled, insufficient permissions, or source not in `managed_isds` |
 
 ### Remove User from ISD
 
@@ -136609,6 +136857,10 @@ Base URL: `/api/personal-access-tokens/`
 | POST | `/api/personal-access-tokens/{uuid}/rotate/` | Atomic rotation: creates new token, revokes old |
 | POST | `/api/personal-access-tokens/{uuid}/set_network_acl/` | Replace the token's source-network allowlist |
 | GET | `/api/personal-access-tokens/available_scopes/` | Lists all delegatable permission enum values |
+| GET | `/api/personal-access-tokens/templates/` | Token templates the caller can use, such as the site agent's |
+| GET | `/api/personal-access-tokens/template_targets/?template=<key>` | Entities a template's token can be bound to |
+| GET | `/api/personal-access-tokens/available_binding_entities/?type=<type>&query=<text>` | Entities the caller can restrict a token to (first 50 matches) |
+| POST | `/api/personal-access-tokens/agent_user/` | Staff: create a dedicated user for a template target and its restricted token |
 
 PUT and PATCH are disabled -- tokens are immutable after creation.
 
@@ -136641,6 +136893,109 @@ Response (201, with `Cache-Control: no-store` header):
 }
 ```
 
+### Templates
+
+A template names the scopes a known integration needs, so its token carries
+those and nothing more. It is a suggestion only: the token is still created
+through `POST /api/personal-access-tokens/` with explicit scopes, and the create
+checks apply as usual. Neither endpoint accepts a personal access token.
+
+`site_agent` is the first template. Its required scopes are what the site
+agent's own calls are checked against:
+
+| Scope | Agent calls |
+|-------|-------------|
+| `ORDER.APPROVE` | `approve_by_provider`, `set_state_done`, `set_state_erred` on orders |
+| `ORDER.REJECT` | `reject_by_provider` on orders |
+| `RESOURCE.SET_BACKEND_ID` | `set_backend_id` on orders and provider resources |
+| `RESOURCE.SET_STATE` | `set_as_ok`, `set_as_erred`, `refresh_last_sync`, `set_limits` |
+| `RESOURCE.SET_BACKEND_METADATA` | `set_backend_metadata`, `set_endpoints`, `set_membership_sync_statuses` |
+| `RESOURCE.SET_USAGE` | `set_usage`, `set_user_usage`, `set_user_usages` |
+| `OFFERING.UPDATE_USER` | offering user state transitions |
+| `OFFERING.MANAGE_AGENT` | agent identity, service and queue registration; offering `set_backend_metadata`, `check_unique_backend_id` and `site_agent_config`; SLURM policy `report-command-result` |
+
+Optional features add `OFFERING.UPDATE_COMPONENTS` (component sync),
+`OFFERING.MANAGE_BACKEND_RESOURCES` (backend resource import),
+`SERVICE_PROVIDER.LIST_KEYS` (the SSH keys of the offering's users) and
+`RESOURCE.MANAGE_API_KEY` (resource API keys).
+
+`SERVICE_PROVIDER.LIST_KEYS` held on an offering (`OFFERING.MANAGER` has it)
+lets `/api/marketplace-service-providers/<uuid>/keys/` list the keys of the
+users of that offering's resources; held on the provider's organization it
+lists the keys of all the provider's users, as before.
+
+**Where it is bound: one offering.** A site-agent token is bound to the
+offering it serves:
+
+- Its user holds the template's scopes on the offering (`OFFERING.MANAGER`) or
+  on the offering's organization (`CUSTOMER.OWNER`). The agent's checks accept
+  a role above the binding (`binding_on_path`): a binding that names the
+  offering counts for the orders, resources, offering users, usage and agent
+  registration of that offering, whether the role is held on the offering or
+  on its organization. The token reaches nothing outside that offering.
+- An organization binding is not offered. A token bound to the organization
+  (and its service provider, to see the resources it sells) would reach the
+  organization's own purchases and the provider's account directory.
+- An offering binding lets the token list and retrieve the offering's service
+  provider record, which the agent looks up at startup. It does not reach the
+  provider's detail actions, such as its team.
+- What a token reads follows the user's roles, not the token's scopes. The
+  role must therefore also grant the template's `role_permissions`, which for
+  the site agent are `ORDER.LIST` (which orders it sees) and `OFFERING.UPDATE`
+  (a resource's team). The token does not carry them.
+
+`template_targets` lists the offerings where the caller's roles hold all of
+that, each with the `bindings` to create the token with and the optional
+features they can add there. Site-wide grants make no target. `templates`
+lists a template only when it has a target, and lists nothing to a user who
+may not create tokens.
+
+A staff user's token without `STAFF.ACCESS` acts as the user without staff. So
+staff get two kinds of target:
+
+- an offering where their own roles qualify, as anyone else (a scoped token);
+- every other offering, marked `staff_access`. There the token works only with
+  `STAFF.ACCESS` added to its scopes, and such a token cannot be restricted: its
+  `bindings` are empty and it can do everything the staff user can. The
+  offering only fills in the agent's configuration.
+
+Staff can instead create a dedicated user for the offering (`agent_user`, with
+the same re-authentication as creating a token). It creates a user with no
+usable password that only holds `OFFERING.MANAGER` on the offering (its
+username, unless one is chosen, is the template, the offering's name and the
+start of its UUID, such as `site-agent-slurm-hpc-cluster-f30000`, numbered
+`-2`, `-3`… while taken; `template_targets` shows staff that name as
+`suggested_username`), checks that
+this role grants what the template needs on this site, and returns a token for
+that user restricted to the offering, with the chosen optional features. Such
+a token passes no owner-only check and reaches no other offering. Everything is
+rolled back when any step is refused.
+
+The audit log records the creation in the user's and the creating staff
+user's event streams: `user_creation_succeeded`, `dedicated_user_created`
+(naming the staff user, the template and the offering), `role_granted` (with
+the reason "Dedicated Site agent user", initiated by the staff user) and
+`pat_created`.
+
+The dedicated user is marked `is_service_account` (read-only in the API). It has
+no usable password and normally authenticates with its token. Single sign-on
+still finds it by username like any account and may sign in to it, for a team
+that logs in to it on purpose; every such sign-in (OIDC token, OIDC/OAuth login,
+identity bridge) is logged at WARNING and recorded as a
+`service_account_signed_in` event, since a username collision looks the same.
+
+Which rows a token can read still follows the user's roles, not the token's
+scopes, so the template carries no `*.LIST` permissions.
+
+### Restricting a token by hand
+
+`available_binding_entities` lists, for one entity type, the entities the
+create endpoint accepts as a binding: those the caller holds an active role on,
+directly or on an ancestor (an organization's projects, offerings and
+resources, a project's resources, an offering's resources). Staff and holders
+of a site-wide grant get any entity. Whether the role grants one of the token's
+permissions there is checked when the token is created.
+
 ### Rotate Token
 
 **POST** `/api/personal-access-tokens/{uuid}/rotate/`
@@ -136654,6 +137009,25 @@ Atomically revokes the old token and creates a new one with the same name, scope
 Sets `is_active=False` on the token (soft delete). Returns 204.
 
 ## Scope Enforcement
+
+**Restricted tokens and role checks.** Some actions check only that the user
+holds a role (`is_owner`, `is_service_manager`, `is_administrator`,
+`is_offering_manager`), not a permission, so a token's scopes do not narrow
+them; its bindings do. A token passes such a check within its bindings with its
+user's roles, whatever scopes it carries. This is what lets an owner's token
+bound to a project manage that project's credit, policies or ports.
+
+It also means an organization owner's site-agent token, bound to one offering,
+can perform the owner-only actions on that offering: update or delete its
+policies, edit its tags, organization groups and user attribute
+configuration. An offering manager's token cannot, as those checks want the
+owner role.
+
+An owner's token bound to one offering also cannot complete an offering user's
+deletion (`set_deleted`, `request_deletion`) or set POSIX attributes: those
+act on the provider account and identities shared by the provider's offerings,
+so they need a binding that covers the organization. Where either matters, give
+the agent its own user with only the `OFFERING.MANAGER` role on the offering.
 
 PAT scopes follow an intersection model: the effective permission at request time is the intersection of the PAT's scopes and the user's current roles.
 
