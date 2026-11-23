@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-22T03:04:03.442945Z
+Generated: 2026-11-23T03:04:03.802547Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -867,6 +867,37 @@ own: such rows are invisible until something tries to read them.
 A deployment that started without a dedicated key can adopt one at any time —
 the `secretKey`-derived key stays an implicit last-resort fallback, so rows
 written before the switch keep decrypting with no fallback entry needed.
+
+### Event retention
+
+Every event in the event log (a resource created, a role granted, a sign-in)
+stays in the database for the life of the deployment unless
+`waldur.eventRetentionDays` is set. With a period set, a daily Celery beat task
+(`delete-expired-events`, 04:30) deletes events older than that many days,
+together with their feed entries:
+
+```yaml
+waldur:
+  eventRetentionDays: 365
+```
+
+- Whole days. Unset or `0` keeps events forever, which is the default; the
+  chart refuses to render anything but a whole number.
+- It is rendered into `override.conf.py` as
+  `WALDUR_CORE["EVENT_RETENTION_DAYS"]`. It is a deployment setting: it does
+  not appear in the administration settings, and staff cannot change it from
+  the UI or through `waldur.settingsOverrides`.
+- **Deletion is permanent.** The event log is the audit trail users,
+  organization owners and auditors read, so choose the period by your
+  audit-retention policy, and back up or export the events first if they must
+  be kept elsewhere.
+- Pods do not restart when only this value changes. After the `helm upgrade`,
+  run `kubectl rollout restart deploy/waldur-mastermind-worker
+  deploy/waldur-mastermind-beat deploy/waldur-mastermind-api` so the worker
+  picks up the new period.
+
+See the event retention page of the Waldur admin guide for how the cleanup
+runs on a large table and how to choose a period.
 
 ## High Availability Considerations
 
@@ -14670,7 +14701,7 @@ Enable logging of user profile data access events for GDPR compliance.
 
 **Default value:** 90
 
-Number of days to retain user data access logs before automatic cleanup.
+Number of days to retain user data access logs before automatic cleanup. 0 keeps them forever.
 
 #### USER_DATA_ACCESS_LOG_SELF_ACCESS
 
@@ -16308,6 +16339,103 @@ See [Debugging](../debugging.md) for the Docker Compose equivalent and broader l
 | Log shows the message was sent, recipient never receives it | SPF/DKIM missing for the `DEFAULT_FROM_EMAIL` domain, or recipient-side filtering |
 | Email log is populated but nothing arrives | The relay accepted and dropped the message — inspect the relay's own logs |
 | Templates edited on disk have no effect | Stored templates take precedence — edit them under **Administration → Notifications** or via `override_templates` |
+
+---
+
+### Event Retention
+<!-- Source: docs/admin-guide/mastermind-configuration/event-retention.md -->
+
+# Event Retention
+
+Every action Waldur records — a resource created, a role granted, a sign-in, an
+order approved — is written to the event log as an `Event` row, plus one `Feed`
+row for each organization, project or resource the event is filed under.
+Nothing removes these rows by default, so on a busy deployment the event
+tables grow for the life of the installation and become some of the largest in
+the database.
+
+`EVENT_RETENTION_DAYS` bounds them.
+
+## Configuration
+
+| Setting | Environment variable | Default | Description |
+|---------|----------------------|---------|-------------|
+| `WALDUR_CORE["EVENT_RETENTION_DAYS"]` | `WALDUR_EVENT_RETENTION_DAYS` | `0` | Delete events older than this many days. `0` keeps events forever. |
+
+It is a deployment setting, not a runtime one: it does not appear in the
+administration settings, and staff cannot change it from the UI or through
+`/api/override-settings/`. The retention period of the audit trail is decided
+by whoever runs the deployment, and changing it means changing the
+deployment's configuration and restarting the API, Celery worker and Celery
+beat containers.
+
+- **Helm** (`waldur-helm`): set `waldur.eventRetentionDays` in your values
+  file.
+- **Docker Compose** (`waldur-docker-compose`): set
+  `WALDUR_EVENT_RETENTION_DAYS` in `.env`.
+- **Other image-based deployments**: pass the `WALDUR_EVENT_RETENTION_DAYS`
+  environment variable to the containers.
+- **Source installs**: set `WALDUR_CORE["EVENT_RETENTION_DAYS"]` in your
+  settings module.
+
+The image treats a negative value like `0`, and a value that is not a whole
+number, or is above `36500` (a century), stops the container at startup with
+an error naming the variable. The Helm chart refuses anything but a whole
+number of days when it renders.
+
+## How It Works
+
+The Celery beat entry `delete-expired-events` runs the task
+`waldur_core.logging.delete_expired_events` daily at 04:30. When the setting
+is above `0`, the task deletes every event created more than that many days
+ago, oldest first, together with its feed rows. It deletes 5,000 events per
+transaction, so the first run on a deployment with years of history does not
+hold one long transaction or lock the event table for its whole duration;
+it logs the number of events deleted and the cutoff it used.
+
+A run stops after 10 minutes, well inside the Celery soft time limit, and
+queues a fresh run for the events still left, so the backlog of a first run
+is cleared in a chain of runs rather than one that is cut off. Two runs that
+overlap (one started by hand while the scheduled one is running, say) skip the
+rows the other has locked instead of waiting for them.
+
+Newer events, the event list (`/api/events/`) and the scoped feeds of
+organizations, projects and resources are unaffected apart from the expired
+rows no longer being listed.
+
+## Choosing a Retention Period
+
+**Deletion is permanent.** Nothing is archived or exported first; take a
+database backup or export the events beforehand if they must be kept
+elsewhere.
+
+The event log is the audit trail that users, organization owners and auditors
+read: it answers who granted a role, who deleted a resource, and when. The
+retention period is therefore a policy decision for the deployment, not a
+tuning parameter. Before setting it, check:
+
+- your organization's audit and record-keeping requirements, and any contract
+  or regulation that names a minimum period;
+- how far back support staff usually look when investigating an incident or a
+  billing dispute;
+- that the period is longer than any reporting cycle (for example a yearly
+  allocation review) that relies on events.
+
+If events are also shipped to an external log store that meets those
+requirements, the period here can be shorter. The setting applies to all event
+types alike: security and permission events are deleted on the same schedule
+as the rest.
+
+To see how fast the event tables grow before choosing, use
+[table growth monitoring](table-growth-monitoring.md).
+
+## Related Files
+
+- Task: `src/waldur_core/logging/tasks.py`
+- Schedule: `src/waldur_core/server/celery_settings.py`
+- Setting: `src/waldur_core/core/metadata.py` (`WaldurCore.EVENT_RETENTION_DAYS`)
+- Environment variable: `docker/rootfs/etc/waldur/settings.py`
+- Tests: `src/waldur_core/logging/tests/test_event_retention.py`
 
 ---
 
@@ -23519,6 +23647,7 @@ td:nth-child(4) {
 | `cleanup-stale-agent-queues` | `waldur_mastermind.marketplace_site_agent.cleanup_stale_agent_queues` | 1 day | Tear down unified-queue RMQ state for consumers whose owner is inactive.<br><br>Mirrors `waldur_core.logging.delete_stale_event_subscriptions` for the<br>EventConsumer-backed path: when the owner's credential is no longer active<br>(or the user is gone), drop the RMQ queue and user and flip the consumer<br>back to an unregistered state.<br><br>An owner counts as active if they hold a live DRF token OR a live Personal<br>Access Token. The PAT arm is essential: a PAT-backed agent typically<br>has no DRF token at all, so keying off DRF tokens alone would reap every<br>PAT-backed agent on the next run. |
 | `cleanup-stale-token-exchange-codes` | `waldur_core.core.cleanup_stale_token_exchange_codes` | 1 minute | Delete TokenExchangeCode rows that were never redeemed. |
 | `cleanup-system-logs` | `waldur_core.logging.cleanup_system_logs` | 15 minutes | Enforce row count limit per source (across all instances).<br><br>Keeps newest logs, deletes oldest when count exceeds the configured limit.<br>Runs periodically to maintain log volume within limits. |
+| `cleanup-user-data-access-logs` | `waldur_core.logging.cleanup_user_data_access_logs` | Cron: `30 4 * * * (m/h/dM/MY/d)` | Clean up old user data access logs based on retention period.<br><br>Returns:<br> dict with count of deleted records |
 | `cleanup_stale_offering_users` | `waldur_mastermind.marketplace.cleanup_stale_offering_users` | 1 day | Periodic task to clean up offering users who no longer have project access. |
 | `cleanup_usage_poll_records` | `waldur_mastermind.marketplace.cleanup_usage_poll_records` | 1 day | Delete ComponentUsagePollRecord entries older than the retention period. |
 | `close-stale-step-discussions` | `waldur_mastermind.proposal.close_stale_step_discussions` | 1 day | Close the step discussions whose step has ended without closing them,<br>as when it ends: nightly, the backstop for an event that was missed. |
@@ -36001,6 +36130,36 @@ connects:
   `passwd`, `token`, `credentials` or `key` and that is not marked. A field that only looks like
   one (a token URL, a path to a token file, the *name* of a Kubernetes Secret) goes in its
   `NOT_SECRET` list with the reason.
+- **Which settings are sensitive.** Mark with the `SENSITIVE` marker every non-secret field that
+  decides
+  - where the agent connects, and so where its credentials go: URLs, URIs, hosts, ports,
+    endpoints, proxies, TLS verification and STARTTLS switches, kubeconfig files and contexts,
+    namespaces and realms;
+  - what it reads, writes, runs or installs, on its own host — file and directory paths, binary
+    paths such as `slurm_bin_path`, `execution_mode`, the owner, mode and ACLs it sets as root,
+    templates it renders — or on customers' machines: cloud-init user data, SSH keys, firewall
+    rules, VM templates;
+  - what access it grants: roles and role maps, groups and group name templates, the DNs and OUs
+    it writes under, UID/GID ranges, how it matches users, partitions and QoS.
+
+  The marker appears in the JSON Schema as `"sensitive": true`. Waldur stores these settings but
+  limits who may change them. A secret is marked `SECRET` only, never both. A setting where `""`
+  would mean something else than unset takes `NonEmptyStr`.
+
+  ```python
+  from waldur_site_agent.common.plugin_schemas import SECRET, SENSITIVE, CommonBackendSettingsSchema
+
+  class MyBackendSettingsSchema(CommonBackendSettingsSchema):
+      api_url: str = Field(..., description="API base URL", json_schema_extra=SENSITIVE)
+      api_token: str = Field(..., description="Admin API token", json_schema_extra=SECRET)
+  ```
+
+  `tests/test_plugin_catalogue.py` fails for a field of a settings or component schema, nested
+  ones included, whose name (split at underscores and camelCase humps) has a word such as `url`,
+  `host`, `port`, `path`, `file`, `mode`, `template`, `owner`, `role`, `group`, `dn` or `ssh`, and
+  that is neither marked nor listed with a reason in its `NOT_SENSITIVE` list. Declare every key
+  the backend reads: an undeclared key of an open schema is invisible to the catalogue, and
+  Waldur treats a change to it as sensitive.
 - **Which roles a backend can fill.** `BaseBackend.supported_roles` defaults to order processing,
   membership sync and reporting. A backend that only reports usage narrows it:
 
@@ -36010,7 +36169,9 @@ connects:
 
 `waldur_site_export_plugin_catalogue [-o FILE]` writes the catalogue of the installed plugins as
 JSON: for each entry point its package, version, roles, settings and component JSON Schemas, and
-the dotted paths of its secret settings (`keycloak.keycloak_password` for a nested model). CI
+the dotted paths of its secret settings (`keycloak.keycloak_password` for a nested model), of
+its sensitive ones (`keycloak.keycloak_url`) and of its sensitive component fields
+(`sensitive_component_settings`). CI
 publishes it as the `plugin-catalogue.json` artifact of the `Export plugin catalogue` job on
 `main` and on tags, which is where Waldur takes it from.
 
@@ -44067,7 +44228,7 @@ and leave order processing and membership sync to another backend (or unset).
 |---|---|
 | Create / terminate resource | Not supported |
 | Update limits, pause, downscale, restore | Not supported — raise `NotImplementedError` |
-| Usage reporting | Compute: node and CPU hours. Storage: space and inodes. Inference: pre-priced cost |
+| Usage reporting | Compute: node hours. Storage: space and inodes. Inference: pre-priced cost |
 
 ## Features
 
@@ -44081,7 +44242,7 @@ and leave order processing and membership sync to another backend (or unset).
 
 The plugin implements three separate backends to handle different types of accounting data:
 
-- **Compute Backend** (`cscs-dwdi-compute`): Reports CPU and node hour usage from HPC clusters
+- **Compute Backend** (`cscs-dwdi-compute`): Reports node-hour usage from HPC clusters
 - **Storage Backend** (`cscs-dwdi-storage`): Reports storage space and inode usage from filesystems
 - **Inference Backend** (`cscs-dwdi-inference`): Reports LLM inference cost per resource
 
@@ -44092,7 +44253,6 @@ The plugin implements three separate backends to handle different types of accou
 The compute backend queries the DWDI API for computational resource usage and reports:
 
 - Node hours consumed by accounts and users
-- CPU hours consumed by accounts and users
 - Account-level and user-level usage aggregation
 
 **API Endpoints Used:**
@@ -44152,12 +44312,6 @@ backend_components:
     unit_factor: 1
     accounting_type: "usage"
     label: "Node Hours"
-
-  cpuHours:
-    measured_unit: "cpu-hours"
-    unit_factor: 1
-    accounting_type: "usage"
-    label: "CPU Hours"
 ```
 
 ### Storage Backend Configuration
@@ -44188,7 +44342,7 @@ backend_settings:
 backend_components:
   storage_space:
     measured_unit: "GB"
-    unit_factor: 0.000000001  # Convert bytes to GB
+    unit_factor: 1000000000  # bytes per GB: DWDI bytes / factor = GB
     accounting_type: "usage"
     label: "Storage Space (GB)"
 
@@ -44227,6 +44381,41 @@ The warehouse returns a per-resource `totalCost`; the backend divides it by the 
 component's `unit_factor` (or `unit_factor_reporting`) and reports the result. Because the amount is
 already priced by DWDI, set the offering plan's `token_cost` price to 1 so Waldur records the cost
 as-is.
+
+### Unit factors and components
+
+Every backend reports `DWDI amount / factor`, where the factor is the component's
+`unit_factor_reporting` if set, otherwise its `unit_factor`. That is the direction the whole agent
+uses (`backend_value = waldur_value × unit_factor`): the factor is how many DWDI units make one
+Waldur unit. Some examples:
+
+| DWDI amount | Waldur unit | Factor |
+|---|---|---|
+| node-hours | node-hours | `1` |
+| node-hours | GPU-hours on 4-GPU nodes | `unit_factor_reporting: 0.25` |
+| bytes | GB | `1000000000` |
+| `totalCost` in EUR | EUR | `1` |
+
+Waldur stores `unit_factor` as a whole number, so a fractional factor goes in
+`unit_factor_reporting`. A factor of 0 or below is refused: the component is logged as an error
+and not reported.
+
+A component is filled from the DWDI field it names with `dwdi_field`, or else by its name:
+
+| Backend | DWDI fields | Filled by name |
+|---|---|---|
+| compute | `nodeHours` | any name containing `node` |
+| storage | `spaceUsed`, `inodesUsed` | `storage` or a name containing `space`; a name containing `inodes` |
+| inference | `totalCost` | `token_cost` |
+
+An offering passes all its components to its reporting backend, so components another backend
+handles (a SLURM `cpu` limit, say) are skipped. A component billed by usage that matches no field
+is logged as an error at startup, because nothing reports it and it would go unbilled.
+
+An amount DWDI leaves out of a row (`totalNodeHours`, `spaceUsed`, `inodesUsed`, `totalCost`) fails
+that resource's report instead of reading as 0, so recorded usage is never lowered by a malformed
+response. A missing per-user `nodeHours` skips only that user, with a warning. A resource with no
+DWDI row at all reports 0 for the components the backend fills.
 
 ## Authentication
 
@@ -45960,8 +46149,8 @@ Required only for consumption billing:
    [Security](#security)
 3. **Credential**: a bearer token, or a username and password, if the API is authenticated
 4. **Retention**: at least 31 days, and N × 31 days with `reporting_periods: N`; see [Retention](#retention)
-5. **Waldur**: `INVOICE_FINALIZATION_GRACE_PERIOD_HOURS` above 0 and at least `closed_period_hours`,
-   or the last pass before midnight is final; see [Closed months](#closed-months)
+5. **Waldur**: `INVOICE_FINALIZATION_GRACE_PERIOD_HOURS` at least `closed_period_hours`, or the last
+   pass before the grace period ends is final; see [Closed months](#closed-months)
 
 ### Waldur Marketplace Setup
 
@@ -46557,9 +46746,10 @@ change is measured in real seconds.
 The current-period figure stops at the last pass before midnight, so a month is measured once more
 after it ends — but only within `closed_period_hours` (default 24) of its end. Waldur takes usage for
 a past month only while that month's invoice is still open, which lasts
-`INVOICE_FINALIZATION_GRACE_PERIOD_HOURS` and is **0 by default**: with the default, Waldur refuses
-the re-measured month and the last pass before midnight is final, so up to one reporting interval
-at the end of each month goes unbilled. Set the grace period above 0 and at least as long as
+`INVOICE_FINALIZATION_GRACE_PERIOD_HOURS` and is **2 by default**. With a grace period shorter than
+`closed_period_hours`, Waldur refuses the month once the grace period has passed, and the last pass
+before then is final; with 0, the last pass before midnight is final, so up to one reporting
+interval at the end of each month goes unbilled. Set the grace period at least as long as
 `closed_period_hours`. Outside the window the month is not queried, and the processor skips it.
 
 `waldur_site_load_historical_usage` gets an error rather than an empty report for a month outside the
@@ -53926,6 +54116,8 @@ Every key the plugin reads. Keys not listed here are ignored.
   enforced.
 - `enforce_offering_partitions` (default: `false`) — Create one association per partition of the
   Waldur offering — see [Partitions](#partitions).
+- `hostname` (deprecated) — Ignored; the agent never reads it. Accepted because older offerings
+  carried it in their plugin options, from where Waldur moved it into `backend_settings`.
 - `qos_default` (default: `normal`) — Account QoS when the resource is neither paused nor
   downscaled.
 - `qos_downscaled` (default: unset) — Account QoS while the resource is downscaled.
@@ -71631,20 +71823,22 @@ When a resource is activated mid-month, `_register` calls `get_or_create_invoice
 
 Finalization transitions invoices from mutable to immutable (CREATED) state. The behavior depends on the `INVOICE_FINALIZATION_GRACE_PERIOD_HOURS` setting:
 
-**Without grace period** (default, `grace_hours = 0`):
-
-1. On the 1st at midnight, `create_monthly_invoices` finalizes previous month invoices immediately
-2. Overdue credits are zeroed, compensations are applied, invoices transition PENDING → CREATED
-3. Reports and notifications are sent
-
-**With grace period** (e.g., `grace_hours = 24`):
+**With grace period** (default, `grace_hours = 2`):
 
 1. On the 1st at midnight, `create_monthly_invoices` transitions previous month invoices to PENDING_FINALIZATION
 2. The `finalize_previous_invoices` task runs hourly on the 1st–3rd of each month
 3. Once the configured grace period has elapsed (measured from midnight on the 1st), it finalizes: PENDING_FINALIZATION → CREATED
 4. Reports and notifications are sent only after all invoices are finalized
 
-The grace period allows late usage data (e.g., from external billing systems) to be captured before invoices are frozen.
+The grace period allows late usage data (e.g., from external billing systems) to be captured before invoices are frozen. The default of 2 hours lets a site agent, which reports every 30 minutes by default, send the last hours of the previous month; raise it when usage arrives later than that.
+
+**Without grace period** (`grace_hours = 0`):
+
+1. On the 1st at midnight, `create_monthly_invoices` finalizes previous month invoices immediately
+2. Overdue credits are zeroed, compensations are applied, invoices transition PENDING → CREATED
+3. Reports and notifications are sent
+
+Usage-based usage reported after midnight for the previous month is then refused, so whatever was used since the provider's last report before midnight is not billed.
 
 ```mermaid
 graph TD
@@ -71985,10 +72179,10 @@ The grace period is configured in `WALDUR_INVOICES` settings:
 ```python
 WALDUR_INVOICES = {
     # Grace period in hours before finalizing previous month invoices.
-    # 0 means finalize immediately (default, backward compatible).
-    # When > 0, invoices transition PENDING -> PENDING_FINALIZATION on the 1st,
+    # Invoices transition PENDING -> PENDING_FINALIZATION on the 1st,
     # then PENDING_FINALIZATION -> CREATED after this many hours.
-    "INVOICE_FINALIZATION_GRACE_PERIOD_HOURS": 0,
+    # 0 finalizes them at midnight on the 1st.
+    "INVOICE_FINALIZATION_GRACE_PERIOD_HOURS": 2,
 }
 ```
 
@@ -127370,6 +127564,7 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
 - proposal_panel_changed
 - proposal_rejected_at_round_completion
 - proposal_report_released
+- proposal_reviewers_notified
 - proposal_run_closed
 - proposal_run_opened
 - proposal_step_completed
@@ -146061,7 +146256,11 @@ Content-Type: application/json
 |---------|---------|-------------|
 | `USER_DATA_ACCESS_LOGGING_ENABLED` | `False` | Enable logging of user data access events |
 | `USER_DATA_ACCESS_LOG_SELF_ACCESS` | `False` | Log when users access their own profile |
-| `USER_DATA_ACCESS_LOG_RETENTION_DAYS` | `90` | Days to retain logs before automatic cleanup |
+| `USER_DATA_ACCESS_LOG_RETENTION_DAYS` | `90` | Days to retain logs before automatic cleanup; 0 keeps them forever |
+
+The `cleanup-user-data-access-logs` beat task runs daily at 04:30 UTC and deletes
+the logs older than `USER_DATA_ACCESS_LOG_RETENTION_DAYS`. A value of 0 keeps
+the logs forever.
 
 ### Logged Fields
 
