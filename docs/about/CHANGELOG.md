@@ -1,5 +1,57 @@
 # Changelog
 
+## 8.1.5-rc.4 - 2026-11-23
+
+### Highlights
+
+This release makes Arrow billing safer. Each license-month is now billed only once, issued invoices are never changed, and operators can preview billing changes before applying them. Site-agent offerings can now be configured in Waldur: the agent configuration is checked against the plugin catalogue, a dedicated token wizard creates the agent's credentials, and the agent downloads its full configuration from Waldur. Call managers get Excel exports, can message reviewers, and receive the reasons reviewers give when they send back accepted reviews. Operators can now set how long events are kept.
+
+### What's New
+
+- **Site agent configuration in Waldur**: Service providers can edit a site-agent offering's agent configuration in the offering editor, and Waldur checks it against the plugin catalogue. The agent can download its complete configuration as JSON. A new permission controls who can change where an agent connects and what it runs.
+- **Agent token wizard**: The personal access token dialog is now a wizard with a site-agent template. Owners of a service provider organization are offered the agent token directly, and agents can run with a narrowly scoped permission for managing their offering's agent.
+- **Arrow billing changes wizard**: Staff can preview Arrow invoice changes before applying them. The consumption cleanup now runs from a scoped wizard with a preview. Staff can also see an Arrow resource's invoice items from the Resources tab.
+- **Offering order flow diagram**: An offering's Actions menu now shows its order flow as a swimlane diagram. The order start date is now respected on every ordering path.
+- **Increase-only component limits**: Service providers can mark a component's limit as increase-only, which stops customers from lowering it after ordering.
+- **Feedback survey wizard**: Surveys and their questions are now created in a single wizard.
+- **Category structure editing**: Staff can edit category sections and attributes from the Categories admin page, and changes made through the API no longer lose data.
+- **Call management**: Call managers can export proposals and reviews as Excel workbooks and message the reviewers of selected proposals. Reviewers can give a reason when they send back an accepted review, and the call's managers are notified.
+- **Event retention**: Events older than a configurable retention period are deleted automatically. The period can be set in Helm and Docker Compose; leaving it empty or 0 keeps events forever. The user data access log cleanup now also runs on a schedule.
+- **Connecting AI clients**: The Connected apps tab shows how to connect an AI client, and MCP server URLs are now available in public settings.
+- **AI inference app**: A new AI inference micro-app has been added.
+
+### Improvements
+
+- Staff can accept an invitation on behalf of a verified user whose email address differs from the invited one.
+- Resource API keys are now revealed with a POST request, and a personal access token that carries the reveal permission can reveal them.
+- Offering user management now shows the SSH port for SCIM login nodes.
+- OpenStack tenant orders now accept zero limits for cores, RAM and storage.
+- A usage reporter that has not sent data recently no longer shows as disconnected.
+- Project metrics hide resources and projects the user cannot see, and show an empty state instead of "Not found".
+- The previous month's invoices stay open for 2 hours by default. Per-user usage reports follow the same rule as other usage for past months.
+- The Arrow Resources tab only shows mapped offerings, has a license column, and explains consumption history. Force import is limited to resources of mapped offerings.
+- Accessibility and display improvements: icon tooltips can be reached with the keyboard, dates are formatted in a single app locale, and the theme switch is back in the account menu.
+- Debian and Alpine security updates are applied on top of the base images. The Helm chart pins the postgres-minio and uvk-everypay images.
+
+### Bug Fixes
+
+- Fixed Arrow billing overcharges, exposure of the Arrow API key and linked licenses that were not synced. Historical consumption now uses the Arrow license, and adjustment items are named after the month they correct.
+- Fixed editing Arrow customer mappings, and fixed search, filters and error messages in the Arrow admin pages.
+- Volumes of an imported OpenStack instance now get the state of the matching OpenStack volume.
+- Terminated resources are now counted over the same usage period as active ones.
+- A call's event feed is hidden from its reviewers and panel members.
+- An existing privileged account pushed to the Identity Bridge by a non-staff caller is returned unchanged.
+- Clearing a field in an update dialog now sends an empty value. Invoice items without an offering component show their own name.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [43 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.5-rc.3...8.1.5-rc.4) - Arrow billing fixes and preview, site agent configuration and token template, call management features, event retention
+- **Waldur Homeport**: [36 commits](https://github.com/waldur/waldur-homeport/compare/8.1.5-rc.3...8.1.5-rc.4) - Arrow admin wizards, agent configuration editor, token wizard, order flow diagram, feedback survey wizard, accessibility improvements
+- **Waldur Helm**: [4 commits](https://github.com/waldur/waldur-helm/compare/8.1.5-rc.3...8.1.5-rc.4) - Event retention setting, invoice grace period default, pinned postgres-minio and uvk-everypay images
+- **Waldur Docker Compose**: [1 commit](https://github.com/waldur/waldur-docker-compose/compare/8.1.5-rc.3...8.1.5-rc.4) - Event retention setting
+
+---
+
 ## 8.1.5-rc.3 - 2026-11-19
 
 ### Highlights
