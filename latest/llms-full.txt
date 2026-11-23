@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-23T03:04:03.802547Z
+Generated: 2026-11-23T13:29:50.800159Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -12312,6 +12312,7 @@ WALDUR_CORE = {'ATTACHMENT_LINK_MAX_AGE': datetime.timedelta(seconds=3600),
  'EMAIL_CHANGE_MAX_AGE': datetime.timedelta(days=1),
  'ENABLE_ACCOUNTING_START_DATE': False,
  'ENABLE_PROJECT_KIND_COURSE': False,
+ 'EVENT_RETENTION_DAYS': 0,
  'EXTENSIONS_AUTOREGISTER': True,
  'EXTERNAL_LINKS': [],
  'HOMEPORT_SENTRY_DSN': None,
@@ -12506,6 +12507,12 @@ Allows to enable accounting for organizations using value of accounting_start_da
 **Type:** bool
 
 Enable course kind for projects.
+
+#### EVENT_RETENTION_DAYS
+
+**Type:** int
+
+Delete events older than this many days, together with their feed entries, in a daily background job. 0 or a negative value keeps events forever. Deletion is permanent, and the event log is the audit trail users and auditors read, so the period is a policy decision for the deployment. Set by the deployment (in the container image through the WALDUR_EVENT_RETENTION_DAYS environment variable); staff cannot change it at runtime.
 
 #### EXTENSIONS_AUTOREGISTER
 
@@ -21397,7 +21404,7 @@ Tells a proposal creator that their draft, still open when its round's cut-off p
 
 ### proposal.proposal_manager_message
 
-A message a call manager writes to the applicants of selected proposals. Subject and body are the manager's own text.
+A message a call manager writes to the applicants or the reviewers of selected proposals. Subject and body are the manager's own text. Each reviewer gets a message of their own, linking to their review.
 
 #### Templates
 
@@ -21416,9 +21423,11 @@ A message a call manager writes to the applicants of selected proposals. Subject
     {{ body }}
 
     Proposal: {{ proposal_name }} (call "{{ call_name }}")
-    {{ proposal_url }}
+    {% if audience == "reviewers" %}Your review: {{ review_url }}
 
-    This message was sent by the call manager through {{ site_name }}.
+    You receive this message as a reviewer of this proposal. It was sent by the call manager through {{ site_name }}.{% else %}{{ proposal_url }}
+
+    This message was sent by the call manager through {{ site_name }}.{% endif %}
 
 ```
 
@@ -21433,6 +21442,17 @@ A message a call manager writes to the applicants of selected proposals. Subject
     <body>
         {{ body|linebreaks }}
 
+        {% if audience == "reviewers" %}
+        <p>
+            Proposal: {{ proposal_name }} (call "{{ call_name }}")<br>
+            Your review: <a href="{{ review_url }}">{{ review_url }}</a>
+        </p>
+
+        <p>
+            You receive this message as a reviewer of this proposal. It was sent
+            by the call manager through {{ site_name }}.
+        </p>
+        {% else %}
         <p>
             Proposal: {{ proposal_name }} (call "{{ call_name }}")<br>
             <a href="{{ proposal_url }}">{{ proposal_url }}</a>
@@ -21441,6 +21461,7 @@ A message a call manager writes to the applicants of selected proposals. Subject
         <p>
             This message was sent by the call manager through {{ site_name }}.
         </p>
+        {% endif %}
     </body>
     </html>
 
@@ -22382,7 +22403,8 @@ A notification to the call managers about a rejected review.
     - Reviewer: {{ reviewer_name }}
     - Assigned date: {{ assign_date }}
     - Rejected date: {{ rejection_date }}
-
+    {% if decline_reason %}- Reason: {{ decline_reason }}
+    {% endif %}
     ACTION REQUIRED: Please assign a new reviewer to maintain the minimum required number of reviews for this proposal.
 
     Review Progress:
@@ -22415,7 +22437,8 @@ A notification to the call managers about a rejected review.
             <strong>Assignment details:</strong><br>
             - Reviewer: {{ reviewer_name }}<br>
             - Assigned date: {{ assign_date }}<br>
-            - Rejected date: {{ rejection_date }}
+            - Rejected date: {{ rejection_date }}{% if decline_reason %}<br>
+            - Reason: {{ decline_reason|linebreaksbr }}{% endif %}
         </p>
 
         <p>
@@ -23655,6 +23678,7 @@ td:nth-child(4) {
 | `create_customer_permission_reviews` | `waldur_core.structure.create_customer_permission_reviews` | 1 day | Create customer permission reviews for customers that need periodic review of user permissions. |
 | `create_project_permission_reviews` | `waldur_core.structure.create_project_permission_reviews` | 1 day | Create project permission reviews for projects that need periodic review of user permissions. |
 | `delete-dangling-event-subscriptions` | `waldur_core.logging.delete_dangling_event_subscriptions` | 1 hour | No description available |
+| `delete-expired-events` | `waldur_core.logging.delete_expired_events` | Cron: `30 4 * * * (m/h/dM/MY/d)` | Delete events older than EVENT_RETENTION_DAYS, with their feed entries.<br><br>WALDUR_CORE["EVENT_RETENTION_DAYS"] is a deployment setting, not a runtime<br>one; 0 (the default) keeps events forever. Events are deleted oldest first<br>in batches, each in its own transaction, so the first run on a large table<br>neither holds one long transaction nor locks the table. Feed rows go with<br>their event through the cascade.<br><br>A run stops after EVENT_RETENTION_TIME_BUDGET seconds, or when the soft<br>time limit interrupts it, and queues a fresh run for the rest. Overlapping<br>runs (a manual one, or a queued one meeting the next beat) skip the rows<br>another run has locked rather than wait for them.<br><br>Returns the number of events this run deleted. |
 | `delete-idle-ephemeral-event-consumers` | `waldur_core.logging.delete_idle_ephemeral_event_consumers` | 1 hour | Delete ephemeral (browser) event consumers nobody reads any more.<br><br>The realtime UI registers an ephemeral consumer per tab and deletes it on<br>explicit logout. A tab that is closed, or whose session simply ends, leaves<br>the consumer behind, and its queue keeps receiving every event for its<br>bindings. The owner's DRF token usually stays valid after a tab closes, so<br>the token-based sweeps do not catch this case.<br><br>- Owner deactivated, or without an active DRF token or PAT (OIDC-registered<br> consumers excepted, see ``_owner_signed_out``): deleted at once.<br>- Queue with a reader: ``unread_since`` is cleared.<br>- Queue without a reader, or missing: ``unread_since`` is stamped on the<br> first run that sees it, and the consumer is deleted once that is older<br> than ``EVENT_CONSUMER_EPHEMERAL_IDLE_HOURS`` (at least one hour).<br><br>Readers are sampled once per run (hourly), so a consumer goes up to an hour<br>past the threshold before it is deleted. The whole broker is read in one<br>request first; if that fails, nothing is deleted this run: an unreadable<br>broker is not evidence of an unread queue, and a row must not be deleted<br>while its queue and RabbitMQ user cannot be removed. |
 | `delete-old-verifications` | `waldur_core.onboarding.delete_old_verifications` | 1 day | This task runs daily to delete verifications that are in FAILED or EXPIRED<br>status and were last modified more than 30 days ago. |
 | `delete-stale-event-subscriptions` | `waldur_core.logging.delete_stale_event_subscriptions` | 1 day | No description available |
@@ -28934,7 +28958,8 @@ Reminder: submit your access request {{ proposal_name }}
         <strong>Assignment details:</strong><br>
         - Reviewer: {{ reviewer_name }}<br>
         - Assigned date: {{ assign_date }}<br>
-        - Rejected date: {{ rejection_date }}
+        - Rejected date: {{ rejection_date }}{% if decline_reason %}<br>
+        - Reason: {{ decline_reason|linebreaksbr }}{% endif %}
     </p>
 
     <p>
@@ -29239,6 +29264,17 @@ This is an automated message from the {{ site_name }}. Please do not reply to th
 <body>
     {{ body|linebreaks }}
 
+    {% if audience == "reviewers" %}
+    <p>
+        Proposal: {{ proposal_name }} (call "{{ call_name }}")<br>
+        Your review: <a href="{{ review_url }}">{{ review_url }}</a>
+    </p>
+
+    <p>
+        You receive this message as a reviewer of this proposal. It was sent
+        by the call manager through {{ site_name }}.
+    </p>
+    {% else %}
     <p>
         Proposal: {{ proposal_name }} (call "{{ call_name }}")<br>
         <a href="{{ proposal_url }}">{{ proposal_url }}</a>
@@ -29247,6 +29283,7 @@ This is an automated message from the {{ site_name }}. Please do not reply to th
     <p>
         This message was sent by the call manager through {{ site_name }}.
     </p>
+    {% endif %}
 </body>
 </html>
 
@@ -29944,7 +29981,8 @@ Assignment details:
 - Reviewer: {{ reviewer_name }}
 - Assigned date: {{ assign_date }}
 - Rejected date: {{ rejection_date }}
-
+{% if decline_reason %}- Reason: {{ decline_reason }}
+{% endif %}
 ACTION REQUIRED: Please assign a new reviewer to maintain the minimum required number of reviews for this proposal.
 
 Review Progress:
@@ -30703,9 +30741,11 @@ Proposal state update: {{ proposal_name }} - {{ new_state }}
 {{ body }}
 
 Proposal: {{ proposal_name }} (call "{{ call_name }}")
-{{ proposal_url }}
+{% if audience == "reviewers" %}Your review: {{ review_url }}
 
-This message was sent by the call manager through {{ site_name }}.
+You receive this message as a reviewer of this proposal. It was sent by the call manager through {{ site_name }}.{% else %}{{ proposal_url }}
+
+This message was sent by the call manager through {{ site_name }}.{% endif %}
 
 ```
 
@@ -36591,7 +36631,7 @@ plugins in this repository):
 | `digitalocean` | `waldur-site-agent-digitalocean` | DigitalOcean droplets |
 | `harbor` | `waldur-site-agent-harbor` | Harbor registry projects |
 | `nextcloud` | `waldur-site-agent-nextcloud` | Nextcloud |
-| `ceph_s3`, `croit_usage` | `waldur-site-agent-ceph-s3` | Ceph S3 users and buckets; croit usage reporting |
+| `ceph_s3`, `croit_usage`, `rgw_usage` | `waldur-site-agent-ceph-s3` | Ceph S3 users and buckets; usage reporting from croit or from RGW itself |
 | `litellm`, `litellm-usage` | `waldur-site-agent-litellm` | LiteLLM virtual keys; usage reporting |
 | `envoy`, `envoy-usage` | `waldur-site-agent-envoy-ai-gateway` | Envoy AI Gateway API keys; usage reporting |
 | `cscs-dwdi-compute`, `cscs-dwdi-storage`, `cscs-dwdi-inference` | `waldur-site-agent-cscs-dwdi` | CSCS DWDI usage reporting |
@@ -43267,7 +43307,8 @@ Two **flavours** reach the same RGW concepts by different routes:
 | Talks to | croit's management API | RadosGW Admin Ops on the gateway |
 | Authenticates with | bearer token or basic auth | SigV4, as an RGW user with caps |
 | Users, keys, quotas | yes | yes |
-| GB-day metering | yes | **no** — see [Usage Reporting](#usage-reporting) |
+| GB-day metering | yes, from croit's statistics (`croit_usage`) | yes, accrued from bucket statistics (`rgw_usage`) |
+| Traffic and request metering | no | yes, from the RGW usage log (`rgw_usage`) |
 
 The flavours differ only inside the client. Everything above it — key lifecycle,
 quota mapping, metadata, Waldur plumbing — is shared.
@@ -43277,10 +43318,11 @@ quota mapping, metadata, Waldur plumbing — is shared.
 | Entry point | Group | Role |
 |---|---|---|
 | `ceph_s3` | `waldur_site_agent.backends` | order processing, membership sync |
-| `croit_usage` | `waldur_site_agent.backends` | reporting (croit flavour only) |
+| `croit_usage` | `waldur_site_agent.backends` | reporting from croit's statistics (croit clusters) |
+| `rgw_usage` | `waldur_site_agent.backends` | reporting from RGW's Admin Ops (radosgw flavour, any Ceph) |
 
 **Modes:** `order_process`, `membership_sync`, `event_process`, and `report` with
-`reporting_backend: croit_usage`.
+`reporting_backend: croit_usage` or `rgw_usage`.
 
 | Operation | Behaviour |
 |---|---|
@@ -43289,13 +43331,15 @@ quota mapping, metadata, Waldur plumbing — is shared.
 | Update limits | Updates the quotas |
 | Add / remove members | **No-op** — returns `True`; one S3 user per resource, no per-member access |
 | Pause / downscale / restore | **No-op** — returns `True` without changing quotas |
-| Usage reporting | `ceph_s3`: **No-op** (reports nothing). `croit_usage`: GB-days from croit statistics |
+| Usage reporting | `ceph_s3`: none. `croit_usage`: croit's statistics. `rgw_usage`: RGW's Admin Ops |
 
 ## Features
 
 - **Automatic S3 User Creation**: One S3 user per marketplace resource with slug-based naming
 - **Usage-Based Billing**: storage billed in GB-days, integrated from croit's
-  metrics over the billing period. Object counts are not billed
+  metrics or accrued from RGW's bucket statistics over the billing period, and,
+  with `rgw_usage`, traffic and requests from the RGW usage log. Object counts are
+  not billed
 - **Safety Quota Enforcement**: an ordered ceiling is applied as both a RadosGW
   user quota (the tenant total) and a bucket quota (per bucket)
 - **Credential Management**: two S3 access keys per resource, encrypted in Waldur and
@@ -43327,8 +43371,8 @@ offerings:
     stomp_enabled: true
     websocket_use_tls: false
 
-    # Backend roles. Metering is a separate backend because only croit can do
-    # it; see Usage Reporting.
+    # Backend roles. Metering is a separate backend: croit_usage reads croit's
+    # statistics, rgw_usage reads RGW itself; see Usage Reporting.
     backend_type: "ceph_s3"
     order_processing_backend: "ceph_s3"
     membership_sync_backend: "ceph_s3"
@@ -43365,7 +43409,7 @@ Talks Admin Ops directly to the gateway, for a Ceph cluster croit does not manag
     backend_type: "ceph_s3"
     order_processing_backend: "ceph_s3"
     membership_sync_backend: "ceph_s3"
-    # No reporting_backend: this flavour cannot meter. See Usage Reporting.
+    reporting_backend: "rgw_usage"             # see Usage Reporting
 
     backend_settings:
       flavour: "radosgw"
@@ -43384,12 +43428,11 @@ operator did not intend.
 
 #### Two behaviours that differ from croit
 
-- **No GB-day metering of its own.** Admin Ops exposes no stored-bytes series:
-  `/admin/usage` is bandwidth and operation counts, and bucket stats are a
-  point-in-time size. On a croit cluster, `croit_usage` can still meter it from
-  croit's statistics (see
+- **Storage is accrued, not integrated.** Admin Ops exposes no stored-bytes series,
+  only a bucket's size now, so `rgw_usage` accrues GB-days pass by pass (see
+  [Reporting from RGW itself](#reporting-from-rgw-itself-rgw_usage)). On a croit
+  cluster, `croit_usage` can integrate croit's statistics instead (see
   [Reporting for a radosgw-managed offering](#reporting-for-a-radosgw-managed-offering-on-a-croit-cluster)).
-  On plain Ceph, leave `reporting_backend` unset and bill on a fixed component.
 - **Quota enforcement overshoots.** RGW syncs bucket statistics into the
   user-quota check periodically rather than on every write. Measured on squid: a
   6 MiB ceiling against 5 MiB already stored accepted a further 7 MiB before
@@ -43510,7 +43553,8 @@ the flavour and is checked when the backend starts.
   token, which the client renews before it expires
 - **`password`** (croit only): API password (alternative to token)
 - **`admin_access_key`** (radosgw only, required): access key of the RGW user
-  holding `users=*;buckets=read`
+  holding `users=*;buckets=read`, plus `usage=read` for traffic metering with
+  `rgw_usage`
 - **`admin_secret_key`** (radosgw only, required): its secret
 - **`admin_path`** (radosgw only, default: `"admin"`): the value of
   `rgw_admin_entry`, if the operator renamed it
@@ -43532,6 +43576,9 @@ the flavour and is checked when the backend starts.
 - **`default_storage_class`** (croit only, optional): Default storage class.
   Rejected on the radosgw flavour: Admin Ops user-create takes a placement but no
   storage class
+- **`storage_size`** (`rgw_usage` only, default: `"logical"`): which bucket size is
+  billed, `logical` (the bytes stored, RGW's `size`; what croit's statistics bill)
+  or `allocated` (RGW's `size_actual`, including allocation overhead)
 
 The billing period boundary for GB-day reporting follows the **agent's global**
 `timezone`, which the reporting processor injects into the backend — the same value
@@ -43550,8 +43597,10 @@ would not notice; GB-days move storage-hours onto the wrong invoice.
 
 ##### Usage-Based Storage (`s3_storage`)
 
-The only billed component. Reports GB-days — storage integrated over the billing
-period — with optional safety quota enforcement:
+Reports GB-days — storage integrated or accrued over the billing period — with
+optional safety quota enforcement. With `rgw_usage`, traffic and request components
+can be billed beside it (see
+[Reporting from RGW itself](#reporting-from-rgw-itself-rgw_usage)):
 
 ```yaml
 s3_storage:
@@ -43650,18 +43699,16 @@ allows in a tenant name; the rendered tenant is at most 64 characters.
 
 ## Usage Reporting
 
-**On a croit cluster only, and it needs its own backend.** Set
+Metering needs its own backend, one of two:
 
-```yaml
-    reporting_backend: "croit_usage"
-```
-
-Metering reads croit's statistics subsystem, which plain Ceph does not have, so it
-lives in a separate backend class. It works for both flavours: a croit-flavoured
-offering reads croit with its own API settings, and a radosgw-flavoured offering
-needs croit's address and credentials in `croit_reporting` (see
-[Reporting for a radosgw-managed offering](#reporting-for-a-radosgw-managed-offering-on-a-croit-cluster)).
-On plain Ceph, leave `reporting_backend` unset.
+- **`croit_usage`** reads croit's statistics subsystem, so it needs a croit
+  cluster. It works for both flavours: a croit-flavoured offering reads croit with
+  its own API settings, and a radosgw-flavoured offering needs croit's address and
+  credentials in `croit_reporting` (see
+  [Reporting for a radosgw-managed offering](#reporting-for-a-radosgw-managed-offering-on-a-croit-cluster)).
+- **`rgw_usage`** reads RGW's own Admin Ops, so it works on any Ceph the radosgw
+  flavour manages, croit or not, and adds traffic and request metering (see
+  [Reporting from RGW itself](#reporting-from-rgw-itself-rgw_usage)).
 
 Leaving `reporting_backend` at `ceph_s3` reports **nothing** — deliberately, not
 zeros. A zero is a legitimate usage value and would overwrite the period's
@@ -43673,6 +43720,131 @@ billing period, not a reading taken at report time. Object counts are not billed
 Usage is metered **per resource**, not per key: the series is the S3 user's, so
 the resource's two access keys never enter the calculation and rotating one
 cannot change a bill.
+
+### Reporting from RGW itself (`rgw_usage`)
+
+For the radosgw flavour, plain users and [account mode](#account-mode-an-rgw-account-per-resource)
+alike. No croit, no agent-side state and no volume are needed.
+
+```yaml
+    reporting_backend: "rgw_usage"
+    backend_settings:
+      flavour: "radosgw"
+      rgw_accounts: true
+      s3_endpoint: "https://s3.example.com"
+      admin_access_key: "ADMINACCESSKEY000000"   # caps: users=*;buckets=*;accounts=*;usage=read
+      admin_secret_key: "..."
+      storage_size: "logical"                    # or "allocated"
+    backend_components:
+      s3_storage:
+        accounting_type: "usage"
+        backend_name: "storage"
+        label: "Storage"
+        measured_unit: "GB-day"
+        unit_factor: 1000000000
+        accrual_unit: "day"                      # "hour" for a GB-hour price
+      s3_egress:
+        accounting_type: "usage"
+        backend_name: "bytes_sent"               # served to clients
+        label: "Data out"
+        measured_unit: "GB"
+        unit_factor: 1000000000
+      s3_ingress:
+        accounting_type: "usage"
+        backend_name: "bytes_received"           # written by clients
+        label: "Data in"
+        measured_unit: "GB"
+        unit_factor: 1000000000
+      s3_requests:
+        accounting_type: "usage"
+        backend_name: "ops"
+        label: "Requests"
+        measured_unit: "1000 requests"
+        unit_factor: 1000
+```
+
+Any of the four may be left out. A component with another `backend_name` is not
+reported.
+
+**Storage is accrued, the way Waldur bills OpenStack usage.**
+- Each pass reads what the resource stores **now**: the sum of its bucket sizes
+  (`GET /admin/bucket?uid=…&stats=true`). In account mode the call goes through the
+  root user, which lists every bucket of the account, including those the
+  consumer's IAM users created.
+- The pass adds a level times the time since the previous pass to the month's
+  GB-days, as Waldur's OpenStack accumulator does. The interval is billed at the
+  level the previous pass measured, and the level measured now is recorded for the
+  next one, so storage is billed from the pass that first sees it. An outage longer
+  than 24 hours is billed only for 24 of them, since the level may have changed
+  anywhere in it. The 24 hours are counted after the up to 12 hours a quiet
+  checkpoint may lag (see below), so an outage shorter than a day is billed whole.
+- The checkpoint (the exact total and the moment it is accrued to) is kept in
+  Waldur, in the usage row's description, for example
+  `Accrued 123.456789 to 2026-11-21T23:40:12Z, at a level of 9.01 at that moment`.
+  A restart, a retry or a second agent instance reads the same checkpoint, so
+  nothing is counted twice, and rounding to Waldur's two decimals never drifts the
+  sum. If someone changes the figure in Waldur, accrual continues from theirs.
+- The first pass of a month closes the previous month to its last instant at the
+  level it measures. That needs `reporting_periods` of 2 or more (the default) and
+  a Waldur that still accepts that month's usage; otherwise the month's last
+  interval goes unbilled. The new month starts at its first instant, at the level
+  the previous month last recorded, or at the resource's creation.
+- A pass that changes nothing (the same level, the same rounded total) does not
+  write; the next pass bills the longer interval at the same level. An idle
+  resource is still written at least every 12 hours, so its checkpoint never gets
+  near the 24-hour cap.
+- A level is held across the whole interval since the previous pass, so storage
+  that comes and goes between two passes (30 minutes by default) is not seen, and
+  a change is billed from the pass that first sees it. Over a month the error is
+  at most one pass interval's worth of each change.
+- Past months cannot be recomputed: nothing remembers the levels. The historical
+  loader refuses a storage-only offering rather than report a month as zero.
+- A pass that cannot read the buckets reports nothing for storage and keeps the
+  checkpoint, so the next pass bills the gap (up to the cap).
+- The root user's own statistics (`GET /admin/user?stats=true`) are not used: RGW
+  refreshes them once a day by default (`rgw_user_quota_sync_interval`), so they
+  read 0 or stale.
+
+**Traffic and requests come from the RGW usage log.**
+- `GET /admin/usage` totals for the billing period: bytes sent to clients, bytes
+  received from them, and operations. The gateway logs them per bucket owner and
+  hour: the account in account mode, whichever of its users made the request, and
+  the user otherwise. Deleted buckets keep their traffic.
+- The log is kept by the cluster, so every pass reports the month's absolute
+  total, and a past month is read again for the historical loader.
+- Prerequisites on the cluster: `rgw_enable_usage_log = true` on every gateway,
+  and the `usage=read` cap on the agent's admin user
+  (`radosgw-admin caps add --uid <admin> --caps "usage=read"`); without the cap the
+  agent logs an error naming it and reports the other components.
+- Ceph ships with the usage log off, and an unwritten log reads like tenants that
+  sent nothing. Zeros are still reported, since an empty log is not a failed read.
+  But when every resource reads zero, the agent checks the last day of the log
+  across every owner (at most hourly, and not while the log has been seen written
+  that day) and logs a warning naming `rgw_enable_usage_log` when it is empty. A
+  past month that every resource read as zero is checked the same way, once; the
+  historical loader refuses such a month rather than write never-measured zeros.
+- In the reporting passes, a resource's traffic is read from its creation hour, so
+  a uid freed by a deleted resource and reused by a new one does not carry the old
+  one's traffic over, and the new resource's RGW account is looked up afresh. The
+  historical loader does not pass the resource, so it reads whole months.
+- The log is kept per UTC hour. With a reporting timezone whose offset is not a
+  whole hour, the hour that straddles a month boundary is counted wholly in one
+  month.
+- Each pass reads only what is new. The agent keeps, in memory, the totals of the
+  hours that ended over an hour ago (a gateway flushes its entries every 30 s), and
+  reads the hours settled since the previous pass plus the last hour or two. A
+  finished month is read once it has settled, then kept. A restart costs one full
+  read of the month, never a wrong figure.
+- The log grows until it is trimmed (`radosgw-admin usage trim`), and the agent
+  never trims it. It holds one entry per owner, bucket and hour, spread over
+  `rgw_usage_max_shards` (32) objects, so a month adds about
+  `720 × buckets / 32` entries to each object: 112,500 for 1,000 resources of five
+  buckets. Ceph reports `LARGE_OMAP_OBJECTS` above 200,000 entries per object
+  (`osd_deep_scrub_large_omap_object_key_threshold`), so at that size trim every
+  month once its invoices are final, keeping the previous month for the historical
+  loader (`radosgw-admin usage trim --end-date <first day of last month>`).
+- IAM API calls in account mode are logged too, with an empty bucket name, and
+  count as operations.
 
 ### Reporting for a radosgw-managed offering on a croit cluster
 
@@ -104657,7 +104829,8 @@ The toggle sets the **provider-wide default**. Users can override it per instanc
 SLURM clusters are connected through the
 [Waldur site agent](../../admin-guide/providers/site-agent/index.md), which runs next to the
 cluster and keeps its accounts and usage in sync with Waldur. The offering is created in Waldur
-first.
+first. Waldur can also hold the agent's configuration for the offering: see
+[Configure a site agent from Waldur](site-agent-configuration.md).
 
 1. Open the organization that will provide the offering, select its **Service provider** tab,
    then **Marketplace → Offerings**, and click **Add**.
@@ -108664,6 +108837,403 @@ To register organization as service provider:
 
 The **Regenerate** button replaces the API secret code. **Disable service provider profile**
 turns the organization back into a regular one.
+
+---
+
+### Configure a site agent from Waldur
+<!-- Source: docs/user-guide/service-provider-organization/site-agent-configuration.md -->
+
+# Configure a site agent from Waldur
+
+A [Waldur site agent](../../admin-guide/providers/site-agent/index.md) runs next to a provider's
+backend, such as a SLURM cluster, and keeps it in sync with a **Waldur site agent** offering.
+Waldur can hold the agent's configuration for that offering. The agent then loads it from Waldur
+when it starts, and its local file keeps only what it needs to reach Waldur and its secrets.
+
+This page is for the service provider. It covers what Waldur stores, how to set it, how to run
+the agent with it, and who may change it. The agent's own settings are described in its
+[configuration reference](../../admin-guide/providers/site-agent/docs/configuration.md), in the
+section "Configuration from Waldur".
+
+## What Waldur stores for a site agent offering
+
+Each site agent offering has an **agent configuration**. It holds:
+
+| Part | What it decides |
+|------|-----------------|
+| `order_processing_backend`, `membership_sync_backend`, `reporting_backend` | Which agent plugin fills each role, such as `slurm` |
+| `username_management_backend` | Which plugin creates usernames, such as `base` or `ldap` |
+| `custom_backends` | Plugins of your own that Waldur does not know |
+| `backend_settings` | The plugin settings, without secrets |
+| `backend_components` | Extra per-component fields that only the agent reads, such as `unit_factor_reporting` |
+| `event_settings` | Whether the agent takes events over STOMP, and where it connects for them |
+| `agent_settings` | `resource_import_enabled`, `username_reconciliation_enabled`, `preserve_unmanaged_backend_users` and `omit_anomalous_usage_components` |
+
+Waldur adds the rest of the agent's offering configuration from the offering itself:
+
+- the offering's name;
+- the components, from the offering's **Accounting** components: measured unit, unit factor,
+  accounting type, label and limit;
+- the SLURM periodic usage policy of the offering, if it has one, as `policy_settings`.
+
+An offering whose configuration names no backend for any role gets SLURM for all three roles.
+Once you set one role, a role you leave empty stays off.
+
+## What stays on the agent host
+
+Waldur never stores secrets. These stay in the agent's local file:
+
+- how the agent reaches Waldur: `waldur_api_url`, `waldur_offering_uuid`, `verify_ssl`, and the
+  agent's credentials (`waldur_api_token`, or the three `oidc_*` settings);
+- the plugin secrets, such as the LDAP `bind_password` of a SLURM offering;
+- the settings at the top of the file, which belong to the agent process rather than to one
+  offering: `timezone`, `log_level`, `sentry_dsn`, `global_proxy` and the others.
+
+Waldur refuses a secret sent as part of the configuration. It also refuses any setting whose name
+contains a word such as `password`, `token`, `secret` or `key`, for example `bind_password` or
+`api_key`, unless an agent plugin declares it as an ordinary setting. Words are the parts of the
+name between underscores, so `keycloak_url` is accepted.
+
+## Set the agent configuration through the API
+
+Waldur's interface has no editor for the agent configuration yet. Set it through the API.
+
+### Find the current configuration
+
+The provider offering shows it in its `agent_configuration` field:
+
+```bash
+curl -H "Authorization: Token <your token>" \
+  https://waldur.example.com/api/marketplace-provider-offerings/<offering UUID>/
+```
+
+Only users who may update the offering's integration see this field.
+
+### Change the configuration
+
+Send the whole configuration to the offering's `update_integration` action. A write replaces the
+whole agent configuration, so start from the current one and change what you need. Leave out a
+part to clear it.
+
+```bash
+curl -X POST -H "Authorization: Token <your token>" -H "Content-Type: application/json" \
+  https://waldur.example.com/api/marketplace-provider-offerings/<offering UUID>/update_integration/ \
+  -d @agent-configuration.json
+```
+
+An example `agent-configuration.json` for a SLURM cluster with LDAP project groups:
+
+```json
+{
+  "agent_configuration": {
+    "order_processing_backend": "slurm",
+    "membership_sync_backend": "slurm",
+    "reporting_backend": "slurm",
+    "backend_settings": {
+      "default_account": "root",
+      "customer_prefix": "hpc_",
+      "project_prefix": "hpc_",
+      "allocation_prefix": "hpc_",
+      "ldap": {
+        "uri": "ldaps://ldap.example.com",
+        "bind_dn": "cn=site-agent,dc=example,dc=com",
+        "base_dn": "dc=example,dc=com"
+      }
+    },
+    "event_settings": {
+      "stomp_enabled": true
+    },
+    "agent_settings": {
+      "resource_import_enabled": false
+    }
+  }
+}
+```
+
+The LDAP `bind_password` is not in it: it goes into the agent's local file.
+
+You can also send `agent_configuration` when you create an offering through the API, and it is
+part of an offering export and import. The same checks apply on every path.
+
+Waldur records each change in the offering's history, with who made it and when
+(`GET /api/marketplace-provider-offerings/<offering UUID>/history/`). The history does not show
+the configuration itself.
+
+### What Waldur checks when you save
+
+Waldur knows the agent's plugins from a list that the site agent publishes and Waldur ships with:
+which roles each plugin can fill, which settings it accepts, and which of them are secret. Waldur
+validates the configuration against that list, the plugin catalogue. A save is refused with an
+error that names the setting when:
+
+- a role names a backend that is not in the catalogue. Add your own plugin's name to
+  `custom_backends` to use it; Waldur does not check the settings of a custom backend;
+- a backend cannot fill the role it is set for;
+- `backend_settings` do not match the settings schema of the backends in use;
+- the configuration has an unknown key, or a value of the wrong type;
+- a setting is a secret, or is named like one;
+- `backend_components` names a component the offering does not have. When you rename or remove
+  a component, Waldur moves or removes its entry for you;
+- `backend_components` sets a field that belongs to the offering component, such as
+  `measured_unit`, `unit_factor` or `limit`. Set those on the component in **Accounting**;
+- the offering is not a site agent offering;
+- the change needs a permission you do not have. See
+  [Who can change the agent configuration](#who-can-change-the-agent-configuration).
+
+## Generate the agent configuration file
+
+Waldur can also write the configuration out as a complete YAML file for the agent. Use it for an
+agent that keeps its configuration in the local file (`configuration_source: local`, the
+default). A change made in Waldur then reaches the agent only when you generate the file again,
+replace it on the agent host and restart the agent.
+
+To generate the file:
+
+1. Open the offering's **Edit** tab, then **Integration → Credentials**.
+2. Click **Actions → Generate Site Agent Config**.
+3. Optionally, set the Waldur API URL the agent should use and its time zone, and choose
+   whether to include the SLURM periodic usage policy.
+4. Click **Generate Configuration**. Copy the result or click **Download YAML**.
+
+To generate one file for several offerings, use **Generate Site Agent Config** in the actions
+of the offering list under **Marketplace → Offerings** and select the offerings.
+
+The file has no secrets. The agent's API token and each required backend secret get an empty
+value marked with a `# SECRET:` comment. A secret required only inside an optional block, such as
+the LDAP `bind_password`, gets one only when that block is configured. The header lists every
+backend secret, including the optional ones that have no placeholder. Fill them in on the agent
+host.
+
+Generating the file needs the permission to read the service provider's API secret code. Waldur
+checks it on the provider's organization, so by default only organization owners and staff can
+generate the file. Offering managers and service provider managers see the action, but Waldur
+refuses it.
+
+Through the API the action is
+`POST /api/marketplace-service-providers/<provider UUID>/generate_site_agent_config/` with
+`{"offering_uuids": ["<offering UUID>"]}`. There, `"secret_format": "env"` writes each secret as
+a `${VARIABLE}` reference to fill in with a tool such as `envsubst`. The same body sent to
+`POST /api/marketplace-service-providers/<provider UUID>/site_agent_config_secrets/` lists the
+secrets as data.
+
+## Run the agent with the configuration from Waldur
+
+### Write the bootstrap file
+
+Set `configuration_source: waldur` on the offering in the agent's file. The offering may then
+hold only these keys:
+
+- `waldur_api_url` and `waldur_offering_uuid`;
+- `waldur_api_token`, or `oidc_token_url`, `oidc_client_id` and `oidc_client_secret`;
+- `verify_ssl`;
+- `configuration_source`;
+- `name`, optionally. Waldur's offering name is used otherwise;
+- `backend_settings` with the secrets only, at the paths Waldur lists for the offering.
+
+```yaml
+timezone: "UTC"
+log_level: "INFO"
+
+offerings:
+  - name: "HPC cluster"
+    configuration_source: waldur
+    waldur_api_url: "https://waldur.example.com/api/"
+    waldur_api_token: "<agent token>"
+    waldur_offering_uuid: "<offering UUID>"
+    verify_ssl: true
+    backend_settings:
+      ldap:
+        bind_password: "<LDAP bind password>"
+```
+
+Any other key fails the load with an error that names it. A setting that looks configured in the
+file but would be replaced by Waldur's is never accepted silently.
+
+To see which secrets an offering needs, read
+`GET /api/marketplace-provider-offerings/<offering UUID>/site_agent_config/`. Its `secrets` list
+gives the path of each secret, the backend that reads it and whether it is required. A secret
+marked `required_with_parent` is needed only when its block, such as `ldap`, is configured.
+
+The offering UUID and the Waldur API URL are shown on the offering's **Edit** tab under
+**Integration → Credentials**.
+
+### Choose a token for the agent { data-mentions="setting:PAT_ENABLED" }
+
+Use a personal access token made from the `site_agent` template. It carries
+`OFFERING.MANAGE_AGENT` and the other scopes the agent needs, and is bound to the one offering. It
+can load the agent configuration, but it cannot change it.
+
+To create one:
+
+1. Open the offering's **Edit** tab, then **Integration → Credentials**.
+2. Click **Actions → Create agent token**. The token wizard opens with the `site_agent` template
+   and this offering already selected.
+3. Finish the wizard and copy the token into the agent's file as `waldur_api_token`.
+
+The item is enabled when Waldur can make a working agent token for you on this offering, as it
+can for the offering's managers. If it cannot, for example for an organization owner who is not
+the offering's manager, the item is disabled and suggests adding yourself as the offering's
+manager.
+
+Through the API, the template's endpoints are `GET /api/personal-access-tokens/templates/` and
+`GET /api/personal-access-tokens/template_targets/?template=site_agent`. See
+[Personal access tokens](../../developer-guide/personal-access-tokens.md) for how to create the
+token there, and for the dedicated agent user that staff can create for an offering.
+
+Other credentials work too. To load the configuration, the token's user must be allowed to update
+the offering's integration or to run its agent. To run the agent as well, the user needs a role
+such as offering manager. An offering manager's own API token works, but it also allows changing
+the agent configuration. Whoever holds the agent's token can do what the token allows, so prefer
+the template token.
+
+### What happens when the agent starts
+
+For each offering with `configuration_source: waldur`, the agent:
+
+1. calls `GET /api/marketplace-provider-offerings/<offering UUID>/site_agent_config/` with the
+   offering's credentials;
+2. adds the secrets from its local file to `backend_settings`;
+3. checks that every required secret is set and not empty;
+4. validates the result like a local configuration;
+5. logs the offering, the configuration `version` Waldur reports, and the source.
+
+Waldur's answer never changes how the agent reaches Waldur. The API URL, the offering UUID, the
+credentials, `verify_ssl` and `configuration_source` always come from the local file.
+
+The `version` is a hash of the whole offering configuration that Waldur serves. It changes when,
+and only when, that configuration changes. Compare the version in the agent's log with the one
+Waldur returns now to see whether the agent runs the latest configuration.
+
+### Apply a change to the configuration
+
+The agent reads its configuration once, when the process starts. A change takes effect only
+after you restart the agent's services. That applies to every part Waldur serves, not only the
+agent configuration:
+
+- a change to the agent configuration;
+- a change to the offering's name or its **Accounting** components;
+- a change to the offering's SLURM periodic usage policy;
+- a Waldur upgrade that brings new plugin defaults.
+
+The agent's services run one per mode, and each serves every offering in the agent's file. To
+restart all of them on the host:
+
+```bash
+systemctl restart 'waldur-agent-*'
+```
+
+### Fix an agent that stops at startup
+
+The agent does not start with a configuration it could not load. It exits with status 1 and one
+error line that names the offering and the cause, when:
+
+- Waldur cannot be reached;
+- Waldur answers with an error, such as 401 for invalid credentials, 403 for a token without
+  permission, 404 for an unknown offering, or 400 for an offering that is not a site agent
+  offering;
+- the file holds a key that is not allowed;
+- a required secret is missing;
+- the file sets a secret for a block that Waldur does not configure, such as
+  `ldap.bind_password` when the configuration in Waldur has no `ldap` block;
+- the configuration Waldur serves fails the agent's own validation.
+
+There is no cached copy to fall back on. An agent that cannot reach Waldur could not process
+orders or report usage either. The agent's systemd units restart it after 30 seconds, so it
+starts once the cause is fixed. See the agent's
+[deployment guide](../../admin-guide/providers/site-agent/docs/deployment.md) for its logs.
+
+### Check a locally configured agent for drift
+
+An offering that the agent still configures from its local file is compared with what Waldur
+would serve for it, each time the agent starts. Each difference is logged as a warning that names
+the offering and what differs:
+
+- per component: `accounting_type`, `unit_factor`, `unit_factor_reporting`, `limit`, and a
+  component Waldur does not have;
+- per role: the backend, with both values;
+- per backend setting: the key only. The value is never logged, as it may be a credential.
+
+The check never stops the agent. If Waldur is unreachable or the token may not read the
+configuration, the agent only logs a debug message.
+
+### Move an agent to the configuration from Waldur
+
+1. Set the agent configuration in Waldur to match the agent's current file.
+2. Restart the agent and read its drift warnings. Fix the configuration in Waldur until there
+   are none.
+3. Replace the offering in the file with the bootstrap keys and `configuration_source: waldur`,
+   keeping the secrets.
+4. Restart the agent and check that it logs the configuration version.
+
+### Stop using `waldur_site_load_components`
+
+`waldur_site_load_components` is deprecated. It created the offering's components in Waldur from
+the agent's `backend_components`. Configure the components in the offering's **Accounting**
+instead, and use `configuration_source: waldur`. The command skips offerings whose
+configuration comes from Waldur.
+
+## Who can change the agent configuration
+
+Two permissions guard the agent configuration. Reading it on the offering, and changing it,
+needs `OFFERING.UPDATE_INTEGRATION`. A change to the parts that decide where the agent connects,
+what it runs and what access it grants needs `OFFERING.UPDATE_AGENT_CONFIGURATION` as well. The
+agent itself can also load the configuration with `OFFERING.MANAGE_AGENT`, which is what the
+`site_agent` token template carries.
+
+By default, the roles hold these permissions:
+
+| Permission | Organization owner | Service provider manager | Offering manager |
+|------------|:------------------:|:------------------------:|:----------------:|
+| `OFFERING.UPDATE_INTEGRATION`: read and change the agent configuration | Yes | Yes | Yes |
+| `OFFERING.UPDATE_AGENT_CONFIGURATION`: change its trust-sensitive parts | Yes | Yes | Yes |
+| `SERVICE_PROVIDER.GET_API_SECRET_CODE` on the organization: generate the YAML file | Yes | No | No |
+| `OFFERING.MANAGE_AGENT`: run the agent and load its configuration | Yes | No | Yes |
+
+### Which changes need `OFFERING.UPDATE_AGENT_CONFIGURATION`
+
+A change to any of these needs the permission. Adding, removing or emptying a value counts as a
+change.
+
+- any role backend and `custom_backends`;
+- any key of `event_settings`;
+- `resource_import_enabled`, `username_reconciliation_enabled` and
+  `preserve_unmanaged_backend_users` in `agent_settings`. `omit_anomalous_usage_components` does
+  not need it;
+- a backend setting that the plugin catalogue marks as sensitive, such as SLURM's `ldap.uri`,
+  `rest_api.url` and `rest_api.token_file`, or the Waldur plugin's `target_api_url`;
+- a backend setting that none of the backends in use declares. With a custom backend this can be
+  every setting.
+
+Any other change, such as a SLURM account prefix, needs only `OFFERING.UPDATE_INTEGRATION`.
+Without the permission, Waldur refuses the save with 403 and lists the settings you may not
+change. When an offering is created with a configuration, the permission is checked on its
+organization.
+
+### Why the permission controls the agent host
+
+!!! warning
+    With `configuration_source: waldur`, whoever may change the agent configuration decides, at
+    the agent's next restart, where the agent connects, what it runs and what access it grants.
+    That includes where the secrets in the agent's local file are sent. For example:
+
+    - an LDAP `uri` changed in Waldur receives the local LDAP `bind_password`;
+    - a token file path, such as SLURM's `rest_api.token_file`, makes the agent read that file on
+      its host and send its content to the configured endpoint;
+    - a STOMP host with `websocket_use_tls: false` receives the agent's API token in plain text.
+
+    With a local file, the person who copies a generated file onto the host sees such a change
+    before the agent acts on it. Here nobody does.
+
+Treat `OFFERING.UPDATE_AGENT_CONFIGURATION` as control over the agent host. Grant the roles that
+hold it, and any token that carries it, only to people you would let edit the agent's
+configuration file.
+
+If that is too broad for your site, either:
+
+- keep the offering on `configuration_source: local`; or
+- ask your Waldur administrator to remove the permission from the roles that should not have it,
+  for example with
+  [`waldur override_roles`](../../admin-guide/mastermind-configuration/cli-guide.md#override_roles).
 
 ---
 
@@ -130946,6 +131516,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`SelectiveDNSMockMixin`](#selectivednsmockmixin) | `waldur_mastermind.marketplace_remote.tests.dns_utils` | Mixin class that provides selective DNS mocking for test classes |
 | [`ContainerExecutorMixin`](#containerexecutormixin) | `waldur_mastermind.marketplace_script.utils` | Mixin to execute scripts in containers for marketplace script processing |
 | [`AgentConfigurationTestMixin`](#agentconfigurationtestmixin) | `waldur_mastermind.marketplace_site_agent.tests.test_agent_configuration` | No description available |
+| [`AgentConfigurationTrustTestMixin`](#agentconfigurationtrusttestmixin) | `waldur_mastermind.marketplace_site_agent.tests.test_agent_configuration_trust` | An offering with a SLURM agent configuration, its owner, service provider man... |
 | [`ResourceGlauthAccessMixin`](#resourceglauthaccessmixin) | `waldur_mastermind.marketplace_site_agent.tests.test_glauth_resource_access` | No description available |
 | [`RegisteredScopeMixin`](#registeredscopemixin) | `waldur_mastermind.matrix_chat.tests.test_room_scopes` | Registers Customer, for the test only, as a kind of room scope whose members ... |
 | [`AppserviceErrorCountMixin`](#appserviceerrorcountmixin) | `waldur_mastermind.matrix_chat.views` | Counts the view's 4xx and 5xx answers for the webhook_errors diagnostic |
@@ -130980,6 +131551,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`ReviewerSuggestionsTestMixin`](#reviewersuggestionstestmixin) | `waldur_mastermind.proposal.tests.test_proposal_reviewer_suggestions` | No description available |
 | [`EvaluatorRoleTestMixin`](#evaluatorroletestmixin) | `waldur_mastermind.proposal.tests.test_proposal_roles` | A call with a rapporteur role, picked from its panel members in an assignment... |
 | [`ProposalTeamMixin`](#proposalteammixin) | `waldur_mastermind.proposal.tests.test_proposal_team` | No description available |
+| [`DeclineReasonTestMixin`](#declinereasontestmixin) | `waldur_mastermind.proposal.tests.test_review_decline_reason` | No description available |
 | [`ReviewRolesMixin`](#reviewrolesmixin) | `waldur_mastermind.proposal.tests.test_reviewer_pool_visibility` | No description available |
 | [`CallSetupMixin`](#callsetupmixin) | `waldur_mastermind.proposal.tests.test_reviewer_registry` | No description available |
 | [`StepInputsTestMixin`](#stepinputstestmixin) | `waldur_mastermind.proposal.tests.test_step_inputs` | No description available |
@@ -132599,6 +133171,15 @@ Mixin to execute scripts in containers for marketplace script processing.
 
 **Description:** No description available.
 
+### AgentConfigurationTrustTestMixin
+
+**Module:** `waldur_mastermind.marketplace_site_agent.tests.test_agent_configuration_trust`
+
+**Description:**
+
+An offering with a SLURM agent configuration, its owner, service provider
+manager and offering manager, with the roles' grants from permissions.yaml.
+
 ### ResourceGlauthAccessMixin
 
 **Module:** `waldur_mastermind.marketplace_site_agent.tests.test_glauth_resource_access`
@@ -132972,6 +133553,12 @@ assignment step right after the administrative check.
 ### ProposalTeamMixin
 
 **Module:** `waldur_mastermind.proposal.tests.test_proposal_team`
+
+**Description:** No description available.
+
+### DeclineReasonTestMixin
+
+**Module:** `waldur_mastermind.proposal.tests.test_review_decline_reason`
 
 **Description:** No description available.
 
