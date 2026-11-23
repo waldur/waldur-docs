@@ -225,10 +225,9 @@ To create one:
    and this offering already selected.
 3. Finish the wizard and copy the token into the agent's file as `waldur_api_token`.
 
-The item is enabled when Waldur can make a working agent token for you on this offering, as it
-can for the offering's managers. If it cannot, for example for an organization owner who is not
-the offering's manager, the item is disabled and suggests adding yourself as the offering's
-manager.
+The item is shown to the offering's managers and to the owners of its organization, when that
+organization is a service provider. Waldur offers no agent token for an offering whose organization
+is not a service provider, so the item does not appear there.
 
 Through the API, the template's endpoints are `GET /api/personal-access-tokens/templates/` and
 `GET /api/personal-access-tokens/template_targets/?template=site_agent`. See
