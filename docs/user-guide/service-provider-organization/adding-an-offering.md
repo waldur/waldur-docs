@@ -90,7 +90,8 @@ The toggle sets the **provider-wide default**. Users can override it per instanc
 SLURM clusters are connected through the
 [Waldur site agent](../../admin-guide/providers/site-agent/index.md), which runs next to the
 cluster and keeps its accounts and usage in sync with Waldur. The offering is created in Waldur
-first.
+first. Waldur can also hold the agent's configuration for the offering: see
+[Configure a site agent from Waldur](site-agent-configuration.md).
 
 1. Open the organization that will provide the offering, select its **Service provider** tab,
    then **Marketplace → Offerings**, and click **Add**.
