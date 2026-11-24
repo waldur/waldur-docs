@@ -5,8 +5,9 @@ backend, such as a SLURM cluster, and keeps it in sync with a **Waldur site agen
 Waldur can hold the agent's configuration for that offering. The agent then loads it from Waldur
 when it starts, and its local file keeps only what it needs to reach Waldur and its secrets.
 
-This page is for the service provider. It covers what Waldur stores, how to set it, how to run
-the agent with it, and who may change it. The agent's own settings are described in its
+This page is for the service provider. It covers what Waldur stores, how to set it, how to check
+what the agent will load, how to generate the agent's file, how to run the agent with it, and who
+may change it. The agent's own settings are described in its
 [configuration reference](../../admin-guide/providers/site-agent/docs/configuration.md), in the
 section "Configuration from Waldur".
 
@@ -49,11 +50,34 @@ contains a word such as `password`, `token`, `secret` or `key`, for example `bin
 `api_key`, unless an agent plugin declares it as an ordinary setting. Words are the parts of the
 name between underscores, so `keycloak_url` is accepted.
 
-## Set the agent configuration through the API
+## Set the agent configuration
 
-Waldur's interface has no editor for the agent configuration yet. Set it through the API.
+### In the interface
 
-### Find the current configuration
+1. Open the offering's **Edit** tab, then **Integration → Agent configuration**.
+2. Edit the parts of the configuration on its tabs:
+    - **Backends**: the plugin for each role and your own `custom_backends`;
+    - **Events**: the `event_settings`;
+    - **Agent**: the `agent_settings`;
+    - **Backend settings**: the `backend_settings` and `backend_components`, as JSON.
+
+    ![Backends of the agent configuration](../img/site-agent-config-backends.png)
+
+    ![Backend settings of a SLURM offering with an LDAP block](../img/site-agent-config-backend-settings.png)
+
+3. Click the pencil next to a row to change it. Each save is checked the same way as through the
+   API, see [What Waldur checks when you save](#what-waldur-checks-when-you-save).
+
+A new backend may refuse the settings of the one it replaces. To change the backends and their
+settings together, use **Edit roles and backend settings together → Edit as JSON** on the
+**Backends** tab.
+
+Secrets never go here. Enter only settings without secrets: the agent takes its secrets from its
+own file. See [Check what the agent loads](#check-what-the-agent-loads) for the secrets it needs.
+
+### Through the API
+
+#### Find the current configuration
 
 The provider offering shows it in its `agent_configuration` field:
 
@@ -64,7 +88,7 @@ curl -H "Authorization: Token <your token>" \
 
 Only users who may update the offering's integration see this field.
 
-### Change the configuration
+#### Change the configuration
 
 Send the whole configuration to the offering's `update_integration` action. A write replaces the
 whole agent configuration, so start from the current one and change what you need. Leave out a
@@ -135,29 +159,83 @@ error that names the setting when:
 - the change needs a permission you do not have. See
   [Who can change the agent configuration](#who-can-change-the-agent-configuration).
 
+## Check what the agent loads
+
+The **What the agent loads** tab of **Integration → Agent configuration** shows the
+configuration the agent receives for the offering, its `version`, and the secrets the agent's own
+file must hold.
+
+![What the agent loads for an offering with an LDAP block](../img/site-agent-config-agent-loads.png)
+
+Each secret is listed with the backend that reads it and when it is needed:
+
+- **Required**: always.
+- **Required once its block is set**: only when the block that holds it, such as `ldap`, is
+  configured.
+- **Optional**: the agent runs without it.
+
+A secret whose block the offering does not configure is listed apart, under **Secrets needed only
+once their block is configured**. Leave it out of the agent's file: an agent that reads its
+configuration from Waldur refuses a secret for a block that Waldur does not serve. Add it once
+you configure the block.
+
+![A secret whose block the offering does not configure](../img/site-agent-config-agent-loads-unset-block.png)
+
 ## Generate the agent configuration file
 
-Waldur can also write the configuration out as a complete YAML file for the agent. Use it for an
-agent that keeps its configuration in the local file (`configuration_source: local`, the
-default). A change made in Waldur then reaches the agent only when you generate the file again,
-replace it on the agent host and restart the agent.
+Waldur writes the agent's YAML file for you. The file has no secrets: you fill those in on the
+agent host.
 
 To generate the file:
 
 1. Open the offering's **Edit** tab, then **Integration → Credentials**.
 2. Click **Actions → Generate Site Agent Config**.
-3. Optionally, set the Waldur API URL the agent should use and its time zone, and choose
-   whether to include the SLURM periodic usage policy.
-4. Click **Generate Configuration**. Copy the result or click **Download YAML**.
+3. Under **Configuration source**, choose what the file holds:
+    - **Read from Waldur** (`configuration_source: waldur`): only how to reach Waldur and the
+      secrets. The agent reads the rest from Waldur when it starts, so a change made in Waldur
+      needs only a restart of the agent. It needs a site agent release that supports
+      `configuration_source`.
+    - **Everything in the file** (`configuration_source: local`): the whole configuration. A
+      change made in Waldur reaches the agent only when you generate the file again, replace it
+      on the agent host and restart the agent. Only this choice offers the SLURM periodic usage
+      policy, as Waldur always serves it to an agent that reads from Waldur.
+4. Optionally, set the Waldur API URL the agent should use and its time zone.
+
+    ![Generate Site Agent Configuration with Read from Waldur selected](../img/site-agent-config-generate-waldur.png)
+
+5. Click **Generate Configuration**. Copy the result or click **Download YAML**.
+
+    ![The generated file](../img/site-agent-config-generate-preview.png)
 
 To generate one file for several offerings, use **Generate Site Agent Config** in the actions
 of the offering list under **Marketplace → Offerings** and select the offerings.
 
-The file has no secrets. The agent's API token and each required backend secret get an empty
-value marked with a `# SECRET:` comment. A secret required only inside an optional block, such as
-the LDAP `bind_password`, gets one only when that block is configured. The header lists every
-backend secret, including the optional ones that have no placeholder. Fill them in on the agent
-host.
+With **Read from Waldur**, the file for a SLURM offering with an LDAP block looks like this:
+
+```yaml
+sentry_dsn: ''
+timezone: UTC
+offerings:
+- name: HPC Cluster Access
+  configuration_source: waldur
+  waldur_api_url: https://waldur.example.com/api/
+  waldur_api_token: ''  # SECRET: Waldur API token (User Profile -> Credentials -> API Token)
+  waldur_offering_uuid: '<offering UUID>'
+  backend_settings:
+    ldap:
+      bind_password: ''  # SECRET: slurm, required if its block is set
+```
+
+The agent's API token and each secret it needs get an empty value marked with a `# SECRET:`
+comment. Fill them in on the agent host. A secret gets a placeholder only when its block is
+configured, and an optional one gets none. The header at the top of the file lists the secrets in
+two groups:
+
+- **BACKEND SECRETS TO CONFIGURE**: the secrets to fill in now, and the optional ones you may
+  add;
+- **SECRETS NEEDED ONLY ONCE THEIR BLOCK IS CONFIGURED**: the secrets of blocks the offering
+  does not set. Leave them out, as on the
+  [What the agent loads](#check-what-the-agent-loads) tab.
 
 Generating the file needs the permission to read the service provider's API secret code. Waldur
 checks it on the provider's organization, so by default only organization owners and staff can
@@ -166,8 +244,10 @@ refuses it.
 
 Through the API the action is
 `POST /api/marketplace-service-providers/<provider UUID>/generate_site_agent_config/` with
-`{"offering_uuids": ["<offering UUID>"]}`. There, `"secret_format": "env"` writes each secret as
-a `${VARIABLE}` reference to fill in with a tool such as `envsubst`. The same body sent to
+`{"offering_uuids": ["<offering UUID>"]}`. Add `"configuration_source": "waldur"` for the file
+that reads its configuration from Waldur; `local` is the default. There, `"secret_format": "env"`
+writes each secret as a `${VARIABLE}` reference to fill in with a tool such as `envsubst`. The
+agent does not expand the variables itself. The same body sent to
 `POST /api/marketplace-service-providers/<provider UUID>/site_agent_config_secrets/` lists the
 secrets as data.
 
@@ -175,7 +255,9 @@ secrets as data.
 
 ### Write the bootstrap file
 
-Set `configuration_source: waldur` on the offering in the agent's file. The offering may then
+The quickest way is to [generate the file](#generate-the-agent-configuration-file) with
+**Read from Waldur** and fill in its secrets. To write it by hand, set
+`configuration_source: waldur` on the offering in the agent's file. The offering may then
 hold only these keys:
 
 - `waldur_api_url` and `waldur_offering_uuid`;
@@ -204,7 +286,8 @@ offerings:
 Any other key fails the load with an error that names it. A setting that looks configured in the
 file but would be replaced by Waldur's is never accepted silently.
 
-To see which secrets an offering needs, read
+To see which secrets an offering needs, open the
+[What the agent loads](#check-what-the-agent-loads) tab, or read
 `GET /api/marketplace-provider-offerings/<offering UUID>/site_agent_config/`. Its `secrets` list
 gives the path of each secret, the backend that reads it and whether it is required. A secret
 marked `required_with_parent` is needed only when its block, such as `ldap`, is configured.
@@ -316,7 +399,7 @@ configuration, the agent only logs a debug message.
 2. Restart the agent and read its drift warnings. Fix the configuration in Waldur until there
    are none.
 3. Replace the offering in the file with the bootstrap keys and `configuration_source: waldur`,
-   keeping the secrets.
+   keeping the secrets. Generating the file with **Read from Waldur** gives you these keys.
 4. Restart the agent and check that it logs the configuration version.
 
 ### Stop using `waldur_site_load_components`
