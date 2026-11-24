@@ -23,7 +23,7 @@ a new project:
     - **Project description** - A brief description about the project.
     - **OECD FoS code** - OECD science field code ([more info](https://joinup.ec.europa.eu/collection/eu-semantic-interoperability-catalogue/solution/field-science-and-technology-classification/about))
     - **Start date** - once reached, marks the date when prepared user invitations are sent out and triggers the processing of previously made resource orders.
-    - **End date** – once reached (plus any configured grace period), triggers the creation of termination orders for the existing resources. If the resources have already been terminated by this time, the project will be removed. The date is inclusive.
+    - **End date** – the day the project's resources are terminated, or the last day of the grace period if one is configured. Once they are all terminated, the project is removed. See [Start and end dates](start-and-end-dates.md).
 
 !!! note
     Your Waldur administrator may enforce a project name convention (for example, a maximum length). If the name you enter does not meet the requirement, the form shows an error and the project is not created. See [Project name restrictions](../staff-users/project-name-restrictions.md).
@@ -39,9 +39,11 @@ description.
 ## End dates and resources
 
 !!! note
-    1. If a resource has a termination date that comes after the project's end date, the project's end date will automatically become that resource's termination date.
-    2. If a resource has a termination date that comes before the project's end date, we'll use the resource's original termination date.
+    1. A resource's termination date cannot be later than the project's end date.
+    2. A resource is terminated on its own termination date or on the project's termination day (end date plus any grace period), whichever comes first.
     3. Important: Setting any end date (either the project's or a resource's) only creates a termination request. The resource remains active in the project until the termination process is fully completed.
+
+For worked examples, see [Start and end dates](start-and-end-dates.md).
 
 ## Grace period
 
