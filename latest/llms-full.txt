@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-24T03:04:00.770412Z
+Generated: 2026-11-24T09:53:56.223126Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -23649,7 +23649,7 @@ td:nth-child(4) {
 | Job Name | Task | Schedule | Description |
 |----------|------|----------|-------------|
 | `cancel-expired-invitations` | `waldur_core.users.cancel_expired_invitations` | 6 hours | Invitation lifetime must be specified in Waldur Core settings with parameter<br>"INVITATION_LIFETIME". If invitation creation time is less than expiration time, the invitation will set as expired. |
-| `check-arrow-billing-export` | `waldur_mastermind.waldur_arrow.check_billing_export_scheduled` | 6 hours | Scheduled task to check for finalized billing export and reconcile.<br><br>Runs every ARROW_BILLING_CHECK_INTERVAL_HOURS (default: 6 hours).<br>Checks previous month and current month for billing data. |
+| `check-arrow-billing-export` | `waldur_mastermind.waldur_arrow.check_billing_export_scheduled` | 6 hours | Scheduled task to check for finalized billing export and reconcile.<br><br>Runs every ARROW_BILLING_CHECK_INTERVAL_HOURS (default: 6 hours).<br>Checks the previous month; the current one is not final yet. |
 | `check-arrow-validated-billing` | `waldur_mastermind.waldur_arrow.check_validated_billing` | 12 hours | Scheduled task to check for newly validated billing in Arrow.<br><br>Checks synced but not yet validated billing syncs and updates their state.<br>If auto-reconciliation is enabled, triggers reconciliation. |
 | `check-expired-permissions` | `waldur_core.permissions.check_expired_permissions` | 1 day | No description available |
 | `check-polices` | `waldur_mastermind.policy.check_polices` | Cron: `0 */4 * * * (m/h/dM/MY/d)` | Evaluate all policies across all policy types in the system.<br><br>Passes ``reconcile_already_fired=True`` so this periodic sweep also<br>re-applies idempotent immediate actions (request_pausing,<br>request_downscaling, restrict_members) for policies that are still<br>triggered but were already fired by an earlier evaluation -- catching<br>resources that became newly eligible since then (an offering's<br>supports_pausing flag turned on, a resource added to scope) instead of<br>leaving them stuck unpaused/undownscaled forever. See<br>``utils._reconcile_idempotent_actions`` for why this is safe to repeat.<br>The frequent per-event evaluation path (``evaluate_policies_async``)<br>deliberately does not pass this -- only this periodic safety net does. |
@@ -23690,8 +23690,8 @@ td:nth-child(4) {
 | `mark-expired-assignment-batches` | `waldur_mastermind.proposal.mark_expired_assignment_batches` | 15 minutes | Mark assignment batches as EXPIRED when their deadline passes. |
 | `mark-expired-reviewer-pool-invitations` | `waldur_mastermind.proposal.mark_expired_reviewer_pool_invitations` | 1 hour | Expire pending pool invitations past their date and tell who sent them. |
 | `mark-expired-workflow-steps` | `waldur_mastermind.proposal.mark_expired_workflow_steps` | 1 hour | Expire ACTIVE workflow step instances past their deadline and advance the workflow.<br><br>For each overdue active step, marks it EXPIRED and either activates the<br>next enabled step or rejects the proposal when no further step exists.<br>Each transition runs in its own transaction so a single failure does not<br>block other expiries. |
-| `mark-offering-backend-as-disconnected-after-timeout` | `waldur_mastermind.marketplace_site_agent.mark_offering_backend_as_disconnected_after_timeout` | 1 hour | No description available |
-| `mark_agent_services_as_inactive` | `waldur_mastermind.marketplace_site_agent.mark_agent_services_as_inactive` | 5 minutes | No description available |
+| `mark-offering-backend-as-disconnected-after-timeout` | `waldur_mastermind.marketplace_site_agent.mark_offering_backend_as_disconnected_after_timeout` | 1 hour | Mark site-agent integrations Disconnected after an hour without a request.<br><br>Usage reporting is not one of these. A provider pushes usage on their own<br>schedule, including a one-shot run days apart, and silence is not a dropped<br>connection. The row keeps the time of the last report-agent request. |
+| `mark_agent_services_as_inactive` | `waldur_mastermind.marketplace_site_agent.mark_agent_services_as_inactive` | 5 minutes | Mark a daemon agent service Idle after 10 minutes without a processor run.<br><br>The report service is exempt. Usage reporting runs when the provider's<br>accounting run finishes and then exits, so a quiet ``report`` service is<br>not an idle daemon. Its processor ``last_run`` stays the record of the<br>last report. |
 | `mark_resources_as_erred_after_timeout` | `waldur_mastermind.marketplace.mark_resources_as_erred_after_timeout` | 2 hours | Mark stale orders and their resources as erred if they have been executing for more than 2 hours. |
 | `marketplace-metrics-enforce-retention` | `waldur_mastermind.marketplace_metrics.enforce_retention` | 1 day | No description available |
 | `marketplace-metrics-purge-archived` | `waldur_mastermind.marketplace_metrics.purge_archived` | 1 day | No description available |
@@ -55113,9 +55113,22 @@ sacct --noconvert --truncate --allocations --allusers \
   --starttime=2024-01-01T00:00:00 --endtime=2024-01-31T23:59:59 \
   --accounts=hpc_alloc1 --format=Account,ReqTRES,Elapsed,User
 
-# Termination
+# Termination: pause first (the configured lever), then cancel jobs and remove
+sacctmgr modify account hpc_alloc1 set GrpSubmitJobs=0   # or: set qos=<qos_paused>
 scancel -A hpc_alloc1 -f
+sacctmgr remove user where account=hpc_alloc1
+sacctmgr remove account where name=hpc_alloc1
 ```
+
+Termination pauses the account before it cancels jobs and removes it. slurmdbd
+refuses the removal while it still counts a job as running ("Job(s) active,
+cancel job(s) before remove"); the order then fails and is retried, and the
+pause keeps the account closed to new jobs until then. On offerings with
+`supports_pausing`, Waldur keeps a resource paused from its project's or its own
+end date until it is terminated, so the next status sync does not lift it. With `qos_management.skip_qos_swap: true` or QoS
+enforcement the pause is `GrpSubmitJobs=0`, which leaves the QoS of queued jobs
+alone; otherwise it swaps the account to `qos_paused`, and without either lever
+the account is not paused.
 
 ## Testing
 
@@ -78292,6 +78305,15 @@ cleared, the pause set for the grace period is lifted unless usage is still over
 the grace limit, and a pause the policy set itself is lifted by the next
 evaluation as usual. When the grace period runs out instead, the resources stay
 paused until they are terminated.
+
+Resources are also paused right before they are terminated for an end date:
+once the project has expired (with no grace period, on the end date itself); on
+offerings with `disable_grace_period`, on the project's raw end date; and on a
+resource's own end date. A termination can fail -- slurmdbd refuses to remove
+an account while it still counts a job as running -- and is retried by the next
+daily run. Until it succeeds the resource stays paused, and neither the policy
+nor a usage-limit reset lifts it, so the account takes no new jobs meanwhile.
+Extending the end date lifts the pause.
 
 Outside the grace period the policy lifts a pause once usage is below the grace
 limit, except while a usage-limit restriction or a firing cost policy with
@@ -109093,8 +109115,9 @@ backend, such as a SLURM cluster, and keeps it in sync with a **Waldur site agen
 Waldur can hold the agent's configuration for that offering. The agent then loads it from Waldur
 when it starts, and its local file keeps only what it needs to reach Waldur and its secrets.
 
-This page is for the service provider. It covers what Waldur stores, how to set it, how to run
-the agent with it, and who may change it. The agent's own settings are described in its
+This page is for the service provider. It covers what Waldur stores, how to set it, how to check
+what the agent will load, how to generate the agent's file, how to run the agent with it, and who
+may change it. The agent's own settings are described in its
 [configuration reference](../../admin-guide/providers/site-agent/docs/configuration.md), in the
 section "Configuration from Waldur".
 
@@ -109137,11 +109160,34 @@ contains a word such as `password`, `token`, `secret` or `key`, for example `bin
 `api_key`, unless an agent plugin declares it as an ordinary setting. Words are the parts of the
 name between underscores, so `keycloak_url` is accepted.
 
-## Set the agent configuration through the API
+## Set the agent configuration
 
-Waldur's interface has no editor for the agent configuration yet. Set it through the API.
+### In the interface
 
-### Find the current configuration
+1. Open the offering's **Edit** tab, then **Integration → Agent configuration**.
+2. Edit the parts of the configuration on its tabs:
+    - **Backends**: the plugin for each role and your own `custom_backends`;
+    - **Events**: the `event_settings`;
+    - **Agent**: the `agent_settings`;
+    - **Backend settings**: the `backend_settings` and `backend_components`, as JSON.
+
+    [Image: Backends of the agent configuration]
+
+    [Image: Backend settings of a SLURM offering with an LDAP block]
+
+3. Click the pencil next to a row to change it. Each save is checked the same way as through the
+   API, see [What Waldur checks when you save](#what-waldur-checks-when-you-save).
+
+A new backend may refuse the settings of the one it replaces. To change the backends and their
+settings together, use **Edit roles and backend settings together → Edit as JSON** on the
+**Backends** tab.
+
+Secrets never go here. Enter only settings without secrets: the agent takes its secrets from its
+own file. See [Check what the agent loads](#check-what-the-agent-loads) for the secrets it needs.
+
+### Through the API
+
+#### Find the current configuration
 
 The provider offering shows it in its `agent_configuration` field:
 
@@ -109152,7 +109198,7 @@ curl -H "Authorization: Token <your token>" \
 
 Only users who may update the offering's integration see this field.
 
-### Change the configuration
+#### Change the configuration
 
 Send the whole configuration to the offering's `update_integration` action. A write replaces the
 whole agent configuration, so start from the current one and change what you need. Leave out a
@@ -109223,29 +109269,83 @@ error that names the setting when:
 - the change needs a permission you do not have. See
   [Who can change the agent configuration](#who-can-change-the-agent-configuration).
 
+## Check what the agent loads
+
+The **What the agent loads** tab of **Integration → Agent configuration** shows the
+configuration the agent receives for the offering, its `version`, and the secrets the agent's own
+file must hold.
+
+[Image: What the agent loads for an offering with an LDAP block]
+
+Each secret is listed with the backend that reads it and when it is needed:
+
+- **Required**: always.
+- **Required once its block is set**: only when the block that holds it, such as `ldap`, is
+  configured.
+- **Optional**: the agent runs without it.
+
+A secret whose block the offering does not configure is listed apart, under **Secrets needed only
+once their block is configured**. Leave it out of the agent's file: an agent that reads its
+configuration from Waldur refuses a secret for a block that Waldur does not serve. Add it once
+you configure the block.
+
+[Image: A secret whose block the offering does not configure]
+
 ## Generate the agent configuration file
 
-Waldur can also write the configuration out as a complete YAML file for the agent. Use it for an
-agent that keeps its configuration in the local file (`configuration_source: local`, the
-default). A change made in Waldur then reaches the agent only when you generate the file again,
-replace it on the agent host and restart the agent.
+Waldur writes the agent's YAML file for you. The file has no secrets: you fill those in on the
+agent host.
 
 To generate the file:
 
 1. Open the offering's **Edit** tab, then **Integration → Credentials**.
 2. Click **Actions → Generate Site Agent Config**.
-3. Optionally, set the Waldur API URL the agent should use and its time zone, and choose
-   whether to include the SLURM periodic usage policy.
-4. Click **Generate Configuration**. Copy the result or click **Download YAML**.
+3. Under **Configuration source**, choose what the file holds:
+    - **Read from Waldur** (`configuration_source: waldur`): only how to reach Waldur and the
+      secrets. The agent reads the rest from Waldur when it starts, so a change made in Waldur
+      needs only a restart of the agent. It needs a site agent release that supports
+      `configuration_source`.
+    - **Everything in the file** (`configuration_source: local`): the whole configuration. A
+      change made in Waldur reaches the agent only when you generate the file again, replace it
+      on the agent host and restart the agent. Only this choice offers the SLURM periodic usage
+      policy, as Waldur always serves it to an agent that reads from Waldur.
+4. Optionally, set the Waldur API URL the agent should use and its time zone.
+
+    [Image: Generate Site Agent Configuration with Read from Waldur selected]
+
+5. Click **Generate Configuration**. Copy the result or click **Download YAML**.
+
+    [Image: The generated file]
 
 To generate one file for several offerings, use **Generate Site Agent Config** in the actions
 of the offering list under **Marketplace → Offerings** and select the offerings.
 
-The file has no secrets. The agent's API token and each required backend secret get an empty
-value marked with a `# SECRET:` comment. A secret required only inside an optional block, such as
-the LDAP `bind_password`, gets one only when that block is configured. The header lists every
-backend secret, including the optional ones that have no placeholder. Fill them in on the agent
-host.
+With **Read from Waldur**, the file for a SLURM offering with an LDAP block looks like this:
+
+```yaml
+sentry_dsn: ''
+timezone: UTC
+offerings:
+- name: HPC Cluster Access
+  configuration_source: waldur
+  waldur_api_url: https://waldur.example.com/api/
+  waldur_api_token: ''  # SECRET: Waldur API token (User Profile -> Credentials -> API Token)
+  waldur_offering_uuid: '<offering UUID>'
+  backend_settings:
+    ldap:
+      bind_password: ''  # SECRET: slurm, required if its block is set
+```
+
+The agent's API token and each secret it needs get an empty value marked with a `# SECRET:`
+comment. Fill them in on the agent host. A secret gets a placeholder only when its block is
+configured, and an optional one gets none. The header at the top of the file lists the secrets in
+two groups:
+
+- **BACKEND SECRETS TO CONFIGURE**: the secrets to fill in now, and the optional ones you may
+  add;
+- **SECRETS NEEDED ONLY ONCE THEIR BLOCK IS CONFIGURED**: the secrets of blocks the offering
+  does not set. Leave them out, as on the
+  [What the agent loads](#check-what-the-agent-loads) tab.
 
 Generating the file needs the permission to read the service provider's API secret code. Waldur
 checks it on the provider's organization, so by default only organization owners and staff can
@@ -109254,8 +109354,10 @@ refuses it.
 
 Through the API the action is
 `POST /api/marketplace-service-providers/<provider UUID>/generate_site_agent_config/` with
-`{"offering_uuids": ["<offering UUID>"]}`. There, `"secret_format": "env"` writes each secret as
-a `${VARIABLE}` reference to fill in with a tool such as `envsubst`. The same body sent to
+`{"offering_uuids": ["<offering UUID>"]}`. Add `"configuration_source": "waldur"` for the file
+that reads its configuration from Waldur; `local` is the default. There, `"secret_format": "env"`
+writes each secret as a `${VARIABLE}` reference to fill in with a tool such as `envsubst`. The
+agent does not expand the variables itself. The same body sent to
 `POST /api/marketplace-service-providers/<provider UUID>/site_agent_config_secrets/` lists the
 secrets as data.
 
@@ -109263,7 +109365,9 @@ secrets as data.
 
 ### Write the bootstrap file
 
-Set `configuration_source: waldur` on the offering in the agent's file. The offering may then
+The quickest way is to [generate the file](#generate-the-agent-configuration-file) with
+**Read from Waldur** and fill in its secrets. To write it by hand, set
+`configuration_source: waldur` on the offering in the agent's file. The offering may then
 hold only these keys:
 
 - `waldur_api_url` and `waldur_offering_uuid`;
@@ -109292,7 +109396,8 @@ offerings:
 Any other key fails the load with an error that names it. A setting that looks configured in the
 file but would be replaced by Waldur's is never accepted silently.
 
-To see which secrets an offering needs, read
+To see which secrets an offering needs, open the
+[What the agent loads](#check-what-the-agent-loads) tab, or read
 `GET /api/marketplace-provider-offerings/<offering UUID>/site_agent_config/`. Its `secrets` list
 gives the path of each secret, the backend that reads it and whether it is required. A secret
 marked `required_with_parent` is needed only when its block, such as `ldap`, is configured.
@@ -109404,7 +109509,7 @@ configuration, the agent only logs a debug message.
 2. Restart the agent and read its drift warnings. Fix the configuration in Waldur until there
    are none.
 3. Replace the offering in the file with the bootstrap keys and `configuration_source: waldur`,
-   keeping the secrets.
+   keeping the secrets. Generating the file with **Read from Waldur** gives you these keys.
 4. Restart the agent and check that it logs the configuration version.
 
 ### Stop using `waldur_site_load_components`
@@ -131638,6 +131743,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`ReviewerChecklistMixin`](#reviewerchecklistmixin) | `waldur_core.checklist.mixins` | Mixin for ViewSets that provide checklist review functionality to reviewers |
 | [`UserChecklistMixin`](#userchecklistmixin) | `waldur_core.checklist.mixins` | Mixin for ViewSets that provide checklist functionality to end users |
 | [`LatestAnswerTestMixin`](#latestanswertestmixin) | `waldur_core.checklist.tests.test_latest_answers` | No description available |
+| [`ChecklistEditGuardMixin`](#checklisteditguardmixin) | `waldur_core.checklist.views` | Runs the checklist edit guards before a question, option or dependency is wri... |
 | [`ConstanceTableMixin`](#constancetablemixin) | `waldur_core.configuration.tests.utils` | Gives a test django-constance's settings table |
 | [`ExcludedFieldsAdminMixin`](#excludedfieldsadminmixin) | `waldur_core.core.admin` | This mixin allows to toggle display of fields in Django model admin according... |
 | [`ExtraActionsMixin`](#extraactionsmixin) | `waldur_core.core.admin` | Allows to add extra actions to admin list page |
@@ -131766,6 +131872,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`AgentConfigurationTestMixin`](#agentconfigurationtestmixin) | `waldur_mastermind.marketplace_site_agent.tests.test_agent_configuration` | No description available |
 | [`AgentConfigurationTrustTestMixin`](#agentconfigurationtrusttestmixin) | `waldur_mastermind.marketplace_site_agent.tests.test_agent_configuration_trust` | An offering with a SLURM agent configuration, its owner, service provider man... |
 | [`ResourceGlauthAccessMixin`](#resourceglauthaccessmixin) | `waldur_mastermind.marketplace_site_agent.tests.test_glauth_resource_access` | No description available |
+| [`SiteAgentFixtureMixin`](#siteagentfixturemixin) | `waldur_mastermind.marketplace_site_agent.tests.test_pat_template` | No description available |
 | [`RegisteredScopeMixin`](#registeredscopemixin) | `waldur_mastermind.matrix_chat.tests.test_room_scopes` | Registers Customer, for the test only, as a kind of room scope whose members ... |
 | [`AppserviceErrorCountMixin`](#appserviceerrorcountmixin) | `waldur_mastermind.matrix_chat.views` | Counts the view's 4xx and 5xx answers for the webhook_errors diagnostic |
 | [`MatrixEnabledWriteGuardMixin`](#matrixenabledwriteguardmixin) | `waldur_mastermind.matrix_chat.views` | Reject mutating requests while the Matrix integration is disabled |
@@ -131904,6 +132011,15 @@ Default permissions are IsAdminUser but should be overridden with app-specific p
 **Module:** `waldur_core.checklist.tests.test_latest_answers`
 
 **Description:** No description available.
+
+### ChecklistEditGuardMixin
+
+**Module:** `waldur_core.checklist.views`
+
+**Description:**
+
+Runs the checklist edit guards before a question, option or dependency
+is written, so a checklist an app has locked can't be changed from here.
 
 ### ConstanceTableMixin
 
@@ -133431,6 +133547,12 @@ manager and offering manager, with the roles' grants from permissions.yaml.
 ### ResourceGlauthAccessMixin
 
 **Module:** `waldur_mastermind.marketplace_site_agent.tests.test_glauth_resource_access`
+
+**Description:** No description available.
+
+### SiteAgentFixtureMixin
+
+**Module:** `waldur_mastermind.marketplace_site_agent.tests.test_pat_template`
 
 **Description:** No description available.
 
