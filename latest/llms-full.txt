@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-24T09:53:56.223126Z
+Generated: 2026-11-24T12:57:19.255895Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -23762,7 +23762,7 @@ td:nth-child(4) {
 | `sync-user-deactivation-status` | `waldur_core.permissions.sync_user_deactivation_status` | 3 hours | Sync user activation status based on DEACTIVATE_USER_IF_NO_ROLES setting.<br><br>This task ensures all users in the system match the current policy:<br>- If DEACTIVATE_USER_IF_NO_ROLES is True: deactivate users with no active roles<br>- If DEACTIVATE_USER_IF_NO_ROLES is False: reactivate users who were previously auto-deactivated |
 | `sync_request_types` | `waldur_mastermind.support.sync_request_types` | 1 day | Synchronize request types from the active support backend. |
 | `terminate_expired_resources` | `waldur_mastermind.marketplace.terminate_expired_resources` | Cron: `20 1 * * * (m/h/dM/MY/d)` | Terminate marketplace resources that have reached their end date. |
-| `terminate_resources_if_project_end_date_has_been_reached` | `waldur_mastermind.marketplace.terminate_resources_if_project_end_date_has_been_reached` | Cron: `40 1 * * * (m/h/dM/MY/d)` | Terminate resources when their project has reached its end date (including grace period).<br><br>Also pauses resources for projects currently in the grace period,<br>if the offering has supports_pausing=True in plugin_options, and lifts that<br>pause from resources whose project has left the grace period without<br>expiring (its end date was extended or cleared). |
+| `terminate_resources_if_project_end_date_has_been_reached` | `waldur_mastermind.marketplace.terminate_resources_if_project_end_date_has_been_reached` | Cron: `40 1 * * * (m/h/dM/MY/d)` | Terminate resources when their project has reached its end date (including grace period).<br><br>Also pauses resources for projects currently in the grace period,<br>if the offering has supports_pausing=True in plugin_options, and lifts that<br>pause from resources whose project has left the grace period without<br>expiring (its end date was extended or cleared). Resources are paused before<br>they are scheduled for termination too, and stay paused if it fails. |
 | `terminate_resources_in_state_erred_without_backend_id_and_failed_terminate_order` | `waldur_mastermind.marketplace.terminate_resources_in_state_erred_without_backend_id_and_failed_terminate_order` | 1 day | Clean up erred site-agent resources that failed both creation and termination. |
 | `update-custom-quotas` | `waldur_core.quotas.update_custom_quotas` | 1 hour | No description available |
 | `update-invoices-total-cost` | `invoices.update_invoices_total_cost` | 1 day | Refresh current month invoices: the estimated volume discounts of the<br>open ones first, as they lower the total, then the cached total cost. |
@@ -40788,15 +40788,27 @@ are called by their full path.
 ### Option A: generate it from Waldur (SLURM only, recommended)
 
 For SLURM offerings, skip hand-writing YAML entirely. On the same `Integration` → `Credentials`
-page from step 1, open `Actions` → `Generate Site Agent Config`. It builds a config from your
-*actual* offering — `name`, `waldur_api_url`, `waldur_offering_uuid`, all three `*_backend`
-fields, `backend_settings`, and `backend_components` (including your real plan components, not a
-generic example) are filled in for you. Only `waldur_api_token` comes back as a placeholder
-(`<YOUR_API_TOKEN_HERE>`) — swap in the token from step 1. Copy or download the result as
-`waldur-site-agent-config.yaml`.
+page from step 1, open `Actions` → `Generate Site Agent Config`, and pick a **Configuration
+source**:
 
-You need the `GET_SERVICE_PROVIDER_API_SECRET_CODE` permission on the customer to see this
-action — if it's missing from the `Actions` menu, that's usually why.
+- **Read from Waldur** (`configuration_source: waldur`, needs an agent release that supports it):
+  the file holds only `name`, `waldur_api_url`, `waldur_offering_uuid`, the token and the
+  secrets. The agent reads the backends, `backend_settings` and components from Waldur when it
+  starts, so a later change in Waldur needs only a restart.
+- **Everything in the file** (`configuration_source: local`): the whole configuration from your
+  *actual* offering, including all three `*_backend` fields, `backend_settings` and
+  `backend_components` from your real plan components.
+
+Each secret the agent needs, starting with `waldur_api_token`, comes back empty with a
+`# SECRET:` comment (or as `<YOUR_API_TOKEN_HERE>` for an offering with no agent configuration
+in Waldur). Fill in the token from step 1 and any listed backend secret, such as the LDAP
+`bind_password`. Copy or download the result as `waldur-site-agent-config.yaml`.
+
+Generating the file needs the `SERVICE_PROVIDER.GET_API_SECRET_CODE` permission on the
+organization, which by default only its owners and staff have: offering managers see the action,
+but Waldur refuses it. The
+[service provider guide](https://docs.waldur.com/latest/user-guide/service-provider-organization/site-agent-configuration/)
+covers the agent configuration in Waldur and the generator in full.
 
 ### Option B: write it by hand
 
@@ -100983,7 +100995,7 @@ a new project:
     - **Project description** - A brief description about the project.
     - **OECD FoS code** - OECD science field code ([more info](https://joinup.ec.europa.eu/collection/eu-semantic-interoperability-catalogue/solution/field-science-and-technology-classification/about))
     - **Start date** - once reached, marks the date when prepared user invitations are sent out and triggers the processing of previously made resource orders.
-    - **End date** – once reached (plus any configured grace period), triggers the creation of termination orders for the existing resources. If the resources have already been terminated by this time, the project will be removed. The date is inclusive.
+    - **End date** – the day the project's resources are terminated, or the last day of the grace period if one is configured. Once they are all terminated, the project is removed. See [Start and end dates](start-and-end-dates.md).
 
 !!! note
     Your Waldur administrator may enforce a project name convention (for example, a maximum length). If the name you enter does not meet the requirement, the form shows an error and the project is not created. See [Project name restrictions](../staff-users/project-name-restrictions.md).
@@ -100999,9 +101011,11 @@ description.
 ## End dates and resources
 
 !!! note
-    1. If a resource has a termination date that comes after the project's end date, the project's end date will automatically become that resource's termination date.
-    2. If a resource has a termination date that comes before the project's end date, we'll use the resource's original termination date.
+    1. A resource's termination date cannot be later than the project's end date.
+    2. A resource is terminated on its own termination date or on the project's termination day (end date plus any grace period), whichever comes first.
     3. Important: Setting any end date (either the project's or a resource's) only creates a termination request. The resource remains active in the project until the termination process is fully completed.
+
+For worked examples, see [Start and end dates](start-and-end-dates.md).
 
 ## Grace period
 
@@ -102030,6 +102044,9 @@ permission decides.
 |-----|---------------|--------------|
 | Holders of the end date permission (by default, organization owners) | **Set termination date** | The date changes immediately |
 | Everyone else with access to the resource | **Request end date change** | A request is raised for someone to approve |
+
+For how the termination date relates to the project's dates and grace period,
+see [Start and end dates](start-and-end-dates.md).
 
 The request flow has to be enabled per offering. Where it is off, only the
 permission holders have any end date action at all — the behaviour Waldur has
@@ -103180,6 +103197,299 @@ elevated access, evaluated per‑network:
 If you don't have the required permission for the advanced controls, the
 basic gateway action still works — your request will simply be rejected if
 you include unauthorised advanced fields.
+
+---
+
+### Start and end dates
+<!-- Source: docs/user-guide/customer-organization/start-and-end-dates.md -->
+
+# Start and end dates
+
+Waldur uses dates in several places to decide when things start and stop: the
+project, each order, each resource and, for prepaid offerings, the subscription.
+This page explains what each date does, how the dates affect each other, and what
+happens on the day each one is reached.
+
+| Date | Set on | What happens when it is reached |
+|------|--------|---------------------------------|
+| Project start date | Project | Invitations are sent and orders waiting for the project are processed |
+| Project end date | Project | Every resource in the project is terminated, after the grace period if there is one |
+| Grace period | Organization or project | Pushes the project's terminations back by a number of days |
+| Order start date | Order | The approved order is processed |
+| Resource termination date | Resource | The resource is terminated |
+| Subscription period | Prepaid resource | Sets the resource's termination date; extended by renewal |
+
+!!! note "Dates are calendar days"
+    All of these are dates, not times, and they are read in the time zone of the
+    Waldur server. The checks run in the background a few times a day, so an action
+    due on a date happens during that day, not at a precise hour.
+
+## How the dates fit together
+
+```d2
+direction: right
+
+project: Project {
+  start: start date
+  end: end date
+  grace: grace period
+  start -> end -> grace
+}
+
+order: Order {
+  ostart: start date
+}
+
+resource: Resource {
+  rend: termination date
+}
+
+order.ostart -> project.start: not before {style.stroke-dash: 3}
+order.ostart -> project.end: not after {style.stroke-dash: 3}
+resource.rend -> project.end: not after {style.stroke-dash: 3}
+```
+
+- An order's start date must fall between the project's start date and end date.
+- A resource's termination date cannot be later than the project's end date.
+- A resource is terminated on its own termination date or on the project's
+  termination day, whichever comes first.
+
+## Project start date
+
+The project start date lets you prepare a project before it begins. Until that
+date:
+
+- **Invitations are held.** Invitations you create are saved but not sent. They
+  go out once the start date is reached, and their expiry is counted from the
+  start date, not from when you created them.
+- **Orders are held.** An order placed in the project waits in the **Pending
+  project** state. Once the start date is reached it continues to provider
+  review, if the offering needs it, and is then processed.
+
+The dates are on the project's **Edit** tab, under **General**. Once a grace
+period is set, **Resource termination date** shows the day the resources will
+actually be terminated.
+
+[Image: Start date, end date, grace period and resource termination date of a project]
+
+A start date cannot be in the past. Once it has been reached, it cannot be
+changed. Clearing the start date of a project that has not started yet releases
+the held invitations and orders straight away.
+
+## Project end date
+
+The project end date is the day the project's resources are terminated. When it
+is reached, Waldur creates a termination order for every active resource in the
+project. Treat **the day before the end date as the last full day of work**: the
+terminations are started in the early hours of the end date itself.
+
+Once every resource has been terminated, the project itself is removed.
+
+A project end date cannot be set in the past. Users who may edit the project
+change it on the project's **Edit** tab, or with the pencil next to **End date**
+in the project list. For other project members, the same pencil opens **Request
+end date change**: they pick a new date and give a reason, and an organization
+owner approves or rejects the request.
+
+[Image: A project member requesting a later end date]
+
+### Reminders
+
+Project members and organization owners receive an email **7 days** and
+**1 day** before the project's resources are terminated, so with a grace period
+the reminders are counted from the end of the grace period. They are sent only
+if the notification is enabled on your Waldur.
+
+## Grace period
+
+A grace period gives the project's users extra days after the end date to back
+up their data or to ask for an extension before anything is deleted.
+
+- Staff set it in days, on the organization (the default for all of its
+  projects) or on a single project. A project's own value always wins, and a
+  value of **0** turns the grace period off for that project even when the
+  organization has one.
+- Resources are terminated on **end date + grace period**.
+- During the grace period, resources of offerings that support pausing are
+  **paused**: they keep existing, but you cannot start new work on them. For
+  SLURM, for example, no new jobs can be submitted.
+- The project list marks the project **In grace** with the days left, and the
+  project's pages show a warning bar with the original end date, the last day
+  of the grace period and the days remaining.
+
+[Image: A project in its grace period in the project list]
+
+[Image: The grace period warning bar on a project]
+
+```d2
+direction: down
+
+active: "Before the end date\nResources work normally" {style.fill: "#c8e6c9"; style.font-color: "#1f2328"}
+grace: "Grace period\n(from the day after the end date)\nResources paused" {style.fill: "#fff3cd"; style.font-color: "#1f2328"}
+terminated: "End date + grace period\nResources terminated,\nthen the project is removed" {style.fill: "#ffcdd2"; style.font-color: "#1f2328"}
+
+active -> grace: end date passes
+grace -> terminated: last day of the grace period
+grace -> active: end date extended {style.stroke-dash: 3}
+```
+
+**Extending the end date during the grace period** brings the project back to
+normal: the pause applied for the grace period is lifted automatically. While a
+project is in its grace period, its end date can be moved to any date whose
+grace period has not yet run out, including a date in the past.
+
+!!! note "Offerings that opt out"
+    A service provider can switch the grace period off for an offering. Its
+    resources are terminated on the project end date itself, while the project's
+    other resources still get the grace period.
+
+### A project with a 3-day grace period
+
+A project ends on **30 November** and has a **3-day** grace period:
+
+| Day | State of the project | What happens to its resources |
+|-----|----------------------|-------------------------------|
+| 26 November | Active | Reminder email: 7 days until termination |
+| 29 November | Active | Last full day before the end date |
+| 30 November | Active (end date reached) | Nothing yet |
+| 1 December | In grace period | Resources that support pausing are paused |
+| 2 December | In grace period | Reminder email: 1 day until termination |
+| 3 December | Grace period over | Resources are terminated; the project is removed once they are gone |
+
+Without a grace period, the resources would be terminated on 30 November, and
+the reminders would arrive on 23 and 29 November.
+
+## Order start date
+
+An order's start date delays the processing of an approved order, for example
+to have a resource ready on the first day of a course. It is shown as **Start
+date** in the last step of the order form.
+
+- It is optional. Without it, an order is processed as soon as it is approved.
+- It must be a future date, not before the project's start date, and not after
+  the project's end date.
+- Approvals still happen first. An order with a future start date goes through
+  consumer and provider review as usual, then waits in the **Pending start
+  date** state.
+- A future project start date is waited for before the provider review, and the
+  order's own start date after it.
+- On the start date, Waldur starts processing the order, as if it had just been
+  approved.
+
+[Image: Start date and termination date in the order form]
+
+Until then, the resource page shows the order as **Scheduled**, with the date
+it will start on.
+
+[Image: An approved order scheduled to start on its start date]
+
+!!! note
+    The field is available only if your Waldur administrator has enabled order
+    start dates. Without it, every order is processed as soon as it is approved.
+
+```d2
+direction: down
+
+placed: Order placed
+consumer: "Consumer review\n(if required)"
+project: "Pending project\n(project start date\nin the future)"
+provider: "Provider review\n(if required)"
+pending: "Pending start date\n(order start date\nin the future)"
+exec: Executing
+done: Resource created {style.fill: "#c8e6c9"; style.font-color: "#1f2328"}
+
+placed -> consumer
+consumer -> project
+consumer -> provider: project already started
+project -> provider: project start date reached
+provider -> pending
+provider -> exec: no future start date
+pending -> exec: order start date reached
+exec -> done
+```
+
+## Resource termination date
+
+The termination date (end date) is the day a single resource is terminated,
+independent of the rest of the project. Like the project end date, it is the
+day the resource goes away, not the last day you can use it.
+
+You can set it in the order form as **Termination date**, or later with
+**Actions → Set termination date** on the resource. Those without the
+permission to set it can ask for a new date instead: see
+[Changing a resource end date](resource-end-date-changes.md).
+
+A termination date must be:
+
+- today or later;
+- not before the order's start date;
+- not after the project's end date;
+- within any limits the service provider sets for the offering.
+
+Depending on the offering, the service provider may also:
+
+- **require** a termination date for every new resource, in which case the
+  order form fills in a default date a set number of days ahead, never after
+  the project's end date, and you can change it within the allowed range;
+- cap it at a **maximum number of days** after creation, or at a **latest
+  date**.
+
+Resource reminders are sent 7 days and 1 day before the termination date by
+default. A service provider can choose other days for its offering.
+
+### Three resources in one project
+
+A project ends on **31 December** with a **10-day** grace period. Three of its
+resources:
+
+| Resource | Its termination date | Terminated on |
+|----------|---------------------|---------------|
+| A | none | 10 January (project end date + grace period) |
+| B | 15 December | 15 December (its own date comes first) |
+| C | none, from an offering that opts out of the grace period | 31 December |
+
+Resource B cannot be given a termination date later than 31 December while the
+project ends on that date.
+
+## Prepaid subscriptions
+
+For prepaid offerings, you buy a **subscription period** of a number of months
+and pay for it upfront. You do not choose a termination date: it is the order's
+start date (or the day you order) plus the subscription period. With order
+start dates enabled, the start date is asked for next to the subscription
+period, and the form shows the period it covers.
+
+[Image: Start date and subscription period in a prepaid order]
+
+- The service provider decides which subscription periods can be chosen.
+- Only staff can change the termination date of a prepaid resource directly.
+  End date change requests are not available for prepaid offerings.
+- To keep using the resource, **renew** it with **Actions → Renew allocation**.
+  The renewal is priced and charged upfront, like the original order, and can
+  increase the limits at the same time.
+
+A renewal extends the resource from its current termination date or from today,
+whichever is later:
+
+| Termination date when renewing | Renewing on | Extension | New termination date |
+|--------------------------------|-------------|-----------|----------------------|
+| 31 January | 1 December | 1 month | 28 February |
+| 15 November (already passed) | 1 December | 12 months | 1 December next year |
+
+[Image: Choosing the extension period when renewing]
+
+The new date is applied once the renewal order has been completed. A renewal is
+an order, so renew well before the termination date to leave time for any
+approval it needs.
+
+## Related pages
+
+- [Project management](project-management.md): setting the project's dates and
+  grace period
+- [Changing a resource end date](resource-end-date-changes.md): requesting and
+  approving a new termination date
+- [Resource lifecycle](../../about/concepts/lifecycle.md): order and resource
+  states
 
 ---
 
@@ -129674,6 +129984,7 @@ td:nth-child(4) {
 | `record_credit_transaction` | `Django Signal (post_save)` | `invoices.ProjectCredit` | Write ledger rows for every credit value change, organization or project. |
 | `refresh_vat_rates_when_enabled` | `Custom Signal (setting_updated)` | `—` | Without rates, pending invoices cannot get VAT until the next month. |
 | `refund_project_credit_on_project_removal` | `Django Signal (pre_delete)` | `structure.Project` | No description |
+| `release_end_date_pause_when_resource_end_date_changes` | `Django Signal (post_save)` | `marketplace.Resource` | Lift the end-date pause once a resource's own end date is moved past today. |
 | `release_grace_pauses_when_project_end_date_changes` | `Django Signal (post_save)` | `structure.Project` | Lift grace-period pauses once a project's end date moves it out of the grace period. |
 | `release_posix_allocations_on_consumer_deletion` | `Django Signal (post_delete)` | `marketplace.OfferingUser` | Mark the deleted POSIX id consumer's identity as released. |
 | `release_posix_allocations_on_consumer_deletion` | `Django Signal (post_delete)` | `marketplace.ServiceProviderAccount` | Mark the deleted POSIX id consumer's identity as released. |
@@ -129898,7 +130209,7 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 817
+Total unique handlers found: 818
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_auth_social**: 2 handlers
@@ -129906,7 +130217,7 @@ Total unique handlers found: 817
 - **waldur_core**: 353 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 400 handlers
+- **waldur_mastermind**: 401 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 15 handlers
 - **waldur_openstack_replication**: 1 handlers
