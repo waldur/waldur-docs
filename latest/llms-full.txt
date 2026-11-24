@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-24T21:35:58.990454Z
+Generated: 2026-11-24T21:53:54.603802Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -10610,6 +10610,38 @@ options:
 
 ```
 
+## estimate_change
+
+Estimate what a change to a customer's resources would cost per month, by billing the next month with and without the change and rolling it back. Nothing is saved. The monthly, yearly and one-off figures are gross: before credit and excluding VAT. The month's credit, its total net of credit and its VAT are given next to them.
+
+```bash
+
+usage: waldur estimate_change [--month MONTH]
+                              [--resize RESOURCE_UUID [TYPE=VALUE ...]]
+                              [--switch RESOURCE_UUID PLAN_UUID]
+                              [--remove RESOURCE_UUID]
+                              [--add PLAN_UUID [PROJECT_UUID ...]] [--json]
+                              customer_uuid
+
+positional arguments:
+  customer_uuid
+
+options:
+  --month MONTH         Reference month as YYYY-MM; it must not be invoiced
+                        yet. Defaults to next month.
+  --resize RESOURCE_UUID [TYPE=VALUE ...]
+                        New limits for a resource, in the component's unit.
+  --switch RESOURCE_UUID PLAN_UUID
+  --remove RESOURCE_UUID
+  --add PLAN_UUID [PROJECT_UUID ...]
+                        A new resource: plan, project, then optional
+                        TYPE=VALUE limits and end_date=YYYY-MM-DD, when it
+                        ends; a prepaid component is estimated only with an
+                        end date.
+  --json
+
+```
+
 ## evaluate_slurm_policy
 
 Manually trigger SLURM periodic usage policy evaluation. Can evaluate a specific resource against a specific policy, or all resources for a policy.
@@ -11883,6 +11915,12 @@ options:
 ## sync_saml2_providers
 
 Synchronize SAML2 identity providers.
+
+## update_openstack_external_addresses
+
+Recompute the mapped public IPs of all floating IPs and the
+  addresses by which global search finds tenants and VMs. Run once after an
+  upgrade, and whenever mapped addresses look out of date.
 
 ## validate_openstack_billing
 
@@ -15894,7 +15932,7 @@ Public LiveKit signaling URL that browsers connect to for calls, e.g. wss://matr
 
 **Type:** bool
 
-Enable Personal Access Token authentication.
+Give personal access tokens to every user. While off, only users with the per-user personal access tokens flag can create and use them.
 
 #### PAT_MAX_LIFETIME_DAYS
 
@@ -23791,6 +23829,7 @@ td:nth-child(4) {
 | `waldur-marketplace-resume-api-keys-after-limit-reset` | `waldur_mastermind.marketplace.resume_api_keys_after_limit_reset` | 5 minutes | Resume the API keys whose limits have reset since Waldur paused them.<br><br>The per-key counterpart of ``lift_reset_spending_limit_restrictions``: runs<br>every few minutes, so a key paused by a daily limit comes back close to<br>midnight UTC rather than on the hourly check. |
 | `waldur-marketplace-resume-api-keys-under-limit` | `waldur_mastermind.marketplace.resume_api_keys_under_limit` | 1 hour | Resume the API keys Waldur paused for a limit once they are under it again.<br><br>The per-key counterpart of ``re_evaluate_usage_limit_restrictions``: a usage<br>report resumes such a key on its own, but a period may reset without one. |
 | `waldur-marketplace-retry-failed-api-key-limit-pauses` | `waldur_mastermind.marketplace.retry_failed_api_key_limit_pauses` | 5 minutes | Issue again the limit pauses of API keys that the site agent failed to apply.<br><br>The key stays usable at the backend until its pause succeeds. |
+| `waldur-marketplace-rotate-due-api-keys` | `waldur_mastermind.marketplace.rotate_due_api_keys` | 1 hour | Rotate settled API keys whose deleted assignee still holds their value. |
 | `waldur-marketplace-script-cleanup-orphaned-k8s-resources` | `waldur_marketplace_script.cleanup_orphaned_k8s_resources` | 1 hour | Remove orphaned Kubernetes Jobs and ConfigMaps created by Waldur that are older than 1 hour. |
 | `waldur-marketplace-script-pull-resources` | `waldur_marketplace_script.pull_resources` | 1 hour | Pull resources from marketplace script offerings by executing configured pull scripts. |
 | `waldur-marketplace-script-remove-old-dry-runs` | `waldur_marketplace_script.remove_old_dry_runs` | 1 day | Remove old dry run records that are older than one day. |
@@ -115910,11 +115949,7 @@ Waldur-based services. To add a publication, open a merge request against this p
 ## Papers and reports
 
 - 2026 - [Supporting a Fast-Paced National AI Resource: Portal, Identity, and Federated Access at Scale](https://www.computer.org/csdl/proceedings-article/sc-w/2026/122100b950/2lkuFNmbqPm), S. R. Alam, A. Tom and C. Woods, SC26-W: Workshops of the International Conference for High Performance Computing, Networking, Storage and Analysis, Chicago, IL, USA, IEEE, 2026, pp. 2015-2026, doi: 10.1109/SCW72768.2026.00238.
-- 2026 - [Portable and Resilient by Design: A Cloud-Style Stack for HPC and AI across NVIDIA Grace and Grace Hopper Superchips](https://doi.org/10.1145/3816891.3834897), S. R. Alam and S. McIntosh-Smith, Workshop Proceedings of the 55th International Conference on Parallel Processing (ICPP Workshops 2026), Singapore, ACM, 2026, pp. 13-23, doi: 10.1145/3816891.3834897.
 - 2026 - [Cloud in the crosshairs: exposing vulnerabilities in web-based management interfaces of open-source IaaS platforms](https://doi.org/10.1007/s10207-026-01319-w), A. Perrakis et al., International Journal of Information Security, Springer, 2026, vol. 25, no. 5, art. 144, doi: 10.1007/s10207-026-01319-w, preprint: [Research Square rs-7496016](https://doi.org/10.21203/rs.3.rs-7496016/v1).
-- 2026 - [Tokenised Authentication for Research Computing Services, Project Report](https://doi.org/10.7488/era/7519), J. Bell et al., EPCC, University of Edinburgh, 2026, doi: 10.7488/era/7519.
-- 2026 - [FAIR-Compute: A Roadmap for Fair and Efficient Allocation of Federated Digital Research Infrastructure](https://arxiv.org/abs/2607.28290), K. E. Zachariadis et al., Final Report to the National Federated Compute Services (NFCS) Flexible Fund, arXiv preprint, 2026, doi: 10.48550/arXiv.2607.28290.
-- 2026 - [Federated IAM for existing infrastructures](https://doi.org/10.7488/era/7458), S. Booth, EPCC, University of Edinburgh, 2026, doi: 10.7488/era/7458.
 - 2026 - [Transitioning User and Identity Management for Alps](https://doi.org/10.1145/3837730.3837747), A. Ceriani et al., Proceedings of the Cray User Group (CUG 2026), Nice, France, ACM, 2026, pp. 190-198, doi: 10.1145/3837730.3837747.
 - 2026 - [Beyond Pre-Training: The Full Lifecycle of Foundation Models on HPC Systems](https://arxiv.org/abs/2604.12599), D. Conciatore et al., arXiv preprint, presented at the Cray User Group (CUG 2026), Nice, France, 2026, doi: 10.48550/arXiv.2604.12599.
 - 2025 - [Isambard-AI: a leadership-class supercomputer optimised specifically for Artificial Intelligence](https://doi.org/10.1145/3725789.3725794), S. McIntosh-Smith, S. R. Alam and C. Woods, Proceedings of the Cray User Group (CUG 2024), Perth, Australia, ACM, 2025, pp. 44-54, doi: 10.1145/3725789.3725794, preprint: [arXiv:2410.11199](https://arxiv.org/abs/2410.11199).
@@ -130245,9 +130280,18 @@ td:nth-child(4) {
 | `update_customer_of_offering_if_project_has_been_moved` | `Custom Signal (project_moved)` | `structure.Project` | Update the customer of an offering if the project has been moved. |
 | `update_daily_quotas` | `Django Signal (post_save)` | `quotas.QuotaUsage` | No description |
 | `update_estimate_when_invoice_is_created` | `Django Signal (post_save)` | `invoices.Invoice` | Update price estimates when new invoice is created for customer. |
+| `update_external_addresses_on_external_subnet_change` | `Django Signal (post_save)` | `openstack.ExternalSubnet` | No description |
+| `update_external_addresses_on_external_subnet_delete` | `Django Signal (post_delete)` | `openstack.ExternalSubnet` | No description |
 | `update_floating_ip_external_addresses` | `Django Signal (post_save)` | `openstack.FloatingIP` | No description |
 | `update_instances_ip_external_addresses` | `Django Signal (post_save)` | `marketplace.Offering` | No description |
 | `update_invoice_item_on_project_name_update` | `Django Signal (post_save)` | `structure.Project` | No description |
+| `update_ip_addresses_on_floating_ip_delete` | `Django Signal (post_delete)` | `openstack.FloatingIP` | No description |
+| `update_ip_addresses_on_load_balancer_change` | `Django Signal (post_save)` | `openstack.LoadBalancer` | No description |
+| `update_ip_addresses_on_load_balancer_delete` | `Django Signal (post_delete)` | `openstack.LoadBalancer` | No description |
+| `update_ip_addresses_on_port_change` | `Django Signal (post_save)` | `openstack.Port` | No description |
+| `update_ip_addresses_on_port_delete` | `Django Signal (post_delete)` | `openstack.Port` | No description |
+| `update_ip_addresses_on_router_change` | `Django Signal (post_save)` | `openstack.Router` | No description |
+| `update_ip_addresses_on_router_delete` | `Django Signal (post_delete)` | `openstack.Router` | No description |
 | `update_maintenance_announcement_on_offering_change` | `Django Signal (post_save)` | `marketplace.MaintenanceAnnouncementOffering` | Update AdminAnnouncement when affected offerings change. |
 | `update_maintenance_announcement_on_offering_change` | `Django Signal (post_delete)` | `marketplace.MaintenanceAnnouncementOffering` | Update AdminAnnouncement when affected offerings change. |
 | `update_marketplace_resource_limits_when_vm_is_updated` | `Custom Signal (vm_updated)` | `—` | No description |
@@ -130342,7 +130386,7 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 818
+Total unique handlers found: 827
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_auth_social**: 2 handlers
@@ -130350,7 +130394,7 @@ Total unique handlers found: 818
 - **waldur_core**: 353 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 401 handlers
+- **waldur_mastermind**: 410 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 15 handlers
 - **waldur_openstack_replication**: 1 handlers
@@ -137693,9 +137737,21 @@ All authentication failures return the same `"Invalid token."` message regardles
 
 The `revoke_user_pats_on_deactivation` signal handler in `waldur_core.core.handlers` revokes all active PATs when a user's `is_active` changes from `True` to `False`.
 
-### Global Kill Switch
+### Who May Have Tokens
 
-The `PAT_ENABLED` setting (default: `True`) controls whether PAT authentication is active. When `False`, `PATAuthentication.authenticate()` returns `None` for all `w_`-prefixed tokens, effectively disabling all PATs system-wide.
+A user may create, rotate and authenticate with tokens when the `PAT_ENABLED` setting is on **or** the user's own `can_use_personal_access_tokens` flag is set:
+
+| `PAT_ENABLED` | User flag | Tokens |
+|---------------|-----------|--------|
+| on | any | yes |
+| off | on | yes |
+| off | off | no |
+
+So `PAT_ENABLED` gives tokens to every user, and the flag gives them to selected users on a deployment that keeps them off for everyone else. Staff are not special-cased. `core.utils.can_use_personal_access_tokens(user)` holds the rule; token creation, rotation, REST and MCP authentication, and the template endpoints all call it.
+
+Neither switch deletes tokens. While a user is not allowed tokens, their existing tokens are refused, with the `pats_disabled` audit reason (see [Network ACLs](#network-acls)). They work again once the user is allowed tokens, unless they have expired or been revoked in the meantime. To cut off one user while `PAT_ENABLED` is on, revoke their tokens or deactivate the account; clearing the flag has no effect then.
+
+Before this rule, a user needed both `PAT_ENABLED` and the flag. On upgrade, migration `core.0062` turns a stored `PAT_ENABLED` of `True` off, so exactly the flagged users keep their tokens and nobody gains any. To give tokens to every user, turn `PAT_ENABLED` on again afterwards. A value the deployment applies from a settings file on every deploy is restored by the next deploy, which the migration logs as a warning; change it in that file.
 
 ## Configuration
 
@@ -137703,7 +137759,7 @@ The `PAT_ENABLED` setting (default: `True`) controls whether PAT authentication 
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `PAT_ENABLED` | `True` | Global enable/disable for PAT authentication |
+| `PAT_ENABLED` | `False` | Give tokens to every user; while off, only users with the per-user flag have them (see [Who May Have Tokens](#who-may-have-tokens)) |
 | `PAT_MAX_LIFETIME_DAYS` | `365` | Maximum token lifetime in days |
 | `PAT_MAX_TOKENS_PER_USER` | `20` | Maximum active tokens per user |
 
@@ -137846,7 +137902,7 @@ A request from outside the ACL is rejected with the same generic `Invalid token.
 
 Enforcement **fails closed**: if the source address cannot be determined, a token with a non-empty ACL is rejected.
 
-A known token presented after it should no longer work -- revoked, or with a deactivated owner, or an owner no longer permitted personal access tokens -- is rejected with the same generic error and recorded as a `pat_authentication_rejected` audit event carrying a `reason` (`revoked`, `user_inactive`, `permission_revoked`), debounced per token, reason and source IP. An expired token is rejected without an individual audit event (expiry is an expected lifecycle end, already surfaced by the `pat_expired` event the cleanup task emits, not a replay signal). An unknown token is never audited, so a forged bearer token cannot flood the event log.
+A known token presented after it should no longer work -- revoked, or with a deactivated owner, or an owner who is not allowed personal access tokens -- is rejected with the same generic error and recorded as a `pat_authentication_rejected` audit event carrying a `reason` (`revoked`, `user_inactive`, `pats_disabled`), debounced per token, reason and source IP. Events recorded before `pats_disabled` existed carry `permission_revoked` for the same check. An expired token is rejected without an individual audit event (expiry is an expected lifecycle end, already surfaced by the `pat_expired` event the cleanup task emits, not a replay signal). An unknown token is never audited, so a forged bearer token cannot flood the event log.
 
 Audit volume is additionally capped per token: `PAT_MAX_AUDIT_EVENTS_PER_HOUR` (default 50) limits how many events one token may generate per hour, counted separately for source-address changes and for rejections. Beyond the ceiling the events and the `last_used_at` / `last_used_ip` / `use_count` write are suppressed for the rest of the window and a warning is logged; the requests themselves are unaffected. The per-address debounce alone cannot bound this -- a caller with an IPv6 /64 has effectively unlimited source addresses.
 
