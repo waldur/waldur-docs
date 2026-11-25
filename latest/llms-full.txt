@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-25T03:04:04.630295Z
+Generated: 2026-11-25T09:00:21.231976Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -7804,9 +7804,9 @@ sign-in needs later mastermind and homeport images.
      not 443. While it is empty, no OAuth token is issued, so clients can
      connect only with a personal access token.
 
-   Personal access tokens also need `PAT_ENABLED`, on the same page, and
-   each user who creates one needs the **Personal access tokens** option,
-   which staff turn on when editing the user.
+   Personal access tokens are given to every user by `PAT_ENABLED`, on the
+   same page. While it is off, only users with the **Personal access tokens**
+   option, which staff turn on when editing the user, can create them.
 
 3. Check that `HOMEPORT_URL`, under **Administration → User interface →
    Branding**, is the portal's address, `https://<WALDUR_DOMAIN>/`, with the
@@ -9171,7 +9171,8 @@ The packaged defaults are placeholders. Nothing refuses to start with them.
       `OIDC_MATCHMAKING_BY_EMAIL`. Match by email only when the identity provider verifies it.
 - [ ] **Review the session and token limits**: `TOKEN_LIFETIME` (sign-out after an hour of
       inactivity by default), `API_TOKEN_MAX_LIFETIME_MINUTES` (`0` allows tokens that never
-      expire), `PAT_ENABLED`, and the
+      expire), `PAT_ENABLED` (on gives every user personal access tokens; off limits them
+      to users with the **Personal access tokens** option), and the
       [brute-force protection](mastermind-configuration/brute-force-protection.md) limits.
 
 ### Development and demo features
@@ -104248,9 +104249,9 @@ Click your name in the top-right corner to open the user menu.
 | **Language**, **Dark theme** | Interface language and colour mode |
 | **API token** | Your token for the REST API, with a copy button |
 
-### Personal access tokens in the user menu { data-requires="setting:PAT_ENABLED" }
+### Personal access tokens in the user menu { data-mentions="setting:PAT_ENABLED" }
 
-Where personal access tokens are enabled, **Credentials** also holds them: scoped,
+If your account is allowed personal access tokens, **Credentials** also holds them: scoped,
 time-limited tokens for scripts and integrations. See
 [Personal access tokens](personal-access-tokens.md).
 
@@ -104353,7 +104354,7 @@ By default, the server is available in the current project only. Add `--scope us
 use it in all your projects, or `--scope project` to share it with your team in the
 project's `.mcp.json`. Each team member then signs in with their own account.
 
-### Give Claude Code a token { data-requires="setting:PAT_ENABLED" }
+### Give Claude Code a token { data-mentions="setting:PAT_ENABLED" }
 
 To use a personal access token instead of signing in, pass it as a header:
 
@@ -104395,7 +104396,7 @@ in one project:
 Cursor's MCP settings then show that the server needs you to sign in. Start the sign-in
 there, and approve Cursor on Waldur's consent page.
 
-### Give Cursor a token { data-requires="setting:PAT_ENABLED" }
+### Give Cursor a token { data-mentions="setting:PAT_ENABLED" }
 
 To use a personal access token instead of signing in, add a header that reads it from an
 environment variable:
@@ -104422,7 +104423,7 @@ organization, an administrator must turn on the **MCP servers in Copilot** polic
 4. When VS Code asks, allow it to sign in, and approve it on Waldur's consent page. If
    it doesn't ask, start the sign-in with the server's **Authenticate** action.
 
-### Give VS Code a token { data-requires="setting:PAT_ENABLED" }
+### Give VS Code a token { data-mentions="setting:PAT_ENABLED" }
 
 To use a personal access token instead of signing in, add a `headers` entry with
 `"Authorization": "Bearer <token>"` to the server's configuration. Read the token from an
@@ -104469,7 +104470,7 @@ and secret you get, and these values:
 
 Give the administrator the callback URL that Copilot Studio shows.
 
-### Give Copilot Studio a token { data-requires="setting:PAT_ENABLED" }
+### Give Copilot Studio a token { data-mentions="setting:PAT_ENABLED" }
 
 To use a personal access token instead, choose **API key** for authentication, with the
 type **Header** and the header name `Authorization`. Whoever uses the agent then enters
@@ -104492,7 +104493,7 @@ and secret, and enter these values:
 | Token URL | `https://api.example.com/oauth/token/` |
 | Scope | `mcp:read` |
 
-### Give another client a token { data-requires="setting:PAT_ENABLED" }
+### Give another client a token { data-mentions="setting:PAT_ENABLED" }
 
 A client that sends a fixed header can use a personal access token instead, with the
 header `Authorization: Bearer <your token>`.
@@ -105027,8 +105028,14 @@ Personal access tokens (PATs) provide a secure way to authenticate with the Wald
 
 ## Prerequisites
 
-- A staff user must enable the PAT feature in **Administration > Configuration > Personal access tokens**.
 - Your account must be active.
+- Your account must be allowed personal access tokens. That is the case when either:
+    - staff have turned them on for every user (`PAT_ENABLED`, under **Administration > Configuration > Personal access tokens**), or
+    - while they are not on for every user, staff have turned on the **Personal access tokens** option on your account, when editing the user.
+
+Staff accounts follow the same rule. If **Personal access tokens** is missing under **Profile > Credentials**, your account is not allowed them: ask your administrator.
+
+When an account stops being allowed tokens (staff turn `PAT_ENABLED` off and the account does not have the option), its existing tokens stop working but are not deleted. They work again if the account is allowed tokens before they expire.
 
 ## Creating a token
 
@@ -119681,9 +119688,9 @@ needs later mastermind and homeport images.
       `waldur.settingsOverrides` sets it.
 3. Check that `HOMEPORT_URL`, under **Administration > User interface > Branding**, is
    the portal's address. The OAuth sign-in sends the browser to the consent page there.
-4. For personal access tokens, also turn on `PAT_ENABLED` on the same page. Each user
-   who creates a token also needs the **Personal access tokens** option, which staff
-   turn on when editing the user.
+4. For personal access tokens, turn on `PAT_ENABLED` on the same page to give them to
+   every user. To give them only to some users, leave it off and turn on the **Personal
+   access tokens** option when editing each of those users.
 
 While `MCP_ENABLED` is off, `/mcp`, its metadata and the OAuth endpoints answer 404, and
 the portal hides **Connected apps**.
@@ -148716,9 +148723,9 @@ Copy your API token from HomePort, as described in [Authentication](../integrato
 
 A token carries your permissions, so keep it out of shared scripts and repositories.
 
-### Personal access tokens { data-requires="setting:PAT_ENABLED" }
+### Personal access tokens { data-mentions="setting:PAT_ENABLED" }
 
-For automation, prefer a [personal access token](../user-guide/end-users/personal-access-tokens.md) where your portal offers them: it can be limited to specific scopes and given an expiry date. It is sent as `Authorization: Bearer <token>`.
+For automation, prefer a [personal access token](../user-guide/end-users/personal-access-tokens.md) if your account is allowed them: it can be limited to specific scopes and given an expiry date. It is sent as `Authorization: Bearer <token>`.
 
 ## 2. List the marketplace offerings
 
@@ -151918,10 +151925,10 @@ for provider in sp.keys():
 
 ---
 
-### S3 storage in a CI/CD pipeline { data-requires="setting:PAT_ENABLED" }
+### S3 storage in a CI/CD pipeline { data-mentions="setting:PAT_ENABLED" }
 <!-- Source: docs/integrator-guide/s3-storage-in-ci-cd.md -->
 
-# S3 storage in a CI/CD pipeline { data-requires="setting:PAT_ENABLED" }
+# S3 storage in a CI/CD pipeline { data-mentions="setting:PAT_ENABLED" }
 
 A pipeline can order S3 storage from Waldur, pick up its access key, use it, and
 terminate the storage again, all with a personal access token limited to that
@@ -151960,7 +151967,7 @@ deployment with a site-agent S3 offering.
    resource, which removes the S3 identity and its keys. Termination fails while
    the resource still owns a bucket.
 
-## What the pipeline needs { data-requires="setting:PAT_ENABLED" }
+## What the pipeline needs { data-mentions="setting:PAT_ENABLED" }
 
 **A personal access token** for a user who may order in the project and
 reveal its resources' keys. Create it under **User profile → Personal access
@@ -152001,7 +152008,7 @@ export S3_OFFERING_UUID=<offering uuid>
 export PROJECT_UUID=<project uuid>
 ```
 
-## REST API { data-requires="setting:PAT_ENABLED" }
+## REST API { data-mentions="setting:PAT_ENABLED" }
 
 ### Single requests
 
@@ -152146,7 +152153,7 @@ curl -sSf -X POST -H "Authorization: Bearer $WALDUR_ACCESS_TOKEN" \
   "$WALDUR_API_URL/api/marketplace-resources/$WALDUR_S3_RESOURCE_UUID/terminate/"
 ```
 
-## waldur-cli { data-requires="setting:PAT_ENABLED" }
+## waldur-cli { data-mentions="setting:PAT_ENABLED" }
 
 [`waldur-cli`](waldur-cli/index.md) waits for the order itself, and, from
 its 8.1.5-rc.4 release, has `marketplace api-key` commands to list, wait for, reveal and rotate a
@@ -152218,7 +152225,7 @@ echo "access key id: $AWS_ACCESS_KEY_ID, secret: ${#AWS_SECRET_ACCESS_KEY} chara
 `marketplace api-key reveal` prints the secret; keep its output out of the job
 log, as the script does by capturing it in a variable.
 
-## Ansible { data-requires="setting:PAT_ENABLED" }
+## Ansible { data-mentions="setting:PAT_ENABLED" }
 
 From its 8.1.5-rc.4 release, the `waldur.marketplace` collection has `resource_api_key_facts`, which lists a
 resource's keys, and `resource_api_key_reveal`, which reveals one. The playbook
