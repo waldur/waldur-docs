@@ -149,7 +149,8 @@ The packaged defaults are placeholders. Nothing refuses to start with them.
       `OIDC_MATCHMAKING_BY_EMAIL`. Match by email only when the identity provider verifies it.
 - [ ] **Review the session and token limits**: `TOKEN_LIFETIME` (sign-out after an hour of
       inactivity by default), `API_TOKEN_MAX_LIFETIME_MINUTES` (`0` allows tokens that never
-      expire), `PAT_ENABLED`, and the
+      expire), `PAT_ENABLED` (on gives every user personal access tokens; off limits them
+      to users with the **Personal access tokens** option), and the
       [brute-force protection](mastermind-configuration/brute-force-protection.md) limits.
 
 ### Development and demo features

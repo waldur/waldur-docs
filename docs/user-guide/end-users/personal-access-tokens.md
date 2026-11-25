@@ -1,5 +1,5 @@
 ---
-requires:
+mentions:
   - setting:PAT_ENABLED
 ---
 
@@ -9,8 +9,14 @@ Personal access tokens (PATs) provide a secure way to authenticate with the Wald
 
 ## Prerequisites
 
-- A staff user must enable the PAT feature in **Administration > Configuration > Personal access tokens**.
 - Your account must be active.
+- Your account must be allowed personal access tokens. That is the case when either:
+    - staff have turned them on for every user (`PAT_ENABLED`, under **Administration > Configuration > Personal access tokens**), or
+    - while they are not on for every user, staff have turned on the **Personal access tokens** option on your account, when editing the user.
+
+Staff accounts follow the same rule. If **Personal access tokens** is missing under **Profile > Credentials**, your account is not allowed them: ask your administrator.
+
+When an account stops being allowed tokens (staff turn `PAT_ENABLED` off and the account does not have the option), its existing tokens stop working but are not deleted. They work again if the account is allowed tokens before they expire.
 
 ## Creating a token
 

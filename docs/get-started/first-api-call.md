@@ -8,9 +8,9 @@ Copy your API token from HomePort, as described in [Authentication](../integrato
 
 A token carries your permissions, so keep it out of shared scripts and repositories.
 
-### Personal access tokens { data-requires="setting:PAT_ENABLED" }
+### Personal access tokens { data-mentions="setting:PAT_ENABLED" }
 
-For automation, prefer a [personal access token](../user-guide/end-users/personal-access-tokens.md) where your portal offers them: it can be limited to specific scopes and given an expiry date. It is sent as `Authorization: Bearer <token>`.
+For automation, prefer a [personal access token](../user-guide/end-users/personal-access-tokens.md) if your account is allowed them: it can be limited to specific scopes and given an expiry date. It is sent as `Authorization: Bearer <token>`.
 
 ## 2. List the marketplace offerings
 

@@ -53,9 +53,9 @@ needs later mastermind and homeport images.
       `waldur.settingsOverrides` sets it.
 3. Check that `HOMEPORT_URL`, under **Administration > User interface > Branding**, is
    the portal's address. The OAuth sign-in sends the browser to the consent page there.
-4. For personal access tokens, also turn on `PAT_ENABLED` on the same page. Each user
-   who creates a token also needs the **Personal access tokens** option, which staff
-   turn on when editing the user.
+4. For personal access tokens, turn on `PAT_ENABLED` on the same page to give them to
+   every user. To give them only to some users, leave it off and turn on the **Personal
+   access tokens** option when editing each of those users.
 
 While `MCP_ENABLED` is off, `/mcp`, its metadata and the OAuth endpoints answer 404, and
 the portal hides **Connected apps**.

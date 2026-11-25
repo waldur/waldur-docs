@@ -87,7 +87,7 @@ By default, the server is available in the current project only. Add `--scope us
 use it in all your projects, or `--scope project` to share it with your team in the
 project's `.mcp.json`. Each team member then signs in with their own account.
 
-### Give Claude Code a token { data-requires="setting:PAT_ENABLED" }
+### Give Claude Code a token { data-mentions="setting:PAT_ENABLED" }
 
 To use a personal access token instead of signing in, pass it as a header:
 
@@ -129,7 +129,7 @@ in one project:
 Cursor's MCP settings then show that the server needs you to sign in. Start the sign-in
 there, and approve Cursor on Waldur's consent page.
 
-### Give Cursor a token { data-requires="setting:PAT_ENABLED" }
+### Give Cursor a token { data-mentions="setting:PAT_ENABLED" }
 
 To use a personal access token instead of signing in, add a header that reads it from an
 environment variable:
@@ -156,7 +156,7 @@ organization, an administrator must turn on the **MCP servers in Copilot** polic
 4. When VS Code asks, allow it to sign in, and approve it on Waldur's consent page. If
    it doesn't ask, start the sign-in with the server's **Authenticate** action.
 
-### Give VS Code a token { data-requires="setting:PAT_ENABLED" }
+### Give VS Code a token { data-mentions="setting:PAT_ENABLED" }
 
 To use a personal access token instead of signing in, add a `headers` entry with
 `"Authorization": "Bearer <token>"` to the server's configuration. Read the token from an
@@ -203,7 +203,7 @@ and secret you get, and these values:
 
 Give the administrator the callback URL that Copilot Studio shows.
 
-### Give Copilot Studio a token { data-requires="setting:PAT_ENABLED" }
+### Give Copilot Studio a token { data-mentions="setting:PAT_ENABLED" }
 
 To use a personal access token instead, choose **API key** for authentication, with the
 type **Header** and the header name `Authorization`. Whoever uses the agent then enters
@@ -226,7 +226,7 @@ and secret, and enter these values:
 | Token URL | `https://api.example.com/oauth/token/` |
 | Scope | `mcp:read` |
 
-### Give another client a token { data-requires="setting:PAT_ENABLED" }
+### Give another client a token { data-mentions="setting:PAT_ENABLED" }
 
 A client that sends a fixed header can use a personal access token instead, with the
 header `Authorization: Bearer <your token>`.
