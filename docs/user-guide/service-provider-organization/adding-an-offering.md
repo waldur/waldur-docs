@@ -488,7 +488,7 @@ each discounted component — see
 
 ## Asking customers for order details
 
-The questions a customer answers when ordering an offering are configured on the offering's **User input** tab. Each input has a type (for example **String**, **Integer**, **Boolean**, **Select**, **Select multiple options**, **Date** or one of the Kubernetes configurations), a label, an optional help text, and can be marked required. Inputs on the **Resource options** tab work the same way, except that they cannot be marked required, and their values stay editable on the resource after it is created.
+The questions a customer answers when ordering an offering are configured on the offering's **User input** tab. Each input has a type (for example **String**, **Integer**, **Boolean**, **Select**, **Select multiple options**, **Date**, **Network (CIDR)**, **IPsec VPN**, **Secret** or one of the Kubernetes configurations), a label, an optional help text, and can be marked required. Inputs on the **Resource options** tab work the same way, except that they cannot be marked required, and their values stay editable on the resource after it is created.
 
 ### Showing an input only when it applies
 
@@ -572,6 +572,71 @@ The **Single-Datacenter Kubernetes Configuration** and **Multi-Datacenter Kubern
 - **Customer chooses** — the order form shows a **Cluster topology** selector with both layouts. Switching it keeps the version, access rules, Longhorn and load balancer choices, and resets the per-datacenter infrastructure and node groups.
 
 When **Cluster topology** is left empty, the input type decides: one site for the single-datacenter input, three sites for the multi-datacenter one. Orders that request a topology the offering does not allow, or the wrong number of datacenters for their topology, are rejected.
+
+### Asking for a network
+
+A **Network (CIDR)** input asks the customer for an address range, for example the network a cluster or a tenant should use. On the **Settings** step you decide which networks are acceptable:
+
+- **IP version**: IPv4, IPv6 or either.
+- **Prefix length**: the smallest and largest prefix, for example `/16` to `/28`.
+- **Allowed ranges**: the network must lie inside one of them, for example the private ranges `10.0.0.0/8`, `172.16.0.0/12` and `192.168.0.0/16`.
+- **Excluded ranges**: the network must not overlap any of them, for example ranges your platform uses itself.
+- **Customers may enter several networks**: the customer enters a list instead of one network, up to the number you set. Networks in the list must not overlap each other.
+
+![Settings of a network input: IPv4, prefix /16 to /28, inside the private ranges](../img/offering-cidr-settings.png)
+
+The order form summarises these rules under the input and checks the value as the customer types. A network must be written with its prefix. An address with host bits set is refused with a suggestion, for example *10.0.0.5/24 has host bits set. Did you mean 10.0.0.0/24?*. Waldur checks the value again when the order is created and when the customer changes it later, and stores it normalised.
+
+![Order form refusing 10.0.0.5/24 and suggesting 10.0.0.0/24](../img/order-form-cidr-error.png)
+
+### Asking for a site-to-site VPN
+
+An **IPsec VPN** input collects what you need to set up an IPsec tunnel between the customer's network and yours. The order form shows your end of the tunnel read-only, and asks for the customer's end:
+
+- **Peer gateway public IP**: the public address of the customer's VPN gateway. Private, loopback, link-local, multicast and shared (CGNAT) addresses are refused unless you allow private peers.
+- **Peer ID**: optional, the IKE identity of the gateway if it is not its address.
+- **Remote subnets**: the networks behind the customer's gateway, checked like a network input. They must not overlap your subnets, nor any network input you name.
+- **IKE version**: shown only when you allow IKEv1.
+- **Advanced: IKE and IPsec proposals**: encryption, integrity, Diffie-Hellman group and lifetime of phase 1 (IKE) and phase 2 (IPsec). It starts from your defaults, so most customers leave it closed.
+- **Dead peer detection**: optional.
+
+![Order form with the provider's end of the tunnel and the customer's gateway and subnets](../img/order-form-ipsec.png)
+
+On the **Settings** step you set:
+
+- whether IKEv1 and private peer addresses are allowed;
+- your end of the tunnel: your gateway's public address and your subnets. Leave them empty when they are only known after provisioning; you can set them per resource later;
+- the rules for the customer's subnets, like those of a network input, and which network inputs they must not overlap;
+- for each phase, the allowed encryption algorithms, integrity algorithms and groups, the shortest and longest lifetime, and the defaults.
+
+![Settings of an IPsec VPN input: the customer's gateway, your end of the tunnel and the rules for the customer's subnets](../img/offering-ipsec-settings.png)
+
+Your end of a particular tunnel is set per resource through the API (`update_options_direct`), for example by your site agent once the tunnel exists. Customers cannot change it.
+
+The input holds no pre-shared key. Add a **Secret** input next to it for that.
+
+### Asking for a secret
+
+A **Secret** input holds a value that must not be shown with the other answers, such as a VPN pre-shared key, an API token or a kubeconfig. Its value is stored encrypted. It never appears in the order or resource details, which only show whether it is set.
+
+On the **Settings** step you set:
+
+- **Who sets it**: the customer enters it, or you or your site agent set it after provisioning.
+- **Customers may reveal it**: whether users who may reveal the resource's API keys can read the value back. It starts on for a secret you set and off for one the customer enters.
+- **Shortest length** and **Longest length**.
+- **Several lines**: for a PEM key or a kubeconfig. The customer gets a text area, and line breaks are allowed.
+
+![Settings of a secret input entered by the customer, 8 to 255 characters](../img/offering-secret-settings.png)
+
+A secret input cannot have a default value.
+
+When the customer enters the secret, the order form shows a masked field. Afterwards the resource's **Options** tab shows *Set* with the date it last changed, and a **Replace** button. When you set it, the customer sees it as not set until you do, and can **Reveal** it if you allow that.
+
+![Resource options with the VPN summary and the pre-shared key shown as set](../img/resource-options-vpn-secret.png)
+
+You set and read secrets on the resource's **Secrets** tab in your provider view, whoever set them. Every change and every read is recorded in the resource's events.
+
+![Provider view of a resource's Secrets tab with Replace and Reveal](../img/provider-resource-secrets.png)
 
 ### Calculating limits from one answer
 
