@@ -48,9 +48,9 @@ Click your name in the top-right corner to open the user menu.
 | **Language**, **Dark theme** | Interface language and colour mode |
 | **API token** | Your token for the REST API, with a copy button |
 
-### Personal access tokens in the user menu { data-requires="setting:PAT_ENABLED" }
+### Personal access tokens in the user menu { data-mentions="setting:PAT_ENABLED" }
 
-Where personal access tokens are enabled, **Credentials** also holds them: scoped,
+If your account is allowed personal access tokens, **Credentials** also holds them: scoped,
 time-limited tokens for scripts and integrations. See
 [Personal access tokens](personal-access-tokens.md).
 

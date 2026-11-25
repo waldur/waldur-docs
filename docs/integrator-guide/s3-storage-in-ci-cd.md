@@ -1,4 +1,4 @@
-# S3 storage in a CI/CD pipeline { data-requires="setting:PAT_ENABLED" }
+# S3 storage in a CI/CD pipeline { data-mentions="setting:PAT_ENABLED" }
 
 A pipeline can order S3 storage from Waldur, pick up its access key, use it, and
 terminate the storage again, all with a personal access token limited to that
@@ -37,7 +37,7 @@ deployment with a site-agent S3 offering.
    resource, which removes the S3 identity and its keys. Termination fails while
    the resource still owns a bucket.
 
-## What the pipeline needs { data-requires="setting:PAT_ENABLED" }
+## What the pipeline needs { data-mentions="setting:PAT_ENABLED" }
 
 **A personal access token** for a user who may order in the project and
 reveal its resources' keys. Create it under **User profile → Personal access
@@ -78,7 +78,7 @@ export S3_OFFERING_UUID=<offering uuid>
 export PROJECT_UUID=<project uuid>
 ```
 
-## REST API { data-requires="setting:PAT_ENABLED" }
+## REST API { data-mentions="setting:PAT_ENABLED" }
 
 ### Single requests
 
@@ -223,7 +223,7 @@ curl -sSf -X POST -H "Authorization: Bearer $WALDUR_ACCESS_TOKEN" \
   "$WALDUR_API_URL/api/marketplace-resources/$WALDUR_S3_RESOURCE_UUID/terminate/"
 ```
 
-## waldur-cli { data-requires="setting:PAT_ENABLED" }
+## waldur-cli { data-mentions="setting:PAT_ENABLED" }
 
 [`waldur-cli`](waldur-cli/index.md) waits for the order itself, and, from
 its 8.1.5-rc.4 release, has `marketplace api-key` commands to list, wait for, reveal and rotate a
@@ -295,7 +295,7 @@ echo "access key id: $AWS_ACCESS_KEY_ID, secret: ${#AWS_SECRET_ACCESS_KEY} chara
 `marketplace api-key reveal` prints the secret; keep its output out of the job
 log, as the script does by capturing it in a variable.
 
-## Ansible { data-requires="setting:PAT_ENABLED" }
+## Ansible { data-mentions="setting:PAT_ENABLED" }
 
 From its 8.1.5-rc.4 release, the `waldur.marketplace` collection has `resource_api_key_facts`, which lists a
 resource's keys, and `resource_api_key_reveal`, which reveals one. The playbook
