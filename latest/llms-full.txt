@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-26T06:55:29.046536Z
+Generated: 2026-11-26T12:44:14.543938Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -34936,6 +34936,8 @@ curl -X POST -H "Authorization: Token <owner-token>" -H "Content-Type: applicati
 Create a user for the agent, make it an **offering manager** of this offering (or a manager of the
 service provider), and give its API token to the Kubernetes operator. The agent uses it to read resources,
 resource projects and role grants, and to set each resource project's state from its CR (OK or erred).
+To import people added in Keycloak, the agent needs a staff token instead; see
+[Keeping people added in Keycloak](#keeping-people-added-in-keycloak).
 
 ### 5. Link each resource to its Rancher cluster
 
@@ -34969,6 +34971,125 @@ and grants. It needs a **staff** Waldur token, and the same Rancher and Keycloak
 operator. See [importing access from existing clusters](site-agent/plugins/rancher-kc-crd/README.md)
 for the two-step `inventory` / `apply` procedure, its filters, and what it skips.
 
+## Keeping people added in Keycloak
+
+By default the sync is one-way: whoever a Keycloak admin adds to the operator's groups by hand is
+removed on the next reconcile. A deployment that still grants Rancher access in Keycloak while moving
+to Waldur can instead have such people imported into Waldur: the operator keeps them and reports them,
+and the agent gives them the matching Waldur role, creating their Waldur account if they have none. From
+then on they are ordinary members, and removing them in Waldur removes them from Rancher.
+
+This works with layout A (the Keycloak username is the civil code) and a Keycloak that brokers the same
+identity provider as Waldur, such as TARA.
+
+```mermaid
+sequenceDiagram
+    participant Admin as Keycloak admin
+    participant KC as Rancher's Keycloak
+    participant O as Operator
+    participant A as Site agent
+    participant W as Waldur
+    Admin->>KC: add ee38001010000 to a project group
+    O->>KC: reconcile: member not in the CR, username matches the pattern
+    O->>O: keep, list in status.externalMembers
+    A->>O: read the CR status
+    A->>W: Identity Bridge: find or create the account by civil code
+    A->>W: grant the role mapped to the group
+    A->>O: next cycle: the CR names the person
+```
+
+### What it needs
+
+| Component | Needed |
+|---|---|
+| rancher-keycloak-operator | a release newer than `0.5.0` |
+| Waldur (Mastermind) | a release newer than `8.1.5-rc.4` (the Identity Bridge matches existing users by civil code) |
+| waldur-site-agent + `waldur-site-agent-rancher-kc-crd` | a release newer than `1.0.8-rc.17` |
+
+### 1. Waldur: turn on the Identity Bridge
+
+In Waldur's runtime settings (Constance, see the
+[configuration guide](../mastermind-configuration/configuration-guide.md)), as staff:
+
+- `FEDERATED_IDENTITY_SYNC_ENABLED`: on;
+- `FEDERATED_IDENTITY_SYNC_ALLOWED_ATTRIBUTES`: add `civil_number`;
+- `ENABLED_USER_PROFILE_ATTRIBUTES`: add `civil_number`.
+
+The agent sends each person's civil code to the bridge, which returns the existing account with that
+code, or creates one. Without `civil_number` allowed, the agent imports nobody and logs why: an account
+created without the civil code would not be the one the person signs in to.
+
+The agent's token must belong to a **staff** user (instead of the offering manager in Part 2, step 4):
+before granting a role it reads the account, to refuse staff, support and identity manager accounts,
+and only staff can read accounts across organizations.
+
+### 2. Site agent: emit every role and import
+
+Add to the offering's `backend_settings`:
+
+```yaml
+      import_external_members: true
+      identity_bridge_source: "isd:rancher"    # recorded on the accounts it creates
+      keycloak_identity_provider: "tara"       # alias of the identity provider in Rancher's Keycloak
+      # external_member_username_prefix: "rancher-"   # start of new accounts' usernames
+```
+
+To see what it would do first, set `import_external_members: dry_run`: the agent makes the same
+decisions and only logs them (which role it would grant to whom, whether it would match an existing
+account or create one, and why it would leave someone out), changing nothing in Waldur. It writes the
+CRs as `true` does, so the rollout below is the same. Members the operator reports are removed after its
+grace period during a dry run, as nothing imports them; raise `externalMemberGraceSeconds` (up to 30
+days) for a longer look, then switch to `true`. The site agent needs a release newer than `1.0.8-rc.17`
+that includes the dry run.
+
+Keep `keycloak_user_lookup: username` and drop `keycloak_user_identity_template`: the Keycloak username
+has to map back to the Waldur civil code as is.
+
+With this on, every role in `role_map` and `cluster_role_map` gets a Keycloak group and a Rancher binding
+in every project, even when nobody holds it, so each role has a group to add people to. The roles must
+exist on the offering (Part 2, step 3).
+
+A person is imported only when their Keycloak account is linked to `keycloak_identity_provider` with
+the same civil code as its username. An account that is merely named like a civil code is refused, so
+that a role is never recorded in Waldur against someone else. New Waldur accounts get a neutral username
+(`rancher-` plus random characters, never the civil code), the Keycloak first and last name, and no
+email. When the person later signs in to Waldur through TARA, they land on that account.
+
+### 3. Operator: keep matching members
+
+Once the agent has run one cycle with step 2, set the username pattern:
+
+```bash
+helm upgrade rko rancher-keycloak-operator/rancher-keycloak-operator -n waldur-system --reuse-values \
+  --set config.keycloak.externalMemberPattern='^[a-z]{2}[0-9]+$' \
+  --set-string config.keycloak.externalMemberGraceSeconds=900
+```
+
+Keycloak stores usernames in lowercase, so the pattern must be lowercase too. The order matters: with
+the pattern set first, people left in a group whose binding had disappeared from the CR would be
+imported instead of removed.
+
+The operator remembers, per group, who the CR named and who it removed (`status.memberHistory`), so a
+person removed in Waldur is not imported back. Someone the agent cannot import (no TARA link, a
+privileged account, a role Waldur refuses) stays in the group for the grace period (15 minutes by
+default) and is then removed. See the operator's
+[Keycloak setup guide](rancher-keycloak-operator/docs/keycloak-setup.md), section 6, for the full rules.
+
+### Who can grant Waldur roles this way
+
+!!! warning
+    Turning this on makes these people as powerful as a team manager in Waldur:
+
+    - **Keycloak group admins**: whoever can add people to the operator's groups.
+    - **Keycloak user admins** (`manage-users`): they can create an account named like a civil code and
+      link it to that identity; the role is then recorded in Waldur against the real person.
+    - **Whoever can write `managedrancherprojects/status`**: the agent imports whoever the status lists.
+      Only the operator's service account may have `patch` or `update` on that subresource; the site
+      agent needs none.
+
+    The CR status also lists the imported people's usernames and identity-provider ids, which are civil
+    codes. Keep read access to the CRs restricted (Part 1, step 4).
+
 ## Verify
 
 ```bash
@@ -34977,6 +35098,9 @@ kubectl get mrp -n waldur-system -L waldur.io/resource-uuid
 
 # Members and their sync state
 kubectl get mrp <name> -n waldur-system -o jsonpath='{.status.keycloakRoleBindings[*].syncedMembers}'
+
+# People added in Keycloak and waiting to be imported
+kubectl get mrp <name> -n waldur-system -o jsonpath='{.status.keycloakRoleBindings[*].externalMembers[*].username}'
 
 # Operator log: lookups, refusals, group changes
 kubectl logs deploy/rko-rancher-keycloak-operator -n waldur-system --tail=100
@@ -35002,6 +35126,10 @@ In Waldur, the resource's user list shows an icon on each grant, as the agent re
 | Operator logs `matches 2 users; refusing to pick one` | Two Keycloak users hold the same civil code; resolve it in Keycloak |
 | Users are group members but have no Rancher access | Rancher uses the generic OIDC provider, or the `groups` claim carries full group paths |
 | Agent log warns that roles are not in `role_map` | A Waldur role name is missing from `role_map` / `cluster_role_map` |
+| Someone added in Keycloak disappears after 15 minutes | The agent did not import them; its log says why (no identity-provider link, link to a different civil code, privileged account, Identity Bridge without `civil_number`) |
+| Agent log: import refused because the Identity Bridge does not store `civil_number` | Add `civil_number` to `FEDERATED_IDENTITY_SYNC_ALLOWED_ATTRIBUTES` and `ENABLED_USER_PROFILE_ATTRIBUTES` |
+| Agent cannot read accounts during the import | The agent's token is not a staff token |
+| Every project has a group and binding for each role, even empty ones | Expected with `import_external_members` on |
 
 ---
 
@@ -35378,7 +35506,90 @@ Enable it with the helm value `config.keycloak.createMissingUsers: "true"`
 (env `KEYCLOAK_CREATE_MISSING_USERS=true`). It is off by default: it decides
 that the realm holds users who have never logged in.
 
-## 6. Cleanup semantics to be aware of
+## 6. Keeping members a Keycloak admin added by hand
+
+The operator makes each group's membership match the CR: whoever the CR does
+not name is removed. A deployment that still grants Rancher access in Keycloak
+while moving to Waldur can instead keep those people and have the CR's writer
+import them.
+
+Set `config.keycloak.externalMemberPattern` (env
+`KEYCLOAK_EXTERNAL_MEMBER_PATTERN`) to a regular expression the whole
+username must match, for example `^[a-z]{2}[0-9]+$` for usernames that are
+national identity codes. Keycloak stores usernames in lowercase, so a pattern
+with uppercase letters never matches. An invalid pattern stops the operator at
+startup. With `existingSecret`, add the variable to that secret yourself.
+
+### What the operator remembers
+
+To tell "the writer dropped them" from "someone added them in Keycloak", the
+operator keeps a history per group in `status.memberHistory`, by Keycloak user
+id. It is written back even when a reconcile fails, and it is kept for groups
+that leave the spec:
+
+- **managed**: users the spec named;
+- **removed**: users the operator took out, and when;
+- **external**: users kept although the spec never named them, and since when.
+
+### The rules
+
+For a group member the spec does not name, in this order:
+
+1. **The spec had them** (managed): the writer removed them. They are taken out
+   and recorded as removed.
+2. **They were removed less than the grace period ago**: someone or something
+   put them back, for example another CR on a shared cluster group that still
+   carries the old spec. They are taken out again.
+3. **Their username does not match the pattern**: they are taken out, as
+   without the pattern.
+4. **Otherwise** they were added in Keycloak. They are kept and listed in the
+   binding's `status.*RoleBindings[].externalMembers` (username, first and
+   last name and identity-provider links, never their email), and left out of
+   `syncedMembers`. If the writer names them within the grace period they
+   become managed. If not (the import was refused, or the writer cannot see the
+   grant, for example because the person has not accepted the offering's terms),
+   they are taken out and not reported again until the grace period has passed.
+
+The grace period is `config.keycloak.externalMemberGraceSeconds` (env
+`KEYCLOAK_EXTERNAL_MEMBER_GRACE_SECONDS`), 900 seconds by default. A person
+the writer removed and a Keycloak admin adds back *after* the grace period
+counts as a new addition and is imported again.
+
+The Waldur site agent's `rancher-kc-crd` plugin, with `import_external_members`
+on, turns reported members into Waldur roles; on its next cycle they are
+ordinary members of the CR.
+
+### Before turning it on
+
+- **Anyone who can edit these groups can grant access in Waldur.** That is the
+  point of the feature, but it makes Keycloak group admins as powerful as the
+  people who manage the team in Waldur. The pattern limits which accounts can
+  be imported, not who adds them.
+- **The CR status is trusted.** The writer imports whoever `externalMembers`
+  lists, and `memberHistory` decides who is listed. Keep write access to
+  `managedrancherprojects/status` in the operator's namespace to the
+  operator's service account.
+- **Rollout order.** Have the CR writer emit a binding for every mapped role
+  first (the site agent does with `import_external_members` on), and let one
+  cycle pass before setting the pattern. Members left behind in a group whose
+  binding had disappeared from the CR are then removed instead of imported.
+- **A refused import does not stick.** Someone the writer never takes over is
+  removed after the grace period and stays out for another grace period;
+  after that, being put back counts as a new addition again. A Keycloak admin,
+  or an identity-provider mapper that assigns groups at login, can therefore
+  keep such a person in the group about half the time. Treat the grace period
+  accordingly.
+- **The CR status carries personal data**: `externalMembers` lists usernames
+  and identity-provider ids, which are civil codes in such deployments. Read
+  access to the CRs exposes them, as it already does for the spec.
+- **A CR created afresh starts with no history**, so everyone in its groups who
+  matches the pattern and is not in its spec is reported as external once.
+  People the writer already grants are matched to those grants.
+
+Empty (the default) keeps today's behaviour: every member the CR does not
+name is removed.
+
+## 7. Cleanup semantics to be aware of
 
 On CR deletion the operator removes members (by the UUIDs Keycloak
 lists for each group, whatever form the spec used) and deletes the CR's
@@ -35619,6 +35830,8 @@ The Helm chart installs:
 | `config.keycloak.userRealm` | `master` | Realm for admin auth |
 | `config.keycloak.verifySsl` | `false` | Verify Keycloak TLS |
 | `config.keycloak.createMissingUsers` | `false` | Create missing users of `federatedIdentity` members, linked to their identity provider |
+| `config.keycloak.externalMemberPattern` | | Keep, and report as `externalMembers`, group members the CR never had whose username fully matches this regex |
+| `config.keycloak.externalMemberGraceSeconds` | `900` | How long a kept member waits to be taken over, and how long a removed member stays removed |
 | `config.crNamespace` | `waldur-system` | Namespace for CRs |
 | `existingSecret` | | Use existing secret instead of creating one |
 | `installCRDs` | `true` | Install CRDs with the chart |
@@ -35733,6 +35946,8 @@ A **periodic resync** (every 5 minutes) re-runs the reconciliation for drift det
 | `KEYCLOAK_USER_REALM` | No | `master` | Realm for admin authentication |
 | `KEYCLOAK_VERIFY_SSL` | No | `true` | Verify Keycloak TLS |
 | `KEYCLOAK_CREATE_MISSING_USERS` | No | `false` | Create missing users of `federatedIdentity` members, linked to their identity provider |
+| `KEYCLOAK_EXTERNAL_MEMBER_PATTERN` | No | — | Keep, and report as `externalMembers`, group members the CR never had whose username fully matches this regex |
+| `KEYCLOAK_EXTERNAL_MEMBER_GRACE_SECONDS` | No | `900` | How long a kept member waits to be taken over, and how long a removed member stays removed |
 | `CR_NAMESPACE` | No | `waldur-system` | Namespace for CRs |
 
 **Note:** There is no `RANCHER_CLUSTER_ID` env var. Each CR specifies its target cluster via `spec.clusterId`. One operator instance serves all clusters managed by the Rancher server.
@@ -35742,6 +35957,8 @@ A **periodic resync** (every 5 minutes) re-runs the reconciliation for drift det
 **Attribute-mode members** (`lookupAttribute`, 0.5.0+) need the attribute declared in the realm's user profile (Keycloak 24+) with edit permission `admin` only. The operator refuses attribute lookups that users could satisfy by editing their own profile. An undeclared attribute is never found, and a value matching more than one user adds nobody. See [docs/keycloak-setup.md §4](docs/keycloak-setup.md#4-looking-members-up-by-a-user-attribute).
 
 **Members who have not logged in yet** (`federatedIdentity`): a username-mode member carrying it is added, and kept, only while its Keycloak user holds exactly that identity-provider link, whatever `KEYCLOAK_CREATE_MISSING_USERS` says. Check that existing users' links match before a CR generator starts sending the field. With `KEYCLOAK_CREATE_MISSING_USERS=true`, when Keycloak and Waldur share an upstream identity provider, a member with no Keycloak user also gets one created and linked to that provider in one request, so their first login already carries their groups. An existing user is never linked, and a new user whose link was not stored, or whose identity another user also holds, is deleted again. The member's optional `firstName`/`lastName` fill in the new user's profile until the first login; existing users are left as they are. See [docs/keycloak-setup.md §5](docs/keycloak-setup.md#5-pre-creating-users-who-have-not-logged-in-yet).
+
+**Members added in Keycloak** (`KEYCLOAK_EXTERNAL_MEMBER_PATTERN`): a group member the CR does not name is kept, and listed in the binding's `status.*.externalMembers`, when the whole (lowercase) username matches the pattern and the spec never had them. The operator records per group, by Keycloak user id, who the spec named, who it removed and who it kept (`status.memberHistory`), so a member the CR dropped is removed even after a failed reconcile, and one put back within the grace period (`KEYCLOAK_EXTERNAL_MEMBER_GRACE_SECONDS`, 900 by default) is removed again. A kept member the CR's writer has not taken over within the grace period is removed. See [docs/keycloak-setup.md §6](docs/keycloak-setup.md#6-keeping-members-a-keycloak-admin-added-by-hand).
 
 ## Duplicate handling
 
@@ -54190,6 +54407,17 @@ sequenceDiagram
 
 ---
 
+**A role's last holder.** A role nobody holds in Waldur has no members to put in the CR. When
+Waldur removes the last holder of a role, the agent keeps that role's binding in the CR with an
+empty member list, so the operator empties the group. Before, the binding was dropped, the
+operator stopped managing the group, and the person kept the access its Rancher binding grants.
+The same applies to a group left behind by a renamed template or a role dropped from `role_map` /
+`cluster_role_map`. A kept binding is let go once the operator reports its group empty.
+
+This does not reach groups whose binding had already disappeared before this version: check the
+groups of roles nobody holds in Waldur and remove leftover members by hand, or turn on
+`import_external_members` (below), which gives every mapped role a binding again.
+
 ## Sequence: orphan-CR pruning
 
 ```mermaid
@@ -54536,6 +54764,89 @@ new groups. Then delete the old bindings in Rancher; the operator never removes 
 mind that an adopted project is treated like any other: **removing its ResourceProject from
 Waldur deletes the Rancher project**.
 
+### Continuous import of members added in Keycloak
+
+The one-off import covers the access a cluster has on day one. To keep accepting people a
+Keycloak admin adds to the operator's groups later, turn on `import_external_members`:
+
+```yaml
+backend_settings:
+  import_external_members: true
+  identity_bridge_source: "isd:rancher"   # ISD the accounts it creates belong to
+  # external_member_username_prefix: "rancher-"   # start of new accounts' usernames
+```
+
+With the operator's `externalMemberPattern` set (for example `^[a-z]{2}[0-9]+$`), the operator
+keeps a group member the CR never had, if their username matches, and reports them in the
+binding's `status.*.externalMembers`. On every membership sync the agent then:
+
+1. maps the group back to the Waldur role it was built from (`role_map` for project groups,
+   `cluster_role_map` for the cluster groups);
+2. finds or creates the person's Waldur account through the Identity Bridge
+   (`POST /api/identity-bridge/`). In civil-number mode it sends the civil number from the
+   person's link to `keycloak_identity_provider`, so a person who already has a Waldur account
+   under another username is matched to it rather than getting a second one. **A member is
+   imported only when that link names the same civil number as its username** (ignoring case): a
+   Keycloak account named like a civil code proves nothing about whose code it is, and one linked
+   to someone else's identity would get that person the role. A new account gets a neutral username (`external_member_username_prefix`,
+  `rancher-` by default, plus 20 random hex characters; never the civil code),
+   the Keycloak first and last name when set, and never an email;
+3. refuses staff, support and identity manager accounts, and any account it cannot read;
+4. grants the role on the resource project (project groups) or on the resource (cluster groups).
+   A cluster member is reported by every CR on the cluster and granted once.
+
+On the next cycle the person is an ordinary member of the CR. Removing them in Waldur still works:
+the operator remembers who the CR named and takes them out. Someone the import cannot place (no
+link, a grant Waldur refuses such as a second role in one team, or a grant the agent cannot see
+because the person has not accepted the offering's terms) stays in the group only for the
+operator's grace period (15 minutes by default) and is then removed; the agent logs why.
+
+Requirements:
+
+- username lookup (`keycloak_user_lookup: username`) with `keycloak_user_identity_source`
+  `civil_number` or `username`, and no identity template: the Keycloak username has to map back to
+  the Waldur value as is;
+- Identity Bridge on in Waldur (`FEDERATED_IDENTITY_SYNC_ENABLED`), and in civil-number mode
+  `civil_number` in both `FEDERATED_IDENTITY_SYNC_ALLOWED_ATTRIBUTES` and
+  `ENABLED_USER_PROFILE_ATTRIBUTES`. Without it the agent imports nobody and logs why: an account
+  created without the civil number would not be the one the person signs in to;
+- a **staff** token for the agent: the import reads each account before granting it a role, to
+  refuse privileged ones, and only staff can read accounts across organizations;
+- in civil-number mode, `keycloak_identity_provider` (the link that identifies the person);
+- each role the groups map to must exist on the offering (resource-project roles for `role_map`,
+  resource roles for `cluster_role_map`).
+
+With this setting every role in `role_map` and `cluster_role_map` keeps a binding, empty when
+nobody holds it, so each role has a group to add people to: expect a Keycloak group and a Rancher
+binding per mapped role in every project. A Rancher role in the map that Rancher rejects then
+puts every CR into an error state, not only those with members in that role.
+
+In username mode the bridge finds existing accounts by username and records `isd:rancher` in
+their identity sources; names pushed from Keycloak update theirs. **Turn it on before the operator's
+pattern**, and let one cycle pass: members left in a group whose binding had disappeared are then
+removed rather than imported.
+
+What the import trusts, and who can therefore grant Waldur roles through it:
+
+- **Keycloak group admins**: whoever can add people to these groups.
+- **Keycloak user admins**: an admin with `manage-users` can create an account named like a
+  civil code and link it to that identity. The role is then recorded in Waldur against the real
+  person, while the account the admin made holds the Rancher access.
+- **Whoever can write `managedrancherprojects/status`** in the agent's namespace: the agent
+  imports what `externalMembers` lists, for any civil number. This is a hard requirement: only the
+  operator's service account may have `patch`/`update` on `managedrancherprojects/status`. The
+  agent itself needs none:
+
+  ```yaml
+  # Role for the site agent: the CRs, not their status subresource
+  - apiGroups: ["waldur.io"]
+    resources: ["managedrancherprojects"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  ```
+
+Staff, support and identity manager accounts are never given roles this way, whichever way the
+bridge matched them.
+
 ---
 
 ## User identity matching
@@ -54826,14 +55137,14 @@ group name self-explaining in the Keycloak admin UI.
    access to B, C, … via the shared group's PRTBs.
 2. Slugs (`customer_slug`, `project_slug`, `resource_slug`,
    `project_name`) are **mutable** -- renaming the entity in Waldur
-   creates a new Keycloak group on the next reconcile and orphans the
-   old one (the operator adopts groups by name and never renames adopted
-   groups). Memberships in the old group become stale.
+   creates a new Keycloak group on the next reconcile. The old one keeps
+   its binding with no members until the operator has emptied it (see
+   "A role's last holder"), then is no longer managed; the group itself
+   and its Rancher binding stay.
 3. **Switching the template after deployment** has the same effect as a
    bulk rename: every existing CR re-renders, the operator creates fresh
-   groups, the old groups linger with their stale members. Plan a
-   one-time manual migration if you change the template against an
-   existing deployment.
+   groups and empties the old ones. Plan a one-time migration of the
+   members if you change the template against an existing deployment.
 4. Keycloak's `GROUP.NAME` column is `varchar(255)`. The plugin guards
    this at render time and raises a `ValueError` (with a hint about
    `${rp_uuid_short}`) if the rendered name would exceed 255 chars, so
@@ -76086,6 +76397,304 @@ order option, which it pairs with:
   order with `old_options` and `new_options`; otherwise it is applied
   directly. Either way, read the current rules from the resource's
   `options`, not from its ordered `attributes`.
+
+### Network in CIDR Form
+
+A `cidr` option asks for a network in CIDR notation, or a list of them. It
+works as an order option and as a resource option of any offering. The
+value is stored as validated: trimmed, written as `ipaddress` writes it
+(IPv6 compressed, in lower case).
+
+```json
+{
+  "type": "cidr",
+  "label": "Cluster network",
+  "required": true,
+  "default_configs": {
+    "ip_version": "ipv4",
+    "prefix_length_min": 16,
+    "prefix_length_max": 28,
+    "allowed_ranges": ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"],
+    "excluded_ranges": ["10.96.0.0/12"],
+    "multiple": false,
+    "max_items": 5
+  }
+}
+```
+
+#### Value
+
+- `"10.20.0.0/16"`, or with `multiple` a list such as
+  `["10.20.0.0/16", "fd00:1::/64"]`. With `multiple`, a single string is
+  accepted and stored as a list of one.
+- An empty list is refused for a required option.
+
+#### Offering policy
+
+Every key of `default_configs` is optional; without any, an IPv4 or IPv6
+network of any size is accepted.
+
+- `ip_version`: `ipv4`, `ipv6` or `any` (the default).
+- `prefix_length_min` / `prefix_length_max`: the largest and the smallest
+  network allowed. They apply to IPv4 and IPv6 alike, so with `any` set them
+  only when that makes sense for both.
+- `allowed_ranges`: the value must lie inside one of them. The order form
+  offers a "private only" preset of the RFC 1918 ranges and `fc00::/7`.
+- `excluded_ranges`: the value must not overlap any of them.
+- `multiple` and `max_items`: a list, and its longest length. A list is
+  never longer than 256 entries.
+
+When the offering is saved, the ranges must be networks without host bits
+(of the policy's IP version), the prefix lengths must fit the version (0–32
+or 0–128) with the smallest not above the largest, and `max_items` must be
+at least 1. Keys of other option types are dropped.
+
+#### Refusals
+
+Each is a field error under the option's name:
+
+- a value that is not a network, or a bare address:
+  "Enter a network in CIDR notation, such as 10.0.0.0/16.";
+- host bits set: "10.0.0.5/24 has host bits set. Did you mean 10.0.0.0/24?";
+- the wrong IP version; a prefix length outside the limits;
+- a network outside `allowed_ranges`, or overlapping one of
+  `excluded_ranges` (the message names that range);
+- with `multiple`: entries overlapping each other (the message names both),
+  more than `max_items`, or a bad entry, reported by its position
+  (`{"net": {"1": ["…"]}}`);
+- a list when `multiple` is off.
+
+The Kubernetes egress rules use the same network parser, but keep accepting
+a network with host bits set.
+
+### IPsec VPN Configuration
+
+An `ipsec_vpn_config` option collects a site-to-site IPsec VPN: the
+customer's gateway, the networks behind it and the IKE and ESP proposals.
+It works as an order option and as a resource option of any offering.
+Waldur checks and stores the configuration; building the tunnel is the
+provider's automation's job. It holds no pre-shared key: add a
+[secret option](#secret) next to it for that (see the example there).
+
+#### Value
+
+As stored in order attributes, resource attributes and resource options:
+
+```json
+{
+  "peer_gateway_ip": "198.51.100.10",
+  "peer_id": "",
+  "remote_subnets": ["192.168.10.0/24"],
+  "ike_version": "ikev2",
+  "phase1": {"encryption": "aes256", "integrity": "sha256", "dh_group": 14, "lifetime": 28800},
+  "phase2": {"encryption": "aes256", "integrity": "sha256", "pfs_group": 14, "lifetime": 3600},
+  "dpd": {"action": "restart", "interval": 30, "timeout": 120},
+  "provider": {"gateway_ip": "203.0.113.10", "local_subnets": ["10.0.0.0/16"]}
+}
+```
+
+- The customer sends `peer_gateway_ip` and `remote_subnets` (at least one);
+  the rest is optional. Phase settings left out are filled from the policy's
+  defaults, `ike_version` defaults to `ikev2`, and `dpd` is stored as `null`
+  when not given.
+- `peer_id` is an IP address, a domain name or an identity such as
+  `vpn@example.com`.
+- `provider` is the provider's end of the tunnel. A customer's value for it
+  is ignored: the server keeps the resource's stored `provider`, or sets the
+  policy's defaults. The provider changes it per resource with
+  `update_options_direct` on a resource option.
+
+#### Offering policy
+
+Every key of `default_configs` is optional:
+
+```json
+{
+  "ikev1_allowed": false,
+  "allow_private_peer": false,
+  "provider_gateway_ip": "203.0.113.10",
+  "provider_local_subnets": ["10.0.0.0/16"],
+  "remote_subnets": {"ip_version": "ipv4", "prefix_length_min": 8, "max_items": 10},
+  "no_overlap_with": ["cluster_network"],
+  "phase1": {
+    "encryption": ["aes256", "aes128", "aes256gcm16"],
+    "integrity": ["sha256", "sha384", "sha512"],
+    "dh_groups": [14, 19, 20],
+    "lifetime_min": 3600, "lifetime_max": 86400,
+    "defaults": {"encryption": "aes256", "integrity": "sha256", "dh_group": 14, "lifetime": 28800}
+  },
+  "phase2": {
+    "encryption": ["aes256", "aes128", "aes256gcm16"],
+    "integrity": ["sha256", "sha384", "sha512"],
+    "pfs_groups": [14, 19, 20],
+    "lifetime_min": 900, "lifetime_max": 28800,
+    "defaults": {"encryption": "aes256", "integrity": "sha256", "pfs_group": 14, "lifetime": 3600}
+  }
+}
+```
+
+- Vocabularies: encryption `aes128`, `aes192`, `aes256`, `aes128gcm16`,
+  `aes256gcm16`, `chacha20poly1305`; integrity `sha1`, `sha256`, `sha384`,
+  `sha512`; DH and PFS groups 2, 5, 14, 15, 16, 19, 20, 21, 31. They are
+  enums in the API schema (`IpsecEncryptionEnum`, `IpsecIntegrityEnum`,
+  `IpsecDhGroupEnum`).
+- An allowed list left out is the whole vocabulary except `sha1` and groups
+  2 and 5. `pfs_groups` may list `null`, which allows no PFS.
+- Defaults left out are AES-256, SHA-256, group 14, 28800 s (phase 1) and
+  3600 s (phase 2), or the first allowed value when the provider's list
+  excludes the built-in one. Lifetime limits left out are 3600–86400 s
+  (phase 1) and 900–28800 s (phase 2).
+- `remote_subnets` takes the keys of a `cidr` policy except `multiple`.
+- `no_overlap_with` names `cidr` options whose networks the remote subnets
+  must not overlap. Order options name order options; resource options name
+  resource options, or order options, whose value the resource's attributes
+  hold.
+
+When the offering is saved: the defaults must be in the allowed lists and
+inside the lifetime limits, the lifetime limits in order, the provider's
+address and subnets valid, and every `no_overlap_with` name a `cidr` option
+(an order `cidr` option a resource option names cannot be removed).
+
+#### Refusals
+
+Field errors under the option's name, keyed by the value's field
+(`{"vpn": {"phase1": {"encryption": ["…"]}}}`):
+
+- a `peer_gateway_ip` that is not an IP address, or, unless
+  `allow_private_peer`, one in a private (RFC 1918, `fc00::/7`), loopback,
+  link-local, multicast, reserved, unspecified or CGNAT (`100.64.0.0/10`)
+  range. Documentation ranges are accepted;
+- `ikev1` unless `ikev1_allowed`;
+- algorithms or groups outside the allowed lists, lifetimes out of range;
+- remote subnets breaking the `cidr` rules, overlapping each other, or
+  overlapping the value of a `no_overlap_with` option on the same order or
+  resource (on a partial change, the stored value counts);
+- remote subnets overlapping the provider end's `local_subnets`, which
+  would break routing through the tunnel: "192.168.10.0/24 overlaps the
+  provider's subnet 192.168.0.0/16." The provider end is the one the value
+  is stored with: the resource's stored `provider`, otherwise the policy's
+  `provider_local_subnets`. A provider override through
+  `update_options_direct` that overlaps the remote subnets is refused under
+  `provider.local_subnets` instead ("172.16.0.0/16 overlaps the remote
+  subnet 172.16.0.0/24.");
+- a DPD interval or timeout that is not positive, or a timeout shorter than
+  the interval.
+
+### Secret
+
+A `secret` option asks for a value that must not be stored in plain text: a
+VPN pre-shared key, an API token, a kubeconfig, a certificate's private key.
+It works as an order option and as a resource option of any offering.
+
+```json
+{
+  "type": "secret",
+  "label": "VPN pre-shared key",
+  "required": true,
+  "default_configs": {
+    "secret_source": "customer",
+    "customer_can_reveal": false,
+    "min_length": 8,
+    "max_length": 255,
+    "multiline": false
+  }
+}
+```
+
+#### Offering policy
+
+Every key of `default_configs` is optional:
+
+- `secret_source`: `customer` (the default; the customer types it) or
+  `provider` (the provider or its site agent sets it).
+- `customer_can_reveal`: whether users holding `RESOURCE.REVEAL_API_KEY` on
+  the resource's project or organization may read it back. When omitted,
+  no for a customer-sourced secret and yes for a provider-sourced one.
+- `min_length` (1) and `max_length` (4096, at most 65536).
+- `multiline`: allows line breaks and tabs, for a PEM key or a kubeconfig;
+  the order form then shows a text area. Off when omitted.
+
+When the offering is saved, the lengths must be at least 1, the shortest
+not above the longest and the longest within the cap. A secret option
+takes no `default`, which would be stored in plain text in the offering.
+
+#### Value
+
+A string, sent only for `secret_source: customer`: in the order's
+attributes (which a required option needs), with an edit of the pending
+order, in `update_options` or through `set_option_secret`. It is checked
+against the length limits; unless `multiline` is on it must be a single
+line without control characters, and with it, control characters other
+than line breaks and tabs are still refused. An empty string sets nothing.
+For `secret_source: provider`, a customer's value is refused, and
+`update_options_direct` refuses any value (use `set_option_secret`).
+
+The value is never stored with the other values: it is taken out before
+order or resource attributes, resource options or update orders are
+written, so it never reaches events, webhooks, exports, site-agent payloads
+or API output, and error messages never echo it. Each resource keeps the
+values of its secret options in `ResourceOptionSecret`, encrypted in a
+`CiphertextField` (`reencrypt_fields` rotates it). A value given with
+`update_options` takes effect at once, also when the change itself waits
+for an order.
+
+Values that reach Sentry are filtered too: the `value` of a
+`set_option_secret` request body by its path, and every value a secret
+option received during the request by its content, wherever it appears in
+the event (request body, frame locals, messages). Values shorter than 8
+characters are filtered only where they are a whole string.
+
+#### Status and actions
+
+Resources and orders show the state of each secret in `option_secrets`,
+keyed by the names of the offering's secret options:
+
+```json
+{"vpn_key": {"is_set": true, "source": "customer", "modified": "2026-11-25T12:00:00Z"}}
+```
+
+Actions, all `POST`, with a body naming the option
+(`{"option_name": "vpn_key"}`, plus `"value"` to set one). A response
+carrying a value is sent with `Cache-Control: no-store`, and every set and
+reveal writes an event (`marketplace_resource_option_secret_set`,
+`marketplace_resource_option_secret_revealed`) that never holds the value
+and names any impersonator.
+
+| Endpoint | Who | Notes |
+| --- | --- | --- |
+| `marketplace-resources/{uuid}/set_option_secret/` | who may `update_options` the resource | `secret_source: customer` only |
+| `marketplace-resources/{uuid}/reveal_option_secret/` | `RESOURCE.REVEAL_API_KEY` on the project or organization, as for API keys | only with `customer_can_reveal`; 403 otherwise |
+| `marketplace-provider-resources/{uuid}/set_option_secret/` | who may `update_options_direct` | any secret option, whatever its source |
+| `marketplace-provider-resources/{uuid}/reveal_option_secret/` | who may `update_options_direct` | any secret option |
+
+A reveal with no value set, or one the configured encryption keys cannot
+decrypt, answers 409. Values can be set while the resource is creating,
+OK, updating or erred.
+
+#### Example: a VPN with its pre-shared key
+
+```json
+{
+  "order": ["cluster_network", "vpn", "vpn_key"],
+  "options": {
+    "cluster_network": {"type": "cidr", "label": "Cluster network", "required": true,
+                        "default_configs": {"ip_version": "ipv4", "allowed_ranges": ["10.0.0.0/8"]}},
+    "vpn": {"type": "ipsec_vpn_config", "label": "Site-to-site VPN", "required": true,
+            "default_configs": {"provider_gateway_ip": "203.0.113.10",
+                                "no_overlap_with": ["cluster_network"]}},
+    "vpn_key": {"type": "secret", "label": "VPN pre-shared key", "required": true,
+                "default_configs": {"secret_source": "customer", "min_length": 8,
+                                    "max_length": 255}}
+  }
+}
+```
+
+The customer orders with `{"cluster_network": "10.20.0.0/16", "vpn": {...},
+"vpn_key": "..."}`. The order and the resource hold `cluster_network` and
+`vpn`; `vpn_key` is stored encrypted and shows in `option_secrets`. The
+provider's automation reads it with the provider `reveal_option_secret`.
+With `"secret_source": "provider"` instead, the provider sets the key after
+provisioning and the customer reveals it to configure their gateway.
 
 ## Showing a Resource Option as a Usage Limit
 
@@ -129970,6 +130579,8 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
 - marketplace_resource_limit_change_request_approved
 - marketplace_resource_limit_change_request_created
 - marketplace_resource_limit_change_request_rejected
+- marketplace_resource_option_secret_revealed
+- marketplace_resource_option_secret_set
 - marketplace_resource_paused
 - marketplace_resource_project_created
 - marketplace_resource_project_recovered
@@ -130208,6 +130819,7 @@ accepted limitations. For the resource API key lifecycle specifically, see
 | `structure.ServiceSettings.token` | whole value | |
 | `structure.ServiceSettings.options` | **selective** — only credential-named values in the JSON | `client_secret`, `keycloak_password`, `vault_token`, … |
 | `marketplace.ResourceApiKey.key_ciphertext` | whole value | see [Resource API Keys](resource-api-keys.md#encryption-at-rest) |
+| `marketplace.ResourceOptionSecret.value` | whole value | the value of a resource's secret option, such as a VPN pre-shared key or an API token; see [custom options](guides/marketplace-custom-options.md#secret) |
 | `matrix_chat.MatrixUserProfile.recovery_key` | whole value | Matrix secret-storage recovery key; see the Matrix appservice setup guide |
 | `matrix_chat.MatrixBotIdentity.pickle_key` | whole value | key the Matrix bot's crypto store is pickled under; without it the store is unreadable |
 | `matrix_chat.MatrixBotIdentity.cross_signing_seeds` | whole value | the Matrix bot's cross-signing private keys |

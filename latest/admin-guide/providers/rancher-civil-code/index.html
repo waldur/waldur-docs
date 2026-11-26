@@ -11952,6 +11952,78 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#keeping-people-added-in-keycloak" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keeping people added in Keycloak
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Keeping people added in Keycloak">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-needs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it needs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1-waldur-turn-on-the-identity-bridge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Waldur: turn on the Identity Bridge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-site-agent-emit-every-role-and-import" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Site agent: emit every role and import
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-operator-keep-matching-members" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Operator: keep matching members
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#who-can-grant-waldur-roles-this-way" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Who can grant Waldur roles this way
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#verify" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -24409,6 +24481,78 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#keeping-people-added-in-keycloak" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Keeping people added in Keycloak
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Keeping people added in Keycloak">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-it-needs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it needs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1-waldur-turn-on-the-identity-bridge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Waldur: turn on the Identity Bridge
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-site-agent-emit-every-role-and-import" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Site agent: emit every role and import
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-operator-keep-matching-members" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Operator: keep matching members
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#who-can-grant-waldur-roles-this-way" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Who can grant Waldur roles this way
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#verify" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -24752,7 +24896,9 @@ curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </spa
 <h3 id="4-create-the-agents-api-token">4. Create the agent's API token</h3>
 <p>Create a user for the agent, make it an <strong>offering manager</strong> of this offering (or a manager of the
 service provider), and give its API token to the Kubernetes operator. The agent uses it to read resources,
-resource projects and role grants, and to set each resource project's state from its CR (OK or erred).</p>
+resource projects and role grants, and to set each resource project's state from its CR (OK or erred).
+To import people added in Keycloak, the agent needs a staff token instead; see
+<a href="#keeping-people-added-in-keycloak">Keeping people added in Keycloak</a>.</p>
 <h3 id="5-link-each-resource-to-its-rancher-cluster">5. Link each resource to its Rancher cluster</h3>
 <p>Each resource stands for one Rancher downstream cluster. Set its <code>backend_id</code> to the Rancher cluster ID
 (for example <code>c-m-abc12345</code>); the agent refuses to build CRs for a resource without one:</p>
@@ -24778,19 +24924,141 @@ bindings and the Keycloak users behind them, and writes the matching Waldur reso
 and grants. It needs a <strong>staff</strong> Waldur token, and the same Rancher and Keycloak credentials as the
 operator. See <a href="../site-agent/plugins/rancher-kc-crd/">importing access from existing clusters</a>
 for the two-step <code>inventory</code> / <code>apply</code> procedure, its filters, and what it skips.</p>
-<h2 id="verify">Verify</h2>
+<h2 id="keeping-people-added-in-keycloak">Keeping people added in Keycloak</h2>
+<p>By default the sync is one-way: whoever a Keycloak admin adds to the operator's groups by hand is
+removed on the next reconcile. A deployment that still grants Rancher access in Keycloak while moving
+to Waldur can instead have such people imported into Waldur: the operator keeps them and reports them,
+and the agent gives them the matching Waldur role, creating their Waldur account if they have none. From
+then on they are ordinary members, and removing them in Waldur removes them from Rancher.</p>
+<p>This works with layout A (the Keycloak username is the civil code) and a Keycloak that brokers the same
+identity provider as Waldur, such as TARA.</p>
+<pre class="mermaid"><code>sequenceDiagram
+    participant Admin as Keycloak admin
+    participant KC as Rancher's Keycloak
+    participant O as Operator
+    participant A as Site agent
+    participant W as Waldur
+    Admin-&gt;&gt;KC: add ee38001010000 to a project group
+    O-&gt;&gt;KC: reconcile: member not in the CR, username matches the pattern
+    O-&gt;&gt;O: keep, list in status.externalMembers
+    A-&gt;&gt;O: read the CR status
+    A-&gt;&gt;W: Identity Bridge: find or create the account by civil code
+    A-&gt;&gt;W: grant the role mapped to the group
+    A-&gt;&gt;O: next cycle: the CR names the person</code></pre>
+<h3 id="what-it-needs">What it needs</h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Needed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>rancher-keycloak-operator</td>
+<td>a release newer than <code>0.5.0</code></td>
+</tr>
+<tr>
+<td>Waldur (Mastermind)</td>
+<td>a release newer than <code>8.1.5-rc.4</code> (the Identity Bridge matches existing users by civil code)</td>
+</tr>
+<tr>
+<td>waldur-site-agent + <code>waldur-site-agent-rancher-kc-crd</code></td>
+<td>a release newer than <code>1.0.8-rc.17</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="1-waldur-turn-on-the-identity-bridge">1. Waldur: turn on the Identity Bridge</h3>
+<p>In Waldur's runtime settings (Constance, see the
+<a href="../../mastermind-configuration/configuration-guide/">configuration guide</a>), as staff:</p>
+<ul>
+<li><code>FEDERATED_IDENTITY_SYNC_ENABLED</code>: on;</li>
+<li><code>FEDERATED_IDENTITY_SYNC_ALLOWED_ATTRIBUTES</code>: add <code>civil_number</code>;</li>
+<li><code>ENABLED_USER_PROFILE_ATTRIBUTES</code>: add <code>civil_number</code>.</li>
+</ul>
+<p>The agent sends each person's civil code to the bridge, which returns the existing account with that
+code, or creates one. Without <code>civil_number</code> allowed, the agent imports nobody and logs why: an account
+created without the civil code would not be the one the person signs in to.</p>
+<p>The agent's token must belong to a <strong>staff</strong> user (instead of the offering manager in Part 2, step 4):
+before granting a role it reads the account, to refuse staff, support and identity manager accounts,
+and only staff can read accounts across organizations.</p>
+<h3 id="2-site-agent-emit-every-role-and-import">2. Site agent: emit every role and import</h3>
+<p>Add to the offering's <code>backend_settings</code>:</p>
 <div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span>
-<span class="normal">6</span>
-<span class="normal">7</span>
-<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># CRs written by the agent, one per resource project</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">      </span><span class="nt">import_external_members</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">identity_bridge_source</span><span class="p">:</span><span class="w"> </span><span class="s">"isd:rancher"</span><span class="w">    </span><span class="c1"># recorded on the accounts it creates</span>
+<span class="w">      </span><span class="nt">keycloak_identity_provider</span><span class="p">:</span><span class="w"> </span><span class="s">"tara"</span><span class="w">       </span><span class="c1"># alias of the identity provider in Rancher's Keycloak</span>
+<span class="w">      </span><span class="c1"># external_member_username_prefix: "rancher-"   # start of new accounts' usernames</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>To see what it would do first, set <code>import_external_members: dry_run</code>: the agent makes the same
+decisions and only logs them (which role it would grant to whom, whether it would match an existing
+account or create one, and why it would leave someone out), changing nothing in Waldur. It writes the
+CRs as <code>true</code> does, so the rollout below is the same. Members the operator reports are removed after its
+grace period during a dry run, as nothing imports them; raise <code>externalMemberGraceSeconds</code> (up to 30
+days) for a longer look, then switch to <code>true</code>. The site agent needs a release newer than <code>1.0.8-rc.17</code>
+that includes the dry run.</p>
+<p>Keep <code>keycloak_user_lookup: username</code> and drop <code>keycloak_user_identity_template</code>: the Keycloak username
+has to map back to the Waldur civil code as is.</p>
+<p>With this on, every role in <code>role_map</code> and <code>cluster_role_map</code> gets a Keycloak group and a Rancher binding
+in every project, even when nobody holds it, so each role has a group to add people to. The roles must
+exist on the offering (Part 2, step 3).</p>
+<p>A person is imported only when their Keycloak account is linked to <code>keycloak_identity_provider</code> with
+the same civil code as its username. An account that is merely named like a civil code is refused, so
+that a role is never recorded in Waldur against someone else. New Waldur accounts get a neutral username
+(<code>rancher-</code> plus random characters, never the civil code), the Keycloak first and last name, and no
+email. When the person later signs in to Waldur through TARA, they land on that account.</p>
+<h3 id="3-operator-keep-matching-members">3. Operator: keep matching members</h3>
+<p>Once the agent has run one cycle with step 2, set the username pattern:</p>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code>helm<span class="w"> </span>upgrade<span class="w"> </span>rko<span class="w"> </span>rancher-keycloak-operator/rancher-keycloak-operator<span class="w"> </span>-n<span class="w"> </span>waldur-system<span class="w"> </span>--reuse-values<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--set<span class="w"> </span>config.keycloak.externalMemberPattern<span class="o">=</span><span class="s1">'^[a-z]{2}[0-9]+$'</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--set-string<span class="w"> </span>config.keycloak.externalMemberGraceSeconds<span class="o">=</span><span class="m">900</span>
+</code></pre></div></td></tr></tbody></table></div>
+<p>Keycloak stores usernames in lowercase, so the pattern must be lowercase too. The order matters: with
+the pattern set first, people left in a group whose binding had disappeared from the CR would be
+imported instead of removed.</p>
+<p>The operator remembers, per group, who the CR named and who it removed (<code>status.memberHistory</code>), so a
+person removed in Waldur is not imported back. Someone the agent cannot import (no TARA link, a
+privileged account, a role Waldur refuses) stays in the group for the grace period (15 minutes by
+default) and is then removed. See the operator's
+<a href="../rancher-keycloak-operator/docs/keycloak-setup/">Keycloak setup guide</a>, section 6, for the full rules.</p>
+<h3 id="who-can-grant-waldur-roles-this-way">Who can grant Waldur roles this way</h3>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Turning this on makes these people as powerful as a team manager in Waldur:</p>
+<ul>
+<li><strong>Keycloak group admins</strong>: whoever can add people to the operator's groups.</li>
+<li><strong>Keycloak user admins</strong> (<code>manage-users</code>): they can create an account named like a civil code and
+  link it to that identity; the role is then recorded in Waldur against the real person.</li>
+<li><strong>Whoever can write <code>managedrancherprojects/status</code></strong>: the agent imports whoever the status lists.
+  Only the operator's service account may have <code>patch</code> or <code>update</code> on that subresource; the site
+  agent needs none.</li>
+</ul>
+<p>The CR status also lists the imported people's usernames and identity-provider ids, which are civil
+codes. Keep read access to the CRs restricted (Part 1, step 4).</p>
+</div>
+<h2 id="verify">Verify</h2>
+<div class="highlight"><table class="highlighttable"><tbody><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># CRs written by the agent, one per resource project</span>
 kubectl<span class="w"> </span>get<span class="w"> </span>mrp<span class="w"> </span>-n<span class="w"> </span>waldur-system<span class="w"> </span>-L<span class="w"> </span>waldur.io/resource-uuid
 
 <span class="c1"># Members and their sync state</span>
 kubectl<span class="w"> </span>get<span class="w"> </span>mrp<span class="w"> </span>&lt;name&gt;<span class="w"> </span>-n<span class="w"> </span>waldur-system<span class="w"> </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">'{.status.keycloakRoleBindings[*].syncedMembers}'</span>
+
+<span class="c1"># People added in Keycloak and waiting to be imported</span>
+kubectl<span class="w"> </span>get<span class="w"> </span>mrp<span class="w"> </span>&lt;name&gt;<span class="w"> </span>-n<span class="w"> </span>waldur-system<span class="w"> </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">'{.status.keycloakRoleBindings[*].externalMembers[*].username}'</span>
 
 <span class="c1"># Operator log: lookups, refusals, group changes</span>
 kubectl<span class="w"> </span>logs<span class="w"> </span>deploy/rko-rancher-keycloak-operator<span class="w"> </span>-n<span class="w"> </span>waldur-system<span class="w"> </span>--tail<span class="o">=</span><span class="m">100</span>
@@ -24863,6 +25131,22 @@ kubectl<span class="w"> </span>logs<span class="w"> </span>deploy/rko-rancher-ke
 <tr>
 <td>Agent log warns that roles are not in <code>role_map</code></td>
 <td>A Waldur role name is missing from <code>role_map</code> / <code>cluster_role_map</code></td>
+</tr>
+<tr>
+<td>Someone added in Keycloak disappears after 15 minutes</td>
+<td>The agent did not import them; its log says why (no identity-provider link, link to a different civil code, privileged account, Identity Bridge without <code>civil_number</code>)</td>
+</tr>
+<tr>
+<td>Agent log: import refused because the Identity Bridge does not store <code>civil_number</code></td>
+<td>Add <code>civil_number</code> to <code>FEDERATED_IDENTITY_SYNC_ALLOWED_ATTRIBUTES</code> and <code>ENABLED_USER_PROFILE_ATTRIBUTES</code></td>
+</tr>
+<tr>
+<td>Agent cannot read accounts during the import</td>
+<td>The agent's token is not a staff token</td>
+</tr>
+<tr>
+<td>Every project has a group and binding for each role, even empty ones</td>
+<td>Expected with <code>import_external_members</code> on</td>
 </tr>
 </tbody>
 </table>
