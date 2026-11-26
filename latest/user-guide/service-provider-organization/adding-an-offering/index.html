@@ -2743,6 +2743,39 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#asking-for-a-network" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Asking for a network
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#asking-for-a-site-to-site-vpn" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Asking for a site-to-site VPN
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#asking-for-a-secret" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Asking for a secret
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#calculating-limits-from-one-answer" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -23794,6 +23827,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../developer-guide/site-agent-events/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Site agent events
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -25037,6 +25098,39 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#asking-for-a-network" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Asking for a network
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#asking-for-a-site-to-site-vpn" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Asking for a site-to-site VPN
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#asking-for-a-secret" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Asking for a secret
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#calculating-limits-from-one-answer" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -25751,7 +25845,7 @@ across the plans, since the aggregated discount uses one plan's formula for
 the whole offering component.</p>
 </div>
 <h2 id="asking-customers-for-order-details">Asking customers for order details</h2>
-<p>The questions a customer answers when ordering an offering are configured on the offering's <strong>User input</strong> tab. Each input has a type (for example <strong>String</strong>, <strong>Integer</strong>, <strong>Boolean</strong>, <strong>Select</strong>, <strong>Select multiple options</strong>, <strong>Date</strong> or one of the Kubernetes configurations), a label, an optional help text, and can be marked required. Inputs on the <strong>Resource options</strong> tab work the same way, except that they cannot be marked required, and their values stay editable on the resource after it is created.</p>
+<p>The questions a customer answers when ordering an offering are configured on the offering's <strong>User input</strong> tab. Each input has a type (for example <strong>String</strong>, <strong>Integer</strong>, <strong>Boolean</strong>, <strong>Select</strong>, <strong>Select multiple options</strong>, <strong>Date</strong>, <strong>Network (CIDR)</strong>, <strong>IPsec VPN</strong>, <strong>Secret</strong> or one of the Kubernetes configurations), a label, an optional help text, and can be marked required. Inputs on the <strong>Resource options</strong> tab work the same way, except that they cannot be marked required, and their values stay editable on the resource after it is created.</p>
 <h3 id="showing-an-input-only-when-it-applies">Showing an input only when it applies</h3>
 <p>A follow-up question often only makes sense after a certain answer. Open the input in the <strong>Add option</strong> or edit dialog, and under <strong>Show only when</strong> click <strong>Add rule</strong>:</p>
 <ol>
@@ -25874,6 +25968,54 @@ the whole offering component.</p>
 <li><strong>Customer chooses</strong> — the order form shows a <strong>Cluster topology</strong> selector with both layouts. Switching it keeps the version, access rules, Longhorn and load balancer choices, and resets the per-datacenter infrastructure and node groups.</li>
 </ul>
 <p>When <strong>Cluster topology</strong> is left empty, the input type decides: one site for the single-datacenter input, three sites for the multi-datacenter one. Orders that request a topology the offering does not allow, or the wrong number of datacenters for their topology, are rejected.</p>
+<h3 id="asking-for-a-network">Asking for a network</h3>
+<p>A <strong>Network (CIDR)</strong> input asks the customer for an address range, for example the network a cluster or a tenant should use. On the <strong>Settings</strong> step you decide which networks are acceptable:</p>
+<ul>
+<li><strong>IP version</strong>: IPv4, IPv6 or either.</li>
+<li><strong>Prefix length</strong>: the smallest and largest prefix, for example <code>/16</code> to <code>/28</code>.</li>
+<li><strong>Allowed ranges</strong>: the network must lie inside one of them, for example the private ranges <code>10.0.0.0/8</code>, <code>172.16.0.0/12</code> and <code>192.168.0.0/16</code>.</li>
+<li><strong>Excluded ranges</strong>: the network must not overlap any of them, for example ranges your platform uses itself.</li>
+<li><strong>Customers may enter several networks</strong>: the customer enters a list instead of one network, up to the number you set. Networks in the list must not overlap each other.</li>
+</ul>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/offering-cidr-settings.png" data-desc-position="bottom"><img alt="Settings of a network input: IPv4, prefix /16 to /28, inside the private ranges" src="../../img/offering-cidr-settings.png"></a></p>
+<p>The order form summarises these rules under the input and checks the value as the customer types. A network must be written with its prefix. An address with host bits set is refused with a suggestion, for example <em>10.0.0.5/24 has host bits set. Did you mean 10.0.0.0/24?</em>. Waldur checks the value again when the order is created and when the customer changes it later, and stores it normalised.</p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/order-form-cidr-error.png" data-desc-position="bottom"><img alt="Order form refusing 10.0.0.5/24 and suggesting 10.0.0.0/24" src="../../img/order-form-cidr-error.png"></a></p>
+<h3 id="asking-for-a-site-to-site-vpn">Asking for a site-to-site VPN</h3>
+<p>An <strong>IPsec VPN</strong> input collects what you need to set up an IPsec tunnel between the customer's network and yours. The order form shows your end of the tunnel read-only, and asks for the customer's end:</p>
+<ul>
+<li><strong>Peer gateway public IP</strong>: the public address of the customer's VPN gateway. Private, loopback, link-local, multicast and shared (CGNAT) addresses are refused unless you allow private peers.</li>
+<li><strong>Peer ID</strong>: optional, the IKE identity of the gateway if it is not its address.</li>
+<li><strong>Remote subnets</strong>: the networks behind the customer's gateway, checked like a network input. They must not overlap your subnets, nor any network input you name.</li>
+<li><strong>IKE version</strong>: shown only when you allow IKEv1.</li>
+<li><strong>Advanced: IKE and IPsec proposals</strong>: encryption, integrity, Diffie-Hellman group and lifetime of phase 1 (IKE) and phase 2 (IPsec). It starts from your defaults, so most customers leave it closed.</li>
+<li><strong>Dead peer detection</strong>: optional.</li>
+</ul>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/order-form-ipsec.png" data-desc-position="bottom"><img alt="Order form with the provider's end of the tunnel and the customer's gateway and subnets" src="../../img/order-form-ipsec.png"></a></p>
+<p>On the <strong>Settings</strong> step you set:</p>
+<ul>
+<li>whether IKEv1 and private peer addresses are allowed;</li>
+<li>your end of the tunnel: your gateway's public address and your subnets. Leave them empty when they are only known after provisioning; you can set them per resource later;</li>
+<li>the rules for the customer's subnets, like those of a network input, and which network inputs they must not overlap;</li>
+<li>for each phase, the allowed encryption algorithms, integrity algorithms and groups, the shortest and longest lifetime, and the defaults.</li>
+</ul>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/offering-ipsec-settings.png" data-desc-position="bottom"><img alt="Settings of an IPsec VPN input: the customer's gateway, your end of the tunnel and the rules for the customer's subnets" src="../../img/offering-ipsec-settings.png"></a></p>
+<p>Your end of a particular tunnel is set per resource through the API (<code>update_options_direct</code>), for example by your site agent once the tunnel exists. Customers cannot change it.</p>
+<p>The input holds no pre-shared key. Add a <strong>Secret</strong> input next to it for that.</p>
+<h3 id="asking-for-a-secret">Asking for a secret</h3>
+<p>A <strong>Secret</strong> input holds a value that must not be shown with the other answers, such as a VPN pre-shared key, an API token or a kubeconfig. Its value is stored encrypted. It never appears in the order or resource details, which only show whether it is set.</p>
+<p>On the <strong>Settings</strong> step you set:</p>
+<ul>
+<li><strong>Who sets it</strong>: the customer enters it, or you or your site agent set it after provisioning.</li>
+<li><strong>Customers may reveal it</strong>: whether users who may reveal the resource's API keys can read the value back. It starts on for a secret you set and off for one the customer enters.</li>
+<li><strong>Shortest length</strong> and <strong>Longest length</strong>.</li>
+<li><strong>Several lines</strong>: for a PEM key or a kubeconfig. The customer gets a text area, and line breaks are allowed.</li>
+</ul>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/offering-secret-settings.png" data-desc-position="bottom"><img alt="Settings of a secret input entered by the customer, 8 to 255 characters" src="../../img/offering-secret-settings.png"></a></p>
+<p>A secret input cannot have a default value.</p>
+<p>When the customer enters the secret, the order form shows a masked field. Afterwards the resource's <strong>Options</strong> tab shows <em>Set</em> with the date it last changed, and a <strong>Replace</strong> button. When you set it, the customer sees it as not set until you do, and can <strong>Reveal</strong> it if you allow that.</p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/resource-options-vpn-secret.png" data-desc-position="bottom"><img alt="Resource options with the VPN summary and the pre-shared key shown as set" src="../../img/resource-options-vpn-secret.png"></a></p>
+<p>You set and read secrets on the resource's <strong>Secrets</strong> tab in your provider view, whoever set them. Every change and every read is recorded in the resource's events.</p>
+<p><a class="glightbox" data-type="image" data-width="100%" data-height="auto" href="../../img/provider-resource-secrets.png" data-desc-position="bottom"><img alt="Provider view of a resource's Secrets tab with Replace and Reveal" src="../../img/provider-resource-secrets.png"></a></p>
 <h3 id="calculating-limits-from-one-answer">Calculating limits from one answer</h3>
 <p>Some offerings are billed for several limit components that the customer should not have to size one by one. A managed database, for example, may be billed for primary data, primary write-ahead log (WAL), replica data, replica WAL and a daily full backup, while the customer only knows how much data they want to store. Two input types derive such limits from a single answer:</p>
 <ul>
