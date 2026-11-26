@@ -488,7 +488,7 @@ each discounted component — see
 
 ## Asking customers for order details
 
-The questions a customer answers when ordering an offering are configured on the offering's **User input** tab. Each input has a type (for example **String**, **Integer**, **Boolean**, **Select**, **Select multiple options**, **Date**, **Network (CIDR)**, **IPsec VPN**, **Secret** or one of the Kubernetes configurations), a label, an optional help text, and can be marked required. Inputs on the **Resource options** tab work the same way, except that they cannot be marked required, and their values stay editable on the resource after it is created.
+The questions a customer answers when ordering an offering are configured on the offering's **User input** tab. Each input has a type (for example **String**, **Integer**, **Boolean**, **Select**, **Select multiple options**, **Date**, **Network (CIDR)**, **IPsec VPN**, **Secret** or **Kubernetes Cluster Configuration**), a label, an optional help text, and can be marked required. Inputs on the **Resource options** tab work the same way, except that they cannot be marked required, and their values stay editable on the resource after it is created.
 
 ### Showing an input only when it applies
 
@@ -565,13 +565,13 @@ A value stays taken until its resource is terminated, including while the resour
 
 ### Kubernetes cluster topology
 
-The **Single-Datacenter Kubernetes Configuration** and **Multi-Datacenter Kubernetes Configuration** inputs let the customer describe a cluster: Kubernetes version, OpenStack infrastructure, node groups and access rules. In the input's settings, **Cluster topology** decides how the controller nodes are placed:
+The **Kubernetes Cluster Configuration** input lets the customer describe a cluster: Kubernetes version, OpenStack infrastructure, node groups and access rules. In the input's settings, **Cluster topology** decides how the controller nodes are placed:
 
 - **Single site, 3 controllers** — one datacenter holds all three controllers.
 - **Three sites, 1 controller each** — the cluster spans three datacenters, each configured separately.
 - **Customer chooses** — the order form shows a **Cluster topology** selector with both layouts. Switching it keeps the version, access rules, Longhorn and load balancer choices, and resets the per-datacenter infrastructure and node groups.
 
-When **Cluster topology** is left empty, the input type decides: one site for the single-datacenter input, three sites for the multi-datacenter one. Orders that request a topology the offering does not allow, or the wrong number of datacenters for their topology, are rejected.
+When **Cluster topology** is left empty, the customer chooses. The upgrade that introduced this input converted the earlier **Single-Datacenter Kubernetes Configuration** and **Multi-Datacenter Kubernetes Configuration** inputs into it. Where such an input left **Cluster topology** empty, the upgrade set it to the layout the old input implied: one site or three sites. Orders that request a topology the offering does not allow, or the wrong number of datacenters for their topology, are rejected.
 
 ### Asking for a network
 
