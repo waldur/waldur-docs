@@ -248,6 +248,8 @@ curl -X POST -H "Authorization: Token <owner-token>" -H "Content-Type: applicati
 Create a user for the agent, make it an **offering manager** of this offering (or a manager of the
 service provider), and give its API token to the Kubernetes operator. The agent uses it to read resources,
 resource projects and role grants, and to set each resource project's state from its CR (OK or erred).
+To import people added in Keycloak, the agent needs a staff token instead; see
+[Keeping people added in Keycloak](#keeping-people-added-in-keycloak).
 
 ### 5. Link each resource to its Rancher cluster
 
@@ -281,6 +283,125 @@ and grants. It needs a **staff** Waldur token, and the same Rancher and Keycloak
 operator. See [importing access from existing clusters](site-agent/plugins/rancher-kc-crd/README.md)
 for the two-step `inventory` / `apply` procedure, its filters, and what it skips.
 
+## Keeping people added in Keycloak
+
+By default the sync is one-way: whoever a Keycloak admin adds to the operator's groups by hand is
+removed on the next reconcile. A deployment that still grants Rancher access in Keycloak while moving
+to Waldur can instead have such people imported into Waldur: the operator keeps them and reports them,
+and the agent gives them the matching Waldur role, creating their Waldur account if they have none. From
+then on they are ordinary members, and removing them in Waldur removes them from Rancher.
+
+This works with layout A (the Keycloak username is the civil code) and a Keycloak that brokers the same
+identity provider as Waldur, such as TARA.
+
+```mermaid
+sequenceDiagram
+    participant Admin as Keycloak admin
+    participant KC as Rancher's Keycloak
+    participant O as Operator
+    participant A as Site agent
+    participant W as Waldur
+    Admin->>KC: add ee38001010000 to a project group
+    O->>KC: reconcile: member not in the CR, username matches the pattern
+    O->>O: keep, list in status.externalMembers
+    A->>O: read the CR status
+    A->>W: Identity Bridge: find or create the account by civil code
+    A->>W: grant the role mapped to the group
+    A->>O: next cycle: the CR names the person
+```
+
+### What it needs
+
+| Component | Needed |
+|---|---|
+| rancher-keycloak-operator | a release newer than `0.5.0` |
+| Waldur (Mastermind) | a release newer than `8.1.5-rc.4` (the Identity Bridge matches existing users by civil code) |
+| waldur-site-agent + `waldur-site-agent-rancher-kc-crd` | a release newer than `1.0.8-rc.17` |
+
+### 1. Waldur: turn on the Identity Bridge
+
+In Waldur's runtime settings (Constance, see the
+[configuration guide](../mastermind-configuration/configuration-guide.md)), as staff:
+
+- `FEDERATED_IDENTITY_SYNC_ENABLED`: on;
+- `FEDERATED_IDENTITY_SYNC_ALLOWED_ATTRIBUTES`: add `civil_number`;
+- `ENABLED_USER_PROFILE_ATTRIBUTES`: add `civil_number`.
+
+The agent sends each person's civil code to the bridge, which returns the existing account with that
+code, or creates one. Without `civil_number` allowed, the agent imports nobody and logs why: an account
+created without the civil code would not be the one the person signs in to.
+
+The agent's token must belong to a **staff** user (instead of the offering manager in Part 2, step 4):
+before granting a role it reads the account, to refuse staff, support and identity manager accounts,
+and only staff can read accounts across organizations.
+
+### 2. Site agent: emit every role and import
+
+Add to the offering's `backend_settings`:
+
+```yaml
+      import_external_members: true
+      identity_bridge_source: "isd:rancher"    # recorded on the accounts it creates
+      keycloak_identity_provider: "tara"       # alias of the identity provider in Rancher's Keycloak
+      # external_member_username_prefix: "rancher-"   # start of new accounts' usernames
+```
+
+To see what it would do first, set `import_external_members: dry_run`: the agent makes the same
+decisions and only logs them (which role it would grant to whom, whether it would match an existing
+account or create one, and why it would leave someone out), changing nothing in Waldur. It writes the
+CRs as `true` does, so the rollout below is the same. Members the operator reports are removed after its
+grace period during a dry run, as nothing imports them; raise `externalMemberGraceSeconds` (up to 30
+days) for a longer look, then switch to `true`. The site agent needs a release newer than `1.0.8-rc.17`
+that includes the dry run.
+
+Keep `keycloak_user_lookup: username` and drop `keycloak_user_identity_template`: the Keycloak username
+has to map back to the Waldur civil code as is.
+
+With this on, every role in `role_map` and `cluster_role_map` gets a Keycloak group and a Rancher binding
+in every project, even when nobody holds it, so each role has a group to add people to. The roles must
+exist on the offering (Part 2, step 3).
+
+A person is imported only when their Keycloak account is linked to `keycloak_identity_provider` with
+the same civil code as its username. An account that is merely named like a civil code is refused, so
+that a role is never recorded in Waldur against someone else. New Waldur accounts get a neutral username
+(`rancher-` plus random characters, never the civil code), the Keycloak first and last name, and no
+email. When the person later signs in to Waldur through TARA, they land on that account.
+
+### 3. Operator: keep matching members
+
+Once the agent has run one cycle with step 2, set the username pattern:
+
+```bash
+helm upgrade rko rancher-keycloak-operator/rancher-keycloak-operator -n waldur-system --reuse-values \
+  --set config.keycloak.externalMemberPattern='^[a-z]{2}[0-9]+$' \
+  --set-string config.keycloak.externalMemberGraceSeconds=900
+```
+
+Keycloak stores usernames in lowercase, so the pattern must be lowercase too. The order matters: with
+the pattern set first, people left in a group whose binding had disappeared from the CR would be
+imported instead of removed.
+
+The operator remembers, per group, who the CR named and who it removed (`status.memberHistory`), so a
+person removed in Waldur is not imported back. Someone the agent cannot import (no TARA link, a
+privileged account, a role Waldur refuses) stays in the group for the grace period (15 minutes by
+default) and is then removed. See the operator's
+[Keycloak setup guide](rancher-keycloak-operator/docs/keycloak-setup.md), section 6, for the full rules.
+
+### Who can grant Waldur roles this way
+
+!!! warning
+    Turning this on makes these people as powerful as a team manager in Waldur:
+
+    - **Keycloak group admins**: whoever can add people to the operator's groups.
+    - **Keycloak user admins** (`manage-users`): they can create an account named like a civil code and
+      link it to that identity; the role is then recorded in Waldur against the real person.
+    - **Whoever can write `managedrancherprojects/status`**: the agent imports whoever the status lists.
+      Only the operator's service account may have `patch` or `update` on that subresource; the site
+      agent needs none.
+
+    The CR status also lists the imported people's usernames and identity-provider ids, which are civil
+    codes. Keep read access to the CRs restricted (Part 1, step 4).
+
 ## Verify
 
 ```bash
@@ -289,6 +410,9 @@ kubectl get mrp -n waldur-system -L waldur.io/resource-uuid
 
 # Members and their sync state
 kubectl get mrp <name> -n waldur-system -o jsonpath='{.status.keycloakRoleBindings[*].syncedMembers}'
+
+# People added in Keycloak and waiting to be imported
+kubectl get mrp <name> -n waldur-system -o jsonpath='{.status.keycloakRoleBindings[*].externalMembers[*].username}'
 
 # Operator log: lookups, refusals, group changes
 kubectl logs deploy/rko-rancher-keycloak-operator -n waldur-system --tail=100
@@ -314,3 +438,7 @@ In Waldur, the resource's user list shows an icon on each grant, as the agent re
 | Operator logs `matches 2 users; refusing to pick one` | Two Keycloak users hold the same civil code; resolve it in Keycloak |
 | Users are group members but have no Rancher access | Rancher uses the generic OIDC provider, or the `groups` claim carries full group paths |
 | Agent log warns that roles are not in `role_map` | A Waldur role name is missing from `role_map` / `cluster_role_map` |
+| Someone added in Keycloak disappears after 15 minutes | The agent did not import them; its log says why (no identity-provider link, link to a different civil code, privileged account, Identity Bridge without `civil_number`) |
+| Agent log: import refused because the Identity Bridge does not store `civil_number` | Add `civil_number` to `FEDERATED_IDENTITY_SYNC_ALLOWED_ATTRIBUTES` and `ENABLED_USER_PROFILE_ATTRIBUTES` |
+| Agent cannot read accounts during the import | The agent's token is not a staff token |
+| Every project has a group and binding for each role, even empty ones | Expected with `import_external_members` on |
