@@ -1,5 +1,62 @@
 # Changelog
 
+## 8.1.5-rc.5 - 2026-11-26
+
+### Highlights
+
+Staff can now manage versioned offering templates and create draft offerings from them. Offerings can also ask customers for networks in CIDR form, an IPsec VPN configuration and secrets, and customers can allow-list a Kubernetes cluster's outbound destinations. Prepaid renewals are now priced by what the customer has already paid for, and the cost preview shows the charge for the rest of the current term on its own line. Operators can turn features and micro-apps on for selected users. Several security changes also landed: Waldur now reads client addresses only from a trusted proxy, and the login-failed and logout-failed pages no longer show text taken from the URL.
+
+### What's New
+
+- **Offering templates**: Staff can manage versioned offering templates and presets in Administration, save an existing offering as a template, and create a draft offering from one. Template checks show their findings in the template view.
+- **New offering option types**: Offerings can ask customers for networks in CIDR form, an IPsec VPN configuration and secrets. Secret values are stored encrypted, and authorised users can set and reveal them from the resource page.
+- **Kubernetes egress rules**: Customers can allow-list a Kubernetes cluster's outbound destinations when ordering and later on the resource. The single-datacenter and multi-datacenter Kubernetes option types are merged into one.
+- **Per-user features and micro-apps**: Operators can turn features and micro-apps on for selected users through rules managed in Administration. Every micro-app now ships in every image and is enabled at runtime.
+- **Login page announcements**: Admin announcements can be shown to signed-out visitors on the login page when they are flagged for it.
+- **Public IP search**: The public IPs of floating IPs and router gateways are mapped and searchable. They appear in the floating IP and port tables and in the header search.
+- **Offering user initial password**: Waldur can store an offering user's initial password so that the user can reveal it. Offering users also show whether the Waldur account is active.
+- **Resource API key spending**: A chart shows what resource API keys spend over time.
+- **Site agent bootstrap**: The site agent configuration dialog can generate a bootstrap file that tells the agent to read its configuration from Waldur.
+
+### Improvements
+
+- **Renewal pricing**: A renewal's limit change is priced by what is already paid for, and a prepaid renewal is priced at the limits the order applies. The renewal review shows the charge for the rest of the current term as its own line. When the old end date has passed, the new end date is counted from today.
+- **Change estimates**: A new `estimate_change` management command estimates the cost of a change by simulating the next invoice.
+- **Personal access tokens**: Every user can use personal access tokens while `PAT_ENABLED` is on. While it is off, only flagged users can, and the UI follows the same rule.
+- **Site agent**: Offerings are checked against consistency rules that span several plugins. The STOMP message contracts are now published as AsyncAPI. Marketplace resources expose the customer abbreviation, and the plugin catalogue is refreshed. In the integration settings, agent secrets for blocks the offering does not configure are shown separately.
+- **Resource API keys**: Gaps in the key lifecycle are closed. After an offering is saved, the API keys' models are updated in a background task.
+- **Authentication**: The Identity Bridge matches an existing user by civil number before creating a new one. OIDC client credentials are now sent the way the identity provider's discovery document asks.
+- **Interface polish**:
+  - The table pager is hidden when a single page holds up to ten results.
+  - Badge labels stay on one line.
+  - The Markdown editor is styled for dark mode.
+  - The header search is shown as an icon only.
+  - Estonian translations are corrected.
+  - Unused icon weights are removed from the build.
+  - The map location search library is upgraded.
+- Metrics show when an adopted metric last received data, and provider user lists include first and last names.
+
+### Bug Fixes
+
+- **Security**: Waldur now takes the client address only from the trusted proxy, and refuses requests ("fails closed") when no trusted proxy is configured. `MCP_OAUTH_TRUSTED_PROXY_COUNT` is replaced by `TRUSTED_PROXY_COUNT` in Helm and Docker Compose.
+- **Security**: The login-failed and logout-failed pages now show messages chosen from a code sent by the backend, never text from the URL. Call descriptions are rendered through the shared sanitizer.
+- **Security**: YAML aliases are refused in offering imports, and chat tool arguments are validated against their schema.
+- Expired resources stay paused until their termination succeeds, and termination is retried daily. The grace-period banner now says resources are paused.
+- A finished order can no longer be set to erred, and a terminated resource stays terminated. Set-erred requests without an error message or traceback are accepted.
+- OpenPortal invitation emails are deferred until the project is active.
+- Structure import and export keep the proposal slug, submission date and round state.
+- Price fields in offering and order estimate responses now use the types the API schema declares. End-date help texts no longer call the date inclusive.
+- Waldur no longer logs spurious warnings for HEAD response bodies, site agent retrieve requests and open ticket statuses.
+
+### Core Component Activity
+
+- **Waldur Mastermind**: [54 commits](https://github.com/waldur/waldur-mastermind/compare/8.1.5-rc.4...8.1.5-rc.5) - offering templates, new option types, Kubernetes egress rules, renewal pricing, per-user features, trusted-proxy hardening, module boundary enforcement.
+- **Waldur Homeport**: [32 commits](https://github.com/waldur/waldur-homeport/compare/8.1.5-rc.4...8.1.5-rc.5) - UI for offering templates, new option types, Kubernetes egress rules, feature rules and micro-apps, login announcements, renewal cost breakdown, public IP search.
+- **Waldur Helm**: [3 commits](https://github.com/waldur/waldur-helm/compare/8.1.5-rc.4...8.1.5-rc.5) - replaced `MCP_OAUTH_TRUSTED_PROXY_COUNT` with `TRUSTED_PROXY_COUNT`, RabbitMQ 4.4.1.
+- **Waldur Docker Compose**: [4 commits](https://github.com/waldur/waldur-docker-compose/compare/8.1.5-rc.4...8.1.5-rc.5) - removed the outdated SLURM service overlay, updated the trusted-proxy and personal access token docs, RabbitMQ 4.4.1.
+
+---
+
 ## 8.1.5-rc.4 - 2026-11-23
 
 ### Highlights
