@@ -94,7 +94,8 @@ The packaged defaults are placeholders. Nothing refuses to start with them.
       which lets any client forge its address past the IP allow-lists — and make Caddy or the
       ingress reachable only through it.
       Check: after a failed sign-in, **Django admin → Axes → Access attempts** shows your own
-      address, not the balancer's. (The event log is no proof: it reads the first entry.)
+      address, not the balancer's. In releases after 8.1.5-rc.4, every other use of the client
+      address, the event log included, follows the same `TRUSTED_PROXY_COUNT`.
 - [ ] **Expose only ports 80 and 443.** PostgreSQL, RabbitMQ and the Celery workers must not be
       reachable from outside. Compose publishes nothing else unless you enable the Matrix call
       add-on, which needs its own ports.

@@ -127,10 +127,12 @@ the user's computer, such as those in the user guide, don't need CORS.
 
 The API limits how many OAuth clients one address can register: 60 an hour, registered
 through DCR or CIMD alike. It reads the address from `X-Forwarded-For`, counting the
-proxies in `MCP_OAUTH_TRUSTED_PROXY_COUNT` from the right. The default, 1, fits one proxy
-in front of the API. Set it in the settings file, `override.conf.py`, to the number of
-proxies that add to the header, or to 0 when the API is reached without a proxy. Helm sets
-it from `waldur.trustedProxyCount`.
+proxies in `WALDUR_CORE["TRUSTED_PROXY_COUNT"]` from the right, the same setting every
+other use of the client address follows. The default, 1, fits one proxy in front of the
+API. Set it in the settings file, `override.conf.py`, to the number of proxies that add
+to the header, or to 0 when the API is reached without a proxy. Helm sets it from
+`waldur.trustedProxyCount`. Up to 8.1.5-rc.4 the limit read a separate
+`MCP_OAUTH_TRUSTED_PROXY_COUNT`; later releases ignore it.
 
 ## Let cloud-hosted clients reach Waldur
 
