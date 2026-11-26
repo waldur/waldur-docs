@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-26T12:44:14.543938Z
+Generated: 2026-11-26T14:30:56.637771Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -54771,7 +54771,7 @@ Keycloak admin adds to the operator's groups later, turn on `import_external_mem
 
 ```yaml
 backend_settings:
-  import_external_members: true
+  import_external_members: true            # or dry_run: log what it would do, change nothing
   identity_bridge_source: "isd:rancher"   # ISD the accounts it creates belong to
   # external_member_username_prefix: "rancher-"   # start of new accounts' usernames
 ```
@@ -54800,6 +54800,34 @@ the operator remembers who the CR named and takes them out. Someone the import c
 link, a grant Waldur refuses such as a second role in one team, or a grant the agent cannot see
 because the person has not accepted the offering's terms) stays in the group only for the
 operator's grace period (15 minutes by default) and is then removed; the agent logs why.
+
+#### Dry run
+
+`import_external_members: dry_run` makes every decision above and changes nothing in Waldur: no
+Identity Bridge push, no account, no role. Instead the agent logs, once per membership sync:
+
+```text
+rancher-kc-crd: dry run: would grant project_member (role <uuid>) on resource_project <uuid>
+  to external member ee38…00, existing account <uuid> (matched by civil number)
+rancher-kc-crd: dry run: would grant cluster_member ... creating a new account rancher-<random>
+rancher-kc-crd: dry run: cannot import external member ...: the Identity Bridge would refuse it: ...
+```
+
+along with the warnings of a real run (no link to `keycloak_identity_provider`, a privileged
+account, a role missing on the offering, a bridge that does not store `civil_number`). The account
+is looked up through the user list, the way the bridge would match it: by civil number ignoring
+case, or by username. A grant the person already has is still listed as "would grant".
+
+The lookup needs the same **staff** token as the import: with another token Waldur hides whether
+accounts are active, and accounts outside the token's organizations, so the agent reports the
+preview as wrong instead of showing it. Unlike the import, which sends the civil number in a request
+body, the lookup searches for it in a query parameter (`GET /api/users/?query=…`), once per person
+and cycle, so it can appear in Waldur's access logs.
+
+The CRs are written as with `true`: every mapped role gets a binding, so the preview covers every
+group and the rollout order below stays the same. With the operator's pattern set, the members it
+lists are kept only for its grace period and then removed, as nothing imports them; set
+`externalMemberGraceSeconds` long enough for the preview (at most 30 days), then switch to `true`.
 
 Requirements:
 
@@ -74037,9 +74065,10 @@ The main CI file implements a two-job pattern for the dynamic pipeline:
 >
 > Removal is tracked in **WAL-10111** and gated on drain telemetry (zero legacy
 > queues, sustained) rather than a date — see "The legacy path" in
-> `docs/design/pubsub-architecture.md`. A consumer that already owns a unified
-> queue is automatically suppressed from this path, so the two never
-> double-deliver.
+> `docs/design/pubsub-architecture.md`. Once the offering's own site agent is on
+> a unified queue, its user's legacy queue for that offering is skipped. Any
+> other client that moves to the unified path must delete its legacy
+> subscription, or it receives each event on both paths.
 
 This guide explains the `EventSubscriptionQueue` system for managing RabbitMQ queues
 used by event subscriptions, including queue lifecycle management and cleanup mechanisms.
@@ -107246,7 +107275,7 @@ each discounted component — see
 
 ## Asking customers for order details
 
-The questions a customer answers when ordering an offering are configured on the offering's **User input** tab. Each input has a type (for example **String**, **Integer**, **Boolean**, **Select**, **Select multiple options**, **Date**, **Network (CIDR)**, **IPsec VPN**, **Secret** or one of the Kubernetes configurations), a label, an optional help text, and can be marked required. Inputs on the **Resource options** tab work the same way, except that they cannot be marked required, and their values stay editable on the resource after it is created.
+The questions a customer answers when ordering an offering are configured on the offering's **User input** tab. Each input has a type (for example **String**, **Integer**, **Boolean**, **Select**, **Select multiple options**, **Date**, **Network (CIDR)**, **IPsec VPN**, **Secret** or **Kubernetes Cluster Configuration**), a label, an optional help text, and can be marked required. Inputs on the **Resource options** tab work the same way, except that they cannot be marked required, and their values stay editable on the resource after it is created.
 
 ### Showing an input only when it applies
 
@@ -107323,13 +107352,13 @@ A value stays taken until its resource is terminated, including while the resour
 
 ### Kubernetes cluster topology
 
-The **Single-Datacenter Kubernetes Configuration** and **Multi-Datacenter Kubernetes Configuration** inputs let the customer describe a cluster: Kubernetes version, OpenStack infrastructure, node groups and access rules. In the input's settings, **Cluster topology** decides how the controller nodes are placed:
+The **Kubernetes Cluster Configuration** input lets the customer describe a cluster: Kubernetes version, OpenStack infrastructure, node groups and access rules. In the input's settings, **Cluster topology** decides how the controller nodes are placed:
 
 - **Single site, 3 controllers** — one datacenter holds all three controllers.
 - **Three sites, 1 controller each** — the cluster spans three datacenters, each configured separately.
 - **Customer chooses** — the order form shows a **Cluster topology** selector with both layouts. Switching it keeps the version, access rules, Longhorn and load balancer choices, and resets the per-datacenter infrastructure and node groups.
 
-When **Cluster topology** is left empty, the input type decides: one site for the single-datacenter input, three sites for the multi-datacenter one. Orders that request a topology the offering does not allow, or the wrong number of datacenters for their topology, are rejected.
+When **Cluster topology** is left empty, the customer chooses. The upgrade that introduced this input converted the earlier **Single-Datacenter Kubernetes Configuration** and **Multi-Datacenter Kubernetes Configuration** inputs into it. Where such an input left **Cluster topology** empty, the upgrade set it to the layout the old input implied: one site or three sites. Orders that request a topology the offering does not allow, or the wrong number of datacenters for their topology, are rejected.
 
 ### Asking for a network
 
@@ -129736,7 +129765,7 @@ flowchart TD
     subgraph legacy["Legacy path — deprecated"]
         legacy_queue["EventSubscription plus EventSubscriptionQueue<br/>one queue per offering and object_type"]
     end
-    disp_match -.->|suppressed for users already on a unified queue| legacy
+    disp_match -.->|suppressed once the site agent of this offering is on a unified queue| legacy
     style legacy stroke-dasharray: 5 5
 ```
 
@@ -129891,9 +129920,8 @@ signal, the marketplace path on a manual project re-sync. To avoid delivering it
 to a global twice, the core path owns `user_role` for globals and the
 marketplace path passes `include_global=False` for `user_role` only; every other
 object type is emitted by exactly one path, so a global receives it once.
-Suppression of a user's legacy subscription is keyed on messages actually
-delivered, so a global that genuinely receives a marketplace event correctly
-supersedes its own legacy queue for it. Payloads are built lazily — construction
+A global consumer never suppresses its owner's legacy subscription — see "The
+legacy path" below. Payloads are built lazily — construction
 runs only when a consumer actually exists — and every emitter is guarded by
 `get_skip_side_effects()` so imports, migrations and bulk loads stay silent.
 
@@ -130030,8 +130058,20 @@ That is the key an external system matches its own records on.
 consumers keep working. Its endpoints are marked `deprecated` in the OpenAPI
 schema, and therefore in the generated SDKs.
 
-The two paths never double-deliver: a user who owns a unified queue is
-suppressed from the legacy loop, so every consumer is on exactly one path.
+A user's legacy subscription for an offering is skipped only when that
+offering's own site agent (a consumer linked to an `AgentIdentity` of the same
+offering, i.e. an agent upgraded to `register_queue`) actually received the
+event — the one client known to exist on both paths. Any other consumer of the
+same user — the realtime UI of a browser logged in as the agent's service
+user, an IdM sync, a global staff consumer, an agent of another offering — is a
+different client, so it never suppresses the legacy queue. Suppressing on it
+would leave the legacy queue silently empty. A non-agent client that moved to
+the unified path while keeping its legacy subscription therefore receives the
+event on both paths; delete the legacy subscription after migrating.
+
+Only consumers actually sent the message count: an agent consumer whose
+`object_types` or payload filters drop the event does not suppress the legacy
+queue, so the event is never lost on both paths.
 
 Retirement — the migration command, drain telemetry, and the removal itself — is
 tracked in **WAL-10111**, gated on drain-to-zero rather than a date, because
@@ -130818,6 +130858,7 @@ accepted limitations. For the resource API key lifecycle specifically, see
 | `structure.ServiceSettings.password` | whole value | |
 | `structure.ServiceSettings.token` | whole value | |
 | `structure.ServiceSettings.options` | **selective** — only credential-named values in the JSON | `client_secret`, `keycloak_password`, `vault_token`, … |
+| `marketplace.OfferingUser.initial_password_ciphertext` | whole value | the password the site agent created a member's backend account with (e.g. Open WebUI); only that member can reveal it; see [Offering user initial password](offering-user-initial-password.md) |
 | `marketplace.ResourceApiKey.key_ciphertext` | whole value | see [Resource API Keys](resource-api-keys.md#encryption-at-rest) |
 | `marketplace.ResourceOptionSecret.value` | whole value | the value of a resource's secret option, such as a VPN pre-shared key or an API token; see [custom options](guides/marketplace-custom-options.md#secret) |
 | `matrix_chat.MatrixUserProfile.recovery_key` | whole value | Matrix secret-storage recovery key; see the Matrix appservice setup guide |
@@ -138676,6 +138717,97 @@ POST /api/marketplace-tags/ {"name": "asia-pacific"}
 4. **Add descriptions** - Help users understand what the tag represents
 5. **Avoid duplicates** - Check existing tags before creating new ones
 6. **Coordinate with other providers** - Consistent tagging across providers improves discovery
+
+---
+
+### Offering user initial password
+<!-- Source: docs/developer-guide/offering-user-initial-password.md -->
+
+# Offering user initial password
+
+Some backends create a person's account with a password of their own: the
+LiteLLM plugin of the site agent, under `managed_password`, creates each
+member's Open WebUI chat account with a password derived for that person.
+Waldur keeps that password on the member's offering user, so the member reveals
+it in Waldur instead of the operator sending it by email or ticket.
+
+It is the **initial** password. Waldur never learns about a change made at the
+backend, so once the member changes it there, the stored value no longer works.
+
+## Storing it
+
+The site agent stores it with
+`POST /api/marketplace-offering-users/<uuid>/set_initial_password/`
+(`{"password": "...", "username": "..."}`), which replaces any value stored
+before. The caller needs `UPDATE_OFFERING_USER` on the offering or its customer,
+the same check as `set_ok`. The agent lists the members still waiting for one
+with `?has_initial_password=false` and stores a password only for OK offering
+users.
+
+`username` is optional: the offering user's username the password was created
+for. When it is given and the offering user no longer has it (the username
+changed between the agent's listing and its store), the store is refused with
+`409`, and the agent stores the new account's password on a later pass. A store
+for a `DELETED` offering user is refused with `409` too.
+
+The value is encrypted at rest (see [Field encryption](field-encryption.md)). The
+offering user exposes only `has_initial_password`, never the value. The Django
+admin does not show the field.
+
+## Clearing it
+
+The provider removes a stored value, for example a wrong one, with
+`POST /api/marketplace-offering-users/<uuid>/clear_initial_password/`. It needs
+the same permission as storing one, succeeds when nothing is stored, and logs
+`marketplace_offering_user_initial_password_cleared` when it removed a value.
+If the agent still holds the account it created, it stores the password again on
+its next pass.
+
+Waldur also wipes the value by itself, without an event, when it no longer opens
+the account it was created for:
+
+- **The offering user reaches `DELETED`.** `DELETION_REQUESTED` and `DELETING`
+  keep it, because both can still go back to OK. An offering user restored from
+  `DELETED` has none until the agent stores one again.
+- **The username changes** from one value to another, for example after an
+  address change gave the member a new account, or is removed. A first username
+  wipes nothing.
+  The agent stores the new account's password on its next pass.
+
+## Revealing it
+
+`GET /api/marketplace-offering-users/<uuid>/reveal_initial_password/` returns
+`{"password": "..."}` with `Cache-Control: no-store`, and logs
+`marketplace_offering_user_initial_password_revealed`. It answers `409` when
+nothing is stored or the value cannot be decrypted with the configured keys.
+
+Only the offering user's own user reveals it, signed in as themselves:
+
+| Caller | Result |
+| --- | --- |
+| The member, with their API token or session | `200` |
+| The member, with an OIDC access token | `200` |
+| The member, with a personal access token | `403`, whatever its scopes |
+| Staff impersonating the member | `403` |
+| Anyone else who can see the offering user: service provider, staff, support | `403` |
+| Anyone who cannot see it | `404` |
+
+- **Personal access tokens** are a script's credential and are not trusted with
+  a live secret, as with an [API key's reveal](resource-api-keys.md).
+- **Impersonation** is refused because the password is the member's own login at
+  the backend. Whatever is done with it there is attributed to the member, and
+  the backend keeps no record of the impersonator. The Matrix recovery key takes
+  the same line. Staff who need to help a member ask the provider to reset the
+  account instead.
+- **OIDC access tokens** are admitted, as for an API key's reveal, because
+  HomePort may sign in with one (`OIDC_ACCESS_TOKEN_ENABLED`). Such a token may
+  also belong to another client of the identity provider, so a client trusted
+  with the member's OIDC token can reveal the password. This is a deliberate
+  choice, kept consistent with API keys.
+
+The reveal does not yet ask for step-up re-authentication, so a stolen session
+or API token is enough to read it. The API key reveal has the same gap; both are
+tracked in waldur/waldur-mastermind#1296.
 
 ---
 
