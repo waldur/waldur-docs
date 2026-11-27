@@ -37,10 +37,36 @@ tentative outcome in place of the state (see [Held decisions](allocation-decisio
 Select proposals to act on several at once from **All actions**:
 
 - **Decide a step** — records one outcome, with a reason, on every selected
-  proposal standing at the chosen decision step, each as if completed from its
-  own page. The result lists the proposals **Completed**, those **Refused** with
-  why, and those **Not at this step, so left alone**. The allocation decision,
-  assessments and steps run once per round are decided on each proposal.
+  proposal standing at the chosen decision step. Waldur decides each proposal
+  as if it were completed from its own page, so the same permissions and step
+  gates apply. Each proposal is decided on its own: one refusal does not undo
+  the others. The allocation decision, assessments and steps run once per round
+  are decided on each proposal.
+
+  1. Choose the step (when the selection stands on more than one), the
+     **Outcome** and a **Reason**, then click **Preview**.
+  2. The preview decides nothing yet. It shows how many proposals
+     **Will be decided**, and lists each one that **Will be refused** with the
+     reason: the proposal has moved on, you are on its applicant team, a
+     checklist or the minimum number of reviews is not complete, and so on.
+     Proposals not standing on the step are counted as
+     **Not at this step, so left alone**.
+  3. Click **Decide** to confirm. The result lists the proposals **Decided** and
+     those **Refused**, with the reason.
+
+  The call's managers and organisers decide a step in bulk, as does the step's
+  own completer on the call (its panel chair, say). The dialog offers only the
+  proposals you may act on; a refused proposal you may not act on is listed by
+  its id alone. A selection of up to 2000 proposals is taken at once.
+
+  A selection of more than 25 proposals is checked, and then decided, in the
+  background: the dialog shows how far it has got, and you can close it
+  meanwhile. A run that is interrupted, for example by a restart, goes on by
+  itself from the first proposal it had not yet decided.
+  **Steps decided in bulk**, above the proposals list, lists the call's runs
+  (who started each one, the step and outcome, how many proposals were decided
+  and refused, and whether the run is still going). Open a run to read its
+  result again. Each run is also recorded once in the call's event log.
 - **Assign a reviewer**, **Message the applicants**, **Export the proposals
   (CSV)** and **Export their reviews (CSV)**.
 
