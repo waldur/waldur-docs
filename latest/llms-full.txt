@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-27T03:04:13.379398Z
+Generated: 2026-11-27T06:31:46.742817Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -78465,7 +78465,7 @@ higher layers:
 
 ```mermaid
 flowchart TD
-    composition["composition (waldur_core.server)"]
+    composition["composition (waldur_core.server, waldur_mastermind.demo_presets)"]
     integrations["integrations (auth, cloud/compute providers, marketplace_* bridges)"]
     supporting["supporting (invoices, billing, proposal, policy, support, chat, ...)"]
     marketplace["marketplace (marketplace, marketplace_metrics)"]
@@ -78519,15 +78519,23 @@ Progress:
   (`waldur_auth_social`, `billing`, `invoices`, `marketplace_metrics`,
   `marketplace_remote`) have been eliminated (`waldur_core.users` now has zero
   upward dependencies).
+- **Wave 4 — Marketplace quick wins and `demo_presets` extraction**:
+  extracted cross-app demo-preset and structure import/export orchestration from
+  `waldur_mastermind.marketplace` into the `composition`-layer app
+  `waldur_mastermind.demo_presets` (`visibility = ["waldur_core.server"]`), and
+  eliminated 9 upward edges from `waldur_mastermind.marketplace` (`analytics`,
+  `billing`, `matrix_chat`, `notifications`, `promotions`, `support`,
+  `marketplace_rancher`, `waldur_freeipa`, `waldur_pid`), reducing marketplace
+  upward dependencies from 15 to 6.
 
 Current snapshot (excluding `migrations/` and `tests/`, with `waldur_core.core`
-as a utility module): 66 modules, 314 declared edges, of which **24 edges
-across 6 modules** remain as upward layer violations (60 modules already
+as a utility module): 67 modules, 327 declared edges, of which **15 edges
+across 6 modules** remain as upward layer violations (61 modules already
 respect the target layer order):
 
 | Module | Target Layer | Upward Edges | Upward Targets |
 | --- | --- | --- | --- |
-| `waldur_mastermind.marketplace` | `marketplace` | 15 | `analytics`, `billing`, `invoices`, `matrix_chat`, `notifications`, `policy`, `promotions`, `proposal`, `support`, `marketplace_openstack`, `marketplace_rancher`, `marketplace_site_agent`, `waldur_freeipa`, `waldur_openstack`, `waldur_pid` |
+| `waldur_mastermind.marketplace` | `marketplace` | 6 | `invoices`, `policy`, `proposal`, `marketplace_openstack`, `marketplace_site_agent`, `waldur_openstack` |
 | `waldur_core.core` | `kernel` | 3 | `changelog`, `structure`, `users` |
 | `waldur_core.structure` | `tenancy` | 2 | `marketplace`, `proposal` |
 | `waldur_mastermind.chat` | `supporting` | 2 | `waldur_firecrest`, `waldur_openstack` |
@@ -79485,7 +79493,7 @@ Each preset JSON file includes:
 ## Creating Custom Presets
 
 1. Export current state or copy an existing preset
-2. Place JSON file in `src/waldur_mastermind/marketplace/demo_presets/presets/`,
+2. Place JSON file in `src/waldur_mastermind/demo_presets/presets/`,
    or in one of the deployment's extra directories
 3. Add `_metadata` section with title, description, version
 4. Ensure all UUIDs are unique 32-character hex strings
@@ -79515,7 +79523,7 @@ Include plaintext passwords in the `users` array:
 Presets are stored in:
 
 ```text
-src/waldur_mastermind/marketplace/demo_presets/presets/
+src/waldur_mastermind/demo_presets/presets/
 ```
 
 ---
@@ -102140,6 +102148,160 @@ See [Paying earlier invoices](../staff-users/credit-management-staff.md#paying-e
 
 ---
 
+### Who can change an end date
+<!-- Source: docs/user-guide/customer-organization/end-date-change-requests.md -->
+
+# Who can change an end date
+
+Projects and resources both have an end date. For each of them, Waldur shows
+one of two controls, never both:
+
+- **Set the date**: the date changes as soon as you save it.
+- **Request a change**: you ask for a new date, and someone who may set the
+  date approves or rejects it.
+
+Which one you see depends on your permissions, not on your role's name. This
+page explains who gets which control, how a project end date request works, and
+why the control can be missing.
+
+For the resource request flow itself, see
+[Changing a resource end date](resource-end-date-changes.md). For what the dates
+do, see [Start and end dates](start-and-end-dates.md).
+
+## Who gets which control
+
+With the default permissions:
+
+| Role | Project end date | Resource end date |
+|------|------------------|-------------------|
+| Organization owner | Sets it, approves requests | Sets it, approves requests |
+| Project manager | Requests a change | Requests a change |
+| Project administrator | Requests a change | Requests a change |
+| Project member | Requests a change | Requests a change |
+| Organization reader | Nothing | Nothing |
+| Staff | Sets it, approves requests | Sets it, approves requests |
+| Support | Nothing | Nothing |
+
+!!! note "Project managers ask too"
+    A project manager can edit the project's details, but not its end date.
+    Moving the end date takes its own permission, which by default only
+    organization owners hold, so a project manager requests the change like
+    any other project member.
+
+A member sees **Request end date change** on the resource. An organization owner
+sees **Set termination date** in the same place.
+
+[Image: A project member's resource actions: Request end date change]
+
+[Image: An organization owner's resource actions: Set termination date]
+
+Service providers set a resource's termination date from their own view of the
+resource. That is separate from the requests described here. A role on the
+service provider does not let you set or approve the date as the resource's
+consumer.
+
+## Requesting a project end date change
+
+In your project list, the pencil next to the project's **End date** opens the
+request. In the organization's project list, the same request is **Change end
+date** in the project's row actions.
+
+[Image: The request button next to a project's end date]
+
+Pick the new date and say why you need it. The approver reads the reason when
+deciding.
+
+[Image: The project end date request dialog]
+
+The organization's owners are notified of the new request. You get an email
+when it is approved or rejected.
+
+## Reviewing project end date requests
+
+Requests are listed on the project's **Edit** tab, under **End date change
+requests**. **Pending** shows the ones waiting for a decision; **All** keeps
+the history.
+
+Whoever may set the project's end date gets **Approve** and **Reject** in the
+row actions. Approving changes the project's end date immediately.
+
+[Image: An organization owner reviewing a pending request]
+
+## Why the request action is missing
+
+The request is hidden, not disabled, when you could never use it. Check the
+list below that matches what you are trying to change.
+
+### Project end date
+
+The request is hidden when any of these is true:
+
+- **You may set the date yourself.** Use the project's **Edit** tab instead.
+- **Your role does not allow asking.** Organization readers and support users
+  cannot request a change, and an operator can take the permission away from
+  any role.
+- **You are staff.** Staff edit the date directly.
+
+### Resource end date
+
+The request is hidden when any of these is true:
+
+- **You may set the date yourself.** You see **Set termination date** instead.
+- **Your role does not allow asking.** Organization readers cannot request a
+  change, and an operator can take the permission away from any role.
+- **You are staff or support.** Staff use **Set termination date**.
+- **The offering does not accept requests.** The service provider has to turn
+  them on for each offering; see
+  [Enabling the flow](resource-end-date-changes.md#enabling-the-flow-service-provider).
+- **The offering is prepaid.** Prepaid resources are extended by renewal
+  instead.
+- **The resource is an OpenStack virtual machine or volume.** These end with
+  their tenant, so request the change on the tenant.
+
+An organization reader sees the resource but has no end date action at all:
+
+[Image: An organization reader's resource actions, without any end date action]
+
+The request is shown but **disabled** while the resource is not in the **OK**
+state, for example while it is being updated. Hover over the help icon to see
+why. Wait for the resource to settle, then ask again.
+
+[Image: The request disabled while the resource is updating]
+
+## Changing who may ask (staff)
+
+Four permissions decide everything on this page. Staff can change them for
+each role under **Administration → Configuration → User roles**; see
+[User role management](../staff-users/user_role_management.md).
+
+| Permission in the role editor | Permission name | Default holders |
+|-------------------------------|-----------------|-----------------|
+| Projects: **Request end date change** | `PROJECT.REQUEST_END_DATE_CHANGE` | Project manager, administrator and member |
+| Projects: **Set end date** | `PROJECT.SET_END_DATE` | Organization owner |
+| Resources: **Request end date change** | `RESOURCE.REQUEST_END_DATE_CHANGE` | Project manager, administrator and member |
+| Resources: **Set end date for resource** | `RESOURCE.SET_END_DATE` | Organization owner |
+
+A permission counts when it is held on the project, on its organization, or
+through a site-wide role.
+
+- **To stop a role from asking**, remove its request permission. Its holders
+  then see no end date action at all.
+- **To let a role set the date**, give it the set permission. Its holders stop
+  seeing the request and can approve other people's requests.
+
+!!! tip
+    Holding the set permission always hides the request, even when the same
+    role also holds the request permission. Nobody files a request they could
+    approve themselves.
+
+!!! note "Deployments configured from files"
+    Operators who manage roles in `permissions-override.yaml` drop the
+    permission there instead. A role cloned into an organization has its own
+    name (for example `PROJECT.<slug>.MEMBER`) and has to be listed
+    separately.
+
+---
+
 ### Inference services
 <!-- Source: docs/user-guide/customer-organization/inference-services.md -->
 
@@ -103738,10 +103900,13 @@ permission decides.
 | Who | What they see | What happens |
 |-----|---------------|--------------|
 | Holders of the end date permission (by default, organization owners) | **Set termination date** | The date changes immediately |
-| Everyone else with access to the resource | **Request end date change** | A request is raised for someone to approve |
+| Holders of the request permission (by default, project managers, administrators and members) | **Request end date change** | A request is raised for someone to approve |
 
-For how the termination date relates to the project's dates and grace period,
-see [Start and end dates](start-and-end-dates.md).
+Organization readers and support users get neither. For the full list of who
+sees which action, and why the request can be missing, see
+[Who can change an end date](end-date-change-requests.md). For how the
+termination date relates to the project's dates and grace period, see
+[Start and end dates](start-and-end-dates.md).
 
 The request flow has to be enabled per offering. Where it is off, only the
 permission holders have any end date action at all — the behaviour Waldur has
@@ -104980,11 +105145,13 @@ terminations are started in the early hours of the end date itself.
 
 Once every resource has been terminated, the project itself is removed.
 
-A project end date cannot be set in the past. Users who may edit the project
-change it on the project's **Edit** tab, or with the pencil next to **End date**
-in the project list. For other project members, the same pencil opens **Request
-end date change**: they pick a new date and give a reason, and an organization
-owner approves or rejects the request.
+A project end date cannot be set in the past. Users who may set it (by
+default, organization owners) change it on the project's **Edit** tab. For
+project managers, administrators and members, the pencil next to **End date**
+in the project list opens **Request end date change**: they pick a new date and
+give a reason, and an organization owner approves or rejects the request. See
+[Who can change an end date](end-date-change-requests.md) for who sees which
+action.
 
 [Image: A project member requesting a later end date]
 
@@ -105183,6 +105350,8 @@ approval it needs.
   grace period
 - [Changing a resource end date](resource-end-date-changes.md): requesting and
   approving a new termination date
+- [Who can change an end date](end-date-change-requests.md): who sets the date,
+  who requests it, and why the request can be missing
 - [Resource lifecycle](../../about/concepts/lifecycle.md): order and resource
   states
 
@@ -131011,6 +131180,9 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
 - freeipa_profile_enabled
 - marketplace_offering_user_created
 - marketplace_offering_user_deleted
+- marketplace_offering_user_initial_password_cleared
+- marketplace_offering_user_initial_password_revealed
+- marketplace_offering_user_initial_password_set
 - marketplace_offering_user_restriction_updated
 - matrix_encryption_reset_started
 - matrix_password_generated
@@ -131651,6 +131823,7 @@ td:nth-child(4) {
 | `remember_question_visibility_fields` | `Django Signal (pre_save)` | `checklist.Question` | Keep the fields completion depends on, to tell on save whether they changed. |
 | `remove_cached_template` | `Django Signal (pre_delete)` | `core.NotificationTemplate` | Also wired as a pre_delete receiver on NotificationTemplate (see core/apps.py). |
 | `rename_clones_on_customer_slug_change` | `Django Signal (post_save)` | `structure.Customer` | Keep an organization's cloned role names in sync with its slug. |
+| `reset_secret_values` | `Unknown Signal` | `—` | No description |
 | `revoke_roles_on_project_deletion` | `Django Signal (pre_delete)` | `structure.Project` | When project is deleted, capture user role snapshots before revoking them. |
 | `revoke_user_pats_on_deactivation` | `Django Signal (pre_save)` | `core.User` | Revoke all active PATs when a user is deactivated. |
 | `revoke_user_roles_on_availability_removal` | `Django Signal (post_delete)` | `permissions.RoleAvailability` | Schedule async revocation when a RoleAvailability row is removed. |
@@ -132189,12 +132362,12 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 828
+Total unique handlers found: 829
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_auth_social**: 2 handlers
 - **waldur_autoprovisioning**: 2 handlers
-- **waldur_core**: 353 handlers
+- **waldur_core**: 354 handlers
 - **waldur_freeipa**: 12 handlers
 - **waldur_lexis**: 1 handlers
 - **waldur_mastermind**: 411 handlers
@@ -134142,10 +134315,11 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`MemberSyncFieldsMixin`](#membersyncfieldsmixin) | `waldur_mastermind.marketplace.serializers` | Adds agent-reported sync fields to a UserRole-shaped serializer |
 | [`ResourceEndDateUpdateMixin`](#resourceenddateupdatemixin) | `waldur_mastermind.marketplace.serializers` | Write the end date and who set it, and nothing else |
 | [`UserProfileAttributeFieldsMixin`](#userprofileattributefieldsmixin) | `waldur_mastermind.marketplace.serializers` | Read-only ``user_<attr>`` fields for the personal-data attributes an offering... |
-| [`DeploymentPresetsMixin`](#deploymentpresetsmixin) | `waldur_mastermind.marketplace.tests.test_demo_preset_deployment` | Built-in presets in one temporary directory and the deployment's in another, ... |
-| [`PreviewTestMixin`](#previewtestmixin) | `waldur_mastermind.marketplace.tests.test_demo_preset_preview` | No description available |
-| [`PresetSettingsTestMixin`](#presetsettingstestmixin) | `waldur_mastermind.marketplace.tests.test_demo_preset_settings` | No description available |
+| [`DeploymentPresetsMixin`](#deploymentpresetsmixin) | `waldur_mastermind.demo_presets.tests.test_demo_preset_deployment` | Built-in presets in one temporary directory and the deployment's in another, ... |
+| [`PreviewTestMixin`](#previewtestmixin) | `waldur_mastermind.demo_presets.tests.test_demo_preset_preview` | No description available |
+| [`PresetSettingsTestMixin`](#presetsettingstestmixin) | `waldur_mastermind.demo_presets.tests.test_demo_preset_settings` | No description available |
 | [`DerivedLimitsOrderMixin`](#derivedlimitsordermixin) | `waldur_mastermind.marketplace.tests.test_derived_limits` | No description available |
+| [`SecretAbsenceMixin`](#secretabsencemixin) | `waldur_mastermind.marketplace.tests.test_network_options` | No description available |
 | [`LimitActionPermissionMixin`](#limitactionpermissionmixin) | `waldur_mastermind.marketplace.tests.test_order_creation_permission` | No description available |
 | [`OrderResourceVisibilityMixin`](#orderresourcevisibilitymixin) | `waldur_mastermind.marketplace.tests.test_order_resource_visibility` | No description available |
 | [`ScopeHelperAgreementMixin`](#scopehelperagreementmixin) | `waldur_mastermind.marketplace.tests.test_scope_helpers_by_permission` | Each helper must list exactly the scopes has_permission allows |
@@ -135676,7 +135850,7 @@ email are declared by the serializers themselves.
 
 ### DeploymentPresetsMixin
 
-**Module:** `waldur_mastermind.marketplace.tests.test_demo_preset_deployment`
+**Module:** `waldur_mastermind.demo_presets.tests.test_demo_preset_deployment`
 
 **Description:**
 
@@ -135685,19 +135859,25 @@ another, set as its extra directory.
 
 ### PreviewTestMixin
 
-**Module:** `waldur_mastermind.marketplace.tests.test_demo_preset_preview`
+**Module:** `waldur_mastermind.demo_presets.tests.test_demo_preset_preview`
 
 **Description:** No description available.
 
 ### PresetSettingsTestMixin
 
-**Module:** `waldur_mastermind.marketplace.tests.test_demo_preset_settings`
+**Module:** `waldur_mastermind.demo_presets.tests.test_demo_preset_settings`
 
 **Description:** No description available.
 
 ### DerivedLimitsOrderMixin
 
 **Module:** `waldur_mastermind.marketplace.tests.test_derived_limits`
+
+**Description:** No description available.
+
+### SecretAbsenceMixin
+
+**Module:** `waldur_mastermind.marketplace.tests.test_network_options`
 
 **Description:** No description available.
 
