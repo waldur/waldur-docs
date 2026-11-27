@@ -8600,6 +8600,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Billing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#usage-based-billing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage-based billing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -24280,6 +24297,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Billing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#usage-based-billing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage-based billing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -24380,6 +24414,8 @@ which ones work. Run it before you onboard a new cloud or after you upgrade one.
 <li><code>storage_mode</code> — <code>fixed</code> for a single storage quota, or <code>dynamic</code> for per-volume-type quotas.</li>
 <li><code>max_instances</code>, <code>max_volumes</code>, <code>max_security_groups</code> — upper bounds enforced within a tenant.</li>
 <li><code>default_internal_network_mtu</code> — MTU applied to networks created in the tenant (68–9000).</li>
+<li><code>usage_poll_interval_minutes</code>, <code>billing_source</code>, <code>bill_inactive_instances</code> — how usage-based
+  plans are polled and what they bill; see <a href="#usage-based-billing">Usage-based billing</a>.</li>
 </ul>
 <h3 id="default-marketplace-categories">Default marketplace categories</h3>
 <p>Two of the three OpenStack offering types have a <strong>default category</strong> flag on a marketplace
@@ -24455,6 +24491,37 @@ state is reconciled with the backend on a periodic schedule.</p>
 </ul>
 <p>In <code>dynamic</code> storage mode, a separate storage component is created for each OpenStack volume
 type (for example <code>storage_ssd</code>), so that each volume type can be billed independently.</p>
+<h3 id="usage-based-billing">Usage-based billing</h3>
+<p>Under a usage-based plan, Waldur polls each tenant's usage every <code>usage_poll_interval_minutes</code>
+(15–1440, default 60) and bills each component as its current value multiplied by the time since
+the previous poll. <code>billing_source</code> decides where cores and RAM come from: <code>quota</code> (default)
+reads Nova's quota usage, and <code>placement</code> reads Placement allocations, which also bills vGPU,
+PCI and custom resource classes. Storage always comes from Cinder.</p>
+<p>Both sources count stopped and suspended servers as if they were running (only shelved-offloaded
+servers can drop out, depending on how Nova counts usage). To bill compute for running
+servers only, turn off <code>bill_inactive_instances</code> (<strong>Bill stopped instances</strong> on the offering's
+Billing tab; on by default). With it off, the cores, RAM and other compute of a server are left
+out of a poll interval when the server was <code>SHUTOFF</code>, <code>SUSPENDED</code>, <code>SHELVED</code> or
+<code>SHELVED_OFFLOADED</code> for the whole of it:</p>
+<ul>
+<li>At every poll Waldur reads each server's status and the time Nova last changed it, and keeps
+  that time for the next poll. A server is left out only if it is stopped now and its last-change
+  time is exactly what the previous poll read. Every start, stop, suspend or resume moves that
+  time, and tenants cannot set it. Only Nova's own values are compared, so a Nova clock that runs
+  behind or ahead of Waldur's does not matter.</li>
+<li>The first poll after the option is turned off has nothing to compare with, so it bills every
+  server.</li>
+<li>So the interval in which a server stops is still billed, and it is billed from the next one
+  on only if it runs again. Stopping servers just before a poll, or pulling quotas by hand, does
+  not take running time off the bill.</li>
+<li><code>PAUSED</code> servers keep their memory on the host, and <code>ERROR</code> or a transitional status says
+  nothing about whether a server runs, so those are billed.</li>
+<li>Storage is billed either way: a stopped server's volumes still exist.</li>
+<li>When the server list cannot be read from Nova, that poll bills every server, as if the
+  option were on, and logs a warning.</li>
+</ul>
+<p>Say in the plan description whether stopped servers are billed, so that customers know before
+they order.</p>
 <h2 id="organization-specific-external-networks">Organization-specific external networks</h2>
 <p>A specific external network can be assigned to all OpenStack tenants created by a given
 organization on a given provider. When a tenant is created, Waldur resolves the external

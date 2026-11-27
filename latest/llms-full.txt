@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-27T06:31:46.742817Z
+Generated: 2026-11-27T16:41:43.626933Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -34546,6 +34546,8 @@ Per-offering settings control how tenants behave:
 - `storage_mode` — `fixed` for a single storage quota, or `dynamic` for per-volume-type quotas.
 - `max_instances`, `max_volumes`, `max_security_groups` — upper bounds enforced within a tenant.
 - `default_internal_network_mtu` — MTU applied to networks created in the tenant (68–9000).
+- `usage_poll_interval_minutes`, `billing_source`, `bill_inactive_instances` — how usage-based
+  plans are polled and what they bill; see [Usage-based billing](#usage-based-billing).
 
 ### Default marketplace categories
 
@@ -34615,6 +34617,40 @@ Tenant offerings are billed on quota limits using monthly components:
 
 In `dynamic` storage mode, a separate storage component is created for each OpenStack volume
 type (for example `storage_ssd`), so that each volume type can be billed independently.
+
+### Usage-based billing
+
+Under a usage-based plan, Waldur polls each tenant's usage every `usage_poll_interval_minutes`
+(15–1440, default 60) and bills each component as its current value multiplied by the time since
+the previous poll. `billing_source` decides where cores and RAM come from: `quota` (default)
+reads Nova's quota usage, and `placement` reads Placement allocations, which also bills vGPU,
+PCI and custom resource classes. Storage always comes from Cinder.
+
+Both sources count stopped and suspended servers as if they were running (only shelved-offloaded
+servers can drop out, depending on how Nova counts usage). To bill compute for running
+servers only, turn off `bill_inactive_instances` (**Bill stopped instances** on the offering's
+Billing tab; on by default). With it off, the cores, RAM and other compute of a server are left
+out of a poll interval when the server was `SHUTOFF`, `SUSPENDED`, `SHELVED` or
+`SHELVED_OFFLOADED` for the whole of it:
+
+- At every poll Waldur reads each server's status and the time Nova last changed it, and keeps
+  that time for the next poll. A server is left out only if it is stopped now and its last-change
+  time is exactly what the previous poll read. Every start, stop, suspend or resume moves that
+  time, and tenants cannot set it. Only Nova's own values are compared, so a Nova clock that runs
+  behind or ahead of Waldur's does not matter.
+- The first poll after the option is turned off has nothing to compare with, so it bills every
+  server.
+- So the interval in which a server stops is still billed, and it is billed from the next one
+  on only if it runs again. Stopping servers just before a poll, or pulling quotas by hand, does
+  not take running time off the bill.
+- `PAUSED` servers keep their memory on the host, and `ERROR` or a transitional status says
+  nothing about whether a server runs, so those are billed.
+- Storage is billed either way: a stopped server's volumes still exist.
+- When the server list cannot be read from Nova, that poll bills every server, as if the
+  option were on, and logs a warning.
+
+Say in the plan description whether stopped servers are billed, so that customers know before
+they order.
 
 ## Organization-specific external networks
 
@@ -131860,6 +131896,7 @@ td:nth-child(4) {
 | `schedule_sync` | `Custom Signal (role_granted)` | `—` | Schedule a synchronization task, unless side effects are switched |
 | `schedule_sync` | `Custom Signal (role_revoked)` | `—` | Schedule a synchronization task, unless side effects are switched |
 | `schedule_sync_on_quota_change` | `Django Signal (post_save)` | `quotas.QuotaLimit` | Schedule a synchronization task when a quota is changed. |
+| `update_offering_user_username_after_freeipa_profile_update` | `Django Signal (post_save)` | `waldur_freeipa.Profile` | Update offering user usernames after FreeIPA profile creation/update. |
 | `update_user` | `Django Signal (post_save)` | `core.User` | Update a user's FreeIPA profile when their user account is updated. |
 
 ## Application: `waldur_lexis`
@@ -131926,6 +131963,9 @@ td:nth-child(4) {
 | `add_price_estimate` | `Custom Signal (pre_serializer_fields)` | `CustomerEstimatedCostPolicySerializer` | Add a billing price estimate field to the serializer. |
 | `add_project_credit` | `Custom Signal (pre_serializer_fields)` | `ProjectSerializer` | Add a project credit field to the serializer. |
 | `add_promotion_campaigns` | `Custom Signal (pre_serializer_fields)` | `PublicOfferingDetailsSerializer` | Add promotion campaigns to the serializer. |
+| `add_resources_price_estimate` | `Custom Signal (pre_serializer_fields)` | `MarketplaceProviderCustomerProjectSerializer` | Add a resource-scoped billing price estimate field to provider serializers. |
+| `add_resources_price_estimate` | `Custom Signal (pre_serializer_fields)` | `MarketplaceProviderCustomerSerializer` | Add a resource-scoped billing price estimate field to provider serializers. |
+| `add_resources_price_estimate` | `Custom Signal (pre_serializer_fields)` | `ProviderOfferingSerializer` | Add a resource-scoped billing price estimate field to provider serializers. |
 | `add_router_external_ips` | `Custom Signal (pre_serializer_fields)` | `OpenStackRouterSerializer` | Add router external IPs to the serializer. |
 | `add_service_provider` | `Custom Signal (pre_serializer_fields)` | `CustomerSerializer` | Add a service provider field to the serializer. |
 | `add_service_provider_url` | `Custom Signal (pre_serializer_fields)` | `CustomerSerializer` | Add a service provider URL field to the serializer. |
@@ -132271,7 +132311,6 @@ td:nth-child(4) {
 | `update_maintenance_announcement_on_offering_change` | `Django Signal (post_save)` | `marketplace.MaintenanceAnnouncementOffering` | Update AdminAnnouncement when affected offerings change. |
 | `update_maintenance_announcement_on_offering_change` | `Django Signal (post_delete)` | `marketplace.MaintenanceAnnouncementOffering` | Update AdminAnnouncement when affected offerings change. |
 | `update_marketplace_resource_limits_when_vm_is_updated` | `Custom Signal (vm_updated)` | `—` | No description |
-| `update_offering_user_username_after_freeipa_profile_update` | `Django Signal (post_save)` | `waldur_freeipa.Profile` | Update offering user usernames after FreeIPA profile creation/update. |
 | `update_offering_user_username_after_offering_settings_change` | `Django Signal (post_save)` | `marketplace.Offering` | Update offering user usernames after offering settings change. |
 | `update_offering_user_username_after_provider_settings_change` | `Django Signal (post_save)` | `marketplace.ServiceProvider` | Regenerate usernames on the provider's offerings that inherit a changed setting. |
 | `update_offering_user_username_after_user_change` | `Django Signal (post_save)` | `core.User` | Set new username for offering users after site_username in user details has been changed. |
@@ -132362,15 +132401,15 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 829
+Total unique handlers found: 832
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_auth_social**: 2 handlers
 - **waldur_autoprovisioning**: 2 handlers
 - **waldur_core**: 354 handlers
-- **waldur_freeipa**: 12 handlers
+- **waldur_freeipa**: 13 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 411 handlers
+- **waldur_mastermind**: 413 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 15 handlers
 - **waldur_openstack_replication**: 1 handlers
@@ -134222,6 +134261,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`SelectiveEncryptionMixin`](#selectiveencryptionmixin) | `waldur_core.core.fields` | Encrypts the values under sensitive keys of a JSON-valued field |
 | [`GenericKeyMixin`](#generickeymixin) | `waldur_core.core.managers` | Filtering by generic key field  Support filtering by:  - generic key directly... |
 | [`CreateExecutorMixin`](#createexecutormixin) | `waldur_core.core.mixins` | Mixin to execute create operations using background executors |
+| [`DataciteMixin`](#datacitemixin) | `waldur_core.core.mixins` | A marker model for models that can be registered with PIDs and referred to in... |
 | [`DeleteExecutorMixin`](#deleteexecutormixin) | `waldur_core.core.mixins` | Mixin to execute delete operations using background executors |
 | [`EagerLoadMixin`](#eagerloadmixin) | `waldur_core.core.mixins` | Reduce number of requests to DB |
 | [`ExecutorMixin`](#executormixin) | `waldur_core.core.mixins` | Execute create/update/delete operation with executor |
@@ -134302,6 +134342,9 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`CheckExtensionMixin`](#checkextensionmixin) | `waldur_freeipa.views` | Raise exception if extension is disabled |
 | [`DocsTestMixin`](#docstestmixin) | `waldur_mastermind.chat.tests.test_search_docs` | No description available |
 | [`LLMConfigurationMixin`](#llmconfigurationmixin) | `waldur_mastermind.chat.views` | Validates that AI Assistant is enabled, the user has the required role, and t... |
+| [`DeploymentPresetsMixin`](#deploymentpresetsmixin) | `waldur_mastermind.demo_presets.tests.test_demo_preset_deployment` | Built-in presets in one temporary directory and the deployment's in another, ... |
+| [`PreviewTestMixin`](#previewtestmixin) | `waldur_mastermind.demo_presets.tests.test_demo_preset_preview` | No description available |
+| [`PresetSettingsTestMixin`](#presetsettingstestmixin) | `waldur_mastermind.demo_presets.tests.test_demo_preset_settings` | No description available |
 | [`FeedbackTestMixin`](#feedbacktestmixin) | `waldur_mastermind.feedback.tests.test_feedback` | No description available |
 | [`PeriodMixin`](#periodmixin) | `waldur_mastermind.invoices.models` | Make subclasses preserve the alters_data attribute on overridden methods |
 | [`PaidCreditAffiliateMixin`](#paidcreditaffiliatemixin) | `waldur_mastermind.invoices.tests.test_credit_lots` | The referred customer's invoice is 300; the affiliate earns 10% |
@@ -134315,9 +134358,6 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`MemberSyncFieldsMixin`](#membersyncfieldsmixin) | `waldur_mastermind.marketplace.serializers` | Adds agent-reported sync fields to a UserRole-shaped serializer |
 | [`ResourceEndDateUpdateMixin`](#resourceenddateupdatemixin) | `waldur_mastermind.marketplace.serializers` | Write the end date and who set it, and nothing else |
 | [`UserProfileAttributeFieldsMixin`](#userprofileattributefieldsmixin) | `waldur_mastermind.marketplace.serializers` | Read-only ``user_<attr>`` fields for the personal-data attributes an offering... |
-| [`DeploymentPresetsMixin`](#deploymentpresetsmixin) | `waldur_mastermind.demo_presets.tests.test_demo_preset_deployment` | Built-in presets in one temporary directory and the deployment's in another, ... |
-| [`PreviewTestMixin`](#previewtestmixin) | `waldur_mastermind.demo_presets.tests.test_demo_preset_preview` | No description available |
-| [`PresetSettingsTestMixin`](#presetsettingstestmixin) | `waldur_mastermind.demo_presets.tests.test_demo_preset_settings` | No description available |
 | [`DerivedLimitsOrderMixin`](#derivedlimitsordermixin) | `waldur_mastermind.marketplace.tests.test_derived_limits` | No description available |
 | [`SecretAbsenceMixin`](#secretabsencemixin) | `waldur_mastermind.marketplace.tests.test_network_options` | No description available |
 | [`LimitActionPermissionMixin`](#limitactionpermissionmixin) | `waldur_mastermind.marketplace.tests.test_order_creation_permission` | No description available |
@@ -134401,7 +134441,6 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`UnmanagedOwnerShareMixin`](#unmanagedownersharemixin) | `waldur_openstack.tests.test_unmanaged_owner_share` | No description available |
 | [`LBaaSAuditMixin`](#lbaasauditmixin) | `waldur_openstack.views` | Emit lifecycle audit events for LBaaS resources on create/update/delete |
 | [`UnmanagedOwnerReadOnlyMixin`](#unmanagedownerreadonlymixin) | `waldur_openstack.views` | Refuse write actions on a tenant Waldur does not manage, and on its networks |
-| [`DataciteMixin`](#datacitemixin) | `waldur_pid.mixins` | A marker model for models that can be registered with PIDs and referred to in... |
 | [`RoleMixin`](#rolemixin) | `waldur_rancher.models` | Make subclasses preserve the alters_data attribute on overridden methods |
 | [`SettingsMixin`](#settingsmixin) | `waldur_rancher.models` | Make subclasses preserve the alters_data attribute on overridden methods |
 | [`SyncDestroyMixin`](#syncdestroymixin) | `waldur_rancher.views` | No description available |
@@ -134635,6 +134674,16 @@ Support filtering by:
 Mixin to execute create operations using background executors.
 
 **Base classes:** `AsyncExecutor`
+
+### DataciteMixin
+
+**Module:** `waldur_core.core.mixins`
+
+**Description:**
+
+A marker model for models that can be registered with PIDs and referred to in a Datacite PID way.
+
+**Base classes:** `Model`
 
 ### DeleteExecutorMixin
 
@@ -135705,6 +135754,27 @@ AI_ASSISTANT_ENABLED_ROLES controls which user roles can access the feature.
 
 **Base classes:** `ConstanceCheckExtensionMixin`
 
+### DeploymentPresetsMixin
+
+**Module:** `waldur_mastermind.demo_presets.tests.test_demo_preset_deployment`
+
+**Description:**
+
+Built-in presets in one temporary directory and the deployment's in
+another, set as its extra directory.
+
+### PreviewTestMixin
+
+**Module:** `waldur_mastermind.demo_presets.tests.test_demo_preset_preview`
+
+**Description:** No description available.
+
+### PresetSettingsTestMixin
+
+**Module:** `waldur_mastermind.demo_presets.tests.test_demo_preset_settings`
+
+**Description:** No description available.
+
 ### FeedbackTestMixin
 
 **Module:** `waldur_mastermind.feedback.tests.test_feedback`
@@ -135847,27 +135917,6 @@ serves both offering users and user role grants. Username, full name and
 email are declared by the serializers themselves.
 
 **Base classes:** `Serializer`
-
-### DeploymentPresetsMixin
-
-**Module:** `waldur_mastermind.demo_presets.tests.test_demo_preset_deployment`
-
-**Description:**
-
-Built-in presets in one temporary directory and the deployment's in
-another, set as its extra directory.
-
-### PreviewTestMixin
-
-**Module:** `waldur_mastermind.demo_presets.tests.test_demo_preset_preview`
-
-**Description:** No description available.
-
-### PresetSettingsTestMixin
-
-**Module:** `waldur_mastermind.demo_presets.tests.test_demo_preset_settings`
-
-**Description:** No description available.
 
 ### DerivedLimitsOrderMixin
 
@@ -136654,16 +136703,6 @@ Refuse write actions on a tenant Waldur does not manage, and on its networks.
 Such a tenant is an OpenStack project that only shares networks with
 managed tenants. Waldur holds no credentials for it, and the project and its
 networks are not Waldur's to change, so it is only ever read.
-
-### DataciteMixin
-
-**Module:** `waldur_pid.mixins`
-
-**Description:**
-
-A marker model for models that can be registered with PIDs and referred to in a Datacite PID way.
-
-**Base classes:** `Model`
 
 ### RoleMixin
 
