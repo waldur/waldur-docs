@@ -56,6 +56,63 @@ writes it as a CSV of every page, with the table's filters applied:
 Reviewers' private notes are never exported, and text that would start a
 spreadsheet formula is written with a leading apostrophe.
 
+### Panel evaluation sheets { data-requires="feature:marketplace.show_call_management_functionality !feature:marketplace.call_only" }
+
+Panels meet with a spreadsheet of their proposals' evaluations. Most of an
+evaluation is not a review. Individual and consolidated reports, panel
+comments and technical assessments are **step contributions** and the answers
+to their steps' forms. Two exports cover them, each as CSV or Excel:
+
+- **Panel sheet**: one row per proposal routed to the panel. Each row has the
+  proposal and applicant, its current step, the amount requested per offering
+  component, the review counts and scores with an average per criterion, the
+  outcome of each assessment and decision step (or its status while it has
+  none), and the technical assessment of each requested offering, with its
+  conditions.
+- **Evaluations**: one row per contribution to a step. Each row has the
+  proposal, panel, step, offering (for a per-offering assessment),
+  contributor, status, submission date, outcome, conditions and comment, then
+  one column per question of the step's form with the answer given.
+
+Where to download them:
+
+- **Call edit page → Evaluation workflow → Panels**: each panel's actions
+  menu offers **Panel sheet (Excel)**, **Panel sheet (CSV)**,
+  **Evaluations (Excel)** and **Evaluations (CSV)** for that panel.
+  **All panel sheets (Excel)** downloads one workbook with a sheet per panel.
+- **Manage → Reviews**: the **Evaluations** menu exports every contribution
+  of the call, narrowed by the list's round and proposal filters.
+- **My reviews → Calls**, for panel members: the **My panels** table lists
+  the panels you chair or sit on, with the same four downloads for each.
+
+Who can download them:
+
+- **Call managers, call organisers, staff and support**: any panel's sheet
+  and the whole call's evaluations.
+- **A panel's chair and members**: their own panel only. Asking for another
+  panel is refused.
+
+What a panel's chair or member gets in the file is no more than the proposal
+pages show them:
+
+- **Contributions**: only those they may read, such as their own and the
+  outputs of earlier steps their step reads.
+- **Blind steps**: contributor names are hidden behind an anonymous label
+  (*Contributor 1*, *Reviewer 1*), as on the proposal.
+- **Review scores**: only those they can read on screen, such as the score of
+  their own review.
+- **Step outcomes**: only those the proposal's step list shows them. An
+  allocation decision held until the round's results are published shows as
+  *Active*.
+- **Applicant details**: follow the call's applicant visibility settings.
+
+A proposal the reader has a pending or recused conflict of interest with is
+left out of their file, and so is a proposal whose applicant team they are on.
+The second rule applies to call managers and organisers too.
+
+The same `panel_uuid` (one panel) and `call_step_uuid` (one workflow step)
+filters are also accepted by the proposal and review exports, for API use.
+
 ### One proposal as a PDF { data-requires="!feature:marketplace.call_only" }
 
 **Download PDF** on a proposal (on the proposal page, or in a proposal row's

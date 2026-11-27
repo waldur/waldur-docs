@@ -59,6 +59,11 @@ step's form, ranks the proposals the report covers under **Ranking in this repor
 **Submit report**. A call manager can **Reopen** a submitted report to hand it back to its
 author; proposals that reached the step since then join it.
 
+For a panel's meeting, its chair and members download the panel's evaluation sheet, one row
+per proposal routed to the panel with its scores and assessment outcomes, and every
+contribution to the evaluation of those proposals. See
+*Panel evaluation sheets* in [Data export](data-export.md).
+
 ## Ranking and meeting notes
 
 Expanding a round on the **Rounds** tab also shows its **Ranking** and
