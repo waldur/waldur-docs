@@ -8,10 +8,13 @@ permission decides.
 | Who | What they see | What happens |
 |-----|---------------|--------------|
 | Holders of the end date permission (by default, organization owners) | **Set termination date** | The date changes immediately |
-| Everyone else with access to the resource | **Request end date change** | A request is raised for someone to approve |
+| Holders of the request permission (by default, project managers, administrators and members) | **Request end date change** | A request is raised for someone to approve |
 
-For how the termination date relates to the project's dates and grace period,
-see [Start and end dates](start-and-end-dates.md).
+Organization readers and support users get neither. For the full list of who
+sees which action, and why the request can be missing, see
+[Who can change an end date](end-date-change-requests.md). For how the
+termination date relates to the project's dates and grace period, see
+[Start and end dates](start-and-end-dates.md).
 
 The request flow has to be enabled per offering. Where it is off, only the
 permission holders have any end date action at all — the behaviour Waldur has
