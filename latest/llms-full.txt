@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-27T19:50:30.592549Z
+Generated: 2026-11-27T19:56:51.872519Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -37232,6 +37232,9 @@ offerings:
 An offering with `configuration_source: waldur` may hold only these keys in the file:
 
 - `waldur_api_url`, `waldur_offering_uuid`, and `waldur_api_token` or the three `oidc_*` settings;
+- in place of `waldur_offering_uuid`, `waldur_service_provider_uuid` with
+  `waldur_offering_backend_id` or `waldur_offering_backend_id_startswith`, for a block that stands
+  for a group of offerings (see below);
 - `verify_ssl`;
 - `configuration_source`, and optionally `name` (Waldur's offering name otherwise);
 - `backend_settings` holding **secrets only**: the secret settings Waldur lists for the offering,
@@ -37256,6 +37259,48 @@ offerings:
 ```
 
 `examples/waldur-site-agent-config-from-waldur.yaml.example` is a complete bootstrap file.
+
+**Every offering of a cluster in one block.** A cluster sold as several offerings (one per
+accounting mode, say `cluster-q`, `cluster-u` and `cluster-m`) does not need a block per offering.
+In place of `waldur_offering_uuid`, a block may name the service provider with
+`waldur_service_provider_uuid` and select its offerings by backend ID, with exactly one of:
+
+- `waldur_offering_backend_id`: the offering whose backend ID is exactly this value;
+- `waldur_offering_backend_id_startswith`: every offering whose backend ID starts with this value.
+
+```yaml
+timezone: "UTC"
+offerings:
+  - name: "HPC cluster"   # names the block in errors; each offering keeps its Waldur name
+    configuration_source: waldur
+    waldur_api_url: "https://waldur.example.com/api/"
+    waldur_api_token: "<token>"
+    waldur_service_provider_uuid: "5e0f6a1b2c3d4e5f8a9b0c1d2e3f4a5b"  # the service provider UUID
+    waldur_offering_backend_id_startswith: "cluster"
+    backend_settings:
+      ldap:
+        bind_password: "<secret>"
+```
+
+At startup the agent calls
+`GET marketplace-service-providers/<uuid>/site_agent_config/?backend_id_startswith=<prefix>` (or
+`?backend_id=<backend ID>`) once and loads one offering per offering Waldur returns, each with its
+own `waldur_offering_uuid` and name from Waldur and the block's credentials, `verify_ssl` and
+secrets. Each is then merged and validated exactly like a single offering. The block's secrets
+apply to every matched offering; offerings that need different secrets go in separate blocks.
+
+A block must use one form: `waldur_offering_uuid`, or `waldur_service_provider_uuid` with one
+selector. A block mixing them, or with neither, fails the load. So does a group that matches no
+offering, a matched offering that another block of the file also configures (on its own or through
+another group), and a required secret missing for any matched offering; the error names the block.
+Offerings added to the group in Waldur are picked up at the next restart.
+
+The service provider endpoint needs a Waldur release that includes
+[waldur-mastermind#1360](https://code.opennodecloud.com/waldur/waldur-mastermind/-/issues/1360);
+an older Waldur answers 404. A `site_agent` template token bound to the matched offerings
+(**OFFERING.MANAGE_AGENT**) can load the group: Waldur returns only the offerings the token may
+read, so a token bound to another cluster's offerings does not see them. A service provider
+manager's token works too.
 
 At startup, for each such offering, the agent calls
 `GET marketplace-provider-offerings/<uuid>/site_agent_config/` with the offering's credentials
@@ -105452,6 +105497,21 @@ The new date is applied once the renewal order has been completed. A renewal is
 an order, so renew well before the termination date to leave time for any
 approval it needs.
 
+The renewal dialog shows what the renewal costs, line by line, before you
+confirm it. If the offering gives a **volume discount** for large allocations,
+the discount is shown too:
+
+- When it depends only on this allocation, it appears under each line it
+  reduces, and the total is what you are charged. The same amount is on the
+  renewal order and on the invoice.
+- When it depends on all of your organization's resources of that offering, the
+  dialog shows the full price and the note **Volume discount applied on your
+  invoice**. The discount is then worked out on the month's invoice.
+
+The discount depends on the size of the allocation, not on how long you renew
+it for, and an allocation counts once in a month however many times it is
+renewed in that month.
+
 ## Related pages
 
 - [Project management](project-management.md): setting the project's dates and
@@ -127354,7 +127414,8 @@ the component's billing type — the discount is supported on all of them:
 | Billing type | `usage` is bound to | Line charge the discount reduces |
 |--------------|---------------------|----------------------------------|
 | FIXED / ON_PLAN_SWITCH | the component `amount` | `price × amount × period_fraction` |
-| ONE_TIME (incl. prepaid) | the billed quantity | that one-time charge |
+| ONE_TIME | the billed quantity | that one-time charge |
+| ONE_TIME, prepaid | the allocation (the limit, not limit × months) | that one-time charge |
 | LIMIT | the limit quantity | `price × duration-multiplied quantity` |
 | USAGE | the reported usage for the period | `price × reported usage` |
 
@@ -127367,7 +127428,7 @@ lines for the whole invoice:
 flowchart TB
     ITEMS["Main lines carrying<br/>details.discount_usage"]
     GROUP["Group by plan component<br/>(per customer or per resource)"]
-    EVAL{"Formula on the group's<br/>summed volume: percent > 0?"}
+    EVAL{"Formula on the group volume<br/>(an allocation counted once): percent > 0?"}
     LINES["One negative line per main line<br/>(percent x its charge)"]
     NONE["No discount lines"]
     ERR["Formula error: log and skip<br/>(billing never blocked)"]
@@ -127412,6 +127473,43 @@ Key properties:
   component line is always billed.
 - **Overage is not discounted.** Prepaid overage top-ups are premium-priced and
   bypass the discount.
+
+### Prepaid allocations and renewals
+
+A prepaid allocation is charged upfront: once when it is bought, and again each
+time it is renewed. Every one of those charges is one main line carrying
+`discount_usage`:
+
+| Line | `discount_usage` |
+|------|------------------|
+| First charge | the limit |
+| Renewal, extension | the new limit |
+| Renewal, rest of the current term (a raised limit) | 0, so it takes the percent of the extension billed with it |
+
+These lines are also marked `details["discount_usage_is_allocation"]`. When a
+group's volume is summed (`billing_discount.group_volume`), a resource's
+allocation lines count **once, at the largest**, not once per charge. Without
+that, buying and renewing in the same month, or renewing in short pieces, would
+add the same storage up into a higher tier. Two 1-month renewals of 60 TB in a
+month are still a 60 TB allocation.
+
+**The renewal is quoted with its discount.** `Resource.get_renewal_quote` gives
+each line `discount_percent`, `discount_total` and `discount_deferred`, and
+`estimate_renewal` returns them per line and in total:
+
+- **Per resource**: the discount is priced, with the formula on the new limit
+  and rounded as the invoice's discount line is. The estimate's `total` and the
+  renewal order's cost are net of it, so the quote, the order, the support ticket
+  ("Volume discount: …") and the invoice agree.
+- **Per customer**: the percent depends on what else the month's invoice holds,
+  so nothing is priced. The line is flagged `discount_deferred`, the cost stays
+  gross, and the dialog says the discount is applied on the invoice.
+- **Broken formula**: no discount is quoted or billed.
+
+**Orders quoted before renewals were discounted** are billed as quoted. A
+`cost_lines` entry without `discount_total`, or an order with no `cost_lines`,
+gets no `discount_usage`, so the invoice matches the purchase order that was
+approved.
 
 ## Worked example
 
