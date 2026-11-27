@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-27T21:34:12.950645Z
+Generated: 2026-11-27T21:55:36.655211Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -18735,7 +18735,7 @@ Notifies project users about a resource that is nearing its end date.
 
 ```txt
 
-    {% if count_projects > 1 %}Your {{ count_projects }} projects{% else %} Project{% endif %} will be deleted on {{ end_date|date:'d/m/Y' }}.
+    {% if resources_follow_project_end %}{% if count_projects > 1 %}Your {{ count_projects }} projects{% else %}Project{% endif %} will be deleted on {{ end_date|date:'d/m/Y' }}.{% else %}{% if count_projects > 1 %}Your {{ count_projects }} projects reach their end date{% else %}Project reaches its end date{% endif %} on {{ end_date|date:'d/m/Y' }}.{% endif %}
 
 ```
 
@@ -18745,14 +18745,18 @@ Notifies project users about a resource that is nearing its end date.
 
     Hello {{ user.full_name }}!
 
-    The following projects will have their resources terminated {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %} (on {{ end_date|date:'d/m/Y' }}):
+    {% if resources_follow_project_end %}The following projects will have their resources terminated {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %} (on {{ end_date|date:'d/m/Y' }}):{% else %}The following projects reach their end date {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %} (on {{ end_date|date:'d/m/Y' }}):{% endif %}
 
     {% for project in projects %}
         - {{ project.name }} ({{ project.url }}){% if project.grace_period_days %}
-          End date: {{ project.end_date|date:'d/m/Y' }} | Grace period: {{ project.grace_period_days }} days | Termination date: {{ project.effective_end_date|date:'d/m/Y' }}{% endif %}
+          End date: {{ project.end_date|date:'d/m/Y' }} | Grace period: {{ project.grace_period_days }} days | Termination date: {{ project.effective_end_date|date:'d/m/Y' }}{% endif %}{% if not resources_follow_project_end %}{% if project.resources_on_project_date %}
+          {{ project.resources_on_project_date }} resource{{ project.resources_on_project_date|pluralize }} terminate{{ project.resources_on_project_date|pluralize:"s," }} on the project end date.{% endif %}
+    {% for group in project.termination_groups %}
+          {% if group.past_due %}{{ group.resource_count }} resource{{ group.resource_count|pluralize }} of {{ group.offering_name }} {{ group.resource_count|pluralize:"is,are" }} being terminated (due {{ group.termination_date|date:'d/m/Y' }}).{% else %}{{ group.resource_count }} resource{{ group.resource_count|pluralize }} of {{ group.offering_name }} terminate{{ group.resource_count|pluralize:"s," }} on {{ group.termination_date|date:'d/m/Y' }}.{% endif %}
+    {% endfor %}{% endif %}
     {% endfor %}
 
-    End of the project will lead to termination of all resources in the project.
+    {% if resources_follow_project_end %}End of the project will lead to termination of all resources in the project.{% else %}Resources terminate on the dates above. The project is removed once its end date has passed and no resource is left.{% endif %}
     If you are aware of that, then no actions are needed from your side.
     If you need to update project end date, please update it in project details.
 
@@ -18771,7 +18775,7 @@ Notifies project users about a resource that is nearing its end date.
     </head>
     <body>
     <p>Hello {{ user.full_name }}!</p>
-    <p>The following projects will have their resources terminated {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %} (on {{ end_date|date:'d/m/Y' }}):</p>
+    <p>{% if resources_follow_project_end %}The following projects will have their resources terminated {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %} (on {{ end_date|date:'d/m/Y' }}):{% else %}The following projects reach their end date {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %} (on {{ end_date|date:'d/m/Y' }}):{% endif %}</p>
     <ul>
     {% for project in projects %}
         <li>
@@ -18779,11 +18783,19 @@ Notifies project users about a resource that is nearing its end date.
             {% if project.grace_period_days %}
             <br /><small>End date: {{ project.end_date|date:'d/m/Y' }} | Grace period: {{ project.grace_period_days }} days | Termination date: {{ project.effective_end_date|date:'d/m/Y' }}</small>
             {% endif %}
+            {% if not resources_follow_project_end %}
+            {% if project.resources_on_project_date %}
+            <br />{{ project.resources_on_project_date }} resource{{ project.resources_on_project_date|pluralize }} terminate{{ project.resources_on_project_date|pluralize:"s," }} on the project end date.
+            {% endif %}
+            {% for group in project.termination_groups %}
+            <br />{% if group.past_due %}{{ group.resource_count }} resource{{ group.resource_count|pluralize }} of {{ group.offering_name }} {{ group.resource_count|pluralize:"is,are" }} being terminated (due {{ group.termination_date|date:'d/m/Y' }}).{% else %}{{ group.resource_count }} resource{{ group.resource_count|pluralize }} of {{ group.offering_name }} terminate{{ group.resource_count|pluralize:"s," }} on {{ group.termination_date|date:'d/m/Y' }}.{% endif %}
+            {% endfor %}
+            {% endif %}
         </li>
     {% endfor %}
     </ul>
     <p>
-        End of the project will lead to termination of all resources in the project. <br />
+        {% if resources_follow_project_end %}End of the project will lead to termination of all resources in the project.{% else %}Resources terminate on the dates above. The project is removed once its end date has passed and no resource is left.{% endif %}<br />
         If you are aware of that, then no actions are needed from your side. <br />
         If you need to update project end date, please update it in project details.
     </p>
@@ -23935,7 +23947,7 @@ td:nth-child(4) {
 | `marketplace-openstack.terminate-child-resources-of-terminated-tenants` | `waldur_mastermind.marketplace_openstack.terminate_child_resources_of_terminated_tenants` | 1 day | Reconcile Instance/Volume marketplace resources orphaned under a terminated tenant.<br><br>When a tenant's marketplace Resource is force-terminated without the backend<br>teardown completing (e.g. a staff ``force_destroy`` on an unreachable/erred<br>site, ``marketplace/utils.py`` ``process_order``), the per-tenant<br>Instance/Volume child resources are left non-terminated even though their<br>parent tenant is gone. A terminated tenant can never legitimately have live<br>instances or volumes, so this task marks those child resources TERMINATED to<br>keep the marketplace state consistent.<br><br>Mark-only by design: it does NOT delete plugin rows, release quota, or call<br>the OpenStack backend (which may be unreachable). The child offerings are<br>non-billable, so no invoicing is affected.<br><br>Traceability: for each reconciled resource it records a completed TERMINATE<br>``Order`` (created directly in the DONE state, so no processing/executor and<br>no backend call is triggered) carrying a ``reason`` in its attributes, and<br>routes the state change through ``callbacks.resource_deletion_succeeded`` so<br>the standard ``MARKETPLACE_RESOURCE_TERMINATE_SUCCEEDED`` event appears in the<br>resource's audit log. |
 | `marketplace-reset-stuck-updating-resources` | `waldur_mastermind.marketplace.reset_stuck_updating_resources` | 10 minutes | Reset marketplace resources stuck in UPDATING state.<br><br>This task handles two scenarios where a resource remains in UPDATING state:<br><br>1. The resource's UPDATE order has been completed (state=DONE) but the resource<br> state wasn't transitioned to OK due to a race condition.<br><br>2. The resource was set to UPDATING by a backend operation (e.g., sync/pull)<br> without an order, but the operation finished without updating the state.<br> In this case, if no UPDATE order exists or is executing, and the resource<br> has been stuck for more than 1 hour, it is reset to OK.<br><br>For each stuck resource, the task transitions it to OK state. |
 | `notification_about_project_ending` | `waldur_mastermind.marketplace.notification_about_project_ending` | Cron: `0 10 * * * (m/h/dM/MY/d)` | Send notifications about projects ending in 1 day and 7 days. |
-| `notification_about_resource_ending` | `waldur_mastermind.marketplace.notification_about_resource_ending` | Cron: `0 10 * * * (m/h/dM/MY/d)` | Send notifications about resources ending, on the days the offering's<br>resource_expiration_reminders names (7 and 1 by default).<br><br>"Ending" is the resource's effective end date — the earliest of its own end<br>date and the project-driven termination date. Resources whose offering<br>disables the grace period terminate on the raw project end date (earlier than<br>the project's effective end date that notification_about_project_ending<br>announces), so they are pulled in by their project's raw end date even without<br>an own end date — but only when the project has an actual grace window,<br>otherwise raw == effective and the project-ending notice already covers them. |
+| `notification_about_resource_ending` | `waldur_mastermind.marketplace.notification_about_resource_ending` | Cron: `0 10 * * * (m/h/dM/MY/d)` | Send notifications about resources ending, on the days the offering's<br>resource_expiration_reminders names (7 and 1 by default).<br><br>"Ending" is the resource's effective end date — the earliest of its own end<br>date and the project-driven termination date. Resources whose offering<br>disables the grace period terminate on the raw project end date (earlier than<br>the project's effective end date that notification_about_project_ending<br>announces), so they are pulled in by their project's raw end date even without<br>an own end date — but only when the project has an actual grace window,<br>otherwise raw == effective and the project-ending notice already covers them.<br><br>An offering ``grace_period_days`` above 0 moves the termination date past<br>both raw end dates, so its resources are found by the raw dates shifted back<br>by that length, and the reminder counts down to the date they terminate. |
 | `notify-managers-of-expired-batches` | `waldur_mastermind.proposal.notify_managers_of_expired_batches` | 30 minutes | Notify call managers when batches expire without response. |
 | `notify-offering-teams-on-round-start` | `waldur_mastermind.proposal.notify_offering_teams_on_round_start` | 1 day | Tell the managers of each offering a call takes in when one of its<br>rounds opens today. |
 | `notify-proposal-creator-on-submission-deadline-approaching` | `waldur_mastermind.proposal.notify_proposal_creator_on_submission_deadline_approaching` | 1 day | No description available |
@@ -23969,6 +23981,7 @@ td:nth-child(4) {
 | `remove_deleted_robot_accounts` | `waldur_mastermind.marketplace.remove_deleted_robot_accounts` | 1 day | Remove robot accounts that are in DELETED state.<br>This task runs daily to clean up robot accounts that have been marked for deletion. |
 | `resend-stuck-invitations` | `waldur_core.users.resend_stuck_invitations` | 1 hour | Reconcile stuck invitations that were never sent due to errors or broker/worker downtime. |
 | `reset-slurm-policy-periods` | `waldur_mastermind.policy.reset_slurm_policies_on_period_boundary` | Cron: `0 1 * * * (m/h/dM/MY/d)` | Re-evaluate paused/downscaled SLURM resources whose current period has no usage.<br><br>Runs daily (idempotent). For each SlurmPeriodicUsagePolicy, checks whether any<br>active resources are still paused or downscaled while having 0% usage in the<br>current period — which means the pause carried over from a previous period and<br>should be cleared.<br><br>This is safe to re-run: if the resource is already unpaused, re-evaluation<br>with 0% usage is a no-op. If Celery beat was down or the queue was flushed,<br>the next successful run catches up automatically. |
+| `resume-stale-bulk-step-decisions` | `waldur_mastermind.proposal.resume_stale_bulk_step_decisions` | 5 minutes | Dispatch again the bulk step decisions that have stopped moving. |
 | `retry-attachment-forwarding` | `waldur_mastermind.support.retry_attachment_forwarding` | 15 minutes | Push again the copies the forwarding tasks could not deliver.<br><br>A copy left waiting once a task's retries are spent, because its desk was<br>down for longer, or left claimed by a worker that died mid-push, would<br>otherwise stay hidden and off its desk for good. Each is pushed again<br>until it has had ``MAX_PUSH_ATTEMPTS`` pushes, and is then given up as<br>``ERRED`` and noted on the processing log of the routed ticket. |
 | `revoke_outdated_consents` | `waldur_mastermind.marketplace.revoke_outdated_consents` | 1 day | Revoke consents for users who haven't re-consented within grace period.<br><br>Finds all active ToS with requires_reconsent=True where grace period has expired,<br>and revokes all consents that don't match the current active ToS version. |
 | `sample-table-sizes` | `waldur_core.sample_table_sizes` | Cron: `0 1 * * * (m/h/dM/MY/d)` | Sample all database table sizes and store them for trend analysis.<br>This task runs daily to collect historical data for detecting abnormal growth patterns. |
@@ -23993,8 +24006,8 @@ td:nth-child(4) {
 | `sync-slurm-periodic-settings` | `waldur_mastermind.policy.sync_slurm_periodic_settings` | Cron: `*/10 * * * * (m/h/dM/MY/d)` | Send apply_periodic_settings to all active SLURM resources.<br><br>Runs every 10 minutes to keep SLURM GrpTRESMins, fairshare, and QoS<br>thresholds in sync with current policy settings. This is needed<br>because:<br><br>- The site agent sets initial limits without the grace buffer<br>- Carryover and period boundaries change the effective allocation<br>- Drift can occur after site-agent or SLURM restarts<br><br>Uses a cache to skip resources whose settings haven't changed since<br>the last sync, avoiding unnecessary STOMP messages. |
 | `sync-user-deactivation-status` | `waldur_core.permissions.sync_user_deactivation_status` | 3 hours | Sync user activation status based on DEACTIVATE_USER_IF_NO_ROLES setting.<br><br>This task ensures all users in the system match the current policy:<br>- If DEACTIVATE_USER_IF_NO_ROLES is True: deactivate users with no active roles<br>- If DEACTIVATE_USER_IF_NO_ROLES is False: reactivate users who were previously auto-deactivated |
 | `sync_request_types` | `waldur_mastermind.support.sync_request_types` | 1 day | Synchronize request types from the active support backend. |
-| `terminate_expired_resources` | `waldur_mastermind.marketplace.terminate_expired_resources` | Cron: `20 1 * * * (m/h/dM/MY/d)` | Terminate marketplace resources that have reached their end date. |
-| `terminate_resources_if_project_end_date_has_been_reached` | `waldur_mastermind.marketplace.terminate_resources_if_project_end_date_has_been_reached` | Cron: `40 1 * * * (m/h/dM/MY/d)` | Terminate resources when their project has reached its end date (including grace period).<br><br>Also pauses resources for projects currently in the grace period,<br>if the offering has supports_pausing=True in plugin_options, and lifts that<br>pause from resources whose project has left the grace period without<br>expiring (its end date was extended or cleared). Resources are paused before<br>they are scheduled for termination too, and stay paused if it fails. |
+| `terminate_expired_resources` | `waldur_mastermind.marketplace.terminate_expired_resources` | Cron: `20 1 * * * (m/h/dM/MY/d)` | Terminate marketplace resources that have reached their end date.<br><br>An offering ``grace_period_days`` above 0 extends that date. Until the<br>extended date, a resource that supports pausing is paused and the grace<br>signal is sent; it is not terminated. Unset offering grace keeps the raw<br>end date as a hard stop. |
+| `terminate_resources_if_project_end_date_has_been_reached` | `waldur_mastermind.marketplace.terminate_resources_if_project_end_date_has_been_reached` | Cron: `40 1 * * * (m/h/dM/MY/d)` | Terminate resources when their offering-resolved project end has passed.<br><br>Also pauses resources that are inside the grace window, when the offering<br>supports pausing, and lifts that pause from resources whose end date has<br>left the window (see the project and resource save handlers, and<br>``release_project_grace_pauses`` below). The length is the offering's<br>``grace_period_days`` when set, otherwise the project and organization<br>length. 0 and the legacy ``disable_grace_period`` terminate on the raw<br>project end date. |
 | `terminate_resources_in_state_erred_without_backend_id_and_failed_terminate_order` | `waldur_mastermind.marketplace.terminate_resources_in_state_erred_without_backend_id_and_failed_terminate_order` | 1 day | Clean up erred site-agent resources that failed both creation and termination. |
 | `update-custom-quotas` | `waldur_core.quotas.update_custom_quotas` | 1 hour | No description available |
 | `update-invoices-total-cost` | `invoices.update_invoices_total_cost` | 1 day | Refresh current month invoices: the estimated volume discounts of the<br>open ones first, as they lower the total, then the cached total cost. |
@@ -24019,7 +24032,7 @@ td:nth-child(4) {
 | `waldur-marketplace-calculate-usage` | `waldur_mastermind.marketplace.calculate_usage_for_current_month` | 1 hour | Calculate marketplace resource usage for the current month across all customers and projects. |
 | `waldur-marketplace-lift-reset-spending-limit-restrictions` | `waldur_mastermind.marketplace.lift_reset_spending_limit_restrictions` | 5 minutes | Re-evaluate resources restricted by spending limits that have since reset.<br><br>A daily or weekly limit resets at midnight UTC, usually without a usage<br>report to trigger the lift; this runs every few minutes so the pause ends<br>close to the reset rather than on the hourly re-evaluation. |
 | `waldur-marketplace-prune-api-key-daily-usage` | `waldur_mastermind.marketplace.prune_api_key_daily_usage` | Cron: `20 2 * * * (m/h/dM/MY/d)` | Delete API keys' daily usage rows from before the previous year.<br><br>No limit reads them and no report can be dated in them any more, and an<br>agent that reports every day of the month adds a row a day per key and<br>component. |
-| `waldur-marketplace-re-evaluate-usage-limit-restrictions` | `waldur_mastermind.marketplace.re_evaluate_usage_limit_restrictions` | 1 hour | Lift usage-limit restrictions when a new period resets reported usage.<br><br>A restriction applied by ``evaluate_usage_limit_restriction`` is normally<br>lifted on the next usage report. When a new billing period begins and no new<br>usage is reported, this periodic task re-evaluates every currently restricted<br>resource so month/quarter/annual restrictions clear on rollover. ``total``<br>restrictions never roll over and are only lifted when the limit is raised. |
+| `waldur-marketplace-re-evaluate-usage-limit-restrictions` | `waldur_mastermind.marketplace.re_evaluate_usage_limit_restrictions` | 1 hour | Lift usage-limit restrictions when a new period resets reported usage.<br><br>A restriction applied by ``evaluate_usage_limit_restriction`` is normally<br>lifted on the next usage report. When a new billing period begins and no new<br>usage is reported, this periodic task re-evaluates every currently restricted<br>resource so month/quarter/annual restrictions clear on rollover. ``total``<br>restrictions never roll over and are only lifted when the limit is raised.<br>Resources of offerings that no longer act on usage limits are included, so<br>a restriction the grace period or a policy kept past that change is lifted<br>once nothing holds it. |
 | `waldur-marketplace-resume-api-keys-after-limit-reset` | `waldur_mastermind.marketplace.resume_api_keys_after_limit_reset` | 5 minutes | Resume the API keys whose limits have reset since Waldur paused them.<br><br>The per-key counterpart of ``lift_reset_spending_limit_restrictions``: runs<br>every few minutes, so a key paused by a daily limit comes back close to<br>midnight UTC rather than on the hourly check. |
 | `waldur-marketplace-resume-api-keys-under-limit` | `waldur_mastermind.marketplace.resume_api_keys_under_limit` | 1 hour | Resume the API keys Waldur paused for a limit once they are under it again.<br><br>The per-key counterpart of ``re_evaluate_usage_limit_restrictions``: a usage<br>report resumes such a key on its own, but a period may reset without one. |
 | `waldur-marketplace-retry-failed-api-key-limit-pauses` | `waldur_mastermind.marketplace.retry_failed_api_key_limit_pauses` | 5 minutes | Issue again the limit pauses of API keys that the site agent failed to apply.<br><br>The key stays usable at the backend until its pause succeeds. |
@@ -27460,7 +27473,7 @@ Reminder about stale resources.
 
 ```txt
 
-{% if count_projects > 1 %}Your {{ count_projects }} projects{% else %} Project{% endif %} will be deleted on {{ end_date|date:'d/m/Y' }}.
+{% if resources_follow_project_end %}{% if count_projects > 1 %}Your {{ count_projects }} projects{% else %}Project{% endif %} will be deleted on {{ end_date|date:'d/m/Y' }}.{% else %}{% if count_projects > 1 %}Your {{ count_projects }} projects reach their end date{% else %}Project reaches its end date{% endif %} on {{ end_date|date:'d/m/Y' }}.{% endif %}
 
 ```
 
@@ -27728,7 +27741,7 @@ Resource limit change request rejected for {{ resource_limit_change_request.reso
 </head>
 <body>
 <p>Hello {{ user.full_name }}!</p>
-<p>The following projects will have their resources terminated {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %} (on {{ end_date|date:'d/m/Y' }}):</p>
+<p>{% if resources_follow_project_end %}The following projects will have their resources terminated {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %} (on {{ end_date|date:'d/m/Y' }}):{% else %}The following projects reach their end date {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %} (on {{ end_date|date:'d/m/Y' }}):{% endif %}</p>
 <ul>
 {% for project in projects %}
     <li>
@@ -27736,11 +27749,19 @@ Resource limit change request rejected for {{ resource_limit_change_request.reso
         {% if project.grace_period_days %}
         <br /><small>End date: {{ project.end_date|date:'d/m/Y' }} | Grace period: {{ project.grace_period_days }} days | Termination date: {{ project.effective_end_date|date:'d/m/Y' }}</small>
         {% endif %}
+        {% if not resources_follow_project_end %}
+        {% if project.resources_on_project_date %}
+        <br />{{ project.resources_on_project_date }} resource{{ project.resources_on_project_date|pluralize }} terminate{{ project.resources_on_project_date|pluralize:"s," }} on the project end date.
+        {% endif %}
+        {% for group in project.termination_groups %}
+        <br />{% if group.past_due %}{{ group.resource_count }} resource{{ group.resource_count|pluralize }} of {{ group.offering_name }} {{ group.resource_count|pluralize:"is,are" }} being terminated (due {{ group.termination_date|date:'d/m/Y' }}).{% else %}{{ group.resource_count }} resource{{ group.resource_count|pluralize }} of {{ group.offering_name }} terminate{{ group.resource_count|pluralize:"s," }} on {{ group.termination_date|date:'d/m/Y' }}.{% endif %}
+        {% endfor %}
+        {% endif %}
     </li>
 {% endfor %}
 </ul>
 <p>
-    End of the project will lead to termination of all resources in the project. <br />
+    {% if resources_follow_project_end %}End of the project will lead to termination of all resources in the project.{% else %}Resources terminate on the dates above. The project is removed once its end date has passed and no resource is left.{% endif %}<br />
     If you are aware of that, then no actions are needed from your side. <br />
     If you need to update project end date, please update it in project details.
 </p>
@@ -27815,14 +27836,18 @@ Thank you!
 
 Hello {{ user.full_name }}!
 
-The following projects will have their resources terminated {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %} (on {{ end_date|date:'d/m/Y' }}):
+{% if resources_follow_project_end %}The following projects will have their resources terminated {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %} (on {{ end_date|date:'d/m/Y' }}):{% else %}The following projects reach their end date {% if delta == 1 %} tomorrow {% else %} in {{ delta }} days{% endif %} (on {{ end_date|date:'d/m/Y' }}):{% endif %}
 
 {% for project in projects %}
     - {{ project.name }} ({{ project.url }}){% if project.grace_period_days %}
-      End date: {{ project.end_date|date:'d/m/Y' }} | Grace period: {{ project.grace_period_days }} days | Termination date: {{ project.effective_end_date|date:'d/m/Y' }}{% endif %}
+      End date: {{ project.end_date|date:'d/m/Y' }} | Grace period: {{ project.grace_period_days }} days | Termination date: {{ project.effective_end_date|date:'d/m/Y' }}{% endif %}{% if not resources_follow_project_end %}{% if project.resources_on_project_date %}
+      {{ project.resources_on_project_date }} resource{{ project.resources_on_project_date|pluralize }} terminate{{ project.resources_on_project_date|pluralize:"s," }} on the project end date.{% endif %}
+{% for group in project.termination_groups %}
+      {% if group.past_due %}{{ group.resource_count }} resource{{ group.resource_count|pluralize }} of {{ group.offering_name }} {{ group.resource_count|pluralize:"is,are" }} being terminated (due {{ group.termination_date|date:'d/m/Y' }}).{% else %}{{ group.resource_count }} resource{{ group.resource_count|pluralize }} of {{ group.offering_name }} terminate{{ group.resource_count|pluralize:"s," }} on {{ group.termination_date|date:'d/m/Y' }}.{% endif %}
+{% endfor %}{% endif %}
 {% endfor %}
 
-End of the project will lead to termination of all resources in the project.
+{% if resources_follow_project_end %}End of the project will lead to termination of all resources in the project.{% else %}Resources terminate on the dates above. The project is removed once its end date has passed and no resource is left.{% endif %}
 If you are aware of that, then no actions are needed from your side.
 If you need to update project end date, please update it in project details.
 
@@ -28664,7 +28689,8 @@ Extension: {{ extension_months }} months
 Old end date: {{ old_end_date }}
 New end date: {{ new_end_date }}
 Renewal cost: {{ cost }}
-{% if request_comment %}Purchase order reference: {{ request_comment }}
+{% if volume_discount %}Volume discount: {{ volume_discount }}
+{% endif %}{% if request_comment %}Purchase order reference: {{ request_comment }}
 {% endif %}Old limits: {{ old_limits }}.
 New limits: {{ new_limits }}.
 {% if resource_slug %}Resource slug: {{ resource_slug }}
@@ -76447,6 +76473,50 @@ options of existing offerings and offering templates, setting `topology_mode`
 to what the old type implied (`1-datacenter` or `3-datacenter`) where the
 option had none.
 
+#### Sites fixed by the provider
+
+By default the customer picks the OpenStack infrastructure of each site from
+the tenant offerings they can order. A provider whose automation provisions
+the tenants itself sets `infrastructure_mode: provider_fixed` and lists the
+sites in `fixed_openstack_offerings`, per topology and in site order:
+
+```json
+{
+  "infrastructure_mode": "provider_fixed",
+  "topology_mode": "customer_choice",
+  "fixed_openstack_offerings": {
+    "1-datacenter": ["<tenant offering uuid>"],
+    "3-datacenter": ["<uuid>", "<uuid>", "<uuid>"]
+  }
+}
+```
+
+- Saving the option checks that every topology `topology_mode` allows has its
+  number of distinct `OpenStack.Tenant` offerings. UUIDs are stored in hex.
+- A site must be active or paused, and either the provider's own offering or
+  one shared with the provider's organisation (as `filter_for_customer`
+  decides, organisation groups included). Another organisation's private
+  offering is refused: its name and flavors would be shown to everyone who
+  sees the Kubernetes offering. The same rule is checked on create, on
+  `update_options` / `update_resource_options`, on `import_offering` and when
+  the sites are served.
+- `GET marketplace-public-offerings/{uuid}/k8s_sites/?option=<name>&topology=<topology>`
+  returns the sites of a topology and the flavors every site has under one
+  name with the same vCPUs and RAM, each with every site's own flavor UUID.
+  Any caller who can see the offering may call it, whether or not they can
+  see the OpenStack offerings.
+- An order is refused when its datacenters do not use the provider's sites in
+  order, when the node groups differ between sites, when a flavor is not that
+  site's own or differs in size between the sites, or when a worker flavor is
+  below `minimal_worker_vcpus` / `minimal_worker_ram_gb`. Each site's node
+  groups carry that site's flavor UUID.
+
+The check runs through `register_option_value_check` in
+`common/serializers.py`: `validate_options` calls the checks registered for
+an option type on every value its field accepted. The marketplace app
+registers this one in `apps.py`, because the field itself cannot reach the
+database.
+
 ### Kubernetes Egress Rules
 
 A Kubernetes cluster configuration (`k8s_cluster_config`) can carry the
@@ -98110,10 +98180,36 @@ tentative outcome in place of the state (see [Held decisions](allocation-decisio
 Select proposals to act on several at once from **All actions**:
 
 - **Decide a step** — records one outcome, with a reason, on every selected
-  proposal standing at the chosen decision step, each as if completed from its
-  own page. The result lists the proposals **Completed**, those **Refused** with
-  why, and those **Not at this step, so left alone**. The allocation decision,
-  assessments and steps run once per round are decided on each proposal.
+  proposal standing at the chosen decision step. Waldur decides each proposal
+  as if it were completed from its own page, so the same permissions and step
+  gates apply. Each proposal is decided on its own: one refusal does not undo
+  the others. The allocation decision, assessments and steps run once per round
+  are decided on each proposal.
+
+  1. Choose the step (when the selection stands on more than one), the
+     **Outcome** and a **Reason**, then click **Preview**.
+  2. The preview decides nothing yet. It shows how many proposals
+     **Will be decided**, and lists each one that **Will be refused** with the
+     reason: the proposal has moved on, you are on its applicant team, a
+     checklist or the minimum number of reviews is not complete, and so on.
+     Proposals not standing on the step are counted as
+     **Not at this step, so left alone**.
+  3. Click **Decide** to confirm. The result lists the proposals **Decided** and
+     those **Refused**, with the reason.
+
+  The call's managers and organisers decide a step in bulk, as does the step's
+  own completer on the call (its panel chair, say). The dialog offers only the
+  proposals you may act on; a refused proposal you may not act on is listed by
+  its id alone. A selection of up to 2000 proposals is taken at once.
+
+  A selection of more than 25 proposals is checked, and then decided, in the
+  background: the dialog shows how far it has got, and you can close it
+  meanwhile. A run that is interrupted, for example by a restart, goes on by
+  itself from the first proposal it had not yet decided.
+  **Steps decided in bulk**, above the proposals list, lists the call's runs
+  (who started each one, the step and outcome, how many proposals were decided
+  and refused, and whether the run is still going). Open a run to read its
+  result again. Each run is also recorded once in the call's event log.
 - **Assign a reviewer**, **Message the applicants**, **Export the proposals
   (CSV)** and **Export their reviews (CSV)**.
 
@@ -131199,6 +131295,7 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
 - proposal_step_skipped
 - proposal_step_started
 - proposal_step_withdrawn
+- proposal_steps_decided_in_bulk
 - proposal_submitted
 - proposal_workflow_advanced
 - proposal_workflow_notification_sent
@@ -131233,6 +131330,9 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
 - marketplace_resource_end_date_change_request_canceled
 - marketplace_resource_end_date_change_request_created
 - marketplace_resource_end_date_change_request_rejected
+- marketplace_resource_grace_period_cancelled
+- marketplace_resource_grace_period_ended
+- marketplace_resource_grace_period_started
 - marketplace_resource_limit_change_request_approved
 - marketplace_resource_limit_change_request_created
 - marketplace_resource_limit_change_request_rejected
@@ -131279,6 +131379,9 @@ introducing `SUBSCRIBE_*` permissions that would have to be kept in sync.
 - marketplace_resource_end_date_change_request_created
 - marketplace_resource_end_date_change_request_rejected
 - marketplace_resource_erred_on_backend
+- marketplace_resource_grace_period_cancelled
+- marketplace_resource_grace_period_ended
+- marketplace_resource_grace_period_started
 - marketplace_resource_limit_change_request_approved
 - marketplace_resource_limit_change_request_created
 - marketplace_resource_limit_change_request_rejected
@@ -132282,12 +132385,14 @@ td:nth-child(4) {
 | `end_evaluator_roles_on_call_role_revoked` | `Custom Signal (role_revoked)` | `—` | Whoever loses a role on a call -- taken away, or lapsed and swept by |
 | `end_evaluator_roles_on_chair_change` | `Django Signal (post_save)` | `proposal.CallPanel` | A panel's chair replaced, or cleared, loses the roles held as its |
 | `end_evaluator_roles_on_leaving_panel` | `Django Signal (m2m_changed)` | `CallPanel_members` | Whoever is taken off a call's panel loses the evaluator roles they |
+| `evaluate_usage_limit_on_action_change` | `Django Signal (post_save)` | `marketplace.Offering` | Re-evaluate an offering's resources when its action on usage limit changes. |
 | `evaluate_usage_limit_on_component_change` | `Django Signal (post_save)` | `marketplace.OfferingComponent` | Re-evaluate an offering's resources when a component's limit_amount changes. |
 | `evaluate_usage_limit_on_daily_usage_report` | `Django Signal (post_save)` | `marketplace.ComponentDailyUsage` | Re-evaluate a resource with spending limits when a day's usage changes. |
 | `evaluate_usage_limit_on_resource_limit_change` | `Django Signal (post_save)` | `marketplace.Resource` | Re-evaluate a resource's usage-limit restriction when its limits change. |
 | `evaluate_usage_limit_on_usage_report` | `Django Signal (post_save)` | `marketplace.ComponentUsage` | Pause or downscale a resource when reported usage reaches a component limit. |
 | `follow_call_chairs_for_discussions` | `Django Signal (post_save)` | `proposal.Call` | The call's panel chair or vice-chair changed. |
 | `follow_discussion_settings` | `Django Signal (post_save)` | `proposal.CallWorkflowStep` | A step whose discussion is switched off closes its open discussions, |
+| `follow_grace_windows_when_offering_grace_changes` | `Django Signal (post_save)` | `marketplace.Offering` | Apply a changed offering grace length now, not on the next daily run. |
 | `follow_panel_for_discussions` | `Django Signal (post_save)` | `proposal.CallPanel` | A panel added to the call, or its chair changed (as |
 | `follow_proposal_for_discussions` | `Django Signal (post_save)` | `proposal.Proposal` | A proposal rejected or withdrawn closes its discussions; one moved to |
 | `follow_step_for_discussions` | `Django Signal (post_save)` | `proposal.ProposalWorkflowStepInstance` | A proposal's step that is no longer active closes its discussion, and |
@@ -132629,7 +132734,7 @@ td:nth-child(4) {
 
 ## Summary
 
-Total unique handlers found: 832
+Total unique handlers found: 834
 
 - **waldur_auth_saml2**: 1 handlers
 - **waldur_auth_social**: 2 handlers
@@ -132637,7 +132742,7 @@ Total unique handlers found: 832
 - **waldur_core**: 354 handlers
 - **waldur_freeipa**: 13 handlers
 - **waldur_lexis**: 1 handlers
-- **waldur_mastermind**: 413 handlers
+- **waldur_mastermind**: 415 handlers
 - **waldur_openportal**: 10 handlers
 - **waldur_openstack**: 15 handlers
 - **waldur_openstack_replication**: 1 handlers
@@ -134586,10 +134691,14 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`MemberSyncFieldsMixin`](#membersyncfieldsmixin) | `waldur_mastermind.marketplace.serializers` | Adds agent-reported sync fields to a UserRole-shaped serializer |
 | [`ResourceEndDateUpdateMixin`](#resourceenddateupdatemixin) | `waldur_mastermind.marketplace.serializers` | Write the end date and who set it, and nothing else |
 | [`UserProfileAttributeFieldsMixin`](#userprofileattributefieldsmixin) | `waldur_mastermind.marketplace.serializers` | Read-only ``user_<attr>`` fields for the personal-data attributes an offering... |
+| [`AgentConfigurationTestMixin`](#agentconfigurationtestmixin) | `waldur_mastermind.marketplace.tests.test_agent_configuration` | No description available |
+| [`AgentConfigurationTrustTestMixin`](#agentconfigurationtrusttestmixin) | `waldur_mastermind.marketplace.tests.test_agent_configuration_trust` | An offering with a SLURM agent configuration, its owner, service provider man... |
 | [`DerivedLimitsOrderMixin`](#derivedlimitsordermixin) | `waldur_mastermind.marketplace.tests.test_derived_limits` | No description available |
+| [`SitesMixin`](#sitesmixin) | `waldur_mastermind.marketplace.tests.test_k8s_sites` | Three OpenStack tenant offerings with overlapping flavors |
 | [`SecretAbsenceMixin`](#secretabsencemixin) | `waldur_mastermind.marketplace.tests.test_network_options` | No description available |
 | [`LimitActionPermissionMixin`](#limitactionpermissionmixin) | `waldur_mastermind.marketplace.tests.test_order_creation_permission` | No description available |
 | [`OrderResourceVisibilityMixin`](#orderresourcevisibilitymixin) | `waldur_mastermind.marketplace.tests.test_order_resource_visibility` | No description available |
+| [`PrepaidRenewalMixin`](#prepaidrenewalmixin) | `waldur_mastermind.marketplace.tests.test_renewal_billing` | A prepaid storage allocation of 50 at 4 |
 | [`ScopeHelperAgreementMixin`](#scopehelperagreementmixin) | `waldur_mastermind.marketplace.tests.test_scope_helpers_by_permission` | Each helper must list exactly the scopes has_permission allows |
 | [`GrantMixin`](#grantmixin) | `waldur_mastermind.marketplace.tests.test_slug_permissions` | No description available |
 | [`SpendingLimitsSetupMixin`](#spendinglimitssetupmixin) | `waldur_mastermind.marketplace.tests.test_spending_limits` | No description available |
@@ -134603,8 +134712,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`ConcealmentMixin`](#concealmentmixin) | `waldur_mastermind.marketplace_openstack.tests.test_plugin_resource_concealment` | No description available |
 | [`SelectiveDNSMockMixin`](#selectivednsmockmixin) | `waldur_mastermind.marketplace_remote.tests.dns_utils` | Mixin class that provides selective DNS mocking for test classes |
 | [`ContainerExecutorMixin`](#containerexecutormixin) | `waldur_mastermind.marketplace_script.utils` | Mixin to execute scripts in containers for marketplace script processing |
-| [`AgentConfigurationTestMixin`](#agentconfigurationtestmixin) | `waldur_mastermind.marketplace.tests.test_agent_configuration` | No description available |
-| [`AgentConfigurationTrustTestMixin`](#agentconfigurationtrusttestmixin) | `waldur_mastermind.marketplace.tests.test_agent_configuration_trust` | An offering with a SLURM agent configuration, its owner, service provider man... |
+| [`ImportTestMixin`](#importtestmixin) | `waldur_mastermind.marketplace_site_agent.tests.test_agent_import` | No description available |
 | [`ConformanceMixin`](#conformancemixin) | `waldur_mastermind.marketplace_site_agent.tests.test_contract_conformance` | Capture what a consumer queue receives and check it against a contract |
 | [`ResourceGlauthAccessMixin`](#resourceglauthaccessmixin) | `waldur_mastermind.marketplace_site_agent.tests.test_glauth_resource_access` | No description available |
 | [`SiteAgentFixtureMixin`](#siteagentfixturemixin) | `waldur_mastermind.marketplace_site_agent.tests.test_pat_template` | No description available |
@@ -134634,6 +134742,7 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`OverrideApiMixin`](#overrideapimixin) | `waldur_mastermind.proposal.tests.test_notification_overrides` | No description available |
 | [`ApplicantRolesMixin`](#applicantrolesmixin) | `waldur_mastermind.proposal.tests.test_notification_roles` | No description available |
 | [`PanelChairMixin`](#panelchairmixin) | `waldur_mastermind.proposal.tests.test_panel_chair_completer` | The rapporteur assignment is the panel chair's step |
+| [`PanelExportTestMixin`](#panelexporttestmixin) | `waldur_mastermind.proposal.tests.test_panel_exports` | A call with two panels, physics and chemistry, each with a chair and a member |
 | [`ManagerSetupMixin`](#managersetupmixin) | `waldur_mastermind.proposal.tests.test_pool_invitation_expiry` | No description available |
 | [`ActivityReaderMixin`](#activityreadermixin) | `waldur_mastermind.proposal.tests.test_proposal_activity` | No description available |
 | [`ProposalAdminMixin`](#proposaladminmixin) | `waldur_mastermind.proposal.tests.test_proposal_admin` | No description available |
@@ -136146,11 +136255,38 @@ email are declared by the serializers themselves.
 
 **Base classes:** `Serializer`
 
+### AgentConfigurationTestMixin
+
+**Module:** `waldur_mastermind.marketplace.tests.test_agent_configuration`
+
+**Description:** No description available.
+
+### AgentConfigurationTrustTestMixin
+
+**Module:** `waldur_mastermind.marketplace.tests.test_agent_configuration_trust`
+
+**Description:**
+
+An offering with a SLURM agent configuration, its owner, service provider
+manager and offering manager, with the roles' grants from permissions.yaml.
+
 ### DerivedLimitsOrderMixin
 
 **Module:** `waldur_mastermind.marketplace.tests.test_derived_limits`
 
 **Description:** No description available.
+
+### SitesMixin
+
+**Module:** `waldur_mastermind.marketplace.tests.test_k8s_sites`
+
+**Description:**
+
+Three OpenStack tenant offerings with overlapping flavors.
+
+m1.small and m1.large exist on every site with the same size; m1.odd
+exists everywhere but is bigger on the third site; only-first exists on
+the first site alone.
 
 ### SecretAbsenceMixin
 
@@ -136169,6 +136305,15 @@ email are declared by the serializers themselves.
 **Module:** `waldur_mastermind.marketplace.tests.test_order_resource_visibility`
 
 **Description:** No description available.
+
+### PrepaidRenewalMixin
+
+**Module:** `waldur_mastermind.marketplace.tests.test_renewal_billing`
+
+**Description:**
+
+A prepaid storage allocation of 50 at 4.5 a month, paid until 2024-04-15,
+and the helpers to renew it.
 
 ### ScopeHelperAgreementMixin
 
@@ -136290,20 +136435,11 @@ class MyTestClass(SelectiveDNSMockMixin, test.APITransactionTestCase):
 
 Mixin to execute scripts in containers for marketplace script processing.
 
-### AgentConfigurationTestMixin
+### ImportTestMixin
 
-**Module:** `waldur_mastermind.marketplace.tests.test_agent_configuration`
+**Module:** `waldur_mastermind.marketplace_site_agent.tests.test_agent_import`
 
 **Description:** No description available.
-
-### AgentConfigurationTrustTestMixin
-
-**Module:** `waldur_mastermind.marketplace.tests.test_agent_configuration_trust`
-
-**Description:**
-
-An offering with a SLURM agent configuration, its owner, service provider
-manager and offering manager, with the roles' grants from permissions.yaml.
 
 ### ConformanceMixin
 
@@ -136643,6 +136779,17 @@ assignment step right after the administrative check.
 The rapporteur assignment is the panel chair's step.
 
 **Base classes:** `EvaluatorRoleTestMixin`
+
+### PanelExportTestMixin
+
+**Module:** `waldur_mastermind.proposal.tests.test_panel_exports`
+
+**Description:**
+
+A call with two panels, physics and chemistry, each with a chair and a
+member. One proposal per panel. A blind step of individual reports by
+the panel members, a panel review chaired by the call's panel chair that
+reads those reports, and a technical assessment per requested offering.
 
 ### ManagerSetupMixin
 
