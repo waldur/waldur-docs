@@ -279,6 +279,21 @@ The new date is applied once the renewal order has been completed. A renewal is
 an order, so renew well before the termination date to leave time for any
 approval it needs.
 
+The renewal dialog shows what the renewal costs, line by line, before you
+confirm it. If the offering gives a **volume discount** for large allocations,
+the discount is shown too:
+
+- When it depends only on this allocation, it appears under each line it
+  reduces, and the total is what you are charged. The same amount is on the
+  renewal order and on the invoice.
+- When it depends on all of your organization's resources of that offering, the
+  dialog shows the full price and the note **Volume discount applied on your
+  invoice**. The discount is then worked out on the month's invoice.
+
+The discount depends on the size of the allocation, not on how long you renew
+it for, and an allocation counts once in a month however many times it is
+renewed in that month.
+
 ## Related pages
 
 - [Project management](project-management.md): setting the project's dates and
