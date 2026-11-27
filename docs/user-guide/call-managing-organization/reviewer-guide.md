@@ -89,7 +89,7 @@ organise your workload:
 | **Assignments** | Pending assignment batches to accept or decline |
 | **Invitations** | Pool invitations awaiting your response |
 | **Evaluator roles** | Proposals on which you hold an evaluator role, such as rapporteur; shown only when you hold one |
-| **Calls** | Calls whose reviewer pool you have joined |
+| **Calls** | Calls whose reviewer pool you have joined and, under **My panels**, the panels you chair or sit on, with their evaluation sheets (see [Panel evaluation sheets](data-export.md)) to download |
 
 ![The Tasks tab of My reviews](../img/reviewer-tasks.png)
 
