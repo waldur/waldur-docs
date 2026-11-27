@@ -2,7 +2,7 @@
 
 > Waldur is an open-source hybrid cloud platform for managing multi-cloud environments. It provides a unified interface for resource orchestration, service catalog management, and self-service portal functionality. Main components: MasterMind (backend API/orchestrator) and HomePort (web UI). Licensed under MIT.
 
-Generated: 2026-11-27T16:41:43.626933Z
+Generated: 2026-11-27T19:50:30.592549Z
 Source: https://docs.waldur.com/latest
 
 ---
@@ -78563,20 +78563,27 @@ Progress:
   `billing`, `matrix_chat`, `notifications`, `promotions`, `support`,
   `marketplace_rancher`, `waldur_freeipa`, `waldur_pid`), reducing marketplace
   upward dependencies from 15 to 6.
+- **Wave 5 — Seal `integrations` layer (`chat` and `marketplace` decoupled from providers, `policy`, and `proposal`)**:
+  moved HPC chat tools into `waldur_firecrest` and VM chat tools into
+  `waldur_mastermind.marketplace_openstack`, moved site-agent configuration and
+  consistency schemas into `waldur_mastermind.marketplace`, and inverted the
+  remaining provider, `policy`, and `proposal` hooks (eliminating 7 upward edges:
+  `chat` now has zero upward dependencies, `marketplace` is down to 1 upward
+  edge, and zero modules in `kernel`, `tenancy`, `marketplace`, or `supporting`
+  depend on `integrations`).
 
 Current snapshot (excluding `migrations/` and `tests/`, with `waldur_core.core`
-as a utility module): 67 modules, 327 declared edges, of which **15 edges
-across 6 modules** remain as upward layer violations (61 modules already
+as a utility module): 67 modules, 321 declared edges, of which **8 edges
+across 5 modules** remain as upward layer violations (62 modules already
 respect the target layer order):
 
 | Module | Target Layer | Upward Edges | Upward Targets |
 | --- | --- | --- | --- |
-| `waldur_mastermind.marketplace` | `marketplace` | 6 | `invoices`, `policy`, `proposal`, `marketplace_openstack`, `marketplace_site_agent`, `waldur_openstack` |
 | `waldur_core.core` | `kernel` | 3 | `changelog`, `structure`, `users` |
 | `waldur_core.structure` | `tenancy` | 2 | `marketplace`, `proposal` |
-| `waldur_mastermind.chat` | `supporting` | 2 | `waldur_firecrest`, `waldur_openstack` |
 | `waldur_core.logging` | `kernel` | 1 | `structure` |
 | `waldur_core.permissions` | `kernel` | 1 | `structure` |
+| `waldur_mastermind.marketplace` | `marketplace` | 1 | `invoices` |
 
 Workflow for burning down remaining edges:
 
@@ -80046,11 +80053,13 @@ fully in parallel.
 ### Interaction with the Project Grace Period
 
 A project past its end date but still inside its grace period has the resources
-of offerings with `supports_pausing` paused by the daily end-date task (unless
-the offering sets `disable_grace_period`). The policy never lifts such a pause:
-while the project is in its grace period, a resource stays paused even when its
-usage is below the grace limit, whether the pause came from the grace period or
-from the policy itself.
+of offerings with `supports_pausing` paused by the daily end-date task, unless
+the offering sets `grace_period_days` to 0 or the legacy `disable_grace_period`.
+An offering `grace_period_days` above 0 replaces the project length for that
+offering's resources, including a resource's own end date. The policy never
+lifts such a pause: while the resource is in its grace period, it stays paused
+even when its usage is below the grace limit, whether the pause came from the
+grace period or from the policy itself.
 
 Once the project leaves the grace period because its end date was extended or
 cleared, the pause set for the grace period is lifted unless usage is still over
@@ -80059,13 +80068,14 @@ evaluation as usual. When the grace period runs out instead, the resources stay
 paused until they are terminated.
 
 Resources are also paused right before they are terminated for an end date:
-once the project has expired (with no grace period, on the end date itself); on
-offerings with `disable_grace_period`, on the project's raw end date; and on a
-resource's own end date. A termination can fail -- slurmdbd refuses to remove
-an account while it still counts a job as running -- and is retried by the next
-daily run. Until it succeeds the resource stays paused, and neither the policy
-nor a usage-limit reset lifts it, so the account takes no new jobs meanwhile.
-Extending the end date lifts the pause.
+once the offering-resolved end date has passed; on offerings with
+`grace_period_days` 0 or `disable_grace_period`, on the project's raw end date;
+and on a resource's own end date when the offering sets no grace for it. A
+termination can fail -- slurmdbd refuses to remove an account while it still
+counts a job as running -- and is retried by the next daily run. Until it
+succeeds the resource stays paused, and neither the policy nor a usage-limit
+reset lifts it, so the account takes no new jobs meanwhile. Extending the end
+date lifts the pause.
 
 Outside the grace period the policy lifts a pause once usage is below the grace
 limit, except while a usage-limit restriction or a firing cost policy with
@@ -99291,6 +99301,63 @@ writes it as a CSV of every page, with the table's filters applied:
 Reviewers' private notes are never exported, and text that would start a
 spreadsheet formula is written with a leading apostrophe.
 
+### Panel evaluation sheets { data-requires="feature:marketplace.show_call_management_functionality !feature:marketplace.call_only" }
+
+Panels meet with a spreadsheet of their proposals' evaluations. Most of an
+evaluation is not a review. Individual and consolidated reports, panel
+comments and technical assessments are **step contributions** and the answers
+to their steps' forms. Two exports cover them, each as CSV or Excel:
+
+- **Panel sheet**: one row per proposal routed to the panel. Each row has the
+  proposal and applicant, its current step, the amount requested per offering
+  component, the review counts and scores with an average per criterion, the
+  outcome of each assessment and decision step (or its status while it has
+  none), and the technical assessment of each requested offering, with its
+  conditions.
+- **Evaluations**: one row per contribution to a step. Each row has the
+  proposal, panel, step, offering (for a per-offering assessment),
+  contributor, status, submission date, outcome, conditions and comment, then
+  one column per question of the step's form with the answer given.
+
+Where to download them:
+
+- **Call edit page → Evaluation workflow → Panels**: each panel's actions
+  menu offers **Panel sheet (Excel)**, **Panel sheet (CSV)**,
+  **Evaluations (Excel)** and **Evaluations (CSV)** for that panel.
+  **All panel sheets (Excel)** downloads one workbook with a sheet per panel.
+- **Manage → Reviews**: the **Evaluations** menu exports every contribution
+  of the call, narrowed by the list's round and proposal filters.
+- **My reviews → Calls**, for panel members: the **My panels** table lists
+  the panels you chair or sit on, with the same four downloads for each.
+
+Who can download them:
+
+- **Call managers, call organisers, staff and support**: any panel's sheet
+  and the whole call's evaluations.
+- **A panel's chair and members**: their own panel only. Asking for another
+  panel is refused.
+
+What a panel's chair or member gets in the file is no more than the proposal
+pages show them:
+
+- **Contributions**: only those they may read, such as their own and the
+  outputs of earlier steps their step reads.
+- **Blind steps**: contributor names are hidden behind an anonymous label
+  (*Contributor 1*, *Reviewer 1*), as on the proposal.
+- **Review scores**: only those they can read on screen, such as the score of
+  their own review.
+- **Step outcomes**: only those the proposal's step list shows them. An
+  allocation decision held until the round's results are published shows as
+  *Active*.
+- **Applicant details**: follow the call's applicant visibility settings.
+
+A proposal the reader has a pending or recused conflict of interest with is
+left out of their file, and so is a proposal whose applicant team they are on.
+The second rule applies to call managers and organisers too.
+
+The same `panel_uuid` (one panel) and `call_step_uuid` (one workflow step)
+filters are also accepted by the proposal and review exports, for API use.
+
 ### One proposal as a PDF { data-requires="!feature:marketplace.call_only" }
 
 **Download PDF** on a proposal (on the proposal page, or in a proposal row's
@@ -100308,7 +100375,7 @@ organise your workload:
 | **Assignments** | Pending assignment batches to accept or decline |
 | **Invitations** | Pool invitations awaiting your response |
 | **Evaluator roles** | Proposals on which you hold an evaluator role, such as rapporteur; shown only when you hold one |
-| **Calls** | Calls whose reviewer pool you have joined |
+| **Calls** | Calls whose reviewer pool you have joined and, under **My panels**, the panels you chair or sit on, with their evaluation sheets (see [Panel evaluation sheets](data-export.md)) to download |
 
 [Image: The Tasks tab of My reviews]
 
@@ -101033,6 +101100,11 @@ Round reports are listed on the round's **Meeting notes** tab as **Round report:
 step's form, ranks the proposals the report covers under **Ranking in this report**, and clicks
 **Submit report**. A call manager can **Reopen** a submitted report to hand it back to its
 author; proposals that reached the step since then join it.
+
+For a panel's meeting, its chair and members download the panel's evaluation sheet, one row
+per proposal routed to the panel with its scores and assessment outcomes, and every
+contribution to the evaluation of those proposals. See
+*Panel evaluation sheets* in [Data export](data-export.md).
 
 ## Ranking and meeting notes
 
@@ -134375,8 +134447,8 @@ This document lists all mixin classes found in the Waldur codebase.
 | [`ConcealmentMixin`](#concealmentmixin) | `waldur_mastermind.marketplace_openstack.tests.test_plugin_resource_concealment` | No description available |
 | [`SelectiveDNSMockMixin`](#selectivednsmockmixin) | `waldur_mastermind.marketplace_remote.tests.dns_utils` | Mixin class that provides selective DNS mocking for test classes |
 | [`ContainerExecutorMixin`](#containerexecutormixin) | `waldur_mastermind.marketplace_script.utils` | Mixin to execute scripts in containers for marketplace script processing |
-| [`AgentConfigurationTestMixin`](#agentconfigurationtestmixin) | `waldur_mastermind.marketplace_site_agent.tests.test_agent_configuration` | No description available |
-| [`AgentConfigurationTrustTestMixin`](#agentconfigurationtrusttestmixin) | `waldur_mastermind.marketplace_site_agent.tests.test_agent_configuration_trust` | An offering with a SLURM agent configuration, its owner, service provider man... |
+| [`AgentConfigurationTestMixin`](#agentconfigurationtestmixin) | `waldur_mastermind.marketplace.tests.test_agent_configuration` | No description available |
+| [`AgentConfigurationTrustTestMixin`](#agentconfigurationtrusttestmixin) | `waldur_mastermind.marketplace.tests.test_agent_configuration_trust` | An offering with a SLURM agent configuration, its owner, service provider man... |
 | [`ConformanceMixin`](#conformancemixin) | `waldur_mastermind.marketplace_site_agent.tests.test_contract_conformance` | Capture what a consumer queue receives and check it against a contract |
 | [`ResourceGlauthAccessMixin`](#resourceglauthaccessmixin) | `waldur_mastermind.marketplace_site_agent.tests.test_glauth_resource_access` | No description available |
 | [`SiteAgentFixtureMixin`](#siteagentfixturemixin) | `waldur_mastermind.marketplace_site_agent.tests.test_pat_template` | No description available |
@@ -136064,13 +136136,13 @@ Mixin to execute scripts in containers for marketplace script processing.
 
 ### AgentConfigurationTestMixin
 
-**Module:** `waldur_mastermind.marketplace_site_agent.tests.test_agent_configuration`
+**Module:** `waldur_mastermind.marketplace.tests.test_agent_configuration`
 
 **Description:** No description available.
 
 ### AgentConfigurationTrustTestMixin
 
-**Module:** `waldur_mastermind.marketplace_site_agent.tests.test_agent_configuration_trust`
+**Module:** `waldur_mastermind.marketplace.tests.test_agent_configuration_trust`
 
 **Description:**
 
@@ -147737,6 +147809,8 @@ Sent by:
 | `downscaled` | boolean | yes | Whether the resource is downscaled |
 | `restrict_member_access` | boolean | yes | Whether member access is restricted |
 | `paused` | boolean | yes | Whether the resource is paused |
+| `is_in_grace_period` | boolean | yes | Whether the resource is inside the grace period its offering resolves |
+| `grace_period_end_date` | string or null | yes | Last day of that grace period (YYYY-MM-DD), or null when there is none |
 | `sequence_number` | integer | yes | Incremental message sequence number |
 | `resource_name` | string | no | Name of the resource |
 | `resource_state` | string | no | Display name of the resource state |
