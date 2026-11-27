@@ -80,11 +80,13 @@ terminations are started in the early hours of the end date itself.
 
 Once every resource has been terminated, the project itself is removed.
 
-A project end date cannot be set in the past. Users who may edit the project
-change it on the project's **Edit** tab, or with the pencil next to **End date**
-in the project list. For other project members, the same pencil opens **Request
-end date change**: they pick a new date and give a reason, and an organization
-owner approves or rejects the request.
+A project end date cannot be set in the past. Users who may set it (by
+default, organization owners) change it on the project's **Edit** tab. For
+project managers, administrators and members, the pencil next to **End date**
+in the project list opens **Request end date change**: they pick a new date and
+give a reason, and an organization owner approves or rejects the request. See
+[Who can change an end date](end-date-change-requests.md) for who sees which
+action.
 
 ![A project member requesting a later end date](../img/start-end-project-request.png)
 
@@ -283,5 +285,7 @@ approval it needs.
   grace period
 - [Changing a resource end date](resource-end-date-changes.md): requesting and
   approving a new termination date
+- [Who can change an end date](end-date-change-requests.md): who sets the date,
+  who requests it, and why the request can be missing
 - [Resource lifecycle](../../about/concepts/lifecycle.md): order and resource
   states
