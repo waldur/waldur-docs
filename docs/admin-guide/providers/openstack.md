@@ -65,6 +65,8 @@ Per-offering settings control how tenants behave:
 - `storage_mode` — `fixed` for a single storage quota, or `dynamic` for per-volume-type quotas.
 - `max_instances`, `max_volumes`, `max_security_groups` — upper bounds enforced within a tenant.
 - `default_internal_network_mtu` — MTU applied to networks created in the tenant (68–9000).
+- `usage_poll_interval_minutes`, `billing_source`, `bill_inactive_instances` — how usage-based
+  plans are polled and what they bill; see [Usage-based billing](#usage-based-billing).
 
 ### Default marketplace categories
 
@@ -134,6 +136,40 @@ Tenant offerings are billed on quota limits using monthly components:
 
 In `dynamic` storage mode, a separate storage component is created for each OpenStack volume
 type (for example `storage_ssd`), so that each volume type can be billed independently.
+
+### Usage-based billing
+
+Under a usage-based plan, Waldur polls each tenant's usage every `usage_poll_interval_minutes`
+(15–1440, default 60) and bills each component as its current value multiplied by the time since
+the previous poll. `billing_source` decides where cores and RAM come from: `quota` (default)
+reads Nova's quota usage, and `placement` reads Placement allocations, which also bills vGPU,
+PCI and custom resource classes. Storage always comes from Cinder.
+
+Both sources count stopped and suspended servers as if they were running (only shelved-offloaded
+servers can drop out, depending on how Nova counts usage). To bill compute for running
+servers only, turn off `bill_inactive_instances` (**Bill stopped instances** on the offering's
+Billing tab; on by default). With it off, the cores, RAM and other compute of a server are left
+out of a poll interval when the server was `SHUTOFF`, `SUSPENDED`, `SHELVED` or
+`SHELVED_OFFLOADED` for the whole of it:
+
+- At every poll Waldur reads each server's status and the time Nova last changed it, and keeps
+  that time for the next poll. A server is left out only if it is stopped now and its last-change
+  time is exactly what the previous poll read. Every start, stop, suspend or resume moves that
+  time, and tenants cannot set it. Only Nova's own values are compared, so a Nova clock that runs
+  behind or ahead of Waldur's does not matter.
+- The first poll after the option is turned off has nothing to compare with, so it bills every
+  server.
+- So the interval in which a server stops is still billed, and it is billed from the next one
+  on only if it runs again. Stopping servers just before a poll, or pulling quotas by hand, does
+  not take running time off the bill.
+- `PAUSED` servers keep their memory on the host, and `ERROR` or a transitional status says
+  nothing about whether a server runs, so those are billed.
+- Storage is billed either way: a stopped server's volumes still exist.
+- When the server list cannot be read from Nova, that poll bills every server, as if the
+  option were on, and logs a warning.
+
+Say in the plan description whether stopped servers are billed, so that customers know before
+they order.
 
 ## Organization-specific external networks
 
