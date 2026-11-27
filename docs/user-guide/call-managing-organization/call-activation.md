@@ -57,7 +57,9 @@ the action shows their number (*Activate (2 errors)*), and a refused activation
 lists all of them at once. There is no override. The calls list shows the
 verdict too, under **Workflow check** in the call's expanded row.
 
-An archived call can be activated again the same way.
+An archived call can be activated again the same way. That lifts the freeze on its proposals:
+what was read-only while it was archived (see
+[What archiving freezes](overview.md#what-archiving-freezes)) can be worked on again.
 
 The other sub-tabs of **Validation** help confirm that the workflow does what
 you intend: **Roles**, **Notifications**, **Diagram**, **Timeline**,
