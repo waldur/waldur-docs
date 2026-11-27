@@ -563,15 +563,84 @@ Turn on **Unique across resources** on the first step of the dialog when no two 
 
 A value stays taken until its resource is terminated, including while the resource is in an erred state, since it may still exist in your backend. Values held by pending orders count as taken too. This check runs when the order is submitted, not while the customer types.
 
-### Kubernetes cluster topology
+### Asking for a Kubernetes cluster
 
-The **Kubernetes Cluster Configuration** input lets the customer describe a cluster: Kubernetes version, OpenStack infrastructure, node groups and access rules. In the input's settings, **Cluster topology** decides how the controller nodes are placed:
+The **Kubernetes Cluster Configuration** input lets the customer describe a cluster: Kubernetes version, the OpenStack infrastructure of each site, node groups, inbound access rules and, if you allow them, egress rules. Its settings decide what the customer may choose:
+
+- **Cluster topology**: how the controller nodes are placed.
+- **Site infrastructure**: whether the customer picks the OpenStack infrastructure of each site, or you fix it.
+- **Controller Node Defaults** and **Load Balancer Defaults**: the size of the controller nodes, and whether clusters get load balancer nodes and of what size.
+- **Worker Node Requirements**: **Minimal vCPUs per Worker** and **Minimal RAM per Worker (GB)**. The order form only offers worker flavors that meet them.
+- **Available Kubernetes Versions**: the versions the customer can pick.
+- **Egress rules**: whether customers may restrict the outbound traffic of their clusters.
+
+Waldur collects and checks the configuration and stores it with the order. Your automation builds the cluster from it, applying the access and egress rules too.
+
+#### Cluster topology
+
+**Cluster topology** decides how the controller nodes are placed:
 
 - **Single site, 3 controllers** — one datacenter holds all three controllers.
-- **Three sites, 1 controller each** — the cluster spans three datacenters, each configured separately.
+- **Three sites, 1 controller each** — the cluster spans three datacenters.
 - **Customer chooses** — the order form shows a **Cluster topology** selector with both layouts. Switching it keeps the version, access rules, Longhorn and load balancer choices, and resets the per-datacenter infrastructure and node groups.
 
 When **Cluster topology** is left empty, the customer chooses. The upgrade that introduced this input converted the earlier **Single-Datacenter Kubernetes Configuration** and **Multi-Datacenter Kubernetes Configuration** inputs into it. Where such an input left **Cluster topology** empty, the upgrade set it to the layout the old input implied: one site or three sites. Orders that request a topology the offering does not allow, or the wrong number of datacenters for their topology, are rejected.
+
+#### Fix the sites a cluster is deployed to
+
+By default the customer picks, for each datacenter, an OpenStack tenant offering to deploy it to, and configures each datacenter's node groups separately. When your automation provisions the tenants itself, for example across three OpenStack clouds you run, set **Site infrastructure** to **Provider fixes the sites** and pick the sites for each layout that **Cluster topology** offers:
+
+- **Single site, 3 controllers**: one **Site**.
+- **Three sites, 1 controller each**: **Site 1**, **Site 2** and **Site 3**, three different offerings. The order matters: datacenter 1 of every cluster is deployed to site 1, and so on.
+
+![Settings of a Kubernetes input with the sites fixed: one site for the single-site layout and three for the three-site layout](../img/offering-k8s-fixed-sites.png)
+
+You can pick an **OpenStack tenant** offering that is active or paused and is either your own or one your organisation may order, such as an offering shared with it or with an organisation group it belongs to. Saving the input with any other offering, or with a missing or repeated site, is refused.
+
+#### What customers see when you fix the sites
+
+With the sites fixed, the customer in the order form:
+
+- sees each datacenter's site as **Set by the service provider**, without a way to change it. The customer does not need access to the OpenStack offerings themselves.
+- defines the node groups once, under **Node groups (all sites)**. Every site gets the same node groups, with the same number of nodes and disks, and the other datacenters list them read-only.
+- picks each node group's flavor from the flavors every site has: the same flavor name with the same vCPUs and RAM on each site. Each site is then deployed with its own flavor of that name. Worker flavors below your **Worker Node Requirements** are not offered.
+
+![Order form with the sites set by the provider and the node groups defined once for all sites](../img/order-form-k8s-fixed-sites.png)
+
+![Flavor picker offering only the flavors every site has that meet the worker minimums](../img/order-form-k8s-common-flavors.png)
+
+A flavor counts only when Waldur knows it on every site, so a flavor you add in OpenStack is offered once Waldur has synchronised all the sites. A flavor name used twice on one site is left out, since it is not clear which one is meant.
+
+!!! note
+    Anyone who can see the Kubernetes offering can see the names of its sites and the flavors they share, including customers who cannot see the OpenStack offerings themselves.
+
+#### Checks on orders for fixed sites
+
+Besides checking the order form, Waldur checks a cluster on fixed sites when the order is submitted and whenever its configuration is changed later. It is refused when its datacenters are not on your sites in the order you set, when the node groups differ between sites, when a flavor is not that site's own or differs in size between sites, or when a worker flavor is below the minimums.
+
+#### Change the sites of an offering with running clusters
+
+Changing the sites later does not move existing clusters. When a cluster's configuration is edited and it runs on other sites than you now offer, the form says so and keeps the cluster as it is. **Move to the current sites** switches it to your current sites. Its node groups are kept, and each keeps its flavor when the new sites share a flavor of that name; the others have to be picked again.
+
+#### Egress rules
+
+Egress rules let a customer restrict where a cluster may connect to. Under **Egress rules** in the input's settings:
+
+- **Customers may set egress rules**: shows an **Egress rules** section in the order form. Without it, orders with egress rules are refused.
+- **Allow domain name destinations**: lets customers list domain names as well as networks (CIDR). Enforcing domain rules needs a DNS-aware firewall or network policy.
+- **Baseline destinations**: destinations every restricted cluster may always reach, for example your DNS servers or package mirror. Customers see them read-only.
+
+A cluster without egress rules keeps unrestricted outbound traffic. Once it has at least one rule, outbound traffic is denied except to its rules and your baseline destinations. Baseline destinations on their own do not restrict a cluster.
+
+Each rule has a name, a destination, an optional protocol (**TCP**, **UDP** or **ICMP**), an optional port range and a description:
+
+- A network is written with its prefix, IPv4 or IPv6, for example `10.20.0.0/16` or `2001:db8::/32`.
+- A domain is an exact name such as `registry.example.org`, or a wildcard such as `*.example.org`.
+- Leaving the protocol and ports empty allows any traffic to the destination. Ports without a protocol mean those ports over TCP and UDP. ICMP takes no ports.
+
+To let customers change the rules of a running cluster, add a **Kubernetes Egress Rules** input on the offering's **Resource options** tab. It works only on an offering with exactly one **Kubernetes Cluster Configuration** input, and follows that input's egress settings and baseline destinations.
+
+Waldur only collects and checks the rules: your automation applies them, through security groups, network policy or an egress proxy. The **Public access rules** and **Administrative access rules** of the same input are inbound only.
 
 ### Asking for a network
 
